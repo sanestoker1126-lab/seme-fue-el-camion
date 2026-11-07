@@ -1,0 +1,681 @@
+{
+  "schema": "nina-sprite-map-v1",
+  "character": "Sofía",
+  "atlas": "nina_extra_atlas.png",
+  "atlasSize": {
+    "w": 1280,
+    "h": 768
+  },
+  "cellSize": 256,
+  "columns": 5,
+  "rows": 3,
+  "frameCount": 15,
+  "frames": {
+    "pose_idle_hand": {
+      "filename": "pose_idle_hand.png",
+      "frame": {
+        "x": 32,
+        "y": 16,
+        "w": 192,
+        "h": 224
+      },
+      "sourceSize": {
+        "w": 437,
+        "h": 911
+      },
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 111,
+        "h": 232
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1.0
+      },
+      "group": "pose",
+      "source": "18736.webp",
+      "anchor": "bottom_center",
+      "cell": [
+        0,
+        0
+      ],
+      "sourceCanvas": {
+        "w": 192,
+        "h": 224
+      },
+      "normalizedContent": [
+        47,
+        16,
+        97,
+        202
+      ],
+      "atlasCell": [
+        0,
+        0
+      ]
+    },
+    "pose_victory_hand": {
+      "filename": "pose_victory_hand.png",
+      "frame": {
+        "x": 288,
+        "y": 16,
+        "w": 192,
+        "h": 224
+      },
+      "sourceSize": {
+        "w": 452,
+        "h": 911
+      },
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 115,
+        "h": 232
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1.0
+      },
+      "group": "pose",
+      "source": "18736.webp",
+      "anchor": "bottom_center",
+      "cell": [
+        1,
+        0
+      ],
+      "sourceCanvas": {
+        "w": 192,
+        "h": 224
+      },
+      "normalizedContent": [
+        46,
+        16,
+        100,
+        202
+      ],
+      "atlasCell": [
+        1,
+        0
+      ]
+    },
+    "pose_victory_fist": {
+      "filename": "pose_victory_fist.png",
+      "frame": {
+        "x": 544,
+        "y": 16,
+        "w": 192,
+        "h": 224
+      },
+      "sourceSize": {
+        "w": 450,
+        "h": 899
+      },
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 116,
+        "h": 232
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1.0
+      },
+      "group": "pose",
+      "source": "18736.webp",
+      "anchor": "bottom_center",
+      "cell": [
+        2,
+        0
+      ],
+      "sourceCanvas": {
+        "w": 192,
+        "h": 224
+      },
+      "normalizedContent": [
+        45,
+        16,
+        101,
+        202
+      ],
+      "atlasCell": [
+        2,
+        0
+      ]
+    },
+    "pose_victory_hands": {
+      "filename": "pose_victory_hands.png",
+      "frame": {
+        "x": 800,
+        "y": 16,
+        "w": 192,
+        "h": 224
+      },
+      "sourceSize": {
+        "w": 449,
+        "h": 906
+      },
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 115,
+        "h": 232
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1.0
+      },
+      "group": "pose",
+      "source": "18736.webp",
+      "anchor": "bottom_center",
+      "cell": [
+        3,
+        0
+      ],
+      "sourceCanvas": {
+        "w": 192,
+        "h": 224
+      },
+      "normalizedContent": [
+        46,
+        16,
+        100,
+        202
+      ],
+      "atlasCell": [
+        3,
+        0
+      ]
+    },
+    "fall_damage_01": {
+      "filename": "fall_damage_01.png",
+      "frame": {
+        "x": 1056,
+        "y": 16,
+        "w": 192,
+        "h": 224
+      },
+      "sourceSize": {
+        "w": 649,
+        "h": 815
+      },
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 185,
+        "h": 232
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1.0
+      },
+      "group": "fall",
+      "source": "18737.webp",
+      "anchor": "bottom_center",
+      "cell": [
+        4,
+        0
+      ],
+      "sourceCanvas": {
+        "w": 192,
+        "h": 224
+      },
+      "normalizedContent": [
+        15,
+        16,
+        161,
+        202
+      ],
+      "atlasCell": [
+        4,
+        0
+      ]
+    },
+    "fall_damage_02": {
+      "filename": "fall_damage_02.png",
+      "frame": {
+        "x": 32,
+        "y": 272,
+        "w": 192,
+        "h": 224
+      },
+      "sourceSize": {
+        "w": 731,
+        "h": 821
+      },
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 207,
+        "h": 232
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1.0
+      },
+      "group": "fall",
+      "source": "18737.webp",
+      "anchor": "bottom_center",
+      "cell": [
+        0,
+        1
+      ],
+      "sourceCanvas": {
+        "w": 192,
+        "h": 224
+      },
+      "normalizedContent": [
+        10,
+        25,
+        172,
+        193
+      ],
+      "atlasCell": [
+        0,
+        1
+      ]
+    },
+    "fall_damage_03": {
+      "filename": "fall_damage_03.png",
+      "frame": {
+        "x": 288,
+        "y": 272,
+        "w": 192,
+        "h": 224
+      },
+      "sourceSize": {
+        "w": 743,
+        "h": 811
+      },
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 213,
+        "h": 232
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1.0
+      },
+      "group": "fall",
+      "source": "18737.webp",
+      "anchor": "bottom_center",
+      "cell": [
+        1,
+        1
+      ],
+      "sourceCanvas": {
+        "w": 192,
+        "h": 224
+      },
+      "normalizedContent": [
+        10,
+        30,
+        172,
+        188
+      ],
+      "atlasCell": [
+        1,
+        1
+      ]
+    },
+    "fall_damage_04": {
+      "filename": "fall_damage_04.png",
+      "frame": {
+        "x": 544,
+        "y": 272,
+        "w": 192,
+        "h": 224
+      },
+      "sourceSize": {
+        "w": 742,
+        "h": 822
+      },
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 209,
+        "h": 232
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1.0
+      },
+      "group": "fall",
+      "source": "18737.webp",
+      "anchor": "bottom_center",
+      "cell": [
+        2,
+        1
+      ],
+      "sourceCanvas": {
+        "w": 192,
+        "h": 224
+      },
+      "normalizedContent": [
+        10,
+        27,
+        172,
+        191
+      ],
+      "atlasCell": [
+        2,
+        1
+      ]
+    },
+    "recover_recover_01": {
+      "filename": "recover_recover_01.png",
+      "frame": {
+        "x": 800,
+        "y": 272,
+        "w": 192,
+        "h": 224
+      },
+      "sourceSize": {
+        "w": 426,
+        "h": 849
+      },
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 116,
+        "h": 232
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1.0
+      },
+      "group": "recover",
+      "source": "18735.webp",
+      "anchor": "bottom_center",
+      "cell": [
+        3,
+        1
+      ],
+      "sourceCanvas": {
+        "w": 192,
+        "h": 224
+      },
+      "normalizedContent": [
+        45,
+        16,
+        101,
+        202
+      ],
+      "atlasCell": [
+        3,
+        1
+      ]
+    },
+    "recover_recover_02": {
+      "filename": "recover_recover_02.png",
+      "frame": {
+        "x": 1056,
+        "y": 272,
+        "w": 192,
+        "h": 224
+      },
+      "sourceSize": {
+        "w": 438,
+        "h": 851
+      },
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 119,
+        "h": 232
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1.0
+      },
+      "group": "recover",
+      "source": "18735.webp",
+      "anchor": "bottom_center",
+      "cell": [
+        4,
+        1
+      ],
+      "sourceCanvas": {
+        "w": 192,
+        "h": 224
+      },
+      "normalizedContent": [
+        44,
+        16,
+        104,
+        202
+      ],
+      "atlasCell": [
+        4,
+        1
+      ]
+    },
+    "recover_recover_03": {
+      "filename": "recover_recover_03.png",
+      "frame": {
+        "x": 32,
+        "y": 528,
+        "w": 192,
+        "h": 224
+      },
+      "sourceSize": {
+        "w": 452,
+        "h": 840
+      },
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 125,
+        "h": 232
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1.0
+      },
+      "group": "recover",
+      "source": "18735.webp",
+      "anchor": "bottom_center",
+      "cell": [
+        0,
+        2
+      ],
+      "sourceCanvas": {
+        "w": 192,
+        "h": 224
+      },
+      "normalizedContent": [
+        41,
+        16,
+        109,
+        202
+      ],
+      "atlasCell": [
+        0,
+        2
+      ]
+    },
+    "recover_recover_04": {
+      "filename": "recover_recover_04.png",
+      "frame": {
+        "x": 288,
+        "y": 528,
+        "w": 192,
+        "h": 224
+      },
+      "sourceSize": {
+        "w": 459,
+        "h": 843
+      },
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 126,
+        "h": 232
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1.0
+      },
+      "group": "recover",
+      "source": "18735.webp",
+      "anchor": "bottom_center",
+      "cell": [
+        1,
+        2
+      ],
+      "sourceCanvas": {
+        "w": 192,
+        "h": 224
+      },
+      "normalizedContent": [
+        41,
+        16,
+        110,
+        202
+      ],
+      "atlasCell": [
+        1,
+        2
+      ]
+    },
+    "fall_fall_forward": {
+      "filename": "fall_fall_forward.png",
+      "frame": {
+        "x": 544,
+        "y": 528,
+        "w": 192,
+        "h": 224
+      },
+      "sourceSize": {
+        "w": 259,
+        "h": 322
+      },
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 187,
+        "h": 232
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1.0
+      },
+      "group": "fall",
+      "source": "18749.png",
+      "anchor": "bottom_center",
+      "cell": [
+        2,
+        2
+      ],
+      "sourceCanvas": {
+        "w": 192,
+        "h": 224
+      },
+      "normalizedContent": [
+        15,
+        16,
+        162,
+        202
+      ],
+      "atlasCell": [
+        2,
+        2
+      ]
+    },
+    "fall_fall_airborne": {
+      "filename": "fall_fall_airborne.png",
+      "frame": {
+        "x": 800,
+        "y": 528,
+        "w": 192,
+        "h": 224
+      },
+      "sourceSize": {
+        "w": 226,
+        "h": 366
+      },
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 143,
+        "h": 232
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1.0
+      },
+      "group": "fall",
+      "source": "18755.png",
+      "anchor": "bottom_center",
+      "cell": [
+        3,
+        2
+      ],
+      "sourceCanvas": {
+        "w": 192,
+        "h": 224
+      },
+      "normalizedContent": [
+        34,
+        16,
+        124,
+        202
+      ],
+      "atlasCell": [
+        3,
+        2
+      ]
+    },
+    "land_crouch_landing": {
+      "filename": "land_crouch_landing.png",
+      "frame": {
+        "x": 1056,
+        "y": 528,
+        "w": 192,
+        "h": 224
+      },
+      "sourceSize": {
+        "w": 197,
+        "h": 231
+      },
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 197,
+        "h": 231
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1.0
+      },
+      "group": "land",
+      "source": "18761.png",
+      "anchor": "bottom_center",
+      "cell": [
+        4,
+        2
+      ],
+      "sourceCanvas": {
+        "w": 192,
+        "h": 224
+      },
+      "normalizedContent": [
+        10,
+        16,
+        172,
+        202
+      ],
+      "atlasCell": [
+        4,
+        2
+      ]
+    }
+  },
+  "notes": [
+    "Frames extracted by alpha connected-component contour or alpha silhouette crop.",
+    "Some source sheets contain horizontal streak effects attached to the figure; inspect extracted frames before final gameplay use.",
+    "Pivot bottom-center is a mapping convention. Fine-adjust per-frame feet baseline after visual review.",
+    "v14: each individual PNG is normalized to a 192x224 transparent canvas to prevent giant poses; standing idle now uses the standing pose, not the run/impulse cycle."
+  ]
+}

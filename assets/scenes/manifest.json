@@ -1,0 +1,60 @@
+{
+  "source": "concept_art_guadalajara_escuela",
+  "scenes": [
+    {
+      "id": "guadalajara",
+      "file": "guadalajara_panel.png",
+      "role": "parallax scenery band",
+      "palette": "sunset orange, purple, warm stone"
+    },
+    {
+      "id": "escuela",
+      "file": "escuela_panel.png",
+      "role": "school scenery band",
+      "palette": "blue sky, greenery, warm classroom lights"
+    },
+    {
+      "id": "centro_historico",
+      "file": "generated/centro_historico_guadalajara.png",
+      "role": "Centro Histórico de Guadalajara scenery band",
+      "palette": "cantera cálida, azul de hora dorada, luces coloniales"
+    },
+    {
+      "id": "zapopan",
+      "file": "generated/zapopan_basilica_noche.png",
+      "role": "Zapopan Basilica scenery band",
+      "palette": "piedra iluminada, índigo nocturno, verdes de plaza"
+    },
+    {
+      "id": "mercado_tapatio",
+      "file": "generated/mercado_tapatio_amanecer.png",
+      "role": "nuevo nivel de mercado al amanecer",
+      "palette": "lonas turquesa, cantera dorada y luz cálida"
+    },
+    {
+      "id": "parque_metropolitano",
+      "file": "generated/parque_metropolitano_atardecer.png",
+      "role": "nuevo nivel de parque al atardecer",
+      "palette": "jacarandas, agua azul y luces de puesta de sol"
+    },
+    {
+      "id": "anden_tren_ligero",
+      "file": "generated/anden_tren_ligero_guadalajara.png",
+      "role": "nivel urbano de estación de tren ligero",
+      "palette": "cielo violeta, luces ámbar y jacarandas"
+    },
+    {
+      "id": "plaza_jacarandas",
+      "file": "generated/plaza_jacarandas_noche.png",
+      "role": "nivel final de plaza nocturna",
+      "palette": "cantera cálida, índigo y flores moradas"
+    }
+  ],
+  "reference_sheet": "plataformas_referencia.png",
+  "note": "The source is a composite concept sheet; platform props in the reference panel are not yet separated into individual transparent sprites.",
+  "version": "v11",
+  "rendering_note": "Composite scenery is world-anchored to the camera to keep painted ledges aligned with collision surfaces; a separate low-alpha atmospheric layer moves at a slower parallax rate.",
+  "collision_map": "collision_maps_v8.json",
+  "gameplay": "Visible roof, balcony, cornice and stair surfaces have authored one-way landing colliders; moving platforms and transitions are drawn separately.",
+  "art_note": "La ruta tiene doce niveles; Mercado Tapatío, Parque Metropolitano, Andén y Plaza de las Jacarandas tienen fondos originales. La geometría de colisión se reutiliza y valida por separado."
+}

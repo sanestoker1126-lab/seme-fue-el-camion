@@ -1,0 +1,68 @@
+{
+ "stone_moss": {
+  "w": 153,
+  "h": 64,
+  "top": 6
+ },
+ "stone_long": {
+  "w": 218,
+  "h": 50,
+  "top": 1
+ },
+ "stone_small": {
+  "w": 105,
+  "h": 51,
+  "top": 1
+ },
+ "stone_slim": {
+  "w": 96,
+  "h": 30,
+  "top": 1
+ },
+ "concrete": {
+  "w": 144,
+  "h": 50,
+  "top": 2
+ },
+ "tiles_a": {
+  "w": 155,
+  "h": 42,
+  "top": 1
+ },
+ "brick": {
+  "w": 140,
+  "h": 41,
+  "top": 0
+ },
+ "tiles_b": {
+  "w": 142,
+  "h": 40,
+  "top": 1
+ },
+ "stone_rocks": {
+  "w": 144,
+  "h": 52,
+  "top": 0
+ },
+ "scaffold": {
+  "w": 94,
+  "h": 45,
+  "top": 4
+ },
+ "wood_table": {
+  "w": 104,
+  "h": 55,
+  "top": 1
+ },
+ "hazard": {
+  "w": 88,
+  "h": 49,
+  "top": 2
+ },
+ "plank": {
+  "w": 104,
+  "h": 24,
+  "top": 1,
+  "from": "wood_table (filas 0-23)"
+ }
+}
