@@ -171,6 +171,19 @@
       });
       const tl = $('tramosLabel');
       if (tl) tl.textContent = M.label + ' · ELIGE UNA PARADA';
+      const looks = $('lookPicker');
+      if (looks) {
+        looks.replaceChildren();
+        for (const [key, label] of [['original', 'ORIGINAL'], ['uniforme', 'UNIFORME'], ['rosa', 'ROSA']]) {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'lookOption' + (opt.ninaLook === key ? ' selected' : '');
+          b.textContent = label;
+          b.setAttribute('aria-pressed', String(opt.ninaLook === key));
+          b.onclick = () => cb.look(key);
+          looks.appendChild(b);
+        }
+      }
       const col = $('collection');
       col.innerHTML = ST.ITEMS.map((it) => '<span class="it' + (save.items[it.id] ? ' got' : '') + '" title="' + esc(it.name) + '">' + (save.items[it.id] ? esc(it.name) : '???') + '</span>').join('');
       const found = ST.ITEMS.filter((it) => save.items[it.id]).length;
