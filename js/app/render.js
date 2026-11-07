@@ -1675,7 +1675,8 @@
     if (swimA && drawSwimPlayer(G, T, swimA, alpha)) return;
     const currentScene = G.world && G.world.scenes[G.tramo];
     const suitTheme = currentScene && currentScene.theme;
-    if (suitTheme === 'submarino' && drawDiver(G, alpha)) return;
+    const outfit = suitTheme === 'submarino' ? 'buzo' : suitTheme === 'espacial' ? 'astronauta' : ropt.ninaLook;
+    if (outfit === 'buzo' && drawDiver(G, alpha)) return;
     let yOff = 0;
     if (P.dead) { const t = Math.min(1, G.timers.dying / 0.9); yOff = -Math.sin(t * Math.PI) * 42; }
     const state = P.state, list = NINA[state] || NINA.idle;
@@ -1717,7 +1718,7 @@
       fillRR(-7, -17, 5, 16, 2, '#172432'); fillRR(2, -17, 5, 16, 2, '#172432'); fillRect(-7, -35, 14, 3, '#d9ff65');
     }
     ctx.restore();
-    if (suitTheme === 'espacial') drawAstronautGear(P, alpha);
+    if (outfit === 'astronauta') drawAstronautGear(P, alpha);
     if (P.dashT > 0) for (let i = 1; i <= 3; i++) line(P.x - P.face * (14 + i * 9), P.y - 10 + i * 6, P.x - P.face * (30 + i * 9), P.y - 10 + i * 6, '#4ce7ee', 0.5, 2);
     if (P.kickT > 0) { const k = P.kickT / 0.22; line(P.x + P.face * 16, P.y - 9, P.x + P.face * 58, P.y - 9, '#ffd35a', 0.35 * k, 3); ring(P.x + P.face * 58, P.y - 9, 9, 9, '#ffe9a8', 0.5 * k, 2); }
   }

@@ -14,7 +14,7 @@
 ## Sofía
 - Submarino: se reutiliza el atlas complementario existente para movimiento terrestre; bajo el agua se conserva el nado de V52.
 - Espacio: casco, escafandra y mochila superpuestos provisionalmente. El atlas auténtico de astronauta está pendiente de incorporarse al repositorio.
-- Menú: botones ORIGINAL, UNIFORME y ROSA visibles antes de jugar; selección persistente para Escuela y Guadalajara.
+- Menú: botones ORIGINAL, UNIFORME, ROSA, BUZO y ASTRONAUTA visibles antes de jugar; selección persistente para Escuela y Guadalajara.
 
 ## Presentación y distribución
 - Salida visual como escotilla submarina y módulo orbital; se preservan las reglas de meta existentes.

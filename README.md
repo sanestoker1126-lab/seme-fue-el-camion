@@ -58,7 +58,7 @@ Sofía utiliza el atlas submarino existente fuera del agua y el de nado dentro d
 con un equipo astronauta superpuesto como solución visual temporal, porque el repositorio aún no incluye el
 atlas completo de la versión espacial. Los sprites originales no se reemplazan ni se eliminan.
 
-Antes de pulsar JUGAR se puede elegir ORIGINAL, UNIFORME o ROSA. El ajuste se guarda y se usa en Escuela y
+Antes de pulsar JUGAR se puede elegir ORIGINAL, UNIFORME, ROSA, BUZO o ASTRONAUTA. El ajuste se guarda y se usa en Escuela y
 Guadalajara; los mundos especiales imponen su equipamiento correspondiente.
 
 Las salidas de los mundos nuevos se representan como una escotilla y un módulo orbital. Su comportamiento

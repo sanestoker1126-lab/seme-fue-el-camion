@@ -233,7 +233,7 @@ body.lefty .ctl.kick{grid-column:2;grid-row:1}
 @media(orientation:landscape) and (max-height:520px){.actionCluster{--a:54px;--j:60px;gap:6px}.ctl.down{width:54px;height:54px}}
 
 /* V54: selector de apariencia al iniciar */
-.lookPicker{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:8px}
+.lookPicker{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:7px;margin-top:8px}
 .lookOption{min-height:44px;padding:9px 5px;border-radius:11px;border:1px solid #8cbec851;color:#d4e8eb;background:#10283a;font-size:11px;font-weight:900}
 .lookOption.selected{border-color:#d9ff65;color:#d9ff65;background:#243c37;box-shadow:inset 0 0 0 1px #d9ff6545}
 .lookOption:focus-visible{outline:2px solid #4ce7ee;outline-offset:2px}

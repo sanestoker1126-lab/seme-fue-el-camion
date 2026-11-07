@@ -176,7 +176,7 @@
       const looks = $('lookPicker');
       if (looks) {
         looks.replaceChildren();
-        for (const [key, label] of [['original', 'ORIGINAL'], ['uniforme', 'UNIFORME'], ['rosa', 'ROSA']]) {
+        for (const [key, label] of [['original', 'ORIGINAL'], ['uniforme', 'UNIFORME'], ['rosa', 'ROSA'], ['buzo', 'BUZO'], ['astronauta', 'ASTRONAUTA']]) {
           const b = document.createElement('button');
           b.type = 'button';
           b.className = 'lookOption' + (opt.ninaLook === key ? ' selected' : '');
@@ -207,7 +207,7 @@
       lefty: (v) => (v ? 'SÍ' : 'NO'), landingRing: (v) => (v ? 'SÍ' : 'NO'), catsHelp: (v) => (v ? 'SÍ' : 'NO'),
       relaxed: (v) => (v ? 'SÍ' : 'NO'), freeSelect: (v) => (v ? 'SÍ' : 'NO'), cinematics: (v) => (v ? 'VER' : 'SALTAR'), fps: (v) => (v ? 'SÍ' : 'NO'),
       difficulty: (v) => (C.difficulty[v] || C.difficulty.normal).label,
-      ninaLook: (v) => ({ original: 'ORIGINAL', uniforme: 'UNIFORME', rosa: 'ROSA' }[v] || 'ORIGINAL')
+      ninaLook: (v) => ({ original: 'ORIGINAL', uniforme: 'UNIFORME', rosa: 'ROSA', buzo: 'BUZO', astronauta: 'ASTRONAUTA' }[v] || 'ORIGINAL')
     };
     function paintOpts(opt) {
       for (const pre of ['', 'p']) {
