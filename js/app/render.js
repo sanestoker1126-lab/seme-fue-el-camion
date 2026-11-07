@@ -687,6 +687,7 @@
   function drawNeighborhood(G, V, T) {
     const band = 48;
     for (const sc of G.world.scenes) {
+      if (sc.theme === 'submarino' || sc.theme === 'espacial') continue; // fondo completo, sin fachadas urbanas
       if (!inView(V, sc.x0, sc.startY, sc.x0 + sc.drawW, sc.endY)) continue;
       const school = sc.theme === 'escuela', night = sc.shade > 0.1;
       const wall = school ? (night ? '#172c3b' : '#294754') : (night ? '#282735' : '#483a3d');
@@ -728,6 +729,19 @@
   function drawStreet(G, V, T) {
     const W = G.world, s = W.street, y = s.y1;
     if (y > V.y2 || y + 260 < V.y1) return;
+    const special = W.scenes.length === 1 ? W.scenes[0].theme : null;
+    if (special === 'submarino' || special === 'espacial') {
+      const marine = special === 'submarino', gate = W.bus;
+      const gx = (gate.doorX1 + gate.doorX2) * 0.5;
+      fillRect(V.x1, y, V.x2 - V.x1, 18, marine ? '#41737a' : '#7f899d');
+      fillRect(V.x1, y + 18, V.x2 - V.x1, 220, marine ? '#153644' : '#171a37');
+      fillRR(gx - 58, y - 99, 116, 93, 12, marine ? '#174b5d' : '#455371', 0.96);
+      fillRR(gx - 41, y - 82, 82, 73, 9, marine ? '#2a808c' : '#263c64');
+      fillRR(gx - 27, y - 65, 54, 56, 7, marine ? '#0a2f46' : '#09102b');
+      ring(gx, y - 42, 22, 22, marine ? '#80ecf4' : '#a9ddff', 0.85, 3);
+      text(marine ? 'ESCOTILLA DE RESCATE' : 'MÓDULO DE REGRESO', gx, y - 112, 12, '#e1f5ff');
+      return;
+    }
     // Terminal: fachada, banqueta, asfalto y la parada.
     fillRect(V.x1, y - 240, V.x2 - V.x1, 240, '#22303b');
     for (let ax = Math.floor(V.x1 / 120) * 120; ax < V.x2; ax += 120) {
