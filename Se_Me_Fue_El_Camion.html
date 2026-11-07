@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#101725">
 <title>¡Se me fue el camión! | Plataformas 2.5D</title>
-<link rel="stylesheet" href="css/game.css?v=53.0">
+<link rel="stylesheet" href="css/game.css?v=54.0">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
 </head>
@@ -29,6 +29,9 @@
  <div class="eyebrow">PLATAFORMAS · DESCENSO 2.5D · GUADALAJARA</div>
  <h1>¡SE ME FUE<br><span>EL CAMIÓN!</span></h1>
  <p class="missionIntro">Sofía perdió el último camión después de la posada. Baja por <b><span id="levelsCount">16</span> niveles</b>, vence a los jefes y llega a la terminal. Los seis objetos de la mochila son opcionales: encontrarlos mejora el final.</p>
+ <div class="label">APARIENCIA INICIAL DE SOFÍA</div>
+ <div id="lookPicker" class="lookPicker" role="group" aria-label="Aspecto de Sofía"></div>
+ <p class="small">Los mundos Submarino y Espacial aplican automáticamente su propio equipo.</p>
  <button class="primary" id="start" disabled>CARGANDO…</button>
  <div class="row menuActions"><button class="opt" id="btnStory">VER CINEMÁTICA</button><button class="opt" id="btnHowto">CÓMO JUGAR</button></div>
  <div class="label">MISIONES</div>
@@ -109,7 +112,7 @@
  <div class="optRow"><span>Anillo que marca dónde caes</span><button class="opt" data-opt="landingRing"></button></div>
  <div class="optRow"><span>Práctica: todos los tramos <small>(sin desbloquear)</small></span><button class="opt" data-opt="freeSelect"></button></div>
  <div class="optRow"><span>Cinemáticas</span><button class="opt" data-opt="cinematics"></button></div>
- <div class="optRow"><span>Aspecto de Sofía <small>(su ropa en tierra)</small></span><button class="opt" data-opt="ninaLook"></button></div>
+ <div class="optRow"><span>Aspecto de Sofía <small>(Escuela y Guadalajara)</small></span><button class="opt" data-opt="ninaLook"></button></div>
  <div class="label">SONIDO</div>
  <div class="optRow"><span>Volumen de música</span><button class="opt" data-opt="musicVol"></button></div>
  <div class="optRow"><span>Volumen de efectos</span><button class="opt" data-opt="sfxVol"></button></div>
@@ -146,21 +149,21 @@
 </div>
 
 <!-- Núcleo sin DOM (probado con node --test) -->
-<script src="js/core/util.js?v=53.0"></script>
-<script src="js/core/config.js?v=53.0"></script>
-<script src="js/core/levels.js?v=53.0"></script>
-<script src="js/core/story.js?v=53.0"></script>
-<script src="js/core/physics.js?v=53.0"></script>
-<script src="js/core/enemies.js?v=53.0"></script>
-<script src="js/core/obstacles.js?v=53.0"></script>
-<script src="js/core/world.js?v=53.0"></script>
-<script src="js/core/game.js?v=53.0"></script>
+<script src="js/core/util.js?v=54.0"></script>
+<script src="js/core/config.js?v=54.0"></script>
+<script src="js/core/levels.js?v=54.0"></script>
+<script src="js/core/story.js?v=54.0"></script>
+<script src="js/core/physics.js?v=54.0"></script>
+<script src="js/core/enemies.js?v=54.0"></script>
+<script src="js/core/obstacles.js?v=54.0"></script>
+<script src="js/core/world.js?v=54.0"></script>
+<script src="js/core/game.js?v=54.0"></script>
 <!-- Capa de navegador -->
-<script src="js/app/art_data.js?v=53.0"></script>
-<script src="js/app/render.js?v=53.0"></script>
-<script src="js/app/input.js?v=53.0"></script>
-<script src="js/app/audio.js?v=53.0"></script>
-<script src="js/app/ui.js?v=53.0"></script>
-<script src="js/app/main.js?v=53.0"></script>
+<script src="js/app/art_data.js?v=54.0"></script>
+<script src="js/app/render.js?v=54.0"></script>
+<script src="js/app/input.js?v=54.0"></script>
+<script src="js/app/audio.js?v=54.0"></script>
+<script src="js/app/ui.js?v=54.0"></script>
+<script src="js/app/main.js?v=54.0"></script>
 </body>
 </html>
