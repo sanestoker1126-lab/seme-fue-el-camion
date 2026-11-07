@@ -246,6 +246,31 @@
     ]
   });
   const PARALLAX_SPEED = Object.freeze([0.10, 0.22, 0.40, 0.68, 1.00]);
+
+  /* Rasterización diferida: cada vector se pinta UNA vez en un canvas local de
+     960×1300 y se reutiliza durante el juego. Se descartan los de la misión
+     anterior cuando cambia el mundo para reducir uso de RAM en Android. */
+  const parallaxRaster = new Map();
+  let parallaxRasterTheme = null;
+  function preparedParallax(theme, src) {
+    const original = image(src);
+    if (!ready(original)) return null;
+    if (theme !== parallaxRasterTheme) {
+      parallaxRaster.clear();
+      parallaxRasterTheme = theme;
+    }
+    if (parallaxRaster.has(src)) return parallaxRaster.get(src);
+    const canvas = document.createElement('canvas');
+    canvas.width = original.naturalWidth;
+    canvas.height = original.naturalHeight;
+    const pctx = canvas.getContext('2d', { alpha: true });
+    if (!pctx) return original;
+    try { pctx.drawImage(original, 0, 0, canvas.width, canvas.height); }
+    catch (_) { return original; }
+    parallaxRaster.set(src, canvas);
+    return canvas;
+  }
+
   function drawRealParallax(G, V, sc, begin, end) {
     const list = PARALLAX_LAYERS[sc.theme];
     if (!list) return false;
@@ -262,8 +287,8 @@
     ctx.beginPath(); ctx.rect(xx1, yy1, xx2 - xx1, yy2 - yy1); ctx.clip();
     if (begin === 0) fillRect(xx1, yy1, xx2 - xx1, yy2 - yy1, sc.theme === 'submarino' ? '#052940' : '#080b25');
     for (let i = begin; i < end; i++) {
-      const im = image(list[i]);
-      if (!ready(im)) continue;
+      const im = preparedParallax(sc.theme, list[i]);
+      if (!im) continue;
       const speed = PARALLAX_SPEED[i], padX = 110, padY = 90;
       const dw = xTravel * speed + vw + padX * 2;
       const dh = yTravel * speed + vh + padY * 2;
@@ -272,7 +297,7 @@
       const x1 = Math.max(xx1, dx), y1 = Math.max(yy1, dy);
       const x2 = Math.min(xx2, dx + dw), y2 = Math.min(yy2, dy + dh);
       if (x2 <= x1 || y2 <= y1) continue;
-      const iw = im.naturalWidth, ih = im.naturalHeight;
+      const iw = im.naturalWidth || im.width, ih = im.naturalHeight || im.height;
       const sx = (x1 - dx) * iw / dw, sy = (y1 - dy) * ih / dh;
       const sw = (x2 - x1) * iw / dw, sh = (y2 - y1) * ih / dh;
       ctx.globalAlpha = i === 4 ? 0.88 : 1;
