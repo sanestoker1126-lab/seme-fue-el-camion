@@ -1,0 +1,88 @@
+{
+  "schema": "seme-fue-el-camion-parallax-v55",
+  "version": 1,
+  "sceneDimensions": {
+    "width": 940,
+    "height": 3072
+  },
+  "art": {
+    "viewBox": [
+      0,
+      0,
+      1920,
+      2600
+    ],
+    "intrinsic": [
+      960,
+      1300
+    ],
+    "type": "image/svg+xml"
+  },
+  "speeds": [
+    0.1,
+    0.22,
+    0.4,
+    0.68,
+    1
+  ],
+  "order": "far-to-near",
+  "themes": {
+    "submarino": [
+      {
+        "src": "assets/parallax/submarino/00_fondo_lejano.svg",
+        "speed": 0.1,
+        "front": false
+      },
+      {
+        "src": "assets/parallax/submarino/01_profundidad.svg",
+        "speed": 0.22,
+        "front": false
+      },
+      {
+        "src": "assets/parallax/submarino/02_estructuras.svg",
+        "speed": 0.4,
+        "front": false
+      },
+      {
+        "src": "assets/parallax/submarino/03_elementos.svg",
+        "speed": 0.68,
+        "front": false
+      },
+      {
+        "src": "assets/parallax/submarino/04_primer_plano.svg",
+        "speed": 1,
+        "front": true
+      }
+    ],
+    "espacial": [
+      {
+        "src": "assets/parallax/espacial/00_fondo_lejano.svg",
+        "speed": 0.1,
+        "front": false
+      },
+      {
+        "src": "assets/parallax/espacial/01_profundidad.svg",
+        "speed": 0.22,
+        "front": false
+      },
+      {
+        "src": "assets/parallax/espacial/02_estructuras.svg",
+        "speed": 0.4,
+        "front": false
+      },
+      {
+        "src": "assets/parallax/espacial/03_elementos.svg",
+        "speed": 0.68,
+        "front": false
+      },
+      {
+        "src": "assets/parallax/espacial/04_primer_plano.svg",
+        "speed": 1,
+        "front": true
+      }
+    ]
+  },
+  "alpha": true,
+  "tile": false,
+  "remark": "Se dibujan secciones de cada SVG según la cámara; la última capa se renderiza sobre el jugador sin tapar el pasillo central."
+}

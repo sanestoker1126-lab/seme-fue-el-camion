@@ -223,6 +223,91 @@
 
   /* Los fondos V53 son imágenes compuestas; V54 las utiliza como capa profunda
      continua, con partículas intermedia y cercana a distinta velocidad. */
+
+  /* V55 · Capas de parallax REALES e independientes.
+     Cada SVG tiene un escenario completo y solo la capa 0 es opaca. No se
+     escalan imágenes V54 a la altura de la misión ni se usa mosaico espejo.
+     La velocidad relativa de cada capa es configurable (0.1 .. 1.0).
+     Se recorta la imagen al viewport para reducir rasterización en móviles. */
+  const PARALLAX_LAYERS = Object.freeze({
+    submarino: [
+      'assets/parallax/submarino/00_fondo_lejano.svg',
+      'assets/parallax/submarino/01_profundidad.svg',
+      'assets/parallax/submarino/02_estructuras.svg',
+      'assets/parallax/submarino/03_elementos.svg',
+      'assets/parallax/submarino/04_primer_plano.svg'
+    ],
+    espacial: [
+      'assets/parallax/espacial/00_fondo_lejano.svg',
+      'assets/parallax/espacial/01_profundidad.svg',
+      'assets/parallax/espacial/02_estructuras.svg',
+      'assets/parallax/espacial/03_elementos.svg',
+      'assets/parallax/espacial/04_primer_plano.svg'
+    ]
+  });
+  const PARALLAX_SPEED = Object.freeze([0.10, 0.22, 0.40, 0.68, 1.00]);
+
+  /* Rasterización diferida: cada vector se pinta UNA vez en un canvas local de
+     960×1300 y se reutiliza durante el juego. Se descartan los de la misión
+     anterior cuando cambia el mundo para reducir uso de RAM en Android. */
+  const parallaxRaster = new Map();
+  let parallaxRasterTheme = null;
+  function preparedParallax(theme, src) {
+    const original = image(src);
+    if (!ready(original)) return null;
+    if (theme !== parallaxRasterTheme) {
+      parallaxRaster.clear();
+      parallaxRasterTheme = theme;
+    }
+    if (parallaxRaster.has(src)) return parallaxRaster.get(src);
+    const canvas = document.createElement('canvas');
+    canvas.width = original.naturalWidth;
+    canvas.height = original.naturalHeight;
+    const pctx = canvas.getContext('2d', { alpha: true });
+    if (!pctx) return original;
+    try { pctx.drawImage(original, 0, 0, canvas.width, canvas.height); }
+    catch (_) { return original; }
+    parallaxRaster.set(src, canvas);
+    return canvas;
+  }
+
+  function drawRealParallax(G, V, sc, begin, end) {
+    const list = PARALLAX_LAYERS[sc.theme];
+    if (!list) return false;
+    const B = G.world.bounds, v = G.view;
+    const xx1 = Math.max(V.x1, B.x1), xx2 = Math.min(V.x2, B.x2);
+    const yy1 = Math.max(V.y1, sc.startY), yy2 = Math.min(V.y2, sc.endY);
+    if (xx2 <= xx1 || yy2 <= yy1) return true;
+    const width = B.x2 - B.x1, height = sc.drawH;
+    const vw = Math.min(width, v.w), vh = Math.min(height, v.h);
+    const xTravel = Math.max(0, width - vw), yTravel = Math.max(0, height - vh);
+    const xProgress = Math.max(0, Math.min(xTravel, G.cam.x - B.x1));
+    const yProgress = Math.max(0, Math.min(yTravel, G.cam.y - sc.startY));
+    ctx.save();
+    ctx.beginPath(); ctx.rect(xx1, yy1, xx2 - xx1, yy2 - yy1); ctx.clip();
+    if (begin === 0) fillRect(xx1, yy1, xx2 - xx1, yy2 - yy1, sc.theme === 'submarino' ? '#052940' : '#080b25');
+    for (let i = begin; i < end; i++) {
+      const im = preparedParallax(sc.theme, list[i]);
+      if (!im) continue;
+      const speed = PARALLAX_SPEED[i], padX = 110, padY = 90;
+      const dw = xTravel * speed + vw + padX * 2;
+      const dh = yTravel * speed + vh + padY * 2;
+      const dx = B.x1 + xProgress * (1 - speed) - padX;
+      const dy = sc.startY + yProgress * (1 - speed) - padY;
+      const x1 = Math.max(xx1, dx), y1 = Math.max(yy1, dy);
+      const x2 = Math.min(xx2, dx + dw), y2 = Math.min(yy2, dy + dh);
+      if (x2 <= x1 || y2 <= y1) continue;
+      const iw = im.naturalWidth || im.width, ih = im.naturalHeight || im.height;
+      const sx = (x1 - dx) * iw / dw, sy = (y1 - dy) * ih / dh;
+      const sw = (x2 - x1) * iw / dw, sh = (y2 - y1) * ih / dh;
+      ctx.globalAlpha = i === 4 ? 0.88 : 1;
+      ctx.drawImage(im, sx, sy, sw, sh, x1, y1, x2 - x1, y2 - y1);
+    }
+    ctx.globalAlpha = 1;
+    ctx.restore();
+    return true;
+  }
+
   function drawMissionParallax(G, V, sc) {
     const B = G.world.bounds;
     const x1 = Math.max(V.x1, B.x1), x2 = Math.min(V.x2, B.x2);
@@ -289,7 +374,12 @@
     // Barrios laterales: fachadas con ventanas, según el tramo.
     for (const sc of W.scenes) {
       if (sc.endY < V.y1 || sc.startY > V.y2) continue;
-      if (sc.theme === 'submarino' || sc.theme === 'espacial') { drawMissionParallax(G, V, sc); continue; }
+      if (PARALLAX_LAYERS[sc.theme]) {
+        // Si falla la descarga de los gráficos nuevos, se conserva el fondo V54.
+        if (ready(image(PARALLAX_LAYERS[sc.theme][0]))) drawRealParallax(G, V, sc, 0, 4);
+        else drawMissionParallax(G, V, sc);
+        continue;
+      }
       const school = sc.theme === 'escuela', night = sc.shade;
       const base = school ? '#1f3442' : '#3a2f35', alt = school ? '#253f4f' : '#45373a';
       for (const side of [-1, 1]) {
@@ -1778,6 +1868,8 @@
     drawWaters(G, V, true);
     drawWaterFx(G, V);
     drawParticles(G, V);
+    // Solo el primer plano se dibuja delante de Sofía; los bordes dejan libre el corredor.
+    if (!G.room) for (const sc of W.scenes) if (PARALLAX_LAYERS[sc.theme] && ready(image(PARALLAX_LAYERS[sc.theme][0]))) drawRealParallax(G, V, sc, 4, 5);
     if (debug) drawDebug(G);
     if (G.transition) {
       const tr = G.transition, a = 1 - Math.abs(tr.t / tr.dur - 0.45) / 0.45;
@@ -1787,5 +1879,5 @@
     drawCinematic(G, T);
   }
 
-  NS.Render = { init, resize, draw, preload, setQuality, setOptions, image, ready, NINA, NINA_DIR, NINA_VARIANT_DIR, COMPANIONS, COMPANIONS_SUB, PAINTERS, toggleDebug: () => (debug = !debug), get debug() { return debug; } };
+  NS.Render = { init, resize, draw, preload, setQuality, setOptions, image, ready, NINA, NINA_DIR, NINA_VARIANT_DIR, COMPANIONS, COMPANIONS_SUB, PAINTERS, PARALLAX_LAYERS, PARALLAX_SPEED, toggleDebug: () => (debug = !debug), get debug() { return debug; } };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
