@@ -123,6 +123,7 @@
     for (const g of Object.keys(NINA)) for (const f of NINA[g]) for (const dir of Object.values(NINA_VARIANT_DIR)) image(dir + f + '.png');
     for (const c of [...Object.values(COMPANIONS), ...Object.values(COMPANIONS_SUB)]) { image(c.src); for (const s of c.idle) image(s); for (const s of c.walk) image(s); image(c.shoulder); }
     image(BUS_FRAMES[0]);
+    image(DIVE_SHEET);
     resize();
   }
   function resize() {
@@ -219,6 +220,60 @@
     }
   }
 
+
+  /* Los fondos V53 son imágenes compuestas; V54 las utiliza como capa profunda
+     continua, con partículas intermedia y cercana a distinta velocidad. */
+  function drawMissionParallax(G, V, sc) {
+    const B = G.world.bounds;
+    const x1 = Math.max(V.x1, B.x1), x2 = Math.min(V.x2, B.x2);
+    const y1 = Math.max(V.y1, sc.startY), y2 = Math.min(V.y2, sc.endY);
+    if (x2 <= x1 || y2 <= y1) return;
+    const marine = sc.theme === 'submarino', span = B.x2 - B.x1;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(x1, y1, x2 - x1, y2 - y1); ctx.clip();
+    fillRect(x1, y1, x2 - x1, y2 - y1, marine ? '#062d40' : '#070c29');
+    const im = tintedImage(sc.file, sc.tint);
+    sc.missingArt = !im;
+    if (im) {
+      const iw = im.naturalWidth || im.width, ih = im.naturalHeight || im.height;
+      const scale = Math.max(span * 1.3 / iw, sc.drawH / (ih * 1.5));
+      const tw = iw * scale, th = ih * scale;
+      const left = (B.x1 + B.x2 - tw) / 2 - (G.cam.x - (B.x1 + B.x2) / 2) * 0.06;
+      const top = sc.startY - th * 0.35 - (G.cam.y - sc.startY) * 0.13;
+      const first = Math.floor((y1 - top) / th) - 1;
+      const last = Math.ceil((y2 - top) / th);
+      ctx.globalAlpha = 0.94;
+      for (let row = first; row <= last; row++) {
+        const y = top + row * th;
+        if (y > y2 || y + th < y1) continue;
+        if (Math.abs(row % 2) === 1) {
+          ctx.save(); ctx.translate(left, y + th); ctx.scale(1, -1);
+          ctx.drawImage(im, 0, 0, iw, ih, 0, 0, tw, th); ctx.restore();
+        } else ctx.drawImage(im, left, y, tw, th);
+      }
+      ctx.globalAlpha = 1;
+    }
+    const height = sc.drawH;
+    // Elementos lejanos: brillo y partículas.
+    for (let i = 0; i < 86; i++) {
+      const x = B.x1 + ((hash(i, 41) / 997 * span - G.cam.x * 0.075) % span + span) % span;
+      const y = sc.startY + ((hash(i, 61) / 997 * height - (G.cam.y - sc.startY) * 0.16) % height + height) % height;
+      if (x < x1 - 6 || x > x2 + 6 || y < y1 - 6 || y > y2 + 6) continue;
+      circle(x, y, 0.7 + i % 4 * 0.5, marine ? '#c4f6ed' : '#e9efff', marine ? 0.3 : 0.7);
+    }
+    // Elementos próximos: burbujas y escombros, con otro factor de paralaje.
+    for (let i = 0; i < 38; i++) {
+      const x = B.x1 + ((hash(i + 120, 13) / 997 * span - G.cam.x * 0.27) % span + span) % span;
+      const y = sc.startY + ((hash(i + 120, 57) / 997 * height - (G.cam.y - sc.startY) * 0.34) % height + height) % height;
+      if (x < x1 - 20 || x > x2 + 20 || y < y1 - 20 || y > y2 + 20) continue;
+      const r = 2 + i % 5 * 1.4;
+      if (marine) ring(x, y, r, r, '#d5fbff', 0.34, 0.9);
+      else { circle(x, y, r, '#9ca5bd', 0.35); circle(x - 1, y - 1, r * 0.22, '#f0f6ff', 0.42); }
+    }
+    if (sc.shade) fillRect(x1, y1, x2 - x1, y2 - y1, hex(sc.wash), sc.shade * 0.4);
+    ctx.restore();
+  }
+
   function drawBackdrop(G, V) {
     const W = G.world, B = W.bounds;
     // Cielo del atardecer sobre la azotea de la escuela (inicio de la historia).
@@ -234,6 +289,7 @@
     // Barrios laterales: fachadas con ventanas, según el tramo.
     for (const sc of W.scenes) {
       if (sc.endY < V.y1 || sc.startY > V.y2) continue;
+      if (sc.theme === 'submarino' || sc.theme === 'espacial') { drawMissionParallax(G, V, sc); continue; }
       const school = sc.theme === 'escuela', night = sc.shade;
       const base = school ? '#1f3442' : '#3a2f35', alt = school ? '#253f4f' : '#45373a';
       for (const side of [-1, 1]) {
@@ -283,6 +339,7 @@
   function drawScenes(G, V) {
     const v = G.view, camCx = G.cam.x + v.w / 2, camCy = G.cam.y + v.h / 2;
     for (const sc of G.world.scenes) {
+      if (sc.theme === 'submarino' || sc.theme === 'espacial') continue; // fondo de ancho total, dibujado antes
       if (!inView(V, sc.x0, sc.startY, sc.x0 + sc.drawW, sc.endY)) continue;
       const im = sceneSource(sc);
       sc.missingArt = !im;
@@ -630,6 +687,7 @@
   function drawNeighborhood(G, V, T) {
     const band = 48;
     for (const sc of G.world.scenes) {
+      if (sc.theme === 'submarino' || sc.theme === 'espacial') continue; // fondo completo, sin fachadas urbanas
       if (!inView(V, sc.x0, sc.startY, sc.x0 + sc.drawW, sc.endY)) continue;
       const school = sc.theme === 'escuela', night = sc.shade > 0.1;
       const wall = school ? (night ? '#172c3b' : '#294754') : (night ? '#282735' : '#483a3d');
@@ -671,6 +729,19 @@
   function drawStreet(G, V, T) {
     const W = G.world, s = W.street, y = s.y1;
     if (y > V.y2 || y + 260 < V.y1) return;
+    const special = W.scenes.length === 1 ? W.scenes[0].theme : null;
+    if (special === 'submarino' || special === 'espacial') {
+      const marine = special === 'submarino', gate = W.bus;
+      const gx = (gate.doorX1 + gate.doorX2) * 0.5;
+      fillRect(V.x1, y, V.x2 - V.x1, 18, marine ? '#41737a' : '#7f899d');
+      fillRect(V.x1, y + 18, V.x2 - V.x1, 220, marine ? '#153644' : '#171a37');
+      fillRR(gx - 58, y - 99, 116, 93, 12, marine ? '#174b5d' : '#455371', 0.96);
+      fillRR(gx - 41, y - 82, 82, 73, 9, marine ? '#2a808c' : '#263c64');
+      fillRR(gx - 27, y - 65, 54, 56, 7, marine ? '#0a2f46' : '#09102b');
+      ring(gx, y - 42, 22, 22, marine ? '#80ecf4' : '#a9ddff', 0.85, 3);
+      text(marine ? 'ESCOTILLA DE RESCATE' : 'MÓDULO DE REGRESO', gx, y - 112, 12, '#e1f5ff');
+      return;
+    }
     // Terminal: fachada, banqueta, asfalto y la parada.
     fillRect(V.x1, y - 240, V.x2 - V.x1, 240, '#22303b');
     for (let ax = Math.floor(V.x1 / 120) * 120; ax < V.x2; ax += 120) {
@@ -1537,6 +1608,51 @@
     }
   }
 
+
+  /* V54 · Usa los frames y pivotes del atlas submarino existente; mientras Sofía
+     no está dentro del agua, se mantiene su traje también al correr y saltar. */
+  const DIVE_SHEET = 'assets/player/sofia/sofia_submarina_complementaria.png';
+  const DIVE_STATES = {
+    idle: [0, 6, 210, 226], run: [12, 6, 82, 226], fastRun: [12, 6, 82, 226],
+    climb: [6, 6, 115, 226], jump: [22, 5, 95, 226], fall: [27, 4, 115, 130],
+    land: [31, 4, 88, 226], dash: [67, 5, 100, 130],
+    kick: [94, 4, 130, 226], hurt: [77, 4, 90, 130],
+    dead: [85, 5, 145, 130], cheer: [98, 5, 155, 226]
+  };
+  function drawDiver(G, alpha) {
+    const P = G.P, im = image(DIVE_SHEET);
+    if (!ready(im)) return false;
+    const [first, count, ms, pivot] = DIVE_STATES[P.state] || DIVE_STATES.idle;
+    const oneShot = ['jump', 'land', 'dash', 'kick', 'hurt', 'dead', 'cheer'].includes(P.state);
+    const timer = Math.max(0, oneShot ? P.stateT : P.animT) * 1000;
+    const idx = Math.floor(timer / ms);
+    const frame = first + (oneShot ? Math.min(count - 1, idx) : idx % count);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate(P.x, pivot === 130 ? P.y : P.y + P.h / 2);
+    ctx.scale((P.face < 0 ? -1 : 1) * 0.4, 0.4);
+    ctx.drawImage(im, (frame % 8) * 256, Math.floor(frame / 8) * 256, 256, 256, -128, -pivot, 256, 256);
+    ctx.restore();
+    return true;
+  }
+  /* Reserva visual para el traje astronauta, sin reemplazar los frames originales:
+     cuando se incorpore el atlas espacial la capa se sustituye por frames reales. */
+  function drawAstronautGear(P, alpha) {
+    const foot = P.y + P.h / 2;
+    ctx.save();
+    ctx.translate(P.x, foot);
+    ctx.scale(P.face < 0 ? -1 : 1, 1);
+    fillRR(-16, -46, 32, 28, 8, '#ecf2fa', alpha * 0.87);
+    fillRR(-19, -42, 7, 23, 3, '#7597ac', alpha * 0.95);
+    fillRR(-10, -39, 20, 16, 4, '#acbed1', alpha * 0.9);
+    fillRR(-4, -36, 8, 4, 2, '#4ce7ee', alpha * 0.9);
+    circle(0, -56, 16.5, '#e0e8f5', alpha);
+    circle(0, -56, 12.8, '#236177', alpha * 0.38);
+    ring(0, -56, 13.2, 13.2, '#ffffff', alpha * 0.98, 2.2);
+    circle(8, -63, 2.6, '#ffffff', alpha * 0.5);
+    ctx.restore();
+  }
+
   function drawPlayer(G, T) {
     const P = G.P, foot = P.y + P.h / 2;
     const top = landingBelow(G);
@@ -1557,6 +1673,9 @@
     if (alpha <= 0) return;
     const swimA = swimAnimFor(P);
     if (swimA && drawSwimPlayer(G, T, swimA, alpha)) return;
+    const currentScene = G.world && G.world.scenes[G.tramo];
+    const suitTheme = currentScene && currentScene.theme;
+    if (suitTheme === 'submarino' && drawDiver(G, alpha)) return;
     let yOff = 0;
     if (P.dead) { const t = Math.min(1, G.timers.dying / 0.9); yOff = -Math.sin(t * Math.PI) * 42; }
     const state = P.state, list = NINA[state] || NINA.idle;
@@ -1598,6 +1717,7 @@
       fillRR(-7, -17, 5, 16, 2, '#172432'); fillRR(2, -17, 5, 16, 2, '#172432'); fillRect(-7, -35, 14, 3, '#d9ff65');
     }
     ctx.restore();
+    if (suitTheme === 'espacial') drawAstronautGear(P, alpha);
     if (P.dashT > 0) for (let i = 1; i <= 3; i++) line(P.x - P.face * (14 + i * 9), P.y - 10 + i * 6, P.x - P.face * (30 + i * 9), P.y - 10 + i * 6, '#4ce7ee', 0.5, 2);
     if (P.kickT > 0) { const k = P.kickT / 0.22; line(P.x + P.face * 16, P.y - 9, P.x + P.face * 58, P.y - 9, '#ffd35a', 0.35 * k, 3); ring(P.x + P.face * 58, P.y - 9, 9, 9, '#ffe9a8', 0.5 * k, 2); }
   }

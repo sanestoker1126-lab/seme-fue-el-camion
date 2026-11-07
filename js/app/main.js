@@ -90,6 +90,7 @@
     menu: () => toMenu(),
     togglePause: () => togglePause(),
     option: (k) => setOption(k),
+    look: (value) => chooseLook(value),
     resetProgress: () => resetProgress(),
     click: () => { audio.ensure(); audio.sfx('ui'); }
   });
@@ -123,6 +124,16 @@
     if (k === 'freeSelect') ui.paintMenu(G, opt);
     audio.sfx('ui');
     if (k === 'vib' && opt.vib) audio.vibrate(30);
+  }
+
+  function chooseLook(value) {
+    if (!OPTION_SPEC.ninaLook.includes(value) || opt.ninaLook === value) return;
+    opt.ninaLook = value;
+    store.set('camion-opt-ninaLook', value);
+    applyOptions();
+    ui.paintMenu(G, opt);
+    audio.ensure();
+    audio.sfx('ui');
   }
 
   function resetProgress() {
@@ -329,6 +340,7 @@
       ...(NS.ART.SWIM ? [NS.ART.SWIM.sheet] : []),   // V52: atlas de nado
       // V53: fondos de los mundos nuevos y gatitas submarinas.
       'assets/scenes/generated/submarino_fondo.png', 'assets/scenes/generated/espacial_fondo.png',
+      'assets/player/sofia/sofia_submarina_complementaria.png',
       ...Object.values(R.COMPANIONS_SUB || {}).flatMap((c) => [...c.idle, ...c.walk, c.shoulder])];
     for (const [kind, E] of Object.entries(NS.ART.ENEMY)) for (const f of Object.keys(E.frames)) essential.push('assets/enemies/v50/' + kind + '/' + f + '.png');
     let timer;

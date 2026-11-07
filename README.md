@@ -46,4 +46,21 @@ Opciones incluye **Aspecto de Sofía** (original / uniforme / rosa).
 node --test tests/*.test.js
 ```
 
-Versión actual: **V53** (`js/core/config.js` → 53.0.0).
+Versión actual: **V54** (`js/core/config.js` → 54.0.0).
+
+## V54 · Submarino y Espacio ampliados
+
+Los dos mundos se ampliaron a **940 × 3072 unidades**, con tres sectores de descenso y 39 cristales por mundo.
+Los fondos originales se despliegan de forma continua por todo el ancho y el descenso, con desplazamientos
+independientes de imagen, partículas lejanas y elementos cercanos; no se ha alterado la física.
+
+Sofía utiliza el atlas submarino existente fuera del agua y el de nado dentro del agua. En el espacio se muestra
+con un equipo astronauta superpuesto como solución visual temporal, porque el repositorio aún no incluye el
+atlas completo de la versión espacial. Los sprites originales no se reemplazan ni se eliminan.
+
+Antes de pulsar JUGAR se puede elegir ORIGINAL, UNIFORME o ROSA. El ajuste se guarda y se usa en Escuela y
+Guadalajara; los mundos especiales imponen su equipamiento correspondiente.
+
+Las salidas de los mundos nuevos se representan como una escotilla y un módulo orbital. Su comportamiento
+de meta conserva el sistema del motor existente.
+

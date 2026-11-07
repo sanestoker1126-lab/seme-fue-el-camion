@@ -422,7 +422,7 @@
 
   /* Submarino: descenso por ruinas y arrecifes con una poza profunda (se bucea por los cristales del fondo).
      Reusa el nado de V52. Ningún arrecife flota dentro del agua profunda; cada lado del agua tiene orilla. */
-  const SUBMARINO_MAP = {
+  const SUBMARINO_BASE_MAP = {
     id: 'submarino', width: 760, height: 1024,
     surfaces: [
       { x1: 0, x2: 250, y: 150, start: true, startX: 110 },
@@ -448,7 +448,7 @@
 
   /* Espacial: estación en órbita; se baja saltando entre asteroides y módulos flotantes (gravedad normal).
      Plataformas móviles = rocas a la deriva; tablones = pasarelas de la estación. */
-  const ESPACIAL_MAP = {
+  const ESPACIAL_BASE_MAP = {
     id: 'espacial', width: 760, height: 1024,
     surfaces: [
       { x1: 0, x2: 220, y: 150, start: true, startX: 100 },
@@ -468,6 +468,32 @@
       { x: 450, y: 955 }, { x: 620, y: 955 }, { x: 300, y: 640 }],
     exitX: 450
   };
+
+
+  /* Ampliación: tres secciones recorribles conservando el diseño y la física de V53.
+     No se duplican puntos de inicio ni de meta. */
+  function extendMissionMap(base) {
+    const count = 3, margin = 90;
+    const shift = (s, section) => {
+      const q = { ...s, x1: s.x1 + margin, x2: s.x2 + margin, y: s.y + section * base.height };
+      if (s.start) {
+        if (section === 0) q.startX = s.startX + margin;
+        else { delete q.start; delete q.startX; }
+      }
+      if (s.exit && section !== count - 1) delete q.exit;
+      return q;
+    };
+    const repeat = (name) => Array.from({ length: count }, (_, i) => (base[name] || []).map(s => shift(s, i))).flat();
+    return {
+      ...base, width: base.width + 2 * margin, height: base.height * count,
+      surfaces: repeat('surfaces'), planks: repeat('planks'), stairs: repeat('stairs'),
+      movers: repeat('movers'), water: repeat('water'),
+      gems: Array.from({ length: count }, (_, i) => base.gems.map(g => ({ ...g, x: g.x + margin, y: g.y + i * base.height }))).flat(),
+      exitX: base.exitX + margin
+    };
+  }
+  const SUBMARINO_MAP = extendMissionMap(SUBMARINO_BASE_MAP);
+  const ESPACIAL_MAP = extendMissionMap(ESPACIAL_BASE_MAP);
 
   /* Cada tramo declara qué enemigos y obstáculos puede usar y con qué intensidad.
      La colocación concreta es determinista (semilla por tramo) y se valida con pruebas de alcanzabilidad.
@@ -581,13 +607,13 @@
   const SUBMARINO_LEVEL = {
     id: 'submarino', label: 'RUINAS SUMERGIDAS', file: 'assets/scenes/generated/submarino_fondo.png', map: SUBMARINO_MAP, skin: 'stone_moss', isNew: true,
     tint: 0x9fd8e6, wash: 0x0a2e48, shade: 0.17, theme: 'submarino', room: 'alcantarilla', storyIndex: 16,
-    foes: ['pigeon', 'bat', 'rat'], obstacles: ['spark', 'crate'], foeBudget: 4, obstacleBudget: 2, sideFoes: 2,
+    foes: ['pigeon', 'bat', 'rat'], obstacles: ['spark', 'crate'], foeBudget: 8, obstacleBudget: 3, sideFoes: 3,
     boss: { kind: 'bravo', name: 'GUARDIÁN DEL ARRECIFE', hp: 5 }, music: 12
   };
   const ESPACIAL_LEVEL = {
     id: 'espacial', label: 'ESTACIÓN EN ÓRBITA', file: 'assets/scenes/generated/espacial_fondo.png', map: ESPACIAL_MAP, skin: 'scaffold', isNew: true,
     tint: 0xc3c9ee, wash: 0x0b0a28, shade: 0.1, theme: 'espacial', room: 'alcantarilla', storyIndex: 17,
-    foes: ['pigeon', 'bat', 'chile'], obstacles: ['spark', 'crate'], foeBudget: 4, obstacleBudget: 2, sideFoes: 2,
+    foes: ['pigeon', 'bat', 'chile'], obstacles: ['spark', 'crate'], foeBudget: 8, obstacleBudget: 3, sideFoes: 3,
     boss: { kind: 'bat', name: 'DRON CENTINELA', hp: 5 }, final: true, music: 15
   };
 
