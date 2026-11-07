@@ -219,6 +219,60 @@
     }
   }
 
+
+  /* Los fondos V53 son imágenes compuestas; V54 las utiliza como capa profunda
+     continua, con partículas intermedia y cercana a distinta velocidad. */
+  function drawMissionParallax(G, V, sc) {
+    const B = G.world.bounds;
+    const x1 = Math.max(V.x1, B.x1), x2 = Math.min(V.x2, B.x2);
+    const y1 = Math.max(V.y1, sc.startY), y2 = Math.min(V.y2, sc.endY);
+    if (x2 <= x1 || y2 <= y1) return;
+    const marine = sc.theme === 'submarino', span = B.x2 - B.x1;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(x1, y1, x2 - x1, y2 - y1); ctx.clip();
+    fillRect(x1, y1, x2 - x1, y2 - y1, marine ? '#062d40' : '#070c29');
+    const im = tintedImage(sc.file, sc.tint);
+    sc.missingArt = !im;
+    if (im) {
+      const iw = im.naturalWidth || im.width, ih = im.naturalHeight || im.height;
+      const scale = Math.max(span * 1.3 / iw, sc.drawH / (ih * 1.5));
+      const tw = iw * scale, th = ih * scale;
+      const left = (B.x1 + B.x2 - tw) / 2 - (G.cam.x - (B.x1 + B.x2) / 2) * 0.06;
+      const top = sc.startY - th * 0.35 - (G.cam.y - sc.startY) * 0.13;
+      const first = Math.floor((y1 - top) / th) - 1;
+      const last = Math.ceil((y2 - top) / th);
+      ctx.globalAlpha = 0.94;
+      for (let row = first; row <= last; row++) {
+        const y = top + row * th;
+        if (y > y2 || y + th < y1) continue;
+        if (Math.abs(row % 2) === 1) {
+          ctx.save(); ctx.translate(left, y + th); ctx.scale(1, -1);
+          ctx.drawImage(im, 0, 0, iw, ih, 0, 0, tw, th); ctx.restore();
+        } else ctx.drawImage(im, left, y, tw, th);
+      }
+      ctx.globalAlpha = 1;
+    }
+    const height = sc.drawH;
+    // Elementos lejanos: brillo y partículas.
+    for (let i = 0; i < 86; i++) {
+      const x = B.x1 + ((hash(i, 41) / 997 * span - G.cam.x * 0.075) % span + span) % span;
+      const y = sc.startY + ((hash(i, 61) / 997 * height - (G.cam.y - sc.startY) * 0.16) % height + height) % height;
+      if (x < x1 - 6 || x > x2 + 6 || y < y1 - 6 || y > y2 + 6) continue;
+      circle(x, y, 0.7 + i % 4 * 0.5, marine ? '#c4f6ed' : '#e9efff', marine ? 0.3 : 0.7);
+    }
+    // Elementos próximos: burbujas y escombros, con otro factor de paralaje.
+    for (let i = 0; i < 38; i++) {
+      const x = B.x1 + ((hash(i + 120, 13) / 997 * span - G.cam.x * 0.27) % span + span) % span;
+      const y = sc.startY + ((hash(i + 120, 57) / 997 * height - (G.cam.y - sc.startY) * 0.34) % height + height) % height;
+      if (x < x1 - 20 || x > x2 + 20 || y < y1 - 20 || y > y2 + 20) continue;
+      const r = 2 + i % 5 * 1.4;
+      if (marine) ring(x, y, r, r, '#d5fbff', 0.34, 0.9);
+      else { circle(x, y, r, '#9ca5bd', 0.35); circle(x - 1, y - 1, r * 0.22, '#f0f6ff', 0.42); }
+    }
+    if (sc.shade) fillRect(x1, y1, x2 - x1, y2 - y1, hex(sc.wash), sc.shade * 0.4);
+    ctx.restore();
+  }
+
   function drawBackdrop(G, V) {
     const W = G.world, B = W.bounds;
     // Cielo del atardecer sobre la azotea de la escuela (inicio de la historia).
@@ -234,6 +288,7 @@
     // Barrios laterales: fachadas con ventanas, según el tramo.
     for (const sc of W.scenes) {
       if (sc.endY < V.y1 || sc.startY > V.y2) continue;
+      if (sc.theme === 'submarino' || sc.theme === 'espacial') { drawMissionParallax(G, V, sc); continue; }
       const school = sc.theme === 'escuela', night = sc.shade;
       const base = school ? '#1f3442' : '#3a2f35', alt = school ? '#253f4f' : '#45373a';
       for (const side of [-1, 1]) {
@@ -283,6 +338,7 @@
   function drawScenes(G, V) {
     const v = G.view, camCx = G.cam.x + v.w / 2, camCy = G.cam.y + v.h / 2;
     for (const sc of G.world.scenes) {
+      if (sc.theme === 'submarino' || sc.theme === 'espacial') continue; // fondo de ancho total, dibujado antes
       if (!inView(V, sc.x0, sc.startY, sc.x0 + sc.drawW, sc.endY)) continue;
       const im = sceneSource(sc);
       sc.missingArt = !im;
