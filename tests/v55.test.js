@@ -30,6 +30,8 @@ test('V55: manifiesto de cinco capas y factores de paralaje por misión',()=>{
 test('V55: el renderizado usa recorte visible, y el service worker incluye los SVG',()=>{
  const r=read('js/app/render.js'),sw=read('sw.js'),main=read('js/app/main.js');
  assert.match(r,/function drawRealParallax\(/);
+ assert.match(r,/function preparedParallax\(/);
+ assert.match(r,/parallaxRaster\.clear\(\)/);
  assert.match(r,/PARALLAX_SPEED = Object\.freeze\(\[0\.10, 0\.22, 0\.40, 0\.68, 1\.00\]\)/);
  assert.match(r,/const sx = \(x1 - dx\) \* iw \/ dw/);
  assert.match(r,/drawRealParallax\(G, V, sc, 4, 5\)/);
