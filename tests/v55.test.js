@@ -14,7 +14,7 @@ test('V55: 10 SVG de parallax originales, cinco por misión, sin scripts ni refe
    assert.match(src, /viewBox="0 0 1920 2600"/);
    assert.ok(src.endsWith('</svg>'));
    assert.doesNotMatch(src, /<(?:script|foreignObject|image)\b/i);
-   assert.doesNotMatch(src, /(?:https?:|data:)\/\//i);
+   assert.doesNotMatch(src, /\b(?:href|xlink:href)\s*=/i);
   }
  }
 });
