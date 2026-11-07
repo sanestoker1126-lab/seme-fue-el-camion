@@ -114,7 +114,9 @@
       const r = G.run, P = G.P, total = G.world.scenes.length;
       set('hudTramo', G.room ? (G.room.theme === 'alcantarilla' ? 'ALCANTARILLA' : 'SÓTANO') : 'TRAMO ' + (G.tramo + 1) + '/' + total);
       const boss = G.world.foes.find((f) => f.isBoss && !f.dead && f.scene === G.tramo && f.region === 'main');
-      set('objective', boss ? 'JEFE: ' + boss.bossName : G.tramo === total - 1 ? 'META: LLEGA AL CAMIÓN' : 'META: SIGUE BAJANDO');
+      const worldTheme = G.world.scenes[G.tramo] && G.world.scenes[G.tramo].theme;
+      const goalLabel = worldTheme === 'submarino' ? 'META: LLEGA A LA ESCOTILLA' : worldTheme === 'espacial' ? 'META: LLEGA AL MÓDULO' : 'META: LLEGA AL CAMIÓN';
+      set('objective', boss ? 'JEFE: ' + boss.bossName : G.tramo === total - 1 ? goalLabel : 'META: SIGUE BAJANDO');
       set('hudTime', fmtTime(r.t));
       set('score', String(r.score));
       set('combo', r.combo >= 2 ? '  ×' + G.mult() + ' COMBO ' + r.combo : '');
