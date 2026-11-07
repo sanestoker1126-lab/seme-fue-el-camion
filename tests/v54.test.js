@@ -36,6 +36,8 @@ test('V54: traje submarino real, capa espacial y selección de apariencias al em
   assert.match(r, /function drawDiver\(/);
   assert.match(r, /function drawAstronautGear\(/);
   assert.match(ui, /cb\.look\(key\)/);
+  assert.match(ui, /\['buzo', 'BUZO'\]/);
+  assert.match(ui, /\['astronauta', 'ASTRONAUTA'\]/);
   assert.match(html, /id="lookPicker"/);
   assert.match(sw, /sofia_submarina_complementaria\.png/);
   assert.ok(fs.existsSync(path.join(BASE, 'assets/player/sofia/sofia_submarina_complementaria.png')));
