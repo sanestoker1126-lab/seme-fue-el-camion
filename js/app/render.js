@@ -123,6 +123,7 @@
     for (const g of Object.keys(NINA)) for (const f of NINA[g]) for (const dir of Object.values(NINA_VARIANT_DIR)) image(dir + f + '.png');
     for (const c of [...Object.values(COMPANIONS), ...Object.values(COMPANIONS_SUB)]) { image(c.src); for (const s of c.idle) image(s); for (const s of c.walk) image(s); image(c.shoulder); }
     image(BUS_FRAMES[0]);
+    image(DIVE_SHEET);
     resize();
   }
   function resize() {
@@ -1593,6 +1594,51 @@
     }
   }
 
+
+  /* V54 · Usa los frames y pivotes del atlas submarino existente; mientras Sofía
+     no está dentro del agua, se mantiene su traje también al correr y saltar. */
+  const DIVE_SHEET = 'assets/player/sofia/sofia_submarina_complementaria.png';
+  const DIVE_STATES = {
+    idle: [0, 6, 210, 226], run: [12, 6, 82, 226], fastRun: [12, 6, 82, 226],
+    climb: [6, 6, 115, 226], jump: [22, 5, 95, 226], fall: [27, 4, 115, 130],
+    land: [31, 4, 88, 226], dash: [67, 5, 100, 130],
+    kick: [94, 4, 130, 226], hurt: [77, 4, 90, 130],
+    dead: [85, 5, 145, 130], cheer: [98, 5, 155, 226]
+  };
+  function drawDiver(G, alpha) {
+    const P = G.P, im = image(DIVE_SHEET);
+    if (!ready(im)) return false;
+    const [first, count, ms, pivot] = DIVE_STATES[P.state] || DIVE_STATES.idle;
+    const oneShot = ['jump', 'land', 'dash', 'kick', 'hurt', 'dead', 'cheer'].includes(P.state);
+    const timer = Math.max(0, oneShot ? P.stateT : P.animT) * 1000;
+    const idx = Math.floor(timer / ms);
+    const frame = first + (oneShot ? Math.min(count - 1, idx) : idx % count);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate(P.x, pivot === 130 ? P.y : P.y + P.h / 2);
+    ctx.scale((P.face < 0 ? -1 : 1) * 0.4, 0.4);
+    ctx.drawImage(im, (frame % 8) * 256, Math.floor(frame / 8) * 256, 256, 256, -128, -pivot, 256, 256);
+    ctx.restore();
+    return true;
+  }
+  /* Reserva visual para el traje astronauta, sin reemplazar los frames originales:
+     cuando se incorpore el atlas espacial la capa se sustituye por frames reales. */
+  function drawAstronautGear(P, alpha) {
+    const foot = P.y + P.h / 2;
+    ctx.save();
+    ctx.translate(P.x, foot);
+    ctx.scale(P.face < 0 ? -1 : 1, 1);
+    fillRR(-16, -46, 32, 28, 8, '#ecf2fa', alpha * 0.87);
+    fillRR(-19, -42, 7, 23, 3, '#7597ac', alpha * 0.95);
+    fillRR(-10, -39, 20, 16, 4, '#acbed1', alpha * 0.9);
+    fillRR(-4, -36, 8, 4, 2, '#4ce7ee', alpha * 0.9);
+    circle(0, -56, 16.5, '#e0e8f5', alpha);
+    circle(0, -56, 12.8, '#236177', alpha * 0.38);
+    ring(0, -56, 13.2, 13.2, '#ffffff', alpha * 0.98, 2.2);
+    circle(8, -63, 2.6, '#ffffff', alpha * 0.5);
+    ctx.restore();
+  }
+
   function drawPlayer(G, T) {
     const P = G.P, foot = P.y + P.h / 2;
     const top = landingBelow(G);
@@ -1613,6 +1659,9 @@
     if (alpha <= 0) return;
     const swimA = swimAnimFor(P);
     if (swimA && drawSwimPlayer(G, T, swimA, alpha)) return;
+    const currentScene = G.world && G.world.scenes[G.tramo];
+    const suitTheme = currentScene && currentScene.theme;
+    if (suitTheme === 'submarino' && drawDiver(G, alpha)) return;
     let yOff = 0;
     if (P.dead) { const t = Math.min(1, G.timers.dying / 0.9); yOff = -Math.sin(t * Math.PI) * 42; }
     const state = P.state, list = NINA[state] || NINA.idle;
@@ -1654,6 +1703,7 @@
       fillRR(-7, -17, 5, 16, 2, '#172432'); fillRR(2, -17, 5, 16, 2, '#172432'); fillRect(-7, -35, 14, 3, '#d9ff65');
     }
     ctx.restore();
+    if (suitTheme === 'espacial') drawAstronautGear(P, alpha);
     if (P.dashT > 0) for (let i = 1; i <= 3; i++) line(P.x - P.face * (14 + i * 9), P.y - 10 + i * 6, P.x - P.face * (30 + i * 9), P.y - 10 + i * 6, '#4ce7ee', 0.5, 2);
     if (P.kickT > 0) { const k = P.kickT / 0.22; line(P.x + P.face * 16, P.y - 9, P.x + P.face * 58, P.y - 9, '#ffd35a', 0.35 * k, 3); ring(P.x + P.face * 58, P.y - 9, 9, 9, '#ffe9a8', 0.5 * k, 2); }
   }
