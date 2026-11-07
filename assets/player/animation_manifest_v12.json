@@ -1,0 +1,280 @@
+{
+  "version": 12,
+  "character": "Sofía",
+  "source_atlas": "assets/player/atlas_nina.png",
+  "frame_metadata": "assets/player/atlas_nina.json",
+  "frame_directory": "assets/player/nina_frames/",
+  "cell_px": {
+    "width": 192,
+    "height": 224
+  },
+  "feet_baseline_px": 216,
+  "anchor": {
+    "x": 0.5,
+    "y": 0.9642857142857143,
+    "origin": "feet_baseline"
+  },
+  "runtime_scale": 0.3,
+  "collision_box_game_units": {
+    "width": 32,
+    "height": 62
+  },
+  "important_note": "States marked provisional reuse existing art and do not mean the corresponding animation has been fully drawn.",
+  "states": {
+    "idle": {
+      "frames": [
+        {
+          "name": "nina_03_01",
+          "path": "assets/player/nina_frames/nina_03_01.png",
+          "duration_ms": 180
+        },
+        {
+          "name": "nina_03_02",
+          "path": "assets/player/nina_frames/nina_03_02.png",
+          "duration_ms": 180
+        },
+        {
+          "name": "nina_03_03",
+          "path": "assets/player/nina_frames/nina_03_03.png",
+          "duration_ms": 180
+        },
+        {
+          "name": "nina_03_04",
+          "path": "assets/player/nina_frames/nina_03_04.png",
+          "duration_ms": 180
+        }
+      ],
+      "status": "available",
+      "provisional": false,
+      "notes": "Respiración/reposo; el grupo también contiene gesto."
+    },
+    "run": {
+      "frames": [
+        {
+          "name": "nina_04_01",
+          "path": "assets/player/nina_frames/nina_04_01.png",
+          "duration_ms": 90
+        },
+        {
+          "name": "nina_04_02",
+          "path": "assets/player/nina_frames/nina_04_02.png",
+          "duration_ms": 90
+        },
+        {
+          "name": "nina_04_03",
+          "path": "assets/player/nina_frames/nina_04_03.png",
+          "duration_ms": 90
+        },
+        {
+          "name": "nina_04_04",
+          "path": "assets/player/nina_frames/nina_04_04.png",
+          "duration_ms": 90
+        }
+      ],
+      "status": "available",
+      "provisional": false,
+      "notes": "Ciclo de carrera disponible."
+    },
+    "fastRun": {
+      "frames": [
+        {
+          "name": "nina_06_01",
+          "path": "assets/player/nina_frames/nina_06_01.png",
+          "duration_ms": 58
+        },
+        {
+          "name": "nina_06_02",
+          "path": "assets/player/nina_frames/nina_06_02.png",
+          "duration_ms": 58
+        },
+        {
+          "name": "nina_06_03",
+          "path": "assets/player/nina_frames/nina_06_03.png",
+          "duration_ms": 58
+        },
+        {
+          "name": "nina_06_04",
+          "path": "assets/player/nina_frames/nina_06_04.png",
+          "duration_ms": 58
+        }
+      ],
+      "status": "available",
+      "provisional": false,
+      "notes": "Ciclo de carrera rápida disponible."
+    },
+    "jump": {
+      "frames": [
+        {
+          "name": "nina_01_01",
+          "path": "assets/player/nina_frames/nina_01_01.png",
+          "duration_ms": 110
+        },
+        {
+          "name": "nina_01_02",
+          "path": "assets/player/nina_frames/nina_01_02.png",
+          "duration_ms": 110
+        },
+        {
+          "name": "nina_01_03",
+          "path": "assets/player/nina_frames/nina_01_03.png",
+          "duration_ms": 110
+        },
+        {
+          "name": "nina_01_04",
+          "path": "assets/player/nina_frames/nina_01_04.png",
+          "duration_ms": 110
+        }
+      ],
+      "status": "provisional",
+      "provisional": true,
+      "notes": "El grupo no es un ciclo completo de salto."
+    },
+    "fall": {
+      "frames": [
+        {
+          "name": "nina_01_03",
+          "path": "assets/player/nina_frames/nina_01_03.png",
+          "duration_ms": 150
+        },
+        {
+          "name": "nina_01_04",
+          "path": "assets/player/nina_frames/nina_01_04.png",
+          "duration_ms": 150
+        },
+        {
+          "name": "nina_01_02",
+          "path": "assets/player/nina_frames/nina_01_02.png",
+          "duration_ms": 150
+        }
+      ],
+      "status": "provisional",
+      "provisional": true,
+      "notes": "Reutiliza poses de alcance/recuperación; faltan poses de caída por viento."
+    },
+    "land": {
+      "frames": [
+        {
+          "name": "nina_05_01",
+          "path": "assets/player/nina_frames/nina_05_01.png",
+          "duration_ms": 60
+        },
+        {
+          "name": "nina_05_02",
+          "path": "assets/player/nina_frames/nina_05_02.png",
+          "duration_ms": 60
+        },
+        {
+          "name": "nina_05_03",
+          "path": "assets/player/nina_frames/nina_05_03.png",
+          "duration_ms": 60
+        },
+        {
+          "name": "nina_05_04",
+          "path": "assets/player/nina_frames/nina_05_04.png",
+          "duration_ms": 60
+        }
+      ],
+      "status": "provisional",
+      "provisional": true,
+      "notes": "Grupo de embestida/carrera inclinada usado solo como salida de aterrizaje."
+    },
+    "climb": {
+      "frames": [
+        {
+          "name": "nina_04_01",
+          "path": "assets/player/nina_frames/nina_04_01.png",
+          "duration_ms": 100
+        },
+        {
+          "name": "nina_04_03",
+          "path": "assets/player/nina_frames/nina_04_03.png",
+          "duration_ms": 100
+        },
+        {
+          "name": "nina_05_01",
+          "path": "assets/player/nina_frames/nina_05_01.png",
+          "duration_ms": 100
+        },
+        {
+          "name": "nina_05_03",
+          "path": "assets/player/nina_frames/nina_05_03.png",
+          "duration_ms": 100
+        }
+      ],
+      "status": "provisional",
+      "provisional": true,
+      "notes": "No existe un ciclo dibujado de escalera; necesita arte nuevo."
+    },
+    "dash": {
+      "frames": [
+        {
+          "name": "nina_06_01",
+          "path": "assets/player/nina_frames/nina_06_01.png",
+          "duration_ms": 50
+        },
+        {
+          "name": "nina_06_02",
+          "path": "assets/player/nina_frames/nina_06_02.png",
+          "duration_ms": 50
+        },
+        {
+          "name": "nina_06_03",
+          "path": "assets/player/nina_frames/nina_06_03.png",
+          "duration_ms": 50
+        },
+        {
+          "name": "nina_06_04",
+          "path": "assets/player/nina_frames/nina_06_04.png",
+          "duration_ms": 50
+        }
+      ],
+      "status": "provisional",
+      "provisional": true,
+      "notes": "Ciclo de carrera rápida reutilizado durante el impulso."
+    },
+    "hurt": {
+      "frames": [
+        {
+          "name": "nina_01_02",
+          "path": "assets/player/nina_frames/nina_01_02.png",
+          "duration_ms": 100
+        },
+        {
+          "name": "nina_05_03",
+          "path": "assets/player/nina_frames/nina_05_03.png",
+          "duration_ms": 100
+        }
+      ],
+      "status": "provisional",
+      "provisional": true,
+      "notes": "No hay poses dedicadas de daño."
+    },
+    "cheer": {
+      "frames": [
+        {
+          "name": "nina_02_01",
+          "path": "assets/player/nina_frames/nina_02_01.png",
+          "duration_ms": 140
+        },
+        {
+          "name": "nina_02_02",
+          "path": "assets/player/nina_frames/nina_02_02.png",
+          "duration_ms": 140
+        },
+        {
+          "name": "nina_02_03",
+          "path": "assets/player/nina_frames/nina_02_03.png",
+          "duration_ms": 140
+        },
+        {
+          "name": "nina_02_04",
+          "path": "assets/player/nina_frames/nina_02_04.png",
+          "duration_ms": 140
+        }
+      ],
+      "status": "available",
+      "provisional": false,
+      "notes": "Gesto/victoria disponible; no existe animación de derrota dedicada."
+    }
+  }
+}

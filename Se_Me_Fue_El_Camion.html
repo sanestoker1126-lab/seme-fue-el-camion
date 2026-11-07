@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#101725">
+<title>¡Se me fue el camión! | Plataformas 2.5D</title>
+<link rel="stylesheet" href="css/game.css?v=53.0">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
+</head>
+<body>
+<div id="wrap"><canvas id="game" aria-label="Juego de plataformas: Sofía baja por la ciudad con Luna y Morita para alcanzar el camión"></canvas></div>
+
+<div id="hud">
+ <div class="pill"><b id="hudTramo">TRAMO 1/12</b> <span class="sub">· <span id="hudTime">0:00</span></span><br><span id="objective" class="sub objective">OBJETIVO: SIGUE BAJANDO</span><br><span class="sub">PTS <b id="score">0</b><b id="combo" style="color:#d9ff65"></b></span></div>
+ <div id="rightHud">
+  <div class="pill">CRISTALES <b id="gems">0</b><br><span class="sub">VIDA <b id="life">♥ ♥ ♥</b></span><br><span class="sub">OBJETOS <b id="items">0/6</b></span> <span id="keyBadge"></span></div>
+  <button id="pause" aria-label="Pausa">Ⅱ</button>
+ </div>
+</div>
+<div id="flash"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<div id="banner" hidden aria-live="polite"><div class="tag" id="bannerTag"></div><h2 id="bannerTitle"></h2><p id="bannerLine"></p><p class="driver" id="bannerDriver"></p></div>
+<div id="bubble" hidden aria-live="polite"><span class="who">LETRERO</span><span id="bubbleText"></span></div>
+<div id="card" hidden aria-live="polite"><div class="tag" id="cardTag"></div><h3 id="cardTitle"></h3><p id="cardText"></p></div>
+
+<div id="menu" class="panel">
+ <div class="eyebrow">PLATAFORMAS · DESCENSO 2.5D · GUADALAJARA</div>
+ <h1>¡SE ME FUE<br><span>EL CAMIÓN!</span></h1>
+ <p class="missionIntro">Sofía perdió el último camión después de la posada. Baja por <b><span id="levelsCount">16</span> niveles</b>, vence a los jefes y llega a la terminal. Los seis objetos de la mochila son opcionales: encontrarlos mejora el final.</p>
+ <button class="primary" id="start" disabled>CARGANDO…</button>
+ <div class="row menuActions"><button class="opt" id="btnStory">VER CINEMÁTICA</button><button class="opt" id="btnHowto">CÓMO JUGAR</button></div>
+ <div class="label">MISIONES</div>
+ <div id="missions"></div>
+ <div class="label" id="tramosLabel">PARADAS · ELIGE UNA DESBLOQUEADA</div>
+ <div id="tramos"></div>
+ <p class="small" id="newLevels"></p>
+ <div class="label">OBJETOS RECUPERADOS · <span id="collectionCount">0 / 6</span></div>
+ <div id="collection"></div>
+ <p class="small" id="records"></p>
+ <div class="label">OPCIONES</div>
+ <div class="row"><button class="opt" id="optDiff"></button><button class="opt" id="optMusic"></button><button class="opt" id="optSfx"></button><button class="opt" id="optVib"></button></div>
+ <p class="small" id="diffHelp"></p>
+ <button class="primary secondary" id="btnOptions">⚙ TODAS LAS OPCIONES</button>
+ <div class="hint">HISTORIA: recorre la ruta completa · PRÁCTICA: empieza en una parada desbloqueada.</div>
+</div>
+
+<div id="cinematic" class="panel cinematic" hidden>
+ <div class="letterbox top"></div>
+ <div id="cineScene" class="cineScene">
+  <div class="cineGrade"></div>
+  <div class="cineActors" aria-hidden="true"><img class="cineSofia" src="assets/player/sofia/run_01.png"><img class="cineCat luna" src="assets/companions/luna.png"><img class="cineCat morita" src="assets/companions/morita.png"></div>
+  <div class="cineCaption"><div class="eyebrow" id="cineTag"></div><h2 id="cineTitle"></h2><p id="cineText"></p></div>
+  <div class="cineProgress"><i id="cineProgressBar"></i></div>
+ </div>
+ <div class="cineFooter"><div id="cineDots" class="cineDots"></div><div class="cineButtons"><button class="opt" id="cineSkip">SALTAR</button><button class="primary" id="cineNext">SIGUIENTE ESCENA</button></div></div>
+ <div class="letterbox bottom"></div>
+</div>
+
+<section id="bossCinematic" class="panel bossCinematic" hidden role="dialog" aria-modal="true" aria-labelledby="bossCineTitle">
+ <div class="letterbox top"></div>
+ <div id="bossCineScene" class="bossCineScene" aria-live="polite">
+  <div class="bossCineHeader"><span id="bossCineStage"></span><b id="bossCineBoss"></b></div>
+  <div class="bossCineImpact" aria-hidden="true"><i></i><b id="bossCineWord">¡GRR!</b></div>
+  <div class="bossCineCaption"><div class="eyebrow" id="bossCineTag"></div><h2 id="bossCineTitle"></h2><p id="bossCineText"></p><div id="bossCineCue" class="bossCineCue"></div></div>
+  <div class="bossCineProgress"><i id="bossCineProgressBar"></i></div>
+ </div>
+ <div class="bossCineFooter"><div><span id="bossCineStep"></span><div id="bossCineDots" class="cineDots"></div></div><div class="bossCineButtons"><button class="opt" id="bossCineSkip">SALTAR</button><button class="primary" id="bossCineNext">SIGUIENTE</button></div></div>
+ <div class="letterbox bottom"></div>
+</section>
+
+<div id="guide" class="panel guide" hidden>
+ <div class="eyebrow">GUÍA RÁPIDA · OBJETIVO Y CONTROLES</div>
+ <h1>¿QUÉ<br><span>HAGO?</span></h1>
+ <p><b>Tu misión:</b> baja desde la escuela hasta la parada de la ruta 6 al final del recorrido. Avanza hacia abajo; cada nivel tiene un jefe cerca de la salida. Si te caes o pierdes todas las vidas, reapareces en la última parada.</p>
+ <div class="guideSteps"><div><b>1 · AVANZA</b><span>Salta entre techos, balcones y plataformas. Sigue bajando por la ruta.</span></div><div><b>2 · DEFIÉNDETE</b><span>Patea o cae sobre enemigos. Usa DASH; espera a que el jefe se maree si resiste.</span></div><div><b>3 · EXPLORA</b><span>Pulsa BAJAR en una trampilla para encontrar llaves, poderes y objetos opcionales.</span></div><div><b>4 · LLEGA</b><span>Derrota al jefe y alcanza el camión. Recuperar los seis objetos mejora el final.</span></div></div>
+ <p class="guideControls"><b>Nuevo:</b> las <b>tejas flojas</b> se caen medio segundo después de pisarlas, las <b>bandas eléctricas</b> te arrastran y las <b>sombrillas</b> te hacen rebotar. Los jefes retroceden y contraatacan tras cada golpe: esquiva y vuelve a golpear. Vencerlos te da un corazón.</p>
+ <p class="guideControls"><b>Agua:</b> caer al lago no hace daño. Sofía flota y nada: <b>↓</b> bucea, <b>↑</b> sube, <b>SALTAR</b> en la superficie sale del agua y bajo el agua da una brazada, <b>DASH</b> es un impulso. Sumergida, los enemigos no la alcanzan. Nadando contra una orilla baja, sube sola.</p>
+ <p class="guideControls"><b>PC:</b> A/D o ←/→ mover · Espacio/W saltar · X/U patear · Shift/J dash · S/↓ bajar · P pausa.<br><b>Móvil:</b> joystick para moverte (empújalo hacia ARRIBA para saltar) y botones SALTAR, PATEAR, DASH y BAJAR; puedes tocar varios a la vez.</p>
+ <button class="primary" id="guidePlay">JUGAR HISTORIA</button>
+ <button class="primary secondary" id="guideBack">VOLVER AL MENÚ</button>
+</div>
+
+<div id="intro" class="panel" hidden>
+ <div class="card"><div class="eyebrow" id="introTag"></div><h1 id="introTitle"></h1><p id="introText"></p></div>
+ <button class="primary" id="introNext">SIGUIENTE</button>
+ <button class="primary secondary" id="introSkip">SALTAR HISTORIA</button>
+ <div id="introDots"></div>
+</div>
+
+<div id="pausePanel" class="panel" hidden>
+ <div class="eyebrow">PAUSA</div>
+ <h1>¿UN<br><span>RESPIRO?</span></h1>
+ <p>La misión es llegar a la terminal. Sigue bajando, vence al jefe del nivel y alcanza el camión. Los objetos son opcionales.</p>
+ <button class="primary" id="resumeBtn">CONTINUAR</button>
+ <button class="primary secondary" id="restartBtn">VOLVER A LA ÚLTIMA PARADA</button>
+ <button class="primary secondary" id="quitBtn">MENÚ PRINCIPAL</button>
+ <div class="row"><button class="opt" id="poptMusic"></button><button class="opt" id="poptSfx"></button><button class="opt" id="poptVib"></button><button class="opt" id="poptMore">⚙ OPCIONES</button></div>
+</div>
+
+<div id="optionsPanel" class="panel options" hidden>
+ <div class="eyebrow">AJUSTES · SE GUARDAN EN ESTE DISPOSITIVO</div>
+ <h1>OPCIO<span>NES</span></h1>
+ <div class="label">JUEGO</div>
+ <div class="optRow"><span>Dificultad</span><button class="opt" data-opt="difficulty"></button></div>
+ <div class="optRow"><span>Modo relajado <small>(los golpes empujan pero no quitan vidas)</small></span><button class="opt" data-opt="relaxed"></button></div>
+ <div class="optRow"><span>Las gatitas distraen enemigos</span><button class="opt" data-opt="catsHelp"></button></div>
+ <div class="optRow"><span>Anillo que marca dónde caes</span><button class="opt" data-opt="landingRing"></button></div>
+ <div class="optRow"><span>Práctica: todos los tramos <small>(sin desbloquear)</small></span><button class="opt" data-opt="freeSelect"></button></div>
+ <div class="optRow"><span>Cinemáticas</span><button class="opt" data-opt="cinematics"></button></div>
+ <div class="optRow"><span>Aspecto de Sofía <small>(su ropa en tierra)</small></span><button class="opt" data-opt="ninaLook"></button></div>
+ <div class="label">SONIDO</div>
+ <div class="optRow"><span>Volumen de música</span><button class="opt" data-opt="musicVol"></button></div>
+ <div class="optRow"><span>Volumen de efectos</span><button class="opt" data-opt="sfxVol"></button></div>
+ <div class="optRow"><span>Vibración</span><button class="opt" data-opt="vib"></button></div>
+ <div class="label">PANTALLA Y CONTROLES</div>
+ <div class="optRow"><span>Cámara</span><button class="opt" data-opt="zoom"></button></div>
+ <div class="optRow"><span>Sacudida de pantalla</span><button class="opt" data-opt="shake"></button></div>
+ <div class="optRow"><span>Tamaño de los botones</span><button class="opt" data-opt="ctlSize"></button></div>
+ <div class="optRow"><span>Controles para zurdos <small>(joystick a la derecha)</small></span><button class="opt" data-opt="lefty"></button></div>
+ <div class="optRow"><span>Mostrar FPS</span><button class="opt" data-opt="fps"></button></div>
+ <button class="primary secondary danger" id="optReset">BORRAR PROGRESO</button>
+ <button class="primary" id="optBack">LISTO</button>
+</div>
+<div id="fpsMeter" aria-hidden="true"></div>
+
+<div id="result" class="panel" hidden>
+ <div class="eyebrow" id="resultTag"></div>
+ <h1 id="resultTitle"></h1>
+ <div id="resultStars"></div>
+ <p id="resultText"></p>
+ <div id="resultItems"></div>
+ <button class="primary" id="retry">VOLVER A INTENTAR</button>
+ <button class="primary secondary" id="back">MENÚ</button>
+</div>
+
+<div id="touch">
+ <div class="cluster"><div id="stickBase" role="application" aria-label="Joystick virtual"><div id="stickKnob"></div><span id="stickLabel">MOVER</span></div></div>
+ <div class="actionCluster">
+  <button class="ctl action jump" data-key="jump" aria-label="Saltar"><span>↑</span><small>SALTAR</small></button>
+  <button class="ctl action kick" data-key="kick" aria-label="Patear"><span>◒</span><small>PATEAR</small></button>
+  <button class="ctl action dash" data-key="dash" aria-label="Dash"><span>✦</span><small>DASH</small></button>
+  <button class="ctl down" data-key="down" aria-label="Bajar o entrar"><span>↓</span><small>BAJAR</small></button>
+ </div>
+</div>
+
+<!-- Núcleo sin DOM (probado con node --test) -->
+<script src="js/core/util.js?v=53.0"></script>
+<script src="js/core/config.js?v=53.0"></script>
+<script src="js/core/levels.js?v=53.0"></script>
+<script src="js/core/story.js?v=53.0"></script>
+<script src="js/core/physics.js?v=53.0"></script>
+<script src="js/core/enemies.js?v=53.0"></script>
+<script src="js/core/obstacles.js?v=53.0"></script>
+<script src="js/core/world.js?v=53.0"></script>
+<script src="js/core/game.js?v=53.0"></script>
+<!-- Capa de navegador -->
+<script src="js/app/art_data.js?v=53.0"></script>
+<script src="js/app/render.js?v=53.0"></script>
+<script src="js/app/input.js?v=53.0"></script>
+<script src="js/app/audio.js?v=53.0"></script>
+<script src="js/app/ui.js?v=53.0"></script>
+<script src="js/app/main.js?v=53.0"></script>
+</body>
+</html>
