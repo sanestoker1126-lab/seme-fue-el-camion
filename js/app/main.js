@@ -40,7 +40,7 @@
     vib: [true, false], shake: ['normal', 'suave', 'no'], zoom: ['cerca', 'normal', 'lejos'],
     ctlSize: ['chico', 'normal', 'grande'], lefty: [false, true], landingRing: [true, false],
     catsHelp: [true, false], relaxed: [false, true], freeSelect: [false, true], cinematics: [true, false], fps: [false, true],
-    ninaLook: ['original', 'uniforme', 'rosa']
+    ninaLook: ['original', 'uniforme', 'rosa', 'buzo', 'astronauta']
   };
   const readOpt = (k, def) => {
     const raw = store.get('camion-opt-' + k, null);
