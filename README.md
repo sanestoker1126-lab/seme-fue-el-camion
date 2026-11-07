@@ -46,7 +46,7 @@ Opciones incluye **Aspecto de Sofía** (original / uniforme / rosa).
 node --test tests/*.test.js
 ```
 
-Versión actual: **V54** (`js/core/config.js` → 54.0.0).
+Versión actual: **V55** (`js/core/config.js` → 55.0.0).
 
 ## V54 · Submarino y Espacio ampliados
 
@@ -64,3 +64,19 @@ Guadalajara; los mundos especiales imponen su equipamiento correspondiente.
 Las salidas de los mundos nuevos se representan como una escotilla y un módulo orbital. Su comportamiento
 de meta conserva el sistema del motor existente.
 
+
+## V55 · Parallax gráfico real en las misiones 3 y 4
+
+Se integraron cinco capas independientes por mundo en `assets/parallax/submarino/` y
+`assets/parallax/espacial/`: fondo lejano, profundidad, estructuras, elementos y
+primer plano. Son imágenes SVG optimizadas para mantener detalle sin archivos
+raster gigantes; las cuatro primeras capas quedan detrás del juego y el primer
+plano se dibuja por delante únicamente en los bordes.
+
+La cámara las desplaza con factores 0.10, 0.22, 0.40, 0.68 y 1.00, recorriendo toda
+la anchura y profundidad del mapa sin generar espacios vacíos. El renderizador
+dibuja solo el recorte visible; en caso de que falten imágenes conserva el fondo
+de respaldo V54. La PWA incluye las capas en su precarga para uso sin conexión.
+
+El arte es vectorial y original del proyecto; no recupera fotografías/capas de las
+imágenes V53 aplanadas. El nivel y las colisiones no fueron modificados en V55.

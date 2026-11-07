@@ -341,6 +341,7 @@
       // V53: fondos de los mundos nuevos y gatitas submarinas.
       'assets/scenes/generated/submarino_fondo.png', 'assets/scenes/generated/espacial_fondo.png',
       'assets/player/sofia/sofia_submarina_complementaria.png',
+      ...Object.values(R.PARALLAX_LAYERS || {}).flat(),
       ...Object.values(R.COMPANIONS_SUB || {}).flatMap((c) => [...c.idle, ...c.walk, c.shoulder])];
     for (const [kind, E] of Object.entries(NS.ART.ENEMY)) for (const f of Object.keys(E.frames)) essential.push('assets/enemies/v50/' + kind + '/' + f + '.png');
     let timer;
