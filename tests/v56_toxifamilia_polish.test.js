@@ -73,14 +73,17 @@ test('V56: renderer uses visible world clip and original background sequence', (
 
 test('V56: PWA precaches new files and invalidates V55 cache', () => {
   const sw = read('sw.js'), html = read('Se_Me_Fue_El_Camion.html');
-  assert.match(sw, /camion-v56-toxifamilia-style/);
-  for (const asset of ['css/toxifamilia_style.css', 'js/core/toxifamilia_style.js']) {
-    assert.ok(sw.includes(asset + '?v=56.0'), 'PWA prefetch ' + asset);
-    assert.ok(html.includes(asset + '?v=56.0'), 'HTML link ' + asset);
+  assert.match(sw, /camion-v57-thematic-villains/);
+  for (const [asset, v] of [
+    ['css/toxifamilia_style.css', '56.0'],
+    ['js/core/toxifamilia_style.js', '57.0']
+  ]) {
+    assert.ok(sw.includes(asset + '?v=' + v), 'PWA prefetch ' + asset);
+    assert.ok(html.includes(asset + '?v=' + v), 'HTML link ' + asset);
   }
   for (const js of ['js/core/enemies.js', 'js/app/render.js', 'js/app/main.js']) {
-    assert.ok(sw.includes(js + '?v=56.0'), 'SW version ' + js);
-    assert.ok(html.includes(js + '?v=56.0'), 'HTML version ' + js);
+    assert.ok(sw.includes(js + '?v=57.0'), 'SW version ' + js);
+    assert.ok(html.includes(js + '?v=57.0'), 'HTML version ' + js);
   }
 });
 
