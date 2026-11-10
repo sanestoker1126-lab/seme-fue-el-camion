@@ -1,0 +1,34 @@
+/* Cinematic player — La Toxifamilia; isolated from the platform engine. */
+.toxi-overlay{position:fixed;inset:0;z-index:200000;display:flex;flex-direction:column;box-sizing:border-box;background:#080c19;color:#fff;overflow:hidden;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+.toxi-overlay[hidden]{display:none}
+.toxi-stage{position:relative;flex:1;min-height:0;overflow:hidden;background-color:#152237;background-position:center;background-size:cover;isolation:isolate}
+.toxi-stage::before{content:"";position:absolute;z-index:1;inset:0;background:linear-gradient(180deg,rgba(5,7,18,.58),transparent 28%,rgba(3,7,18,.25) 55%,rgba(3,7,18,.90));pointer-events:none}
+.toxi-stage::after{content:"";position:absolute;z-index:0;inset:-12%;background:radial-gradient(circle at 70% 45%,rgba(99,155,239,.15),transparent 45%);animation:toxiGlow 7s ease-in-out infinite alternate;pointer-events:none}
+.toxi-stage.toxi-pan{animation:toxiCamera 9s ease-in-out both}
+.toxi-actor{position:absolute;z-index:2;display:flex;flex-direction:column;align-items:center;gap:5px;transform:translateX(-50%);max-width:35%;filter:drop-shadow(0 12px 12px rgba(0,0,0,.55))}
+.toxi-actor img{max-width:100%;height:auto;max-height:48vh;object-fit:contain;image-rendering:auto;transform-origin:50% 100%;animation:toxiBreathe 2.3s ease-in-out infinite alternate}
+.toxi-actor span{font-size:clamp(10px,2vw,15px);font-weight:850;letter-spacing:.1em;padding:4px 10px;border-radius:100px;background:rgba(7,13,29,.78);border:1px solid rgba(255,255,255,.22);white-space:nowrap;text-shadow:0 1px 2px #000}
+.toxi-actor.enter-left{animation:toxiFromLeft .95s cubic-bezier(.14,.88,.23,1) both}
+.toxi-actor.enter-right{animation:toxiFromRight .95s cubic-bezier(.14,.88,.23,1) both}
+.toxi-actor.enter-rise{animation:toxiRise .95s ease-out both}
+.toxi-caption{position:absolute;z-index:3;bottom:5%;left:5%;right:5%;max-width:870px;padding:clamp(14px,3vw,30px);border-left:3px solid #78c9ff;border-radius:5px 16px 16px 5px;background:linear-gradient(100deg,rgba(7,12,28,.91),rgba(9,16,31,.70));box-shadow:0 14px 46px rgba(0,0,0,.35);backdrop-filter:blur(8px);animation:toxiRise .55s ease both}
+.toxi-eyebrow{color:#70d9ff;font-size:clamp(10px,1.8vw,14px);font-weight:850;letter-spacing:.18em;text-transform:uppercase}
+.toxi-title{margin:.25em 0;font-size:clamp(22px,5vw,52px);font-weight:950;text-transform:uppercase;line-height:1.04;text-wrap:balance;text-shadow:0 3px 9px rgba(0,0,0,.7)}
+.toxi-text{font-size:clamp(13px,2.2vw,21px);line-height:1.45;max-height:26vh;overflow:auto;margin:.5em 0 0;color:#e6ecf7}
+.toxi-dimmer{position:absolute;z-index:4;inset:0;background:#000;pointer-events:none;animation:toxiReveal .65s ease-out both}
+.toxi-footer{display:flex;flex:0 0 auto;min-height:64px;align-items:center;justify-content:space-between;gap:12px;padding:10px max(16px,env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));background:#090e1c;border-top:1px solid rgba(255,255,255,.15)}
+.toxi-footer button{appearance:none;cursor:pointer;font-size:13px;font-weight:850;padding:12px 16px;border:1px solid #50627b;border-radius:9px;background:#202a40;color:#e6efff;touch-action:manipulation}
+.toxi-footer button.toxi-next{background:linear-gradient(120deg,#48bffc,#467fe8);border-color:#77d5ff;color:#041126}
+.toxi-footer button:focus-visible{outline:3px solid #f0ce73;outline-offset:2px}
+.toxi-meter{display:flex;flex:1;min-width:65px;max-width:420px;flex-direction:column;gap:7px;font-size:12px;color:#adc1d8}
+.toxi-progress{display:block;width:100%;height:4px;border-radius:9px;background:#344059;overflow:hidden}
+.toxi-progress>i{display:block;width:0%;height:100%;background:#e9ce7d}
+@keyframes toxiFromLeft{from{opacity:0;transform:translateX(-130%)}to{opacity:1;transform:translateX(-50%)}}
+@keyframes toxiFromRight{from{opacity:0;transform:translateX(30%)}to{opacity:1;transform:translateX(-50%)}}
+@keyframes toxiRise{from{opacity:0;translate:0 25px}to{opacity:1;translate:0 0}}
+@keyframes toxiBreathe{from{transform:translateY(0) scale(1)}to{transform:translateY(-5px) scale(1.012)}}
+@keyframes toxiReveal{from{opacity:1}to{opacity:0}}
+@keyframes toxiCamera{from{background-position:45% 51%}to{background-position:54% 49%}}
+@keyframes toxiGlow{from{opacity:.5}to{opacity:1}}
+@media(max-width:600px){.toxi-caption{left:3%;right:3%;bottom:3%;padding:13px}.toxi-actor img{max-height:38vh}.toxi-footer{min-height:62px;gap:8px}.toxi-footer button{padding:10px 12px;font-size:11px}}
+@media(prefers-reduced-motion:reduce){.toxi-overlay *, .toxi-stage{animation:none!important;transition:none!important}}

@@ -148,7 +148,7 @@
     ui.toast('PROGRESO BORRADO', 2, 2);
   }
 
-  function startRun(mission, tramo) {
+  function startRun(mission, tramo, skipIntro) {
     audio.ensure();
     mission = mission | 0; tramo = tramo | 0;
     const go = () => {
@@ -157,8 +157,20 @@
       G.newRun({ mission, startTramo: tramo, difficulty: opt.difficulty });
       afterStart();
     };
-    if (mission === 0 && tramo === 0 && !cinematicSeen()) ui.showCinematic(go); else go();
+    if (!skipIntro && mission === 0 && tramo === 0 && !cinematicSeen()) ui.showCinematic(go); else go();
   }
+  /* La Toxifamilia: entrega una mision SOLO al completar sus escenas.
+     Mantiene intacta la seleccion normal del menu y no repite el intro de Sofía. */
+  root.addEventListener('camion:toxifamilia:start-mission', (event) => {
+    if (G.state !== 'menu') return;
+    const detail = event && event.detail || {};
+    const m = detail.mission, tramo = detail.tramo;
+    if (Number.isInteger(m) && m >= 0 && m < 4 &&
+        Number.isInteger(tramo) && tramo >= 0 && tramo < LEVEL_COUNT) {
+      startRun(m, tramo, true);
+    }
+  });
+
   function afterStart() {
     seenFoeKinds.clear();
     ui.show(null);
