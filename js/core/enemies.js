@@ -476,9 +476,10 @@
         P.noCut = true;
         f.hitCD = 0.4;
         ev.push({ type: 'clank', foe: f });
-      } else if (def && (!TYPES[f.kind].contactRequiresCharge || f.state === 'charge')) {
-        // V57: tocar un pez durante su patrulla/aviso no hace daño invisible.
-        // Solo la embestida telegráfica es ofensiva; dash/pisotón siguen funcionando.
+      } else if (def && (!TYPES[f.kind].contactRequiresCharge ||
+        (f.state === 'charge' && P.water === f.waterZone))) {
+        // V57: peces ofensivos SOLO cuando Sofía comparte su estanque
+        // y la embestida ya se anunció. Dash y pisotón siguen funcionando.
         ctx.hurt(f.x, b.y1 + (b.y2 - b.y1) / 2, f.kind);
       }
     }
