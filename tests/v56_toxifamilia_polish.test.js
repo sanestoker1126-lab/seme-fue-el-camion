@@ -83,3 +83,33 @@ test('V56: PWA precaches new files and invalidates V55 cache', () => {
     assert.ok(html.includes(js + '?v=56.0'), 'HTML version ' + js);
   }
 });
+
+test('V56: imagen fallida y carga estancada no bloquean el arranque', async () => {
+  class FailedImage {
+    constructor() { this.complete = true; this.naturalWidth = 0; this.naturalHeight = 0; }
+    set src(value) { this.path = value; }
+    addEventListener() {}
+    removeEventListener() {}
+  }
+  const sandbox = { CAMION: {}, Image: FailedImage };
+  vm.createContext(sandbox);
+  vm.runInContext(read('js/app/render.js'), sandbox);
+  const result = await sandbox.CAMION.Render.preload(['imagen_rota.png']);
+  assert.equal(result.length, 1);
+  assert.equal(result[0], null, 'asset roto devuelve control a boot');
+
+  class StalledImage {
+    constructor() { this.complete = false; this.naturalWidth = 0; }
+    set src(value) { this.path = value; }
+    addEventListener() {}
+    removeEventListener() {}
+  }
+  const stalled = { CAMION: {}, Image: StalledImage,
+    setTimeout: (cb) => setImmediate(cb),
+    clearTimeout: (id) => clearImmediate(id) };
+  vm.createContext(stalled);
+  vm.runInContext(read('js/app/render.js'), stalled);
+  const delayed = await stalled.CAMION.Render.preload(['imagen_sin_respuesta.png']);
+  assert.equal(delayed.length, 1);
+  assert.equal(delayed[0], null, 'watchdog permite continuar');
+});
