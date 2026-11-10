@@ -1,0 +1,64 @@
+/* V56 · La Toxifamilia: pase visual provisional, no sustituye el guion oficial.
+   UI ligera: sin nuevas imágenes ni filtros de blur de pantalla completa. */
+:root {
+ --ink:#f6f3fa;
+ --lime:#c9ff72;
+ --cyan:#86ede4;
+ --panel:#0b0d1df0;
+ --warm:#ffb77c;
+ --toxi-violet:#b78afd;
+ --toxi-pink:#ff7cba;
+ --toxi-acid:#c9ff72;
+ --toxi-shadow:#060713;
+}
+html,body{background:#080914}
+#wrap{background:#111626}
+#wrap:after{background:radial-gradient(ellipse at 53% 44%,transparent 48%,#06071659 86%,#02030ce0 127%)}
+.panel{border:1px solid #b18bf66b;background:linear-gradient(148deg,#101528f7,#0d1326f5 48%,#171026f0);box-shadow:0 19px 55px #02030db5,0 0 0 1px #bc93fd15}
+#menu{background:radial-gradient(ellipse at 90% 0%,#923e8450,transparent 46%),linear-gradient(144deg,#10152cf7,#0d1927f7 54%,#171029f5);border-color:#bba5ff73}
+#menu>.eyebrow{color:#ffadd5;letter-spacing:.17em}
+#menu>h1{text-shadow:0 3px 0 #08070e,0 0 22px #e55d9655;line-height:.94}
+#menu>h1 span{color:#cdfb7e;text-shadow:0 0 15px #b0fc6960}
+#menu .label{color:#a9eddf}
+#menu .missionIntro{border-left-color:#c9ff72;background:linear-gradient(90deg,#cdff700d,transparent);color:#e1e8f2}
+.primary{background:linear-gradient(112deg,#caff72,#aefb79);color:#14201b;box-shadow:0 5px 21px #8ad95130;min-height:44px}
+.primary.secondary{background:linear-gradient(130deg,#2d2846,#1c3446);color:#f7f1ff;box-shadow:none;border:1px solid #a69cee4b}
+.opt{background:linear-gradient(145deg,#25243e,#163044);color:#eaf7ff;border:1px solid #aab9f23d;min-height:44px}
+.opt:active{background:#453466}
+button:focus-visible{outline:3px solid #fbd58b;outline-offset:3px}
+.mission{min-height:53px;background:linear-gradient(145deg,#29204a,#212b4b);border:1px solid #9d8df14a}
+.mission.sel{background:linear-gradient(140deg,#44367a,#244c5f);box-shadow:inset 0 0 0 2px #ccff8c,0 0 15px #b389f33d}
+.mission.new:not(.locked){border-color:#cafa8c8c}
+.mission.locked,.tramo.locked{background:#1b1c2d;color:#768298}
+#missions .mission:nth-child(1){border-left:4px solid #c5ff77}
+#missions .mission:nth-child(2){border-left:4px solid #ffae78}
+#missions .mission:nth-child(3){border-left:4px solid #76efdb}
+#missions .mission:nth-child(4){border-left:4px solid #b89aff}
+.tramo:not(.locked){background:linear-gradient(140deg,#344b59,#312a55);border:1px solid #aaf1d980;box-shadow:inset 0 1px 0 #ffffff21}
+.tramo.new:not(.locked){border-color:#f2c67a}
+.lookOption.selected{border-color:#c9ff72!important;box-shadow:0 0 0 1px #c9ff72}
+.pill{background:linear-gradient(145deg,#11162aeb,#171129e8);border:1px solid #ac86e88a;box-shadow:0 6px 18px #040415a6;max-width:48vw}
+.pill b{color:#c9ff72}
+#objective{color:#ffc28b}
+#banner{border:1px solid #c7a2fa99;background:linear-gradient(160deg,#101026e8,#14253ad9);box-shadow:0 0 26px #a34dd22e,0 12px 44px #0009}
+#banner .tag{color:#bfeaff}
+#banner h2{color:#caff7a}
+#toast{border:1px solid #adff8066;background:#11182ce8;text-shadow:none}
+#bubble{background:#f4e7d6;color:#201724}
+#card{border-color:#e5b3ff75;background:linear-gradient(145deg,#21182df2,#1b1a2ff1)}
+#stickBase{border-color:#caa7ff85;background:radial-gradient(circle at 32% 25%,#af83ed38,#0b1025c9 65%);box-shadow:inset 0 0 0 7px #bda7ff09,0 6px 22px #0505127d}
+#stickKnob{background:linear-gradient(155deg,#e0c7f7ed,#7569bddd);border-color:#e8d3ffb7}
+.ctl{background:linear-gradient(150deg,#332b4ee9,#10172aec);border-color:#b899f099}
+.ctl.action{background:radial-gradient(circle at 30% 25%,#aaf16f44,#10192aec 74%);border-color:#c9ff72b2}
+.ctl.jump{border-color:#d6ff89ed}
+.ctl.kick{border-color:#ffa2c5a6;color:#ffd0e0}
+.ctl.dash{border-color:#ae9affb1;color:#e1cfff}
+.ctl.down{border-color:#8fe8eb9b;background:linear-gradient(145deg,#245268d5,#101c31e9)}
+.ctl.pressed,.ctl:active{background:#b686fa59}
+@media(max-width:390px){
+ .pill{padding:7px 8px;font-size:9px}
+ .pill b{font-size:12px}
+ #rightHud{gap:4px}
+ .menuActions .opt{min-width:120px}
+}
+@media(prefers-reduced-motion:reduce){.primary,.ctl,#banner,.tramo,.mission{animation:none;transition:none}}
