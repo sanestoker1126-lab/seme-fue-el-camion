@@ -104,6 +104,8 @@ test('V57: el dron espera antes de disparar, marca un objetivo fijo y su plasma 
   const f = EN.create('drone', { x: 0, y: -70, lane: { x1: -45, x2: 45 },
     rng: () => 0.75, diff: NS.CONFIG.difficulty.normal });
   f.cool = 0; W.foes.push(f);
+  const hb = EN.hitBox(f);
+  assert.ok(hb.x2 - f.x >= f.w * 0.94, 'hitbox ofensiva alcanza las hélices visibles');
   const P = player(155, -30), ctx = context(), events = [];
   EN.update(W, P, DT, ctx, events);
   assert.equal(f.state, 'aim');
