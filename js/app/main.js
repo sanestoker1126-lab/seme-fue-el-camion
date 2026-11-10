@@ -71,7 +71,10 @@
     chile: 'CHILE · dispara semillas: el DASH las rompe',
     bat: 'MURCIÉLAGO · despierta si te acercas y te persigue',
     pigeon: 'PALOMA · suelta «regalitos» si pasas debajo',
-    kid: 'NIÑO · lanza piedras de lejos y embiste de cerca'
+    kid: 'NIÑO · lanza piedras de lejos y embiste de cerca',
+    piranha: 'PIRAÑA · vigila el agua y esquiva su carrera',
+    shark: 'TIBURÓN · espera a que termine de embestir',
+    drone: 'DRON · esquiva la marca y destruye su plasma con DASH'
   };
   const seenFoeKinds = new Set();
   const bossCinematicSeen = new Set();
