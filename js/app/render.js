@@ -68,9 +68,26 @@
   const ready = (im) => !!(im && im.complete && im.naturalWidth > 0);
   function whenLoaded(im) {
     if (ready(im)) return Promise.resolve(true);
+    // V56 · Una imagen que ya falló puede tener complete=true y naturalWidth=0:
+    // sus eventos ya se dispararon; esperar nuevos 'load/error' bloquea el boot.
+    if (im.complete) return Promise.resolve(false);
     return new Promise((res) => {
-      im.addEventListener('load', () => res(true), { once: true });
-      im.addEventListener('error', () => res(false), { once: true });
+      let settled = false;
+      const finish = (ok) => {
+        if (settled) return;
+        settled = true;
+        root.clearTimeout(timer);
+        im.removeEventListener('load', onLoad);
+        im.removeEventListener('error', onError);
+        res(ok);
+      };
+      const onLoad = () => finish(ready(im));
+      const onError = () => finish(false);
+      const timer = root.setTimeout(() => finish(ready(im)), 9000);
+      im.addEventListener('load', onLoad);
+      im.addEventListener('error', onError);
+      // Cierra la carrera si el recurso terminó de descargarse al enlazar eventos.
+      if (im.complete) finish(ready(im));
     });
   }
 
