@@ -75,7 +75,7 @@ test('V56: PWA precaches new files and invalidates V55 cache', () => {
   const sw = read('sw.js'), html = read('Se_Me_Fue_El_Camion.html');
   assert.match(sw, /camion-v57-thematic-villains/);
   for (const [asset, v] of [
-    ['css/toxifamilia_style.css', '56.0'],
+    ['css/toxifamilia_style.css', '57.0'],
     ['js/core/toxifamilia_style.js', '57.0']
   ]) {
     assert.ok(sw.includes(asset + '?v=' + v), 'PWA prefetch ' + asset);
