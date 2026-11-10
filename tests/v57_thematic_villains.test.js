@@ -92,7 +92,11 @@ test('V57: el pez solo hace daño durante la embestida anunciada, no por contact
   assert.equal(hurt, 0, 'aviso de ataque sin daño');
   f.state = 'charge'; f.stateT = 0;
   EN.update(W, P, DT, ctx, []);
-  assert.equal(hurt, 1, 'contacto durante la carga sí hace daño');
+  assert.equal(hurt, 0, 'incluso en carga, no daña fuera de su estanque');
+  P.water = z; P.submerged = true;
+  f.state = 'charge'; f.stateT = 0;
+  EN.update(W, P, DT, ctx, []);
+  assert.equal(hurt, 1, 'contacto dentro del agua durante la carga sí hace daño');
 });
 
 test('V57: el dron espera antes de disparar, marca un objetivo fijo y su plasma es finito', () => {
