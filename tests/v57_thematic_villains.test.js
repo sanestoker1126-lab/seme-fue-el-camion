@@ -73,6 +73,28 @@ test('V57: piraña permanece patrullando si Sofía no está en su estanque y avi
   assert.ok(noticeAt <= DT * 1.1);
 });
 
+test('V57: el pez solo hace daño durante la embestida anunciada, no por contacto pasivo', () => {
+  const W = world(), z = { id: 'test-lago', x1: 0, x2: 240, y: 0, y2: 160, deep: true };
+  W.waters = [z];
+  const f = EN.create('piranha', { x: 100, y: 80, waterZone: z, lane: { x1: 20, x2: 220 },
+    rng: () => 0.75, diff: NS.CONFIG.difficulty.normal });
+  f.cool = 99; f.dir = 1;
+  W.foes.push(f);
+  const P = player(100, 80); P.vy = 0; P.dashT = 0; P.kickT = 0;
+  let hurt = 0;
+  const ctx = { ...context(),
+    hurtbox: () => NS.util.bodyRect(P, 0.72, 0.86, P.h * 0.07),
+    hurt: () => { hurt++; return true; } };
+  EN.update(W, P, DT, ctx, []);
+  assert.equal(hurt, 0, 'patrulla sin contacto ofensivo');
+  f.state = 'windup'; f.stateT = 0;
+  EN.update(W, P, DT, ctx, []);
+  assert.equal(hurt, 0, 'aviso de ataque sin daño');
+  f.state = 'charge'; f.stateT = 0;
+  EN.update(W, P, DT, ctx, []);
+  assert.equal(hurt, 1, 'contacto durante la carga sí hace daño');
+});
+
 test('V57: el dron espera antes de disparar, marca un objetivo fijo y su plasma es finito', () => {
   const W = world();
   const f = EN.create('drone', { x: 0, y: -70, lane: { x1: -45, x2: 45 },
