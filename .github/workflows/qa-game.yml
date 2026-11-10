@@ -5,6 +5,9 @@ on:
   pull_request:
     branches: ["main"]
   workflow_dispatch:
+concurrency:
+  group: qa-\${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   tests:
     runs-on: ubuntu-latest
@@ -25,7 +28,7 @@ jobs:
           done
       - name: Pruebas del motor y niveles
         run: node --test tests/*.test.js
-      - name: Verificación de recorrido en misiones especiales
-        run: |
-          node tools/niveles/level_check.js . 16
-          node tools/niveles/level_check.js . 17
+      # Los índices 16 y 17 no son posiciones válidas de LEVEL_SEQUENCE;
+      # las misiones especiales se verifican por sus definiciones reales en v53/v57.
+      - name: Validar enemigos y mapas submarino/espacial
+        run: node --test tests/v53.test.js tests/v54.test.js tests/v57_thematic_villains.test.js
