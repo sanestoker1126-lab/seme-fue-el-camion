@@ -178,6 +178,15 @@
     else if (G.state === 'playing' || G.state === 'transition') { G.pause(); input.releaseAll(); audio.pause(); ui.show('pausePanel'); }
   }
 
+  // Avisos de combate útiles, limitados para no llenar la pantalla en móviles.
+  let combatHintT = -999;
+  function combatHint(message, priority = 3) {
+    const now = G.run ? G.run.t : (G.world ? G.world.t : 0);
+    if (now - combatHintT < 1.7) return;
+    combatHintT = now;
+    ui.toast(message, priority, 1.6);
+  }
+
   /* ---------- Eventos del juego → interfaz y audio ---------- */
   function handleEvents(list) {
     for (const e of list) {
@@ -193,6 +202,22 @@
           e.foe.bossHitStart = animT;
           G.shakeT = Math.max(G.shakeT || 0, 0.18);
           audio.bossCue(e.foe.kind, 'hit', e.foe.scene);
+          break;
+        case 'bossPhase':
+          // El cambio de fase tiene un único disparo por jefe al 50 % de vida.
+          if (e.foe) {
+            audio.bossCue(e.foe.kind, 'windup', e.foe.scene);
+            ui.toast('¡SEGUNDA FASE! ' + (e.foe.bossName || 'EL JEFE') + ' SE ACELERA', 4, 3);
+          }
+          break;
+        case 'bossBlock':
+          combatHint('EL JEFE BLOQUEA DE FRENTE · ESQUIVA Y ATACA POR DETRÁS', 3);
+          audio.sfx('alert'); break;
+        case 'clank':
+          combatHint('ARMADURA ACTIVA · ESPERA A QUE EL PERRO SE MAREE', 3);
+          audio.sfx('alert'); break;
+        case 'foeHit':
+          audio.sfx('stomp');
           break;
         case 'hurt': audio.sfx(e.kind === 'fall' ? 'hard' : 'hurt'); ui.hurtFlash(); break;
         case 'shieldBreak': audio.sfx('hurt'); break;
