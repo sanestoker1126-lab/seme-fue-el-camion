@@ -394,6 +394,99 @@
     }
   }
 
+  /* V56 · Capa de atmósfera urbana. Decoración determinista sin colisiones y
+     recortada al área visible; mantiene intactos fondos, parallax y plataformas. */
+  function drawToxiAtmosphere(G, V, T) {
+    const art = NS.TOXI_STYLE;
+    if (!art || G.room) return;
+    for (const sc of G.world.scenes) {
+      if (!inView(V, sc.x0, sc.startY, sc.x0 + sc.drawW, sc.endY)) continue;
+      const p = art.forScene(sc);
+      const x1 = Math.max(V.x1, sc.x0), x2 = Math.min(V.x2, sc.x0 + sc.drawW);
+      const y1 = Math.max(V.y1, sc.startY), y2 = Math.min(V.y2, sc.endY);
+      if (x2 <= x1 || y2 <= y1) continue;
+      const iw = x2 - x1, ih = y2 - y1;
+      ctx.save();
+      ctx.beginPath(); ctx.rect(x1, y1, iw, ih); ctx.clip();
+      // Velo muy tenue, sin oscurecer siluetas ni perder contraste del nivel.
+      fillRect(x1, y1, iw, ih, p.haze, p.intensity * 0.105);
+      const left = sc.x0 + 17, right = sc.x0 + sc.drawW - 17;
+      const first = Math.max(0, Math.floor((y1 - sc.startY) / 136));
+      const last = Math.min(Math.ceil((sc.endY - sc.startY) / 136), Math.ceil((y2 - sc.startY) / 136));
+      for (let n = first; n <= last; n++) {
+        const yy = sc.startY + 52 + n * 136;
+        const h = hash(n + 37, (sc.index + 1) * 53) / 997;
+        const drift = Math.sin(T * (p.motif === 'bubbles' ? 1.1 : 0.45) + n * 2.4) * (p.motif === 'bubbles' ? 9 : 3);
+        const px = left + (right - left) * (0.17 + h * 0.67);
+        if (p.motif === 'bubbles') {
+          ring(px + drift, yy - (T * 14 % 44), 5 + (n % 3) * 2, 6 + (n % 3) * 2, p.accent, 0.33, 1.5);
+          circle(px + 5, yy - 7, 1.5, '#c2faff', 0.65);
+        } else if (p.motif === 'stardust') {
+          line(px - 6, yy, px + 6, yy, p.accent, 0.34, 1.6);
+          line(px, yy - 6, px, yy + 6, p.edge, 0.3, 1.3);
+        } else if (p.motif === 'drip') {
+          line(px, yy - 19, px, yy + 11 + Math.sin(T + n) * 5, p.accent, 0.32, 2);
+          circle(px, yy + 16, 3, p.accent, 0.25);
+        } else if (p.motif === 'caution') {
+          line(left + 12, yy - 8, left + 37, yy - 8, p.accent, 0.35, 2);
+          for (let k = 0; k < 3; k++) line(left + 13 + k * 8, yy - 10, left + 19 + k * 8, yy - 3, p.edge, 0.4, 2);
+        } else if (p.motif === 'spores' || p.motif === 'smog') {
+          circle(px + drift, yy, 3 + n % 4, p.accent, 0.14 + 0.05 * Math.sin(T + n) ** 2);
+          ring(px - 13, yy - 13, 11, 7, p.edge, 0.07, 1);
+        } else if (p.motif === 'antenna') {
+          line(px, yy - 14, px, yy + 11, p.edge, 0.26, 1.4);
+          circle(px, yy - 14, 3 + Math.sin(T * 2 + n) * 1.2, p.accent, 0.38);
+        } else {
+          line(px - 12, yy + 6, px + 15, yy - 2, p.edge, 0.21, 2);
+          line(px - 8, yy - 6, px + 9, yy - 10, p.accent, 0.18, 2);
+        }
+      }
+      // Identidad independiente por tramo: señal que aparece solo cerca del inicio.
+      const plaqueY = sc.startY + 57;
+      if (plaqueY >= y1 - 32 && plaqueY <= y2 + 32) {
+        const x = sc.x0 + 12, w = Math.min(218, sc.drawW - 24);
+        fillRR(x, plaqueY - 15, w, 30, 6, '#09111d', 0.64);
+        fillRect(x + 2, plaqueY - 11, 3, 22, p.accent, 0.9);
+        text('TOXI / ' + p.tag, x + 12, plaqueY, 9, p.accent, 'left', 850);
+        line(x + 12, plaqueY + 9, x + w - 9, plaqueY + 9, p.edge, 0.58, 1);
+      }
+      ctx.restore();
+    }
+  }
+
+  /* El indicador de amenaza no cambia hitboxes ni timings de ataque.
+     Prioriza leer el amago, dirección de carga y momento de contraatacar. */
+  function drawToxiThreat(f, T) {
+    if (f.dead || !NS.TOXI_STYLE) return;
+    const p = NS.TOXI_STYLE.forEnemy(f.kind);
+    const flyer = f.kind === 'bat' || f.kind === 'pigeon';
+    const fy = flyer ? f.y : f.y - f.h * 0.55;
+    const pulse = 0.5 + 0.5 * Math.sin(T * 10 + f.phase);
+    if (f.isBoss && f.enraged) {
+      ring(f.x, fy, f.w * 0.78 + pulse * 4, f.h * 0.85 + pulse * 4, p.color, 0.2 + pulse * 0.18, 2.1);
+      for (let i = 0; i < 3; i++) {
+        const a = T * 1.8 + i * 2.094;
+        circle(f.x + Math.cos(a) * (f.w * 0.65), fy + Math.sin(a) * (f.h * 0.6), 2.6, p.color, 0.75);
+      }
+    }
+    if (['windup', 'aim', 'telegraph', 'alert'].includes(f.state)) {
+      const tipX = f.x + (f.dir || 1) * Math.max(20, f.w * 0.7);
+      ring(f.x, fy, Math.max(18, f.w * 0.63) + 3 * pulse, Math.max(16, f.h * 0.7) + 2 * pulse, p.color, 0.32 + 0.2 * pulse, 2.2);
+      line(f.x, fy, tipX, fy - 5, p.color, 0.55 + pulse * 0.26, 2.6);
+      tri(tipX, fy - 10, tipX + (f.dir || 1) * 11, fy - 5, tipX, fy, p.color, 0.75);
+      if (f.state === 'aim' || f.state === 'telegraph') {
+        ring(tipX + (f.dir || 1) * 14, fy - 5, 9, 9, p.color, 0.35 + 0.18 * pulse, 1.6);
+      }
+    } else if (f.state === 'charge') {
+      const d = f.dir || 1;
+      for (let i = 0; i < 3; i++) {
+        line(f.x - d * (12 + i * 9), fy - 10 + i * 6, f.x - d * (29 + i * 9), fy - 10 + i * 6, p.color, 0.42 - i * 0.11, 2);
+      }
+    } else if (f.state === 'dizzy') {
+      ring(f.x, flyer ? f.y + 12 : f.y + 2, Math.max(16, f.w * 0.55), 6, '#dbff7a', 0.45 + pulse * 0.2, 2.3);
+    }
+  }
+
   function drawFallbackScene(sc) {
     const x = sc.x0, y = sc.startY, w = sc.drawW, h = sc.drawH, school = sc.theme === 'escuela';
     fillRect(x, y, w, h, school ? '#233b4a' : '#342f36');
@@ -1375,6 +1468,7 @@
       const a = f.dead ? 1 - f.deadT / 0.45 : 1;
       const sk = f.kind === 'bravo' ? 'dog' : f.kind;
       const useSprite = !!ESPR[sk] && enemyReady(sk);
+      drawToxiThreat(f, T);
       drawBossFX(f, T);
       ctx.save();
       if (f.isBoss && f.flash > 0 && !f.dead) {
@@ -1852,7 +1946,7 @@
     ctx.setTransform(k, 0, 0, k, ox, oy);
     const V = { x1: G.cam.x - 40, x2: G.cam.x + v.w + 40, y1: G.cam.y - 60, y2: G.cam.y + v.h + 60 };
     const W = G.world;
-    if (!G.room) { drawBackdrop(G, V); drawScenes(G, V); drawNeighborhood(G, V, T); drawStreet(G, V, T); }
+    if (!G.room) { drawBackdrop(G, V); drawScenes(G, V); drawNeighborhood(G, V, T); drawStreet(G, V, T); drawToxiAtmosphere(G, V, T); }
     for (const r of W.rooms) drawRoomBackground(r, V);
     drawWaters(G, V, false);
     drawSolids(G, V);
