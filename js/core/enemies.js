@@ -22,7 +22,11 @@
     bat:    { flyer: true, w: 28, h: 20, hp: 1, wake: 175, speed: 155, chase: 2.4, alert: 0.4, stomp: true, dash: true, hitK: 1.4 },
     pigeon: { flyer: true, w: 30, h: 20, hp: 1, speed: 72, dropCD: 2.3, telegraph: 0.32, stomp: true, dash: true, hitK: 1.4 },
     kid:    { walker: true, w: 38, h: 48, hp: 1, speed: 43, chargeMul: 3.2, sight: 250, windup: 0.65, charge: 0.72, recover: 1.0, stomp: true, dash: 'dizzy', minPlatform: 120, hitKW: 1.7, hitKH: 1.5,
-              throwNear: 150, throwRange: 380, throwWindup: 0.5, throwCD: 2.0, stoneSpeed: 245 }
+              throwNear: 150, throwRange: 380, throwWindup: 0.5, throwCD: 2.0, stoneSpeed: 245 },
+    // V57: enemigos propios de submarino/espacio; no reutilizar palomas bajo el agua.
+    piranha:{ flyer: true, w: 30, h: 20, hp: 1, speed: 82, sight: 110, windup: 0.46, charge: 0.42, recover: 0.7, chargeMul: 2.15, stomp: true, dash: true, hitK: 1.22 },
+    shark:  { flyer: true, w: 82, h: 36, hp: 6, speed: 78, sight: 200, windup: 0.72, charge: 0.65, recover: 1.0, chargeMul: 2.2, stomp: true, dash: 'dizzy', hitK: 1.12 },
+    drone:  { flyer: true, w: 34, h: 28, hp: 1, speed: 73, sight: 350, windup: 0.64, recover: 0.7, shotSpeed: 205, cooldown: 2.4, stomp: true, dash: true, hitK: 1.18 }
   };
 
   function create(kind, o) {
@@ -53,6 +57,14 @@
       f.roostX = o.x; f.roostY = o.y; f.state = 'sleep';
     } else if (kind === 'pigeon') {
       f.lane = o.lane || { x1: o.x - 200, x2: o.x + 200 }; f.baseY = o.y; f.state = 'fly';
+    }
+    else if (kind === 'piranha' || kind === 'shark' || kind === 'drone') {
+      f.lane = o.lane || { x1: o.x - 150, x2: o.x + 150 };
+      f.baseY = o.y;
+      f.waterZone = o.waterZone || null;
+      f.state = 'fly';
+      // Empieza moviéndose lateralmente; ningún ataque sorpresa al aparecer.
+      f.cool = Math.max(0.7, f.cool);
     }
     return f;
   }
@@ -248,6 +260,77 @@
             f.cool = T.dropCD * f.reaction;
             setState(f, 'fly');
           }
+        }
+        break;
+      }
+      case 'piranha':
+      case 'shark': {
+        const z = f.waterZone;
+        // No atacan a Sofía desde fuera del agua: solo reaccionan al mismo estanque.
+        const swimming = z && P.water === z && !P.dead;
+        const safeX1 = z ? z.x1 + f.w * 0.52 + 4 : f.lane.x1;
+        const safeX2 = z ? z.x2 - f.w * 0.52 - 4 : f.lane.x2;
+        if (f.state === 'fly') {
+          f.x += f.dir * f.spd * dt;
+          if (f.x <= safeX1) { f.x = safeX1; f.dir = 1; }
+          if (f.x >= safeX2) { f.x = safeX2; f.dir = -1; }
+          f.y = f.baseY + Math.sin(f.t * 2.5 + f.phase) * 4;
+          if (swimming && f.cool <= 0 && visible && adx < T.sight && Math.abs(P.y - f.y) < 100) {
+            f.dir = Math.sign(dx) || f.dir;
+            setState(f, 'windup'); ev.push({ type: 'foeAlert', foe: f });
+          }
+        } else if (f.state === 'windup') {
+          // Aviso visual completo antes de cualquier embestida.
+          if (f.stateT >= T.windup * f.reaction) {
+            f.aimY = swimming ? P.y : f.baseY;
+            setState(f, 'charge');
+            ev.push({ type: 'foeCharge', foe: f });
+          }
+        } else if (f.state === 'charge') {
+          const minY = z ? z.y + f.h / 2 + 8 : f.baseY - 30;
+          const maxY = z ? z.y2 - f.h / 2 - 8 : f.baseY + 30;
+          f.x = Math.max(safeX1, Math.min(safeX2, f.x + f.dir * f.spd * T.chargeMul * dt));
+          f.y += Math.max(-f.spd * dt, Math.min(f.spd * dt, (f.aimY || f.baseY) - f.y));
+          f.y = Math.max(minY, Math.min(maxY, f.y));
+          if (f.stateT >= T.charge || f.x === safeX1 || f.x === safeX2) {
+            f.cool = (f.kind === 'shark' ? 1.8 : 1.5) * f.reaction;
+            setState(f, 'dizzy');
+          }
+        } else if (f.state === 'dizzy') {
+          // Ventana de contraataque visible: el tiburón es vulnerable al DASH.
+          f.y = f.baseY + Math.sin(f.t * 9) * 2;
+          if (f.stateT >= T.recover * f.reaction) setState(f, 'fly');
+        }
+        break;
+      }
+      case 'drone': {
+        if (f.state === 'fly') {
+          f.x += f.dir * f.spd * 0.7 * dt;
+          if (f.x < f.lane.x1) { f.x = f.lane.x1; f.dir = 1; }
+          if (f.x > f.lane.x2) { f.x = f.lane.x2; f.dir = -1; }
+          f.y = f.baseY + Math.sin(f.t * 2 + f.phase) * 8;
+          if (!P.dead && visible && f.cool <= 0 && Math.abs(P.x - f.x) < T.sight &&
+              Math.abs(P.y - f.y) < 240 && clearLine(W, f.x, f.y, P.x, P.y)) {
+            f.targetX = P.x; f.targetY = P.y;
+            f.dir = Math.sign(dx) || f.dir;
+            setState(f, 'aim'); ev.push({ type: 'foeAlert', foe: f });
+          }
+        } else if (f.state === 'aim') {
+          // Apuntado fijo: el jugador puede esquivar después del aviso.
+          if (f.stateT >= T.windup * f.reaction) {
+            const vx = f.targetX - f.x, vy = f.targetY - f.y;
+            const dist = Math.hypot(vx, vy) || 1;
+            const speed = T.shotSpeed * f.shotMul;
+            W.shots.push({ kind: 'plasma', x: f.x + f.dir * 13, y: f.y,
+              vx: vx / dist * speed, vy: vy / dist * speed,
+              g: 0, r: 7, life: 2.4, from: f.id });
+            ev.push({ type: 'shoot', foe: f });
+            f.cool = T.cooldown * f.reaction;
+            setState(f, 'fly');
+          }
+        } else if (f.state === 'dizzy') {
+          f.y = f.baseY + Math.sin(f.t * 18) * 3;
+          if (f.stateT >= T.recover) { f.cool = Math.max(f.cool, 0.6); setState(f, 'fly'); }
         }
         break;
       }
