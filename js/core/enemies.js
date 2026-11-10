@@ -283,6 +283,14 @@
   function hit(f, how, ev, srcX) {
     if (f.hitCD > 0 || f.dead) return false;
     f.hp -= 1;
+    // V56 · Segunda fase moderada del jefe. No añade ataques invisibles ni
+    // altera la ventana de aviso: solo acelera un 10 % el desplazamiento.
+    // Se anuncia una sola vez al pasar la mitad de vida.
+    if (f.isBoss && f.hp > 0 && !f.enraged && f.hp <= Math.floor(f.maxHp / 2)) {
+      f.enraged = true;
+      f.spd *= 1.10;
+      ev.push({ type: 'bossPhase', foe: f });
+    }
     f.hitCD = NS.CONFIG.combat.enemyHitCooldown;
     f.flash = 0.2;
     if (f.hp <= 0) { f.dead = true; f.deadT = 0; ev.push({ type: 'foeKilled', foe: f, how }); }
