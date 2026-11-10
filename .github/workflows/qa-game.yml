@@ -1,0 +1,31 @@
+name: QA videojuego
+on:
+  push:
+    branches: ["feature/**"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 10
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+      - name: Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Revisar sintaxis de JavaScript
+        run: |
+          for file in js/core/*.js js/app/*.js; do
+            node --check "$file"
+          done
+      - name: Pruebas del motor y niveles
+        run: node --test tests/*.test.js
+      - name: Verificación de recorrido en misiones especiales
+        run: |
+          node tools/niveles/level_check.js . 16
+          node tools/niveles/level_check.js . 17
