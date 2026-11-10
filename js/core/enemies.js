@@ -24,8 +24,8 @@
     kid:    { walker: true, w: 38, h: 48, hp: 1, speed: 43, chargeMul: 3.2, sight: 250, windup: 0.65, charge: 0.72, recover: 1.0, stomp: true, dash: 'dizzy', minPlatform: 120, hitKW: 1.7, hitKH: 1.5,
               throwNear: 150, throwRange: 380, throwWindup: 0.5, throwCD: 2.0, stoneSpeed: 245 },
     // V57: enemigos propios de submarino/espacio; no reutilizar palomas bajo el agua.
-    piranha:{ flyer: true, w: 30, h: 20, hp: 1, speed: 82, sight: 110, windup: 0.46, charge: 0.42, recover: 0.7, chargeMul: 2.15, stomp: true, dash: true, hitK: 1.22 },
-    shark:  { flyer: true, w: 82, h: 36, hp: 6, speed: 78, sight: 200, windup: 0.72, charge: 0.65, recover: 1.0, chargeMul: 2.2, stomp: true, dash: 'dizzy', hitK: 1.12 },
+    piranha:{ flyer: true, w: 30, h: 20, hp: 1, speed: 82, sight: 110, contactRequiresCharge: true, windup: 0.46, charge: 0.42, recover: 0.7, chargeMul: 2.15, stomp: true, dash: true, hitK: 1.22 },
+    shark:  { flyer: true, w: 82, h: 36, hp: 6, speed: 78, sight: 200, contactRequiresCharge: true, windup: 0.72, charge: 0.65, recover: 1.0, chargeMul: 2.2, stomp: true, dash: 'dizzy', hitK: 1.12 },
     drone:  { flyer: true, w: 34, h: 28, hp: 1, speed: 73, sight: 350, windup: 0.64, recover: 0.7, shotSpeed: 205, cooldown: 2.4, stomp: true, dash: true, hitK: 1.18 }
   };
 
@@ -476,7 +476,9 @@
         P.noCut = true;
         f.hitCD = 0.4;
         ev.push({ type: 'clank', foe: f });
-      } else if (def) {
+      } else if (def && (!TYPES[f.kind].contactRequiresCharge || f.state === 'charge')) {
+        // V57: tocar un pez durante su patrulla/aviso no hace daño invisible.
+        // Solo la embestida telegráfica es ofensiva; dash/pisotón siguen funcionando.
         ctx.hurt(f.x, b.y1 + (b.y2 - b.y1) / 2, f.kind);
       }
     }
