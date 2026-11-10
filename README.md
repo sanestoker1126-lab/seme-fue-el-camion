@@ -46,7 +46,7 @@ Opciones incluye **Aspecto de Sofía** (original / uniforme / rosa).
 node --test tests/*.test.js
 ```
 
-Versión actual: **V55** (`js/core/config.js` → 55.0.0).
+Versión de desarrollo: **V57** (`js/core/config.js` → 57.0.0). La rama principal publicada continúa siendo V56 hasta fusionar este PR.
 
 ## V54 · Submarino y Espacio ampliados
 
@@ -80,3 +80,11 @@ de respaldo V54. La PWA incluye las capas en su precarga para uso sin conexión.
 
 El arte es vectorial y original del proyecto; no recupera fotografías/capas de las
 imágenes V53 aplanadas. El nivel y las colisiones no fueron modificados en V55.
+
+## V57 · Villanos especiales y validación automática
+
+El nivel submarino incorpora pirañas que nadan dentro de estanques reales y un tiburón guardián. El nivel espacial utiliza drones que marcan su objetivo antes de disparar plasma. Son diseños temporales en Canvas (el guion de La Toxifamilia aún está en redacción), no spritesheets canónicos.
+
+Los nuevos enemigos conservan los recorridos V54/V55 y la física de 60 FPS. Los peces sólo causan daño por contacto durante una embestida anunciada; se ha corregido el envío de la segunda fase de los jefes a la interfaz. Todos los módulos JS/CSS comparten la versión de caché 57.0, y CI ejecuta las pruebas del motor en cada PR.
+
+Detalles: docs/TOXIFAMILIA_V57_VILLANOS_QA.md. Para revisar localmente: node --test tests/*.test.js.
