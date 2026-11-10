@@ -54,7 +54,7 @@ test('V56: boss phase se dispara una vez al bajar a mitad de vida', () => {
   assert.equal(NS.Enemies.hit(boss, 'kick', events, 90), true);
   assert.equal(boss.hp, 2);
   assert.equal(boss.enraged, true);
-  assert.equal(boss.spd, 110);
+  assert.ok(Math.abs(boss.spd - 110) < 1e-9, 'segundo estado +10 % velocidad');
   boss.hitCD = 0;
   NS.Enemies.hit(boss, 'kick', events, 90);
   assert.equal(events.filter(e => e.type === 'bossPhase').length, 1);
