@@ -32,7 +32,10 @@
     chile: { color:'#ff9d56', warning:'CHILE · CUIDADO CON SEMILLAS', emblem:'✦' },
     bat: { color:'#b695fa', warning:'MURCIÉLAGO · CAMBIA DE ALTURA', emblem:'✦' },
     pigeon: { color:'#80e5eb', warning:'PALOMA · NO PASES DEBAJO', emblem:'◆' },
-    kid: { color:'#f5d071', warning:'RIVAL · ESQUIVA / CONTRAATACA', emblem:'!' }
+    kid: { color:'#f5d071', warning:'RIVAL · ESQUIVA / CONTRAATACA', emblem:'!' },
+    piranha: { color:'#7dffe0', warning:'PIRAÑA · EMBISTE SOLO EN EL AGUA', emblem:'!' },
+    shark: { color:'#6ff2ff', warning:'TIBURÓN · ESPERA SU MAREO', emblem:'!' },
+    drone: { color:'#b497ff', warning:'DRON · EVITA EL DISPARO MARCADO', emblem:'✦' }
   };
   const FALLBACK = Object.freeze({ tag:'RUTA ALTERADA', accent:'#b7f560', edge:'#ff77bd', haze:'#1a2731', motif:'poster', intensity:0.5 });
   const PROFILES = Object.freeze(Object.fromEntries(Object.entries(P).map(([id, p])=>[id,Object.freeze(p)])));
