@@ -112,7 +112,27 @@
       entryDamp: 0.3,       // al caer al agua la velocidad vertical se amortigua (no hay daño por caída)
       climbUp: 30,          // altura de orilla que se sube sola nadando hacia ella
       wadeMul: 0.68,        // agua baja: velocidad de carrera
-      wadeJump: 0.92
+      wadeJump: 0.92,
+      // V58 · Mar abierto (zonas con `sea`): flotación neutra por debajo de `seaBand` u de la superficie.
+      seaBand: 40,
+      seaDrag: 3.2          // freno vertical sin entrada (se queda a la profundidad donde está)
+    },
+
+    // V58 · Tirolesas. Velocidades en u/s. La mano queda `hang` u sobre la caja de Sofía.
+    zip: {
+      min: 170,             // nunca se queda parada: siempre avanza hacia el ancla baja
+      max: 560,
+      accel: 900,           // × seno de la pendiente
+      push: 70,             // empuje fijo (cables casi horizontales)
+      hang: 6,
+      grab: 13,             // tolerancia vertical para colgarse
+      edge: 6,              // no se cuelga en los últimos 6 u de cada extremo
+      endPad: 10,           // se suelta 10 u antes del ancla baja
+      jumpMul: 0.86,        // SALTAR colgada: salto algo menor que el completo, conserva el impulso
+      cooldown: 0.42,       // tras soltarse no vuelve a colgarse de inmediato
+      dropVy: 120,
+      endKeep: 0.72,        // fracción de velocidad que conserva al llegar al final
+      landKeep: 0.55
     },
 
     difficulty: {

@@ -20,7 +20,8 @@
       kickT: 0, kickCD: 0,
       airTopFoot: footY, prevFoot: footY, state: 'idle', stateT: 0, animT: 0,
       shield: false, magnetT: 0, dead: false, cheer: false, onSlip: false, frozen: false,
-      water: null, submerged: false, waterT: 0, swimCD: 0, leapT: 0, wade: null, wadeT: 0, waterBelow: null   // V52: agua
+      water: null, submerged: false, waterT: 0, swimCD: 0, leapT: 0, wade: null, wadeT: 0, waterBelow: null,  // V52: agua
+      zip: null, zipS: 0, zipV: 0, zipCD: 0, zipT: 0                                                         // V58: tirolesa
     };
   }
 
@@ -208,9 +209,13 @@
     if (!impulse && P.dashT <= 0) {
       if (down) P.vy = Math.min(WT.diveMax, P.vy + WT.diveAccel * dt);
       else if (up && !atSurface) P.vy = Math.max(-WT.riseMax, P.vy - WT.riseAccel * dt);
-      else {
+      else if (!z.sea || P.y <= floatY + WT.seaBand) {
         P.vy += (floatY - P.y) * WT.buoyK * dt;
         P.vy *= Math.max(0, 1 - WT.buoyDamp * dt);
+      } else {
+        // V58 · Mar abierto: con el traje de buzo la flotación es neutra. Sin entrada, Sofía se queda donde está
+        // (el resorte de las pozas, proporcional a la profundidad, la dispararía hacia arriba en un mar hondo).
+        P.vy *= Math.max(0, 1 - WT.seaDrag * dt);
       }
     } else if (P.dashT > 0) P.vy *= Math.pow(0.2, dt);
     const prevX = P.x, prevY = P.y;
@@ -222,7 +227,9 @@
     P.y += P.vy * dt;
     resolveY(P, W, prevY, ev);
     if (P.ground) P.ground = null;            // en agua profunda no se pisa: se nada
-    if (P.y + P.h / 2 > z.y2) { P.y = z.y2 - P.h / 2; if (P.vy > 0) P.vy = 0; }
+    // V58 · Desagües: huecos del fondo por los que el agua cae en cascada. Buceando por uno se sale por abajo.
+    const inDrain = !!(z.drains && z.drains.some((d) => P.x - P.w / 2 >= d.x1 - 0.5 && P.x + P.w / 2 <= d.x2 + 0.5));
+    if (!inDrain && P.y + P.h / 2 > z.y2) { P.y = z.y2 - P.h / 2; if (P.vy > 0) P.vy = 0; }
     if (P.leapT <= 0 && P.y < floatY - 7) { P.y = floatY - 7; if (P.vy < 0) P.vy *= 0.3; }
     P.submerged = P.y - P.h / 2 > z.y + 3;
     // Orilla a la altura del agua: nadar contra ella la sube.
@@ -231,6 +238,98 @@
       if (pl) { P.water = null; P.submerged = false; ev.push({ type: 'waterExit', zone: z, x: P.x, climb: true }); }
     }
     P.airTopFoot = P.y + P.h / 2;              // el agua corta la caída: no hay daño al salir
+    return ev;
+  }
+
+  /* ---------- V58 · Tirolesas ----------
+     Cable recto entre un ancla alta (ax, ay) y una baja (bx, by). Sofía se cuelga al tocarlo en el aire: el cable
+     queda `hang` u por encima de su caja (la mano del brazo levantado). Se desliza hacia el ancla baja acelerando
+     con la pendiente. SALTAR la suelta con un salto que conserva el impulso, BAJAR la deja caer y al final del
+     cable se suelta sola. Mientras cuelga no acumula altura de caída: aterrizar tras una tirolesa no duele.
+     Se respeta el mundo: un sólido en el camino la detiene y sus pies se apoyan en la plataforma que crucen. */
+  const zipY = (z, x) => z.ay + (x - z.ax) * z.slope;
+
+  function tryGrabZip(P, W, prevX, prevY, ev) {
+    const Z = NS.CONFIG.zip, PH = NS.CONFIG.phys;
+    const top = P.y - P.h / 2 - Z.hang, prevTop = prevY - P.h / 2 - Z.hang;
+    for (const z of W.zips) {
+      const lo = Math.min(z.ax, z.bx), hi = Math.max(z.ax, z.bx);
+      if (P.x < lo + Z.edge || P.x > hi - Z.edge) continue;
+      // Toca el cable si la mano queda a menos de `grab` u, o si lo cruzó durante este paso (caídas rápidas).
+      const d = top - zipY(z, P.x), pd = prevTop - zipY(z, prevX);
+      if (Math.abs(d) > Z.grab && !(d * pd < 0 && Math.abs(d) < 40 && Math.abs(pd) < 40)) continue;
+      const s = (P.x - z.ax) / z.ux;                     // distancia recorrida desde el ancla alta
+      if (s < 0 || s > z.len - Z.endPad - 12) continue;  // el último tramo ya no vale la pena: está llegando
+      P.zip = z; P.zipS = s; P.zipT = 0;
+      P.zipV = Math.min(Z.max, Math.max(Z.min, P.vx * z.ux + P.vy * z.uy));
+      P.x = z.ax + z.ux * s; P.y = z.ay + z.uy * s + P.h / 2 + Z.hang;
+      P.vx = z.ux * P.zipV; P.vy = z.uy * P.zipV;
+      P.dashT = 0; P.ground = null; P.coyote = 0; P.jumpBuffer = 0; P.dropT = 0; P.noCut = false;
+      P.airDashes = PH.airDashes;
+      P.airTopFoot = P.y + P.h / 2;
+      P.face = z.ux < 0 ? -1 : 1;
+      ev.push({ type: 'zipGrab', zip: z });
+      return true;
+    }
+    return false;
+  }
+
+  function zipStep(P, W, inp, dt, ev) {
+    const Z = NS.CONFIG.zip, PH = NS.CONFIG.phys, z = P.zip;
+    const prevX = P.x, prevY = P.y, prevFoot = prevY + P.h / 2;
+    P.prevFoot = prevFoot; P.ground = null; P.wade = null; P.onSlip = false;
+    P.zipT += dt;
+    const release = (cd) => { P.zip = null; P.zipCD = cd; P.airTopFoot = P.y + P.h / 2; };
+    // La patada funciona colgada: sirve para barrer a quien esté en el camino.
+    if (inp.kickPressed && P.kickCD <= 0 && P.stunT <= 0) { P.kickT = 0.22; P.kickCD = 0.45; ev.push({ type: 'kick' }); }
+    if ((inp.jumpPressed && P.stunT <= 0.1) || inp.downPressed) {
+      const dir = (inp.right ? 1 : 0) - (inp.left ? 1 : 0);
+      if (inp.jumpPressed && P.stunT <= 0.1) {
+        P.vx = z.ux * P.zipV + dir * 60; P.vy = PH.jump * Z.jumpMul; P.noCut = false;
+        release(Z.cooldown);
+        ev.push({ type: 'zipJump', zip: z }); ev.push({ type: 'jump' });
+      } else {
+        P.vx = z.ux * P.zipV * 0.5; P.vy = Math.max(Z.dropVy, z.uy * P.zipV);
+        release(Z.cooldown);
+        ev.push({ type: 'zipDrop', zip: z });
+      }
+      P.x += P.vx * dt; resolveX(P, W, prevX, ev);
+      P.y += P.vy * dt; resolveY(P, W, prevY, ev);
+      P.ground = null;
+      P.airTopFoot = P.y + P.h / 2;
+      return ev;
+    }
+    P.zipV = Math.min(Z.max, Math.max(Z.min, P.zipV + (Z.accel * z.sin + Z.push) * dt));
+    P.zipS += P.zipV * dt;
+    const ended = P.zipS >= z.len - Z.endPad;
+    if (ended) P.zipS = z.len - Z.endPad;
+    P.x = z.ax + z.ux * P.zipS; P.y = z.ay + z.uy * P.zipS + P.h / 2 + Z.hang;
+    P.vx = z.ux * P.zipV; P.vy = z.uy * P.zipV; P.face = z.ux < 0 ? -1 : 1;
+    const wantX = P.x, wantY = P.y;
+    resolveX(P, W, prevX, ev);
+    resolveY(P, W, prevY, ev);
+    let landed = P.ground;
+    if (!landed) { const pl = findOneWayLanding(P, W, prevFoot); if (pl) { P.y = pl.y - P.h / 2; landed = pl; } }
+    if (landed && (landed.kind === 'bounce' || landed.kind === 'pigeon')) {
+      // Un trampolín en el camino la lanza igual que si cayera sobre él.
+      P.vy = inp.jumpHeld ? PH.bounceHeldVy : PH.bounceVy; P.noCut = true; P.ground = null;
+      release(Z.cooldown);
+      ev.push({ type: 'zipEnd', zip: z }); ev.push({ type: 'bounce', plat: landed, fall: 0 });
+    } else if (landed) {
+      P.ground = landed; P.vy = 0; P.vx *= Z.landKeep;
+      release(0.15);
+      ev.push({ type: 'zipEnd', zip: z, landed: true });
+      ev.push({ type: 'land', fall: 0, plat: landed, offset: Math.abs(P.x - (landed.x1 + landed.x2) / 2) });
+    } else if (Math.abs(P.x - wantX) > 0.01 || Math.abs(P.y - wantY) > 0.01) {
+      P.vx = 0; P.vy = Math.max(0, P.vy);                 // un sólido cortó el paso
+      release(Z.cooldown);
+      ev.push({ type: 'zipEnd', zip: z, blocked: true });
+    } else if (ended) {
+      P.vx = z.ux * P.zipV * Z.endKeep; P.vy = Math.max(0, z.uy * P.zipV) * Z.endKeep;
+      release(Z.cooldown);
+      ev.push({ type: 'zipEnd', zip: z });
+    }
+    P.airTopFoot = P.y + P.h / 2;
     return ev;
   }
 
@@ -253,6 +352,14 @@
     P.kickCD = Math.max(0, P.kickCD - dt);
     if (P.dashT > 0) { P.dashT = Math.max(0, P.dashT - dt); if (P.dashT === 0) ev.push({ type: 'dashEnd' }); }
     P.leapT = Math.max(0, P.leapT - dt);
+    P.zipCD = Math.max(0, (P.zipCD || 0) - dt);
+
+    // 0) V58 · Colgada de una tirolesa (si el cable entra en agua profunda, la suelta y nada).
+    if (P.zip) {
+      const zw = waterAt(W, P);
+      if (zw && zw.deep) { P.zip = null; P.zipCD = 0.3; }
+      else return zipStep(P, W, inp, dt, ev);
+    }
 
     // 0) V52 · Agua profunda: se nada (mientras sale de un salto, la zona se ignora hasta que deja el agua).
     let zone = waterAt(W, P);
@@ -343,7 +450,7 @@
       P.vx = P.face * PH.dashSpeed;
       P.vy = 0;
     } else {
-      let g = PH.gravity;
+      let g = PH.gravity * (W.gravityMul || 1);          // V58: gravedad propia del mundo (órbita)
       if (P.vy < 0 && !inp.jumpHeld && !P.noCut) g *= PH.jumpCutMul;
       else if (Math.abs(P.vy) < PH.apexBand) g *= PH.apexGravityMul;
       else if (P.vy > 0) g *= PH.fallGravityMul;
@@ -393,6 +500,8 @@
       for (const z of W.waters) if (z.deep && P.x >= z.x1 && P.x <= z.x2 && z.y - foot >= 0 && z.y - foot < 95) { P.waterBelow = z; break; }
     }
     if (P.wade && P.ground && Math.abs(P.vx) > 110 && Math.floor(P.wadeT * 4) !== Math.floor((P.wadeT - dt) * 4)) ev.push({ type: 'wadeSplash', zone: P.wade, x: P.x });
+    // V58 · Tirolesa: en el aire, al tocar un cable se cuelga (no recién golpeada ni recién soltada).
+    if (!P.ground && P.zipCD <= 0 && P.hurtT <= 0.05 && W.zips && W.zips.length) tryGrabZip(P, W, prevX, prevY, ev);
     // Teja floja: pisarla la hace temblar; medio segundo después se cae (el juego avisa con un evento).
     if (P.ground && P.ground.kind === 'crumble' && P.ground.crState === 'solid') {
       P.ground.crState = 'shake'; P.ground.crT = 0;
@@ -415,6 +524,7 @@
     }
     else if (P.leapT > 0 && !P.ground && P.vy < 0 && P.hurtT <= 0) s = 'waterLeap';
     else if (P.hurtT > 0) s = 'hurt';
+    else if (P.zip) s = 'zip';
     else if (P.kickT > 0) s = 'kick';
     else if (P.dashT > 0) s = 'dash';
     else if (P.landT > 0 && P.ground) s = 'land';
@@ -429,5 +539,13 @@
     return s;
   }
 
-  NS.Physics = { createPlayer, updatePlatforms, stepPlayer, updateState, isSlippery, waterAt, floatYOf };
+  /** Crea una tirolesa a partir de sus dos anclas (en cualquier orden): la alta es la de menor y. */
+  function makeZip(x1, y1, x2, y2, extra) {
+    const hi = y1 <= y2 ? [x1, y1, x2, y2] : [x2, y2, x1, y1];
+    const [ax, ay, bx, by] = hi, len = Math.hypot(bx - ax, by - ay);
+    if (!(Math.abs(bx - ax) >= 40) || !(len > 0)) throw new Error('tirolesa demasiado vertical o sin longitud');
+    return Object.assign({ ax, ay, bx, by, len, ux: (bx - ax) / len, uy: (by - ay) / len, sin: (by - ay) / len, slope: (by - ay) / (bx - ax) }, extra || {});
+  }
+
+  NS.Physics = { createPlayer, updatePlatforms, stepPlayer, updateState, isSlippery, waterAt, floatYOf, makeZip, zipY };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
