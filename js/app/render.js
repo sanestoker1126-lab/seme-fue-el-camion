@@ -476,7 +476,7 @@
   function drawToxiThreat(f, T) {
     if (f.dead || !NS.TOXI_STYLE) return;
     const p = NS.TOXI_STYLE.forEnemy(f.kind);
-    const flyer = f.kind === 'bat' || f.kind === 'pigeon';
+    const flyer = !!(NS.Enemies.TYPES[f.kind] && NS.Enemies.TYPES[f.kind].flyer);
     const fy = flyer ? f.y : f.y - f.h * 0.55;
     const pulse = 0.5 + 0.5 * Math.sin(T * 10 + f.phase);
     if (f.isBoss && f.enraged) {
@@ -1352,11 +1352,11 @@
     fillRect(x - 3, y - 1, 6, 4, '#ffe14a');
   }
 
-  const BOSS_GLOW = { dog: '#ff984f', kid: '#ff6868', chile: '#ff593f', bat: '#b48cff', pigeon: '#63d9ed', bravo: '#ff625b', rat: '#d9ff65' };
+  const BOSS_GLOW = { dog: '#ff984f', kid: '#ff6868', chile: '#ff593f', bat: '#b48cff', pigeon: '#63d9ed', bravo: '#ff625b', rat: '#d9ff65', piranha: '#76ffca', shark: '#6cefff', drone: '#b69bff' };
   function drawBossFX(f, T) {
     if (!f.isBoss) return;
     const color = BOSS_GLOW[f.kind] || '#ffd35a', cx = f.x;
-    const cy = f.y - (f.kind === 'bat' || f.kind === 'pigeon' ? 0 : f.h * 0.54);
+    const cy = f.y - (NS.Enemies.TYPES[f.kind]?.flyer ? 0 : f.h * 0.54);
     const pulse = 0.5 + 0.5 * Math.sin(T * 4.5 + f.phase);
     ellipse(cx, f.y + 1, f.w * (0.66 + pulse * 0.12), 4, color, 0.22);
     ring(cx, cy, f.w * (0.56 + pulse * 0.08), f.h * 0.58, color, 0.18 + pulse * 0.1, 1.6);
@@ -1496,6 +1496,62 @@
       else if (f.dead) ctx.globalAlpha = a;
       const b = Math.sin(t9 + f.x) * 1.5, d = f.dir, fl = f.flash > 0;
       if (useSprite) { drawEnemySprite(f, T, sk); }
+      else if (f.kind === 'piranha' || f.kind === 'shark') {
+        // V57: siluetas acuáticas con hitbox próxima al cuerpo; giro horizontal,
+        // cola y aletas animadas. No genera ni requiere sprites imaginarios.
+        const shark = f.kind === 'shark', w = f.w, h = f.h;
+        const tail = Math.sin(T * (shark ? 11 : 18) + f.phase) * h * 0.26;
+        const body = fl ? '#ffffff' : shark ? '#4d8cab' : '#37cfa0';
+        const dorsal = shark ? '#31556f' : '#178d7b';
+        ctx.save();
+        ctx.translate(f.x, f.y);
+        if (d < 0) ctx.scale(-1, 1);
+        // Cola que no sobrepasa más de media anchura total del box visible.
+        tri(-w * 0.27, 0, -w * 0.49, -h * 0.38 + tail, -w * 0.49, h * 0.38 + tail, dorsal);
+        ellipse(0, 0, w * 0.35, h * 0.4, body);
+        tri(-w * 0.15, -h * 0.26, 0, -h * 0.56, w * 0.09, -h * 0.22, dorsal);
+        tri(-w * 0.08, h * 0.24, -w * 0.2, h * 0.52, w * 0.1, h * 0.29, dorsal);
+        // Hocico, ojo grande, boca reconocible y dientes del tiburón.
+        ellipse(w * 0.23, -h * 0.03, w * 0.21, h * 0.22, body);
+        line(w * 0.18, h * 0.17, w * 0.45, h * 0.18, '#072e39', 1, shark ? 3 : 1.6);
+        if (shark) {
+          for (let tooth = 0; tooth < 3; tooth++) {
+            const tx = w * (0.23 + tooth * 0.085);
+            tri(tx, h * 0.16, tx + w * 0.035, h * 0.3, tx + w * 0.065, h * 0.16, '#e9faff');
+          }
+        }
+        circle(w * 0.22, -h * 0.12, Math.max(2.4, h * 0.09), '#061927');
+        circle(w * 0.24, -h * 0.14, Math.max(1, h * 0.03), '#ffffff');
+        if (f.state === 'windup') circle(w * 0.21, -h * 0.11, h * 0.16, '#ff6f83', 0.2);
+        ctx.restore();
+        if (f.state === 'windup') bang(f.x, f.y - h * 0.85, T);
+      }
+      else if (f.kind === 'drone') {
+        // Antena, rotores y núcleo pulsante. Apuntado representado con
+        // línea discontinua de advertencia (el disparo llegará después).
+        const w = f.w, h = f.h, pulse = 0.55 + 0.45 * Math.sin(T * 9 + f.phase);
+        if (f.state === 'aim') {
+          const tx = Number.isFinite(f.targetX) ? f.targetX : f.x + d * 50;
+          const ty = Number.isFinite(f.targetY) ? f.targetY : f.y;
+          ctx.save();
+          ctx.setLineDash([7, 7]);
+          line(f.x, f.y, tx, ty, '#da9aff', 0.35 + pulse * 0.25, 1.8);
+          ctx.setLineDash([]);
+          ring(tx, ty, 12 + pulse * 3, 12 + pulse * 3, '#ff9be0', 0.45, 1.8);
+          ctx.restore();
+        }
+        line(f.x - w * 0.35, f.y - h * 0.07, f.x - w * 0.66, f.y - h * 0.28, '#99d3e6', 0.9, 3);
+        line(f.x + w * 0.35, f.y - h * 0.07, f.x + w * 0.66, f.y - h * 0.28, '#99d3e6', 0.9, 3);
+        ellipse(f.x - w * 0.68, f.y - h * 0.33, w * 0.26, 2, '#d0acff', 0.7);
+        ellipse(f.x + w * 0.68, f.y - h * 0.33, w * 0.26, 2, '#d0acff', 0.7);
+        fillRR(f.x - w * 0.38, f.y - h * 0.4, w * 0.76, h * 0.79, 5,
+          fl ? '#ffffff' : '#59658c', 1);
+        fillRR(f.x - w * 0.25, f.y - h * 0.24, w * 0.5, h * 0.43, 4, '#18243d');
+        circle(f.x, f.y - h * 0.04, h * 0.16 + pulse, f.state === 'aim' ? '#ff85d9' : '#8bf4f8');
+        circle(f.x - 1, f.y - h * 0.09, 1.8, '#ffffff');
+        line(f.x, f.y - h * 0.4, f.x, f.y - h * 0.64, '#9acbd1', 0.9, 2);
+        circle(f.x, f.y - h * 0.7, 2.5, '#ffc4f0');
+      }
       else if (f.kind === 'kid') {
         const s = f.isBoss ? 1.12 : 1, wind = f.state === 'windup', charge = f.state === 'charge', dizzy = f.state === 'dizzy';
         const torsoY = f.y - 30 * s + b;
@@ -1579,6 +1635,14 @@
     for (const s of G.world.shots) {
       if (s.x < V.x1 || s.x > V.x2 || s.y < V.y1 || s.y > V.y2) continue;
       if (s.kind === 'poop') { circle(s.x, s.y, 7, '#ffffff', 0.25); circle(s.x, s.y, 4.5, '#f2f2ea'); }
+      else if (s.kind === 'plasma') {
+        const dd = Math.hypot(s.vx, s.vy) || 1;
+        line(s.x - s.vx / dd * 14, s.y - s.vy / dd * 14,
+          s.x, s.y, '#be8cff', 0.7, 3);
+        circle(s.x, s.y, s.r + 5, '#9e79ff', 0.16);
+        circle(s.x, s.y, s.r, '#d59bff', 0.92);
+        circle(s.x, s.y, 2.4, '#ffffff');
+      }
       else if (s.kind === 'stone') {
         circle(s.x, s.y + 1, s.r + 2, '#0a0806', 0.3);          // sombra/contorno
         circle(s.x, s.y, s.r, '#6f655a');                        // piedra

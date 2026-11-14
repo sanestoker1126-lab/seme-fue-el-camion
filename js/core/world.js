@@ -376,11 +376,23 @@
       reserve(arena, bossX - half, bossX + half);
       let flyY = arena.y;
       if (bossDef.kind === 'bat') { const l = lidAt(bossX); flyY = l && arena.y - l.y >= 110 ? l.y + (l.h || 10) + 14 : arena.y - 84; }
-      else if (bossDef.kind === 'pigeon') flyY = arena.y - 84;
+      else if (bossDef.kind === 'pigeon' || bossDef.kind === 'drone') flyY = arena.y - 84;
+      // Jefe marino: está dentro del último estanque profundo, no levitando
+      // en la superficie de salida. Conserva el orden del recorrido.
+      const bossWater = bossDef.kind === 'shark'
+        ? W.waters.filter((z) => z.scene === sc.index && z.deep).slice(-1)[0] : null;
+      if (bossWater) {
+        bossX = (bossWater.x1 + bossWater.x2) / 2;
+        flyY = bossWater.y + (bossWater.y2 - bossWater.y) * 0.52;
+      }
       const boss = EN.create(bossDef.kind, {
         id: scope + ':jefe', x: bossX, y: flyY, plat: arena, scene: sc.index,
         lane: { x1: arena.x1 + 26, x2: arena.x2 - 26 },
-        region: 'main', diff, rng, isBoss: true, bossName: bossDef.name, hp: bossDef.hp
+        region: 'main', diff, rng, isBoss: true, bossName: bossDef.name, hp: bossDef.hp,
+        waterZone: bossWater, lane: bossWater
+          ? { x1: bossWater.x1 + 25, x2: bossWater.x2 - 25 }
+          : { x1: Math.max(W.bounds.x1 + 30, arena.x1 + 22),
+              x2: Math.min(W.bounds.x2 - 30, arena.x2 - 22) }
       });
       boss.arena = arena;
       addFoe(boss);
@@ -465,7 +477,22 @@
 
     function placeFoe(kind, cands, rng, walkersOn, sc, scope, diff) {
       const T = EN.TYPES[kind];
-      if (!T || !cands.length) return null;
+      if (!T) return null;
+      if (kind === 'piranha') {
+        // Solo en pozas profundas; repartir amenazas sin amontonarlas.
+        const waters = W.waters.filter(z => z.scene === sc.index && z.deep);
+        const available = waters.map(z => ({ z, count: W.foes.filter(f => f.kind === 'piranha' && f.waterZone === z).length }))
+          .filter(q => q.count < 2).sort((a, b) => a.count - b.count);
+        if (!available.length) return null;
+        const slot = available[0];
+        const z = slot.z;
+        const x = z.x1 + (z.x2 - z.x1) * (slot.count ? 0.68 : 0.32);
+        const y = z.y + Math.max(28, (z.y2 - z.y) * (slot.count ? 0.67 : 0.34));
+        return EN.create(kind, { x, y, waterZone: z,
+          lane: { x1: z.x1 + 21, x2: z.x2 - 21 },
+          scene: sc.index, diff, rng });
+      }
+      if (!cands.length) return null;
       for (let tries = 0; tries < 12; tries++) {
         const pl = cands[Math.floor(rng() * cands.length)];
         if (T.walker) {
@@ -489,9 +516,9 @@
           const x = pl.x1 + pl.w * (0.25 + 0.5 * rng());
           return EN.create(kind, { scope, x, y: pl.y + (pl.h || 10) + 12, scene: sc.index, diff, rng });
         }
-        if (kind === 'pigeon') {
+        if (kind === 'pigeon' || kind === 'drone') {
           const x = (pl.x1 + pl.x2) / 2;
-          const lane = { x1: Math.max(W.bounds.x1 + 40, x - 220), x2: Math.min(W.bounds.x2 - 40, x + 220) };
+          const lane = { x1: Math.max(W.bounds.x1 + 40, x - 160), x2: Math.min(W.bounds.x2 - 40, x + 160) };
           return EN.create(kind, { scope, x, y: pl.y - 118, lane, scene: sc.index, diff, rng });
         }
       }

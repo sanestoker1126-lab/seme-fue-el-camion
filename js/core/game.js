@@ -684,6 +684,15 @@
 
     function handleWorldEvent(e) {
       switch (e.type) {
+        case 'bossPhase':
+          // V56/V57: llevar el evento real de la IA a la capa de interfaz.
+          // Antes lo generaba Enemies.hit() pero Game no lo transmitía.
+          if (e.foe && e.foe.isBoss) {
+            emit('bossPhase', { foe: e.foe });
+            burst(e.foe.x, e.foe.y - e.foe.h * 0.5, 0xc9ff72, 14);
+            G.shakeT = Math.max(G.shakeT, 0.16);
+          }
+          break;
         case 'foeKilled':
           G.run.kills++; G.run.gems++; addCombo(1); addScore(C.scoring.foe);
           if (e.foe && e.foe.isBoss) {

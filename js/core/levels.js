@@ -607,14 +607,16 @@
   const SUBMARINO_LEVEL = {
     id: 'submarino', label: 'RUINAS SUMERGIDAS', file: 'assets/scenes/generated/submarino_fondo.png', map: SUBMARINO_MAP, skin: 'stone_moss', isNew: true,
     tint: 0x9fd8e6, wash: 0x0a2e48, shade: 0.17, theme: 'submarino', room: 'alcantarilla', storyIndex: 16,
-    foes: ['pigeon', 'bat', 'rat'], obstacles: ['spark', 'crate'], foeBudget: 8, obstacleBudget: 3, sideFoes: 3,
-    boss: { kind: 'bravo', name: 'GUARDIÁN DEL ARRECIFE', hp: 5 }, music: 12
+    // Pirañas solo en pozas reales; ratas en cornisas secas de las ruinas.
+    foes: ['piranha', 'rat'], obstacles: ['spark', 'crate'], foeBudget: 8, obstacleBudget: 3, sideFoes: 3,
+    boss: { kind: 'shark', name: 'TIBURÓN GUARDIÁN DEL ARRECIFE', hp: 6 }, music: 12
   };
   const ESPACIAL_LEVEL = {
     id: 'espacial', label: 'ESTACIÓN EN ÓRBITA', file: 'assets/scenes/generated/espacial_fondo.png', map: ESPACIAL_MAP, skin: 'scaffold', isNew: true,
     tint: 0xc3c9ee, wash: 0x0b0a28, shade: 0.1, theme: 'espacial', room: 'alcantarilla', storyIndex: 17,
-    foes: ['pigeon', 'bat', 'chile'], obstacles: ['spark', 'crate'], foeBudget: 8, obstacleBudget: 3, sideFoes: 3,
-    boss: { kind: 'bat', name: 'DRON CENTINELA', hp: 5 }, final: true, music: 15
+    // Drones centinela de disparo anunciado; resto del nivel conserva sus trampas.
+    foes: ['drone', 'chile'], obstacles: ['spark', 'crate'], foeBudget: 8, obstacleBudget: 3, sideFoes: 3,
+    boss: { kind: 'drone', name: 'DRON CENTINELA', hp: 6 }, final: true, music: 15
   };
 
   /* Misiones: separan el juego por mundos. Las 1 y 2 reúnen los 16 niveles existentes por su tema (sin cambiar su
