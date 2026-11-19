@@ -52,12 +52,13 @@
 
   /* Objetos perdidos: uno por tramo, en su zona inferior. */
   const ITEMS = [
-    { id: 'credencial', name: 'CREDENCIAL ESCOLAR', text: 'Sin ella no la dejan entrar el lunes.' },
-    { id: 'tarjeta', name: 'TARJETA DEL CAMIÓN', text: 'Con saldo para toda la semana. ¡Uf!' },
-    { id: 'cuaderno', name: 'CUADERNO DE DIBUJO', text: 'Tiene todos los bocetos del mural de la posada.' },
-    { id: 'audifonos', name: 'AUDÍFONOS', text: 'Todavía suena la playlist del camino a casa.' },
-    { id: 'sueter', name: 'SUÉTER DE LA POSADA', text: 'Con renos bordados. Lo tejió su abuela.' },
-    { id: 'llavero', name: 'LLAVERO DE LA CASA', text: 'Sin esto, llegar a casa tampoco serviría de mucho.' }
+    // V58 · ARCHIVO 01: cada objeto esconde una de las seis memorias USB encriptadas que necesita Estoker.
+    { id: 'credencial', name: 'CREDENCIAL ESCOLAR', text: 'Sin ella no la dejan entrar el lunes. En la funda: LLAVE USB 1 DE 6.' },
+    { id: 'tarjeta', name: 'TARJETA DEL CAMIÓN', text: 'Con saldo para toda la semana. Pegada atrás: LLAVE USB 2 DE 6.' },
+    { id: 'cuaderno', name: 'CUADERNO DE DIBUJO', text: 'Los bocetos del mural de la posada… y en el lomo, la LLAVE USB 3 DE 6.' },
+    { id: 'audifonos', name: 'AUDÍFONOS', text: 'Todavía suena la playlist. En el estuche: LLAVE USB 4 DE 6.' },
+    { id: 'sueter', name: 'SUÉTER DE LA POSADA', text: 'Con renos bordados por su abuela. Cosida al forro: LLAVE USB 5 DE 6.' },
+    { id: 'llavero', name: 'LLAVERO DE LA CASA', text: 'Las llaves de casa y, colgando, la LLAVE USB 6 DE 6.' }
   ];
 
   /* Letreros del mundo. Los del tramo 1 enseñan los controles sin detener la partida. */

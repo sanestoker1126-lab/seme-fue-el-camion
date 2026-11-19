@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#101725">
 <title>¡Se me fue el camión! | Plataformas 2.5D</title>
-<link rel="stylesheet" href="css/game.css?v=57.0">
-<link rel="stylesheet" href="css/toxifamilia_style.css?v=57.0">
-<link rel="stylesheet" href="css/toxifamilia.css?v=57.0">
+<link rel="stylesheet" href="css/game.css?v=58.0">
+<link rel="stylesheet" href="css/toxifamilia_style.css?v=58.0">
+<link rel="stylesheet" href="css/toxifamilia.css?v=58.0">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
 </head>
@@ -17,7 +17,7 @@
 <div id="hud">
  <div class="pill"><b id="hudTramo">TRAMO 1/12</b> <span class="sub">· <span id="hudTime">0:00</span></span><br><span id="objective" class="sub objective">OBJETIVO: SIGUE BAJANDO</span><br><span class="sub">PTS <b id="score">0</b><b id="combo" style="color:#d9ff65"></b></span></div>
  <div id="rightHud">
-  <div class="pill">CRISTALES <b id="gems">0</b><br><span class="sub">VIDA <b id="life">♥ ♥ ♥</b></span><br><span class="sub">OBJETOS <b id="items">0/6</b></span> <span id="keyBadge"></span></div>
+  <div class="pill">CRISTALES <b id="gems">0</b><br><span class="sub">VIDA <b id="life">♥ ♥ ♥</b></span><br><span class="sub">OBJETOS <b id="items">0/6</b></span> <span id="keyBadge"></span><br><span class="sub" id="catsHud">GATAS LISTAS</span></div>
   <button id="pause" aria-label="Pausa">Ⅱ</button>
  </div>
 </div>
@@ -82,7 +82,9 @@
  <div class="guideSteps"><div><b>1 · AVANZA</b><span>Salta entre techos, balcones y plataformas. Sigue bajando por la ruta.</span></div><div><b>2 · DEFIÉNDETE</b><span>Patea o cae sobre enemigos. Usa DASH; espera a que el jefe se maree si resiste.</span></div><div><b>3 · EXPLORA</b><span>Pulsa BAJAR en una trampilla para encontrar llaves, poderes y objetos opcionales.</span></div><div><b>4 · LLEGA</b><span>Derrota al jefe y alcanza el camión. Recuperar los seis objetos mejora el final.</span></div></div>
  <p class="guideControls"><b>Nuevo:</b> las <b>tejas flojas</b> se caen medio segundo después de pisarlas, las <b>bandas eléctricas</b> te arrastran y las <b>sombrillas</b> te hacen rebotar. Los jefes retroceden y contraatacan tras cada golpe: esquiva y vuelve a golpear. Vencerlos te da un corazón.</p>
  <p class="guideControls"><b>Agua:</b> caer al lago no hace daño. Sofía flota y nada: <b>↓</b> bucea, <b>↑</b> sube, <b>SALTAR</b> en la superficie sale del agua y bajo el agua da una brazada, <b>DASH</b> es un impulso. Sumergida, los enemigos no la alcanzan. Nadando contra una orilla baja, sube sola.</p>
- <p class="guideControls"><b>PC:</b> A/D o ←/→ mover · Espacio/W saltar · X/U patear · Shift/J dash · S/↓ bajar · P pausa.<br><b>Móvil:</b> joystick para moverte (empújalo hacia ARRIBA para saltar) y botones SALTAR, PATEAR, DASH y BAJAR; puedes tocar varios a la vez.</p>
+ <p class="guideControls"><b>Nuevo en V58:</b> cada nivel mide el doble. <b>Tirolesas:</b> salta bajo el cable o sal por la orilla y te cuelgas sola; SALTAR te suelta con impulso y BAJAR te deja caer. <b>Vehículos</b> (camiones, carritos, trenes, balsas, mantas, naves) cruzan los huecos y los <b>peces trampolín</b> te lanzan. A mitad de cada nivel hay una <b>parada intermedia</b>. En el mar se bucea a cualquier profundidad y se baja por los desagües; en órbita la gravedad es menor.</p>
+ <p class="guideControls"><b>GATAS (C / E · botón 🐾):</b> si hay un enemigo cerca, Luna se lanza contra él; si no, Morita te trae los cristales cercanos. Se recargan en unos segundos.</p>
+ <p class="guideControls"><b>PC:</b> A/D o ←/→ mover · Espacio/W saltar · X/U patear · Shift/J dash · S/↓ bajar · C/E gatas · P pausa.<br><b>Móvil:</b> joystick para moverte (empújalo hacia ARRIBA para saltar) y botones SALTAR, PATEAR, DASH, BAJAR y GATAS; puedes tocar varios a la vez.</p>
  <button class="primary" id="guidePlay">JUGAR HISTORIA</button>
  <button class="primary secondary" id="guideBack">VOLVER AL MENÚ</button>
 </div>
@@ -147,28 +149,29 @@
   <button class="ctl action kick" data-key="kick" aria-label="Patear"><span>◒</span><small>PATEAR</small></button>
   <button class="ctl action dash" data-key="dash" aria-label="Dash"><span>✦</span><small>DASH</small></button>
   <button class="ctl down" data-key="down" aria-label="Bajar o entrar"><span>↓</span><small>BAJAR</small></button>
+  <button class="ctl action cats" data-key="cats" aria-label="Ordenar a las gatitas: Luna ataca o Morita trae cristales"><span>🐾</span><small>GATAS</small></button>
  </div>
 </div>
 
 <!-- Núcleo sin DOM (probado con node --test) -->
-<script src="js/core/util.js?v=57.0"></script>
-<script src="js/core/config.js?v=57.0"></script>
-<script src="js/core/levels.js?v=57.0"></script>
-<script src="js/core/story.js?v=57.0"></script>
-<script src="js/core/toxifamilia_style.js?v=57.0"></script>
-<script src="js/core/toxifamilia.js?v=57.0"></script>
-<script src="js/core/physics.js?v=57.0"></script>
-<script src="js/core/enemies.js?v=57.0"></script>
-<script src="js/core/obstacles.js?v=57.0"></script>
-<script src="js/core/world.js?v=57.0"></script>
-<script src="js/core/game.js?v=57.0"></script>
+<script src="js/core/util.js?v=58.0"></script>
+<script src="js/core/config.js?v=58.0"></script>
+<script src="js/core/levels.js?v=58.0"></script>
+<script src="js/core/story.js?v=58.0"></script>
+<script src="js/core/toxifamilia_style.js?v=58.0"></script>
+<script src="js/core/toxifamilia.js?v=58.0"></script>
+<script src="js/core/physics.js?v=58.0"></script>
+<script src="js/core/enemies.js?v=58.0"></script>
+<script src="js/core/obstacles.js?v=58.0"></script>
+<script src="js/core/world.js?v=58.0"></script>
+<script src="js/core/game.js?v=58.0"></script>
 <!-- Capa de navegador -->
-<script src="js/app/art_data.js?v=57.0"></script>
-<script src="js/app/render.js?v=57.0"></script>
-<script src="js/app/input.js?v=57.0"></script>
-<script src="js/app/audio.js?v=57.0"></script>
-<script src="js/app/ui.js?v=57.0"></script>
-<script src="js/app/main.js?v=57.0"></script>
-<script src="js/app/toxifamilia_cinematic.js?v=57.0"></script>
+<script src="js/app/art_data.js?v=58.0"></script>
+<script src="js/app/render.js?v=58.0"></script>
+<script src="js/app/input.js?v=58.0"></script>
+<script src="js/app/audio.js?v=58.0"></script>
+<script src="js/app/ui.js?v=58.0"></script>
+<script src="js/app/main.js?v=58.0"></script>
+<script src="js/app/toxifamilia_cinematic.js?v=58.0"></script>
 </body>
 </html>

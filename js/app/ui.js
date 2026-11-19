@@ -128,6 +128,11 @@
       set('life', life);
       set('items', r.items.length + '/' + G.world.totalItems);
       setHTML('keyBadge', r.keys.size ? '<span class="key">LLAVE</span>' : '');
+      // V58 · Recarga de la orden a las gatitas (texto en el HUD y anillo en el botón).
+      const cmd = G.companions ? G.companions.cmdCD || 0 : 0, max = (G.companions && G.companions.cmdMax) || 1;
+      set('catsHud', cmd > 0 ? 'GATAS EN ' + Math.ceil(cmd) + ' s' : 'GATAS LISTAS (C)');
+      const btn = document.querySelector('.ctl.cats');
+      if (btn) { const k = (Math.round((cmd / max) * 20) / 20).toFixed(2); if (btn.dataset.cd !== k) { btn.dataset.cd = k; btn.style.setProperty('--cd', k); btn.classList.toggle('ready', cmd <= 0); } }
     }
 
     /* ---------- Menú principal ---------- */
@@ -316,6 +321,7 @@
       $('resultStars').innerHTML = '';
       $('resultItems').innerHTML = itemsList(s.items);
       $('retry').textContent = 'REINTENTAR DESDE LA PARADA ' + tr;
+      if ($('postCredits')) $('postCredits').hidden = true;
       $('retry').dataset.mode = 'retry';
       show('result');
     }
@@ -325,9 +331,16 @@
       $('resultTitle').innerHTML = e.ending.title;
       $('resultText').innerHTML = esc(e.ending.text) + '<br><br>Tiempo ' + fmtTime(s.time) + (e.newTime ? ' (¡mejor tiempo!)' : '') + ' · ' + s.score + ' pts' + (e.newScore ? ' (¡récord!)' : '') + ' · ' + plural(s.gems, 'cristal', 'cristales') + ' · ' + plural(s.kills, 'enemigo', 'enemigos') + ' · jefes ' + (s.bosses || 0) + '/' + (s.totalBosses || NLV) + (s.relaxed ? '<br><small>Modo relajado activo: los récords cuentan igual, pero sin perder vidas.</small>' : '') + (e.fullRun ? '' : '<br><small>Empezaste en un tramo intermedio: el mejor tiempo solo cuenta desde el tramo 1.</small>');
       $('resultStars').innerHTML = '<span class="on">★</span>'.repeat(e.stars) + '<span>★</span>'.repeat(3 - e.stars);
+      // V58 · Llaves USB (los seis objetos) y escena post-créditos.
+      const keysLine = '<br><b>LLAVES USB RECUPERADAS: ' + (e.keys || 0) + ' / ' + (e.totalKeys || 6) + '</b>' +
+        (e.postCredits ? ' · ¡ESCENA POST-CRÉDITOS DESBLOQUEADA!' : e.lastMission ? ' · Reúne las seis para ver la escena final.' : '');
+      $('resultText').innerHTML += keysLine;
       $('resultItems').innerHTML = itemsList(s.items);
       $('retry').textContent = 'JUGAR OTRA VEZ';
       $('retry').dataset.mode = 'again';
+      let pc = $('postCredits');
+      if (!pc) { pc = document.createElement('button'); pc.id = 'postCredits'; pc.className = 'primary'; pc.textContent = '▶ ESCENA POST-CRÉDITOS'; $('retry').before(pc); pc.onclick = () => { cb.click(); cb.epilogue && cb.epilogue(); }; }
+      pc.hidden = !e.postCredits;
       show('result');
     }
 
@@ -338,7 +351,8 @@
     /* ---------- Cableado de botones ---------- */
     function bind() {
       $('start').onclick = () => cb.start(selMission, 0);
-      $('btnStory').onclick = () => { cb.click(); showCinematic(null); };
+      // V58: VER CINEMÁTICA reproduce el prólogo ARCHIVO 01 (si no está disponible, la cinemática anterior).
+      $('btnStory').onclick = () => { cb.click(); if (!(cb.story && cb.story())) showCinematic(null); };
       $('btnHowto').onclick = () => { cb.click(); show('guide'); };
       $('guideBack').onclick = () => { cb.click(); cb.menu(); };
       $('guidePlay').onclick = () => { cb.click(); cb.start(selMission, 0); };

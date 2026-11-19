@@ -621,6 +621,9 @@
     W.signs.push({ id: 'mundo:letrero:terminal', x: busX1 - 60, y: streetY, text: ST.MESSAGES.busWaiting, scene: W.scenes.length - 1, region: 'main', seenT: -99, busStop: true });
 
     W.platforms.sort((a, b) => a.y - b.y);
+    // V58: clave de orden fija (la y de origen) para buscar por franjas de altura en la física.
+    for (const p of W.platforms) p.sortY = p.y;
+    W.platformsSorted = true;
     W.spawn = { x: W.checkpoints[0].x, y: W.checkpoints[0].y };
     W.totalItems = W.pickups.filter((p) => p.type === 'item').length;
     W.totalGems = W.pickups.filter((p) => p.type === 'gem').length;

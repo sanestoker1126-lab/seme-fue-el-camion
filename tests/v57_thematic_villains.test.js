@@ -153,7 +153,7 @@ test('V57: la cadena de evento y arte es consistente sin cambiar la geometría',
   assert.match(render, /f\.kind === 'piranha' \|\| f\.kind === 'shark'/);
   assert.match(render, /f\.kind === 'drone'/);
   assert.match(render, /s\.kind === 'plasma'/);
-  assert.match(read('sw.js'), /camion-v57-thematic-villains/);
+  assert.match(read('sw.js'), /camion-v5[7-9]-/);   // V58 renovó la caché (la de V57 se invalida)
   // V58: los mundos especiales se rehicieron al doble (ver v54.test.js).
   assert.equal(LV.SUBMARINO_MAP.width, 1520);
   assert.equal(LV.ESPACIAL_MAP.width, 1520);

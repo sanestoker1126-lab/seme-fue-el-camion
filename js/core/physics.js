@@ -31,7 +31,16 @@
   function updatePlatforms(W, t, dt) {
     dt = dt || NS.CONFIG.sim.fixedDt;
     const CR = NS.CONFIG.crumble;
-    for (const pl of W.platforms) {
+    // V58: en un mundo ya construido solo se recorren las plataformas que cambian (las demás tienen prevY === y).
+    let list = W.platforms;
+    if (W.platformsSorted) {
+      if (!W._dynPlatforms || W._dynN !== W.platforms.length) {
+        W._dynPlatforms = W.platforms.filter((p) => p.kind === 'belt' || p.kind === 'crumble' || p.kind === 'moving' || p.kind === 'pigeon');
+        W._dynN = W.platforms.length;
+      }
+      list = W._dynPlatforms;
+    }
+    for (const pl of list) {
       pl.prevY = pl.y;
       if (pl.kind === 'belt') { pl.dx = pl.belt * dt; pl.dy = 0; continue; }
       if (pl.kind === 'crumble') {
@@ -100,10 +109,25 @@
     }
   }
 
+  /* V58: W.platforms viene ordenado por y desde buildWorld; con eso solo se revisa la franja de alturas útil.
+     Las tarimas se mueven a lo más ±PLAT_SLACK de su posición de origen, así que la ventana lo incluye. */
+  const PLAT_SLACK = 40;
+  function platformsNear(W, yMin, yMax) {
+    const L = W.platforms;
+    if (!W.platformsSorted) return L;
+    let lo = 0, hi = L.length;
+    const target = yMin - PLAT_SLACK;
+    while (lo < hi) { const m = (lo + hi) >> 1; if (L[m].sortY < target) lo = m + 1; else hi = m; }
+    let end = lo;
+    const stop = yMax + PLAT_SLACK;
+    while (end < L.length && L[end].sortY <= stop) end++;
+    return L.slice(lo, end);
+  }
+
   function findOneWayLanding(P, W, prevFoot) {
     const U = NS.util, ff = NS.CONFIG.player.footFactor, foot = P.y + P.h / 2;
     let best = null;
-    for (const pl of W.platforms) {
+    for (const pl of platformsNear(W, prevFoot - 40, foot + 0.5)) {
       if (pl.gone || (P.dropT > 0 && pl.drop)) continue;
       if (pl.y > foot + 0.5 || pl.y < prevFoot - 40) continue;
       if (!U.overlapsX(P, pl, ff)) continue;
@@ -118,7 +142,7 @@
     if (!prevGround || prevGround.solid || prevGround.gone || inp.downPressed || P.dashT > 0 || P.vy < 0 || Math.abs(P.vx) <= 22 || P.jumpBuffer > 0) return null;
     if (Math.abs(prevFoot - prevGround.y) > PH.stepMax) return null;
     let target = null, dist = Infinity;
-    for (const pl of W.platforms) {
+    for (const pl of platformsNear(W, prevFoot - PH.stepMax, prevFoot + PH.stepMax)) {
       if (pl.gone || !(pl.kind === 'stair' || prevGround.kind === 'stair')) continue;
       if (!U.overlapsX(P, pl, 0.38)) continue;
       const dy = pl.y - prevFoot;

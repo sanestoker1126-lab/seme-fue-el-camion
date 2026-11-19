@@ -641,6 +641,7 @@
 
   function buildV58(base, cfg) {
     const o = doubleTop(base, !cfg.keepWidth, !!cfg.painted);
+    if (cfg.text && o.art[1]) o.art[1].text = cfg.text.map((t) => t.slice());
     let yFirst = base.height + 118;
     if (cfg.sea) yFirst = genSea(o, base.height, cfg.sea) + 150;
     const yExit = yFirst + (cfg.rowsHeight || base.height - 152);
@@ -651,14 +652,15 @@
 
   /* Piezas y aspecto por nivel (vehicle/bouncer/crumbleLook/zipLook son solo arte: la física es la misma). */
   const V58_CFG = {
-    escuela:              { painted: true, pieces: ['zip', 'plain', 'bounce', 'vehicle'], vehicle: 'carrito' },
+    // `text`: rótulos del arte pintado (px de la imagen) que se vuelven a dibujar sin reflejar en la copia espejo.
+    escuela:              { painted: true, pieces: ['zip', 'plain', 'bounce', 'vehicle'], vehicle: 'carrito', text: [[75, 5, 350, 88], [228, 212, 124, 25], [365, 545, 113, 78]] },
     guadalajara:          { keepWidth: true, pieces: ['vehicle', 'zip', 'bounce'], vehicle: 'camion' },
     escuela_vecina:       { pieces: ['zip', 'crumble', 'vehicle', 'bounce'], vehicle: 'carrito' },
     gdl_noche:            { pieces: ['vehicle', 'zip', 'bounce', 'crumble'], vehicle: 'camion', zipLook: 'cable' },
     azoteas:              { pieces: ['crumble', 'zip', 'bounce', 'zip'], vehicle: 'carrito', zipLook: 'tendedero' },
     escuela_ruinas:       { pieces: ['crumble', 'zip', 'vehicle', 'belt'], vehicle: 'carrito' },
     centro_historico:     { pieces: ['vehicle', 'zip', 'bounce', 'crumble'], vehicle: 'camion' },
-    portales:             { painted: true, pieces: ['vehicle', 'zip', 'bounce', 'belt'], vehicle: 'camion' },
+    portales:             { painted: true, pieces: ['vehicle', 'zip', 'bounce', 'belt'], vehicle: 'camion', text: [[135, 8, 315, 85], [2, 650, 141, 32], [527, 695, 82, 32]] },
     zapopan:              { pieces: ['zip', 'vehicle', 'crumble', 'bounce'], vehicle: 'camion' },
     arcadas:              { pieces: ['belt', 'vehicle', 'zip', 'bounce'], vehicle: 'camion' },
     metro:                { pieces: ['belt', 'vehicle', 'zip', 'belt'], vehicle: 'tren' },

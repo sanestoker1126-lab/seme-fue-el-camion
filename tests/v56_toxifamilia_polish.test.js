@@ -67,23 +67,26 @@ test('V56: renderer uses visible world clip and original background sequence', (
   assert.match(r, /if \(!inView\(V, sc\.x0, sc\.startY, sc\.x0 \+ sc\.drawW, sc\.endY\)\) continue/);
   assert.match(r, /ctx\.clip\(\)/);
   assert.match(r, /function drawToxiThreat\(/);
-  assert.match(r, /drawBackdrop\(G, V\); drawScenes\(G, V\); drawNeighborhood\(G, V, T\); drawStreet\(G, V, T\); drawToxiAtmosphere\(G, V, T\)/);
+  // V58: los fondos cubren todo el nivel (drawSceneBands) y mar/órbita usan su panorama; la atmósfera sigue encima.
+  assert.match(r, /if \(special\) drawSpaceDeco\(G, V, T\); else drawBackdrop\(G, V\); drawStreet\(G, V, T\); drawToxiAtmosphere\(G, V, T\)/);
+  assert.match(r, /function drawSceneBands\(/);
   assert.match(r, /drawRealParallax\(G, V, sc, 4, 5\)/);
 });
 
 test('V56: PWA precaches new files and invalidates V55 cache', () => {
   const sw = read('sw.js'), html = read('Se_Me_Fue_El_Camion.html');
-  assert.match(sw, /camion-v57-thematic-villains/);
-  for (const [asset, v] of [
-    ['css/toxifamilia_style.css', '57.0'],
-    ['js/core/toxifamilia_style.js', '57.0']
+  const V = /version: '(\d+)\.(\d+)/.exec(read('js/core/config.js')), v = V[1] + '.' + V[2];   // V58: versión actual
+  assert.match(sw, new RegExp("const CACHE='camion-v" + V[1]));
+  for (const [asset] of [
+    ['css/toxifamilia_style.css'],
+    ['js/core/toxifamilia_style.js']
   ]) {
     assert.ok(sw.includes(asset + '?v=' + v), 'PWA prefetch ' + asset);
     assert.ok(html.includes(asset + '?v=' + v), 'HTML link ' + asset);
   }
   for (const js of ['js/core/enemies.js', 'js/app/render.js', 'js/app/main.js']) {
-    assert.ok(sw.includes(js + '?v=57.0'), 'SW version ' + js);
-    assert.ok(html.includes(js + '?v=57.0'), 'HTML version ' + js);
+    assert.ok(sw.includes(js + '?v=' + v), 'SW version ' + js);
+    assert.ok(html.includes(js + '?v=' + v), 'HTML version ' + js);
   }
 });
 

@@ -32,3 +32,43 @@
 @keyframes toxiGlow{from{opacity:.5}to{opacity:1}}
 @media(max-width:600px){.toxi-caption{left:3%;right:3%;bottom:3%;padding:13px}.toxi-actor img{max-height:38vh}.toxi-footer{min-height:62px;gap:8px}.toxi-footer button{padding:10px 12px;font-size:11px}}
 @media(prefers-reduced-motion:reduce){.toxi-overlay *, .toxi-stage{animation:none!important;transition:none!important}}
+/* V58 · ARCHIVO 01: texto con saltos de línea, varias capas de fondo y efectos por escena. */
+.toxi-text{white-space:pre-line}
+.toxi-stage{background-size:cover;background-repeat:no-repeat}
+.toxi-fx{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+.toxi-fx.fx-lluvia{background:repeating-linear-gradient(104deg,transparent 0 13px,rgba(190,225,255,.28) 13px 14px,transparent 14px 31px);background-size:220px 220px;animation:toxiRain .45s linear infinite;mix-blend-mode:screen}
+.toxi-fx.fx-lluvia::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(40,70,120,.25),rgba(5,10,30,.45))}
+@keyframes toxiRain{from{background-position:0 0}to{background-position:-60px 220px}}
+.toxi-fx.fx-monitores{background:radial-gradient(ellipse at 50% 30%,rgba(60,160,255,.18),transparent 60%),rgba(3,6,16,.45)}
+.toxi-monitor{position:absolute;top:12%;width:19%;height:20%;border:3px solid #263a52;border-radius:6px;background:linear-gradient(160deg,#0d3550,#071624);box-shadow:0 0 28px rgba(76,231,238,.45),inset 0 0 18px rgba(76,231,238,.35);animation:toxiFlicker 2.8s infinite}
+.toxi-monitor.m0{left:19%}.toxi-monitor.m1{left:40.5%;background:repeating-linear-gradient(90deg,#0a2a3d 0 9px,#4ce7ee55 9px 11px),repeating-linear-gradient(0deg,#0a2a3d 0 9px,#4ce7ee44 9px 11px)}.toxi-monitor.m2{left:62%}
+.toxi-clock{position:absolute;top:4%;right:5%;font:900 clamp(18px,4.2vw,42px)/1 ui-monospace,Menlo,Consolas,monospace;color:#ff3b4f;text-shadow:0 0 14px #ff3b4f;letter-spacing:.08em;animation:toxiBlink 1s steps(2) infinite}
+@keyframes toxiFlicker{0%,100%{opacity:1}47%{opacity:.86}50%{opacity:.6}53%{opacity:.95}}
+@keyframes toxiBlink{50%{opacity:.55}}
+.toxi-fx.fx-hud{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.2vh;background:repeating-linear-gradient(0deg,rgba(0,0,0,.18) 0 2px,transparent 2px 4px),rgba(4,8,20,.35)}
+.toxi-fx.fx-hud b{font:900 clamp(14px,3.4vw,30px)/1.1 ui-monospace,Menlo,Consolas,monospace;color:#d9ff65;text-shadow:0 0 12px #d9ff65aa;opacity:0;animation:toxiLine .5s forwards}
+.toxi-fx.fx-hud b:nth-child(2){animation-delay:.6s}.toxi-fx.fx-hud b:nth-child(3){animation-delay:1.2s}
+.toxi-fx.fx-hud em{margin-top:2vh;font:900 clamp(12px,2.6vw,22px)/1 ui-monospace,Menlo,Consolas,monospace;font-style:normal;color:#fff;letter-spacing:.2em;animation:toxiBlink .8s steps(2) infinite 1.8s;opacity:0;animation-fill-mode:forwards}
+@keyframes toxiLine{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.toxi-fx.fx-apagon{animation:toxiApagon 5s ease-in forwards}
+@keyframes toxiApagon{0%{background:rgba(255,30,40,0)}20%{background:rgba(255,30,40,.28)}24%{background:rgba(0,0,0,.2)}28%{background:rgba(255,30,40,.3)}60%{background:rgba(0,0,0,.75)}100%{background:rgba(0,0,0,.93)}}
+.toxi-stage.toxi-legend{background:#000!important}
+.toxi-fx.fx-legend{display:flex;align-items:center;justify-content:center;background:radial-gradient(circle,#1a0003,#000 70%)}
+.toxi-fx.fx-legend strong{font:900 clamp(34px,9vw,96px)/1 system-ui,-apple-system,Segoe UI,sans-serif;color:#ff1f3d;letter-spacing:.06em;text-shadow:0 0 22px #ff1f3d,0 0 60px #a0001a;animation:toxiStatic 1.6s ease-out both}
+@keyframes toxiStatic{0%{opacity:0;filter:blur(8px);letter-spacing:.4em}30%{opacity:.4}38%{opacity:.1}100%{opacity:1;filter:none;letter-spacing:.06em}}
+.toxi-legend .toxi-caption{background:transparent;border-left-color:#ff1f3d;box-shadow:none;text-align:center;left:0;right:0;margin:auto}
+.toxi-legend .toxi-title{display:none}
+@media(prefers-reduced-motion:reduce){.toxi-fx,.toxi-fx *{animation:none!important;opacity:1!important}}
+/* V58 · Reparto siempre visible: en pantallas bajas (celular en horizontal) el texto va a la izquierda y los
+   personajes a la derecha; en vertical el texto ocupa menos alto. */
+.toxi-cast{position:absolute;inset:0;z-index:2}
+@media(orientation:landscape) and (max-height:560px){
+ .toxi-caption{left:2.5%;right:auto;width:47%;bottom:4%;padding:10px 14px;max-width:none}
+ .toxi-title{font-size:clamp(15px,3.2vw,26px)}
+ .toxi-text{font-size:clamp(11px,1.7vw,14px);max-height:42vh}
+ .toxi-cast{left:47%}
+ .toxi-actor{max-width:44%}
+ .toxi-actor img{max-height:56vh}
+ .toxi-actor span{font-size:9px;padding:3px 7px}
+}
+@media(orientation:portrait){.toxi-caption{bottom:3%}.toxi-text{max-height:22vh}}

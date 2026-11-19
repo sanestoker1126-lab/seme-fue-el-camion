@@ -20,7 +20,8 @@ test('cada uno de los 16 niveles tiene su propio trazado (antes 10 repetían 2 m
   for (const d of SEQ.filter((q) => q.art === 'painted')) {
     assert.ok(d.baseMap === LV.SCHOOL_MAP || d.baseMap === LV.GDL_MAP, d.id);
     assert.equal(d.map.width, d.baseMap.width * 2, d.id + ': el doble de ancho');
-    assert.deepEqual(d.map.art, [{ x: 0, y: 0, w: d.baseMap.width, h: d.baseMap.height, flip: false }, { x: d.baseMap.width, y: 0, w: d.baseMap.width, h: d.baseMap.height, flip: true }]);
+    assert.deepEqual(d.map.art.map(({ x, y, w, h, flip }) => ({ x, y, w, h, flip })), [{ x: 0, y: 0, w: d.baseMap.width, h: d.baseMap.height, flip: false }, { x: d.baseMap.width, y: 0, w: d.baseMap.width, h: d.baseMap.height, flip: true }]);
+    assert.ok(d.map.art[1].text && d.map.art[1].text.length >= 1, d.id + ': rótulos que se pintan al derecho en el espejo');
   }
 });
 

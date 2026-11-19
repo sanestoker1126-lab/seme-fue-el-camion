@@ -4,13 +4,13 @@
 // fotograma, y la calidad adaptativa que eligió el juego (fracción de la resolución de lienzo).
 // OJO: Chromium sin pantalla dibuja el lienzo por software (sin la GPU del teléfono): es una cota pesimista,
 // útil para comparar versiones y detectar regresiones, no una medición de un teléfono real.
-// Uso: node perf_test.js <baseUrl> [rates csv=1,4,6] [levels csv=0,4,10,13,15] [segundos=6]
+// Uso: node perf_test.js <baseUrl> [rates csv=1,4,6] [misión:tramo csv=0:0,1:2,1:8,2:0,3:0] [segundos=6]  (V58: misión y tramo; antes Q.start(n) tomaba n como misión)
 const { chromium, devices } = require('playwright');
 
 (async () => {
   const [base, ratesArg, levelsArg, secsArg] = process.argv.slice(2);
   const rates = (ratesArg || '1,4,6').split(',').map(Number);
-  const levels = (levelsArg || '0,4,10,13,15').split(',').map(Number);
+  const levels = (levelsArg || '0:0,1:2,1:8,2:0,3:0').split(',').map((s) => s.split(':').map(Number));
   const secs = +(secsArg || 6);
   const browser = await chromium.launch();
   const ctx = await browser.newContext({ ...devices['Pixel 7'], viewport: { width: 412, height: 839 } });
@@ -36,7 +36,7 @@ const { chromium, devices } = require('playwright');
     await cdp.send('Emulation.setCPUThrottlingRate', { rate });
     for (const lv of levels) {
       await page.evaluate((lv) => {
-        const Q = window.CAMION_QA; Q.start(lv); Q.G.P.invuln = 999; Q.G.run.lives = 99;
+        const Q = window.CAMION_QA; Q.start(lv[0], lv[1]); Q.G.P.invuln = 999; Q.G.run.lives = 99;
         // Sofía corre de un lado a otro y salta: la cámara se mueve y se dibujan fondos, enemigos y efectos.
         let k = 0;
         clearInterval(window.__drive);
@@ -62,7 +62,7 @@ const { chromium, devices } = require('playwright');
         };
       });
       rows.push(Object.assign({ rate, lv }, r));
-      console.log(`CPU×${rate}  nivel ${String(lv + 1).padStart(2)} ${r.id.padEnd(20)} ${r.fps.toFixed(1).padStart(5)} fps  p95 ${r.p95.toFixed(1).padStart(5)} ms  sim ${r.stepMs.toFixed(2)} ms  dibujo ${r.drawMs.toFixed(2)} ms  calidad ${(r.quality * 100).toFixed(0)}%  (${r.state})`);
+      console.log(`CPU×${rate}  m${lv[0] + 1}:${lv[1] + 1} ${r.id.padEnd(20)} ${r.fps.toFixed(1).padStart(5)} fps  p95 ${r.p95.toFixed(1).padStart(5)} ms  sim ${r.stepMs.toFixed(2)} ms  dibujo ${r.drawMs.toFixed(2)} ms  calidad ${(r.quality * 100).toFixed(0)}%  (${r.state})`);
     }
   }
   await page.evaluate(() => clearInterval(window.__drive));

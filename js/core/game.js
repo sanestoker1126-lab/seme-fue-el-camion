@@ -336,7 +336,7 @@
       let n = 0;
       for (const g of W.pickups) {
         if (g.got || g.type !== 'gem' || g.region !== G.region) continue;
-        if (Math.hypot(g.x - P.x, g.y - P.y) < CC.gemRange) { g.fetchT = 2.2; n++; }
+        if (Math.hypot(g.x - P.x, g.y - P.y) < CC.gemRange) { g.fetchT = 2.2; n++; (W._chasing = W._chasing || new Set()).add(g); }
       }
       const agent = c.agents && c.agents.morita;
       if (agent) { agent.mode = 'explore'; agent.modeT = 0.9; }
@@ -515,23 +515,40 @@
     }
 
     /* ---------- Recogida ---------- */
+    /* V58: índice de recogibles por franjas de 200 u de altura (hay ~1400 en la misión 2). Se busca en ±400 u: cubre
+       lo que el imán (170 u) o Morita (360 u) acercan desde su franja original. Se rehace si se agregan (cajas rotas). */
+    const BAND = 200, REACH_BANDS = 2;
+    function pickupBands(W) {
+      if (!W._pk || W._pkN !== W.pickups.length) {
+        W._pk = new Map();
+        for (const pk of W.pickups) { const b = Math.floor(pk.baseY / BAND); if (!W._pk.has(b)) W._pk.set(b, []); W._pk.get(b).push(pk); }
+        W._pkN = W.pickups.length;
+      }
+      return W._pk;
+    }
     function updatePickups(dt) {
       const P = G.P, W = G.world, PW = C.powers;
+      for (const pk of W.pickups) if (pk.baseY === undefined) { pk.baseX = pk.x; pk.baseY = pk.y; }
+      const bands = pickupBands(W), b0 = Math.floor(P.y / BAND);
+      const near = [];
+      for (let b = b0 - REACH_BANDS; b <= b0 + REACH_BANDS; b++) { const l = bands.get(b); if (l) for (const pk of l) if (!pk.got) near.push(pk); }
+      // Los que Morita trae persiguen a Sofía aunque ella ya esté lejos de donde estaban.
+      if (W._chasing) for (const g of W._chasing) { if (g.got || !(g.fetchT > 0)) W._chasing.delete(g); else if (Math.abs(Math.floor(g.baseY / BAND) - b0) > REACH_BANDS) near.push(g); }
       if (P.magnetT > 0) {
-        for (const g of W.pickups) {
+        for (const g of near) {
           if (g.got || g.type !== 'gem') continue;
           const dx = P.x - g.x, dy = P.y - g.y, d = Math.hypot(dx, dy);
           if (d < PW.magnetRadius && d > 1) { g.x += (dx / d) * PW.magnetSpeed * dt; g.y += (dy / d) * PW.magnetSpeed * dt; }
         }
       }
       // V58: cristales que Morita va trayendo hasta Sofía.
-      for (const g of W.pickups) {
+      for (const g of near) {
         if (!(g.fetchT > 0) || g.got) continue;
         g.fetchT -= dt;
         const dx = P.x - g.x, dy = P.y - g.y, d = Math.hypot(dx, dy);
         if (d > 1) { const v = Math.min(d, C.cats.fetchSpeed * dt); g.x += (dx / d) * v; g.y += (dy / d) * v; }
       }
-      for (const pk of W.pickups) {
+      for (const pk of near) {
         if (pk.got) continue;
         if (Math.abs(P.x - pk.x) > 40 || Math.abs(P.y - pk.y) > 60) continue;
         const reach = pk.type === 'gem' ? 29 : 32;

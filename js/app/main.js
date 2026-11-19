@@ -74,7 +74,9 @@
     kid: 'NIÑO · lanza piedras de lejos y embiste de cerca',
     piranha: 'PIRAÑA · vigila el agua y esquiva su carrera',
     shark: 'TIBURÓN · espera a que termine de embestir',
-    drone: 'DRON · esquiva la marca y destruye su plasma con DASH'
+    drone: 'DRON · esquiva la marca y destruye su plasma con DASH',
+    crab: 'CANGREJO · corre de lado: písalo, patéalo o usa DASH',
+    robot: 'ROBOT · embiste tras encender su visor: salta y golpéalo cuando se maree'
   };
   const seenFoeKinds = new Set();
   const bossCinematicSeen = new Set();
@@ -95,6 +97,8 @@
     option: (k) => setOption(k),
     look: (value) => chooseLook(value),
     resetProgress: () => resetProgress(),
+    story: () => playStory(),
+    epilogue: () => playEpilogue(),
     click: () => { audio.ensure(); audio.sfx('ui'); }
   });
 
@@ -160,8 +164,17 @@
       G.newRun({ mission, startTramo: tramo, difficulty: opt.difficulty });
       afterStart();
     };
-    if (!skipIntro && mission === 0 && tramo === 0 && !cinematicSeen()) ui.showCinematic(go); else go();
+    if (!skipIntro && mission === 0 && tramo === 0 && !cinematicSeen()) {
+      if (NS.ToxiPlayer && NS.ToxiPlayer.play({ set: 'prologo', onDone: go })) return;
+      ui.showCinematic(go);
+    } else go();
   }
+  function playStory() {
+    audio.ensure();
+    if (NS.ToxiPlayer && NS.ToxiPlayer.play({ set: 'prologo', onDone: (fin) => { if (fin) startRun(0, 0, true); } })) return true;
+    return false;
+  }
+  function playEpilogue() { audio.ensure(); return !!(NS.ToxiPlayer && NS.ToxiPlayer.play({ set: 'epilogo' })); }
   /* La Toxifamilia: entrega una mision SOLO al completar sus escenas.
      Mantiene intacta la seleccion normal del menu y no repite el intro de Sofía. */
   root.addEventListener('camion:toxifamilia:start-mission', (event) => {
@@ -239,7 +252,7 @@
         case 'dying': audio.stop(); audio.sfx('lose'); break;
         case 'gameover': ui.showGameOver(e, G); break;
         case 'victoryStart': audio.stop(); audio.sfx('honk'); audio.sfx('motor'); audio.sfx('win'); audio.sfx('luna'); audio.sfx('morita'); break;
-        case 'victory': ui.showVictory(e); break;
+        case 'victory': ui.showVictory(e); if (NS.ToxiPlayer) NS.ToxiPlayer.refreshMenu(!!G.save.epilogue); break;
         case 'gem': audio.sfx('gem'); break;
         case 'power': audio.sfx('power'); break;
         case 'key': audio.sfx('key'); break;
@@ -257,6 +270,7 @@
           ui.toast((e.cat === 'morita' ? 'MORITA' : 'LUNA') + ' distrajo al enemigo', 2, 1.1);
           break;
         case 'companionPurr': audio.sfx(e.cat === 'morita' ? 'moritaPurr' : 'lunaPurr'); break;
+        case 'catCommand': audio.sfx('cats'); audio.sfx(e.cat === 'morita' ? 'moritaAlert' : 'lunaAlert'); audio.vibrate && audio.vibrate(25); break;
         case 'crate': audio.sfx('stomp'); break;
         case 'enemyDiscovered':
           if (e.foe?.isBoss) {
@@ -367,6 +381,7 @@
     G.newRun({ startTramo: 0, difficulty: opt.difficulty });
     G.state = 'menu'; G.drainEvents();
     ui.paintMenu(G, opt); ui.show('menu');
+    if (NS.ToxiPlayer) NS.ToxiPlayer.refreshMenu(!!G.save.epilogue);
     root.requestAnimationFrame(frame);
     const S = NS.LEVELS.LEVEL_SEQUENCE;
     const essential = [
@@ -382,6 +397,7 @@
       'assets/scenes/generated/submarino_fondo.png', 'assets/scenes/generated/espacial_fondo.png',
       'assets/player/sofia/sofia_submarina_complementaria.png',
       ...Object.values(R.PARALLAX_LAYERS || {}).flat(),
+      ...(R.backdropUrls ? R.backdropUrls() : []),   // V58: fondos del ancho del mundo, mar y órbita
       ...Object.values(R.COMPANIONS_SUB || {}).flatMap((c) => [...c.idle, ...c.walk, c.shoulder])];
     for (const [kind, E] of Object.entries(NS.ART.ENEMY)) for (const f of Object.keys(E.frames)) essential.push('assets/enemies/v50/' + kind + '/' + f + '.png');
     let timer;
