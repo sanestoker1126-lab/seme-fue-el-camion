@@ -7,13 +7,16 @@ const { load } = require('./helpers');
 const NS = load();
 const BASE = path.join(__dirname, '..');
 
-test('V54: cada mundo triplica su recorrido vertical y ensancha el mapa sin duplicar inicio/meta', () => {
-  for (const m of [NS.LEVELS.SUBMARINO_MAP, NS.LEVELS.ESPACIAL_MAP]) {
-    assert.equal(m.width, 940);
-    assert.equal(m.height, 3072);
+test('V54→V58: cada mundo especial es más ancho y hondo que en V54, sin duplicar inicio/meta', () => {
+  // V54 los triplicó (940 × 3072); V58 los rehace como mundos completos al doble de ancho de su base (1520).
+  for (const [m, old] of [[NS.LEVELS.SUBMARINO_MAP, NS.LEVELS.SUBMARINO_V54_MAP], [NS.LEVELS.ESPACIAL_MAP, NS.LEVELS.ESPACIAL_V54_MAP]]) {
+    assert.equal(old.width, 940); assert.equal(old.height, 3072);
+    assert.equal(m.width, 1520);
+    assert.ok(m.height >= 3200, m.id + ' alto ' + m.height);
+    assert.ok(m.width * m.height > old.width * old.height * 1.6, m.id + ': más área que V54');
     assert.equal(m.surfaces.filter(p => p.start).length, 1);
     assert.equal(m.surfaces.filter(p => p.exit).length, 1);
-    assert.equal(m.gems.length, 39);
+    assert.ok(m.gems.length >= 80, m.id + ' cristales ' + m.gems.length);
     assert.ok(m.surfaces.every(p => p.x1 >= 0 && p.x2 <= m.width && p.y >= 0 && p.y <= m.height));
     assert.ok(m.gems.every(g => g.x >= 0 && g.x <= m.width && g.y >= 0 && g.y <= m.height));
   }

@@ -89,8 +89,8 @@
     const active = (x, y) => onScreen(x, y, 280);
     // V52: sumergida a más de 14 u (la cabeza bajo el agua) los enemigos no la alcanzan: bucear también es esquivar.
     const NOWHERE = { x1: -1e9, y1: -1e9, x2: -1e9 + 1, y2: -1e9 + 1 };
-    const hurtbox = () => (G.P.water && G.P.submerged && G.P.y - G.P.h / 2 > G.P.water.y + 14) ? NOWHERE
-      : U.bodyRect(G.P, C.player.hurtScaleX, C.player.hurtScaleY, G.P.h * (1 - C.player.hurtScaleY) * 0.5);
+    const bodybox = () => U.bodyRect(G.P, C.player.hurtScaleX, C.player.hurtScaleY, G.P.h * (1 - C.player.hurtScaleY) * 0.5);
+    const hurtbox = () => (G.P.water && G.P.submerged && G.P.y - G.P.h / 2 > G.P.water.y + 14) ? NOWHERE : bodybox();
 
     /* ---------- Partida ---------- */
     function newRun(o = {}) {
@@ -101,13 +101,16 @@
       const hasMission = missions && o.mission != null;
       const mi = hasMission ? U.clamp(o.mission | 0, 0, missions.length - 1) : 0;
       G.mission = mi; G.missionId = missions ? missions[mi].id : 'escuela';
+      G.runMission = hasMission ? mi : null;   // V58: el reintento reconstruye la MISMA misión (antes armaba la secuencia completa)
       const W = NS.World.buildWorld({ difficulty: G.difficulty, seed: o.seed, levels: hasMission ? missions[mi].levels : undefined });
       G.world = W;
       const startTramo = U.clamp(o.startTramo | 0, 0, W.scenes.length - 1);
-      const cp = W.checkpoints[startTramo];
+      // V58: reintentar desde una parada intermedia reaparece ahí y no al inicio del nivel.
+      const mid = o.startMid ? (W.midpoints || []).find((q) => q.scene === startTramo) : null;
+      const cp = mid || W.checkpoints[startTramo];
       G.P = PHY.createPlayer(cp.x, cp.y);
       G.P.ground = cp.plat;
-      G.P.invuln = startTramo > 0 ? 1.2 : 0;
+      G.P.invuln = startTramo > 0 || mid ? 1.2 : 0;
       G.run = {
         t: 0, score: 0, combo: 0, comboT: 0, gems: 0, lives: d.lives, maxLives: d.lives, items: [],
         keys: new Set(), deaths: o.deaths || 0, startTramo, maxDepth: 0, kills: 0, bosses: 0, seenChapters: new Set(), busSeen: false,
@@ -120,7 +123,8 @@
       }
       G.region = 'main'; G.room = null; G.tramo = startTramo; G.transition = null;
       G.timers = { dying: 0, victory: 0 }; G.shakeT = 0; G.fx = []; G.waterFx = []; G.bubbleT = 0; G.msgCD = Object.create(null); G.events.length = 0;
-      G.companions = { warningT: 0, meowCD: 0, senseCD: 0.8, assistCD: 4.2, warningCat: 'luna', warningKind: '', nextCat: 'luna', action: 'idle', actionT: 0, purrNext: 3.4, agents: createCompanionAgents(G.P) };
+      G.companions = { warningT: 0, meowCD: 0, senseCD: 0.8, assistCD: 4.2, warningCat: 'luna', warningKind: '', nextCat: 'luna', action: 'idle', actionT: 0, purrNext: 3.4, agents: createCompanionAgents(G.P),
+        cmdCD: 0, cmdMax: C.cats.cooldown, lastCmd: '' };
       activateCheckpoint(cp, true);
       updateCamera(0, true);
       G.state = 'playing';
@@ -130,14 +134,19 @@
     }
 
     function retry() {
-      const cpScene = G.checkpoint ? G.checkpoint.scene : 0;
-      const carried = G.run ? G.run.items.filter((i) => i < cpScene) : [];
-      newRun({ startTramo: cpScene, deaths: G.run ? G.run.deaths : 0, carriedItems: carried });
+      const cp = G.checkpoint, cpScene = cp ? cp.scene : 0;
+      // Objetos que ya se llevan: los de tramos anteriores a la parada (y, si es intermedia, los del mismo tramo).
+      // V58: se compara el tramo donde estaba el objeto, no su índice de historia (en la misión 2 no coinciden).
+      const sceneOfItem = (idx) => { const pk = G.world.pickups.find((p) => p.type === 'item' && p.itemIndex === idx); return pk ? pk.scene : Infinity; };
+      const carried = G.run ? G.run.items.filter((i) => sceneOfItem(i) < cpScene || (cp && cp.mid && sceneOfItem(i) === cpScene)) : [];
+      newRun({ mission: G.runMission, startTramo: cpScene, startMid: !!(cp && cp.mid), deaths: G.run ? G.run.deaths : 0, carriedItems: carried });
     }
 
     function activateCheckpoint(cp, silent) {
       for (const c of G.world.checkpoints) c.active = c === cp;
+      for (const c of G.world.midpoints || []) c.active = c === cp;
       G.checkpoint = cp;
+      if (cp.mid) { if (!silent) { emit('checkpoint', { cp }); message('cp', ST.MESSAGES.midCheckpoint, 3); } return; }
       if (!G.save.missions) G.save.missions = {};
       let changed = false;
       if (cp.scene + 1 > (G.save.missions[G.missionId] || 0)) { G.save.missions[G.missionId] = cp.scene + 1; changed = true; }
@@ -235,6 +244,8 @@
           }
         }
 
+        // V58: en la tirolesa las dos viajan en los hombros de Sofía.
+        if (P.zip && a.mode !== 'assist') { a.mode = 'shoulder'; a.modeT = 0.35; }
         if (COMPANION_IDLE_MODES.has(a.mode) && a.modeT <= 0) a.mode = a.mode === 'explore' ? 'return' : 'follow';
         if (a.mode === 'return') {
           const homeX = companionAnchorX(P.x + side * 48, P);
@@ -249,12 +260,16 @@
           tx = companionAnchorX(a.target.x - side * 20, P);
           ty = a.target.y + (a.target.h || 30) * 0.5;
         }
-        // V52: las gatitas no nadan: mientras Sofía está en agua profunda la esperan en la orilla más cercana.
-        if (P.water && a.mode !== 'assist') {
+        // V52: en tierra las gatitas no nadan: mientras Sofía está en agua profunda la esperan en la orilla.
+        // V58: en el mundo marino llevan casco y tanque: bucean a su lado.
+        const diving = P.water && P.water.theme === 'submarino';
+        if (P.water && a.mode !== 'assist' && diving) { tx = P.x + side * 40; ty = P.y + P.h / 2 - 6; }
+        else if (P.water && a.mode !== 'assist') {
           const z = P.water, nearLeft = P.x - z.x1 < z.x2 - P.x;
           tx = nearLeft ? z.x1 - 16 - (side < 0 ? 20 : 0) : z.x2 + 16 + (side > 0 ? 20 : 0);
           ty = z.y - 3;
         }
+        if (a.mode === 'shoulder' && P.zip) { a.x = P.x + side * 12; a.y = foot; a.vx = 0; }
 
         const dx = tx - a.x, dy = ty - a.y;
         if (Math.hypot(dx, dy) > 230) {
@@ -296,10 +311,47 @@
       emit('companionAssist', { cat: c.warningCat, foe: target });
     }
 
+    /* ---------- V58 · Orden a las gatitas (botón GATAS) ----------
+       Si hay un enemigo cerca, Luna se lanza contra él: los comunes caen y un jefe recibe un golpe (si está
+       embistiendo de frente solo se marea). Si no hay enemigos, Morita trae los cristales cercanos.
+       Enfriamiento compartido (CONFIG.cats.cooldown). Devuelve qué hizo o null. */
+    function catCommand() {
+      const c = G.companions, P = G.P, W = G.world, CC = C.cats;
+      if (!c || !W || G.state !== 'playing' || P.dead || c.cmdCD > 0) { if (c && c.cmdCD > 0) message('catsCD', ST.MESSAGES.catsTired, 1.4, 0); return null; }
+      const near = W.foes.filter((f) => !f.dead && f.region === G.region && onScreen(f.x, f.y, 10) && Math.hypot(f.x - P.x, f.y - P.y) < CC.range)
+        .sort((a, b) => Math.hypot(a.x - P.x, a.y - P.y) - Math.hypot(b.x - P.x, b.y - P.y));
+      c.cmdCD = CC.cooldown; c.cmdMax = CC.cooldown;
+      if (near.length) {
+        const f = near[0], agent = c.agents && c.agents.luna, ev = [];
+        if (f.isBoss && EN.bossArmored(f, P)) { f.state = 'dizzy'; f.stateT = 0; }
+        else EN.hit(f, 'cat', ev, f.x - (Math.sign(f.x - P.x) || 1) * 20);
+        for (const e of ev) handleWorldEvent(e);
+        if (agent) { agent.mode = 'assist'; agent.modeT = 0.7; agent.target = f; }
+        c.warningCat = 'luna'; c.warningKind = 'enemy'; c.action = 'assist'; c.actionT = 0.7; c.lastCmd = 'luna';
+        burst(f.x, f.y - 14, 0xfff3c4, 16);
+        emit('catCommand', { cat: 'luna', foe: f });
+        message('catCmd', ST.MESSAGES.catsAttack, 1.2, 2);
+        return 'luna';
+      }
+      let n = 0;
+      for (const g of W.pickups) {
+        if (g.got || g.type !== 'gem' || g.region !== G.region) continue;
+        if (Math.hypot(g.x - P.x, g.y - P.y) < CC.gemRange) { g.fetchT = 2.2; n++; }
+      }
+      const agent = c.agents && c.agents.morita;
+      if (agent) { agent.mode = 'explore'; agent.modeT = 0.9; }
+      c.action = 'excited'; c.actionT = 0.9; c.lastCmd = 'morita';
+      emit('catCommand', { cat: 'morita', gems: n });
+      message('catCmd', n ? ST.MESSAGES.catsFetch.replace('{n}', n) : ST.MESSAGES.catsNothing, 1.4, 2);
+      if (!n) c.cmdCD = Math.min(c.cmdCD, 1.2);   // sin nada que traer, se recupera pronto
+      return 'morita';
+    }
+
     /* ---------- Daño ---------- */
     function hurt(srcX, srcY, kind) {
       const P = G.P, CB = C.combat;
       if (G.state !== 'playing' || P.invuln > 0 || P.dead || G.godMode) return false;
+      if (P.zip) { P.zip = null; P.zipCD = 0.6; }   // V58: un golpe la suelta de la tirolesa
       const dir = U.sign(P.x - srcX) || -P.face || 1;
       if (P.shield) {
         P.shield = false;
@@ -325,6 +377,7 @@
 
     function die() {
       const P = G.P;
+      P.zip = null;
       P.dead = true; P.vx = 0; P.vy = P.water ? 40 : -260; P.ground = null; P.noCut = true;   // en el agua se hunde
       G.state = 'dying'; G.timers.dying = 0;
       G.run.deaths++;
@@ -370,8 +423,14 @@
       if (next) G.save.missions[next.id] = Math.max(G.save.missions[next.id] || 0, 1);
       const depth = Math.floor(r.maxDepth / 10);
       if (depth > G.save.bestDepth) G.save.bestDepth = depth;
+      // V58 · Escena post-créditos (nexo con Legend of Presos): al terminar la última misión con las 6 llaves.
+      const keys = ST.ITEMS.filter((it) => G.save.items[it.id]).length;
+      const lastMission = !missions || G.mission === missions.length - 1;
+      const postCredits = lastMission && keys >= ST.ITEMS.length;
+      if (postCredits) G.save.epilogue = true;
       persist();
-      emit('victory', { summary: summary(), stars, newTime, newScore, fullRun, ending: ST.ending(items, total, r.lives) });
+      emit('victory', { summary: summary(), stars, newTime, newScore, fullRun, ending: ST.ending(items, total, r.lives),
+        postCredits, keys, totalKeys: ST.ITEMS.length, lastMission });
     }
 
     function summary() {
@@ -465,6 +524,13 @@
           if (d < PW.magnetRadius && d > 1) { g.x += (dx / d) * PW.magnetSpeed * dt; g.y += (dy / d) * PW.magnetSpeed * dt; }
         }
       }
+      // V58: cristales que Morita va trayendo hasta Sofía.
+      for (const g of W.pickups) {
+        if (!(g.fetchT > 0) || g.got) continue;
+        g.fetchT -= dt;
+        const dx = P.x - g.x, dy = P.y - g.y, d = Math.hypot(dx, dy);
+        if (d > 1) { const v = Math.min(d, C.cats.fetchSpeed * dt); g.x += (dx / d) * v; g.y += (dy / d) * v; }
+      }
       for (const pk of W.pickups) {
         if (pk.got) continue;
         if (Math.abs(P.x - pk.x) > 40 || Math.abs(P.y - pk.y) > 60) continue;
@@ -534,6 +600,7 @@
         G.companions.warningT = Math.max(0, G.companions.warningT - dt);
         G.companions.meowCD = Math.max(0, G.companions.meowCD - dt);
         G.companions.actionT = Math.max(0, G.companions.actionT - dt);
+        G.companions.cmdCD = Math.max(0, (G.companions.cmdCD || 0) - dt);
         if (G.companions.actionT <= 0 && G.companions.action !== 'idle') G.companions.action = 'idle';
         scanCompanionThreats(dt);
         updateCompanionAgents(dt);
@@ -548,7 +615,7 @@
       if (G.run.comboT <= 0) G.run.combo = 0;
       PHY.updatePlatforms(W, W.t, dt);
 
-      const ctx = { active, onScreen, hurt, hurtbox, jumpHeld: !!inp.jumpHeld, busy: G.state !== 'playing' };
+      const ctx = { active, onScreen, hurt, hurtbox, bodybox, jumpHeld: !!inp.jumpHeld, busy: G.state !== 'playing' };
 
       if (G.state === 'transition') stepTransition(dt);
       else if (G.state === 'dying') {
@@ -565,6 +632,7 @@
           const d = doorAt(P);
           if (d) { startTransition(d); input = Object.assign({}, inp, { downPressed: false }); }
         }
+        if (G.state === 'playing' && inp.catsPressed) catCommand();
         if (G.state === 'playing') {
           const evs = PHY.stepPlayer(P, W, input, dt, []);
           for (const e of evs) handlePhysicsEvent(e);
@@ -574,8 +642,13 @@
             if (sc !== G.tramo && P.y < W.bounds.streetY) enterTramo(sc);
             G.run.maxDepth = Math.max(G.run.maxDepth, P.y - W.checkpoints[0].y + P.h / 2);
           }
+          // Paradas: solo hacia adelante. La intermedia de un tramo va después de su parada inicial.
+          const ahead = (cp) => !G.checkpoint || cp.scene > G.checkpoint.scene || (cp.scene === G.checkpoint.scene && cp.mid && !G.checkpoint.mid);
           for (const cp of W.checkpoints) {
-            if (!cp.active && P.ground === cp.plat && Math.abs(P.x - cp.x) < 70 && cp.scene >= (G.checkpoint ? G.checkpoint.scene : 0)) activateCheckpoint(cp);
+            if (!cp.active && P.ground === cp.plat && Math.abs(P.x - cp.x) < 70 && ahead(cp)) activateCheckpoint(cp);
+          }
+          for (const cp of W.midpoints || []) {   // V58: basta pisar la fila de la parada intermedia
+            if (!cp.active && P.ground === cp.plat && ahead(cp)) activateCheckpoint(cp);
           }
           const ev2 = [];
           EN.update(W, P, dt, ctx, ev2);
@@ -623,6 +696,10 @@
           break;
         }
         case 'dropDenied': message('dropDenied', ST.MESSAGES.dropDenied, 6, 0); break;
+        // V58 · Tirolesa.
+        case 'zipGrab': emit('sfx', { name: 'zip' }); message('zipHint', ST.MESSAGES.zipHint, 40, 1); burst(P.x, P.y - P.h / 2 - 6, 0xcfe8ff, 6); break;
+        case 'zipJump': case 'zipDrop': emit('sfx', { name: 'zipOff' }); break;
+        case 'zipEnd': if (!e.landed) emit('sfx', { name: 'zipOff' }); break;
         // V52 · Agua.
         case 'waterEnter': {
           const z = e.zone, big = e.vy > 520, mid = e.vy > 220;
@@ -738,7 +815,7 @@
 
     function drainEvents() { const out = G.events.slice(); G.events.length = 0; return out; }
 
-    Object.assign(G, { setView, newRun, retry, pause, resume, step, hurt, drainEvents, mult, onScreen, updateCamera, defaultSave });
+    Object.assign(G, { setView, newRun, retry, pause, resume, step, hurt, drainEvents, mult, onScreen, updateCamera, defaultSave, catCommand });
     return G;
   }
 

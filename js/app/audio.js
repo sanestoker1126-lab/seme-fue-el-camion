@@ -154,7 +154,11 @@
       splashBig: () => { noise(0.5, 0.13, 1400, 220); noise(0.3, 0.06, 3000, 900, 0.06); tone(160, 0.18, 'sine', 0.05, -80); },
       swim: () => { noise(0.16, 0.05, 900, 500); tone(300, 0.06, 'sine', 0.02, 160, 0.02); },
       wade: () => noise(0.12, 0.045, 2400, 900),
-      drip: () => { tone(1300, 0.05, 'sine', 0.03, 400); tone(900, 0.06, 'sine', 0.025, 300, 0.07); }
+      drip: () => { tone(1300, 0.05, 'sine', 0.03, 400); tone(900, 0.06, 'sine', 0.025, 300, 0.07); },
+      // V58 · Tirolesa (enganche metálico y zumbido del cable) y orden a las gatitas.
+      zip: () => { tone(1200, 0.05, 'square', 0.03, -300); noise(0.35, 0.035, 2600, 1800, 0.04); },
+      zipOff: () => tone(520, 0.08, 'triangle', 0.04, -180),
+      cats: () => { tone(740, 0.08, 'triangle', 0.05, 220); tone(988, 0.12, 'triangle', 0.04, 0, 0.07); }
     };
     const FILE_SFX = {
       luna: [AUDIO.luna, 0.56], morita: [AUDIO.morita, 0.56],

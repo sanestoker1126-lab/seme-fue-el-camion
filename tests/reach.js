@@ -34,6 +34,9 @@ function subWorld(W, A) {
     solids: W.solids.filter((s) => s.kind === 'wall' || (s.y2 > y - 720 && s.y1 < y + 1400 && s.x2 > x1 && s.x1 < x2)),
     hazards: W.hazards.filter((h) => h.type === 'puddle'),
     waters: W.waters || [],
+    // V58: tirolesas cercanas y gravedad propia del mundo (órbita).
+    zips: (W.zips || []).filter((z) => Math.max(z.ay, z.by) > y - 700 && Math.min(z.ay, z.by) < y + 1400 && Math.max(z.ax, z.bx) > x1 && Math.min(z.ax, z.bx) < x2),
+    gravityMul: W.gravityMul || 1,
     t: 0
   };
 }
@@ -82,17 +85,20 @@ function simulate(W, sub, A, x, vx, policy, probe) {
   const crumbles = sub.platforms.filter((p) => p.kind === 'crumble');
   const resetCrumbles = () => { for (const c of crumbles) { c.crState = 'solid'; c.crT = 0; c.gone = false; } };
   resetCrumbles();
-  let airborne = false, minFoot = topY(A), steps = 0, result = null, dashed = false, apexSeen = false, airSteps = 0;
-  for (; steps < 260; steps++) {
+  let airborne = false, steps = 0, result = null, dashed = false, apexSeen = false, airSteps = 0, landFall = 0;
+  // V58: el mar abierto es hondo; desde el agua se simula más tiempo (bucear hasta un desagüe tarda).
+  const maxSteps = isW && A.water.sea ? 480 : 260;
+  for (; steps < maxSteps; steps++) {
     sub.t += 1 / 60;
     NS.Physics.updatePlatforms(sub, sub.t);
     const inp = Object.assign({}, NONE, policy(steps, P, { airborne, airSteps, apexSeen, dashed }));
     if (inp.dashPressed) dashed = true;
     const prevGround = P.ground;
-    NS.Physics.stepPlayer(P, sub, inp, 1 / 60, []);
+    const ev = NS.Physics.stepPlayer(P, sub, inp, 1 / 60, []);
+    // La altura de caída es la que mide el propio juego al aterrizar (la tirolesa y el agua la reinician).
+    for (const e of ev) if (e.type === 'land') landFall = e.fall;
     if (probe) probe.visit(P, A);
     const foot = P.y + P.h / 2;
-    minFoot = Math.min(minFoot, foot);
     if (isW) {
       if (!P.water) leftWater = true;
       else if (leftWater && P.water === A.water) break;          // salió y volvió a caer en la misma agua
@@ -106,7 +112,7 @@ function simulate(W, sub, A, x, vx, policy, probe) {
   for (const c of crates) c.broken = false;
   resetCrumbles();
   if (!result) return null;
-  return { to: result, fall: waterResult ? 0 : topY(result) - minFoot };
+  return { to: result, fall: waterResult ? 0 : landFall };
 }
 
 function policiesFor(A) {
@@ -125,6 +131,14 @@ function policiesFor(A) {
       }
       out.push([st, (i) => ({ jumpPressed: i === 1, jumpHeld: true })]);
       out.push([st, (i) => ({ downHeld: i < 70 })]);
+    }
+    // V58: bucear hasta cada desagüe del fondo (en línea recta y avanzando hacia él desde los extremos).
+    for (const d of A.water.drains || []) {
+      const cx = (d.x1 + d.x2) / 2;
+      out.push([{ x: cx, vx: 0 }, () => ({ downHeld: true })]);
+      for (const sx of [A.x1 + 20, A.x2 - 20]) {
+        out.push([{ x: sx, vx: 0 }, (i, P) => ({ downHeld: true, left: P.x > cx + 6, right: P.x < cx - 6 })]);
+      }
     }
     return out;
   }
@@ -224,6 +238,9 @@ function analyze(W, { safeFall, gems } = {}) {
   if (!reach.has(street)) report.problems.push('La calle de la terminal no es alcanzable sin caídas dañinas desde el inicio');
   report.checks.checkpoints = W.checkpoints.map((cp) => bfs(graph, [cp.plat], safeFall).has(street));
   report.checks.checkpoints.forEach((ok, i) => { if (!ok) report.problems.push(`Desde la parada del tramo ${i + 1} no se llega a la meta sin daño`); });
+  // V58: paradas intermedias alcanzables desde el inicio y con camino seguro a la meta.
+  report.checks.midpoints = (W.midpoints || []).map((mp) => reach.has(mp.plat) && bfs(graph, [mp.plat], safeFall).has(street));
+  report.checks.midpoints.forEach((ok, i) => { if (!ok) report.problems.push(`Parada intermedia ${i + 1} inalcanzable o sin camino seguro a la meta`); });
   const pk = (type) => W.pickups.filter((p) => p.type === type);
   const unreachable = (list) => list.filter((p) => !reach.has(supportOf(graph.nodes, p.x, p.y)));
   const items = unreachable(pk('item')), keys = unreachable(pk('key'));

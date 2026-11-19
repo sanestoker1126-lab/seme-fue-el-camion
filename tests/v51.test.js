@@ -15,8 +15,13 @@ test('cada uno de los 16 niveles tiene su propio trazado (antes 10 repetían 2 m
   const ids = SEQ.map((d) => d.map.id);
   assert.equal(SEQ.length, 16);
   assert.equal(new Set(ids).size, SEQ.length, 'trazados repetidos: ' + ids.join(','));
-  // Los dos niveles con arte pintado conservan el trazado sobre el que se pintó su fondo.
-  for (const d of SEQ.filter((q) => q.art === 'painted')) assert.ok(d.map === LV.SCHOOL_MAP || d.map === LV.GDL_MAP, d.id);
+  // Los dos niveles con arte pintado conservan el trazado sobre el que se pintó su fondo (V58: es la base de su
+  // versión al doble, cuya mitad alta lo reproduce tal cual a la izquierda y reflejado a la derecha).
+  for (const d of SEQ.filter((q) => q.art === 'painted')) {
+    assert.ok(d.baseMap === LV.SCHOOL_MAP || d.baseMap === LV.GDL_MAP, d.id);
+    assert.equal(d.map.width, d.baseMap.width * 2, d.id + ': el doble de ancho');
+    assert.deepEqual(d.map.art, [{ x: 0, y: 0, w: d.baseMap.width, h: d.baseMap.height, flip: false }, { x: d.baseMap.width, y: 0, w: d.baseMap.width, h: d.baseMap.height, flip: true }]);
+  }
 });
 
 test('integridad de todos los mapas: una parada, una salida amplia, todo dentro del mapa', () => {
@@ -40,7 +45,7 @@ test('integridad de todos los mapas: una parada, una salida amplia, todo dentro 
 });
 
 test('tablones: se pisan desde arriba, se cruzan saltando desde abajo y BAJAR los atraviesa', () => {
-  const W0 = NS.World.buildWorld({ levels: [SEQ.find((d) => d.map === LV.PATIO_MAP)] });
+  const W0 = NS.World.buildWorld({ levels: [SEQ.find((d) => d.baseMap === LV.PATIO_MAP)] });
   const built = W0.platforms.find((p) => p.plank);
   assert.ok(built && built.kind === 'thin' && built.drop && built.draw, 'el tablón del mapa es una plataforma delgada atravesable y visible');
   const W = miniWorld({ platforms: [{ x1: -60, x2: 60, y: 0, kind: 'thin', drop: true, h: 9, plank: true }, { x1: -300, x2: 300, y: 120 }] });

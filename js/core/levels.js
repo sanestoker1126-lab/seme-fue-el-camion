@@ -492,8 +492,191 @@
       exitX: base.exitX + margin
     };
   }
-  const SUBMARINO_MAP = extendMissionMap(SUBMARINO_BASE_MAP);
-  const ESPACIAL_MAP = extendMissionMap(ESPACIAL_BASE_MAP);
+  const SUBMARINO_V54_MAP = extendMissionMap(SUBMARINO_BASE_MAP);
+  const ESPACIAL_V54_MAP = extendMissionMap(ESPACIAL_BASE_MAP);
+
+  /* ================= V58 · Niveles al doble de tamaño =================
+     Cada nivel crece hacia los lados y hacia abajo:
+     · Mitad alta: el trazado original (ya validado) y su espejo a la derecha. Las cornisas que tocaban el borde
+       derecho se unen con su reflejo y quedan plataformas largas para correr, pelear y saltar sobre enemigos.
+       Los niveles con arte pintado dibujan su arte reflejado: la colisión del espejo coincide con el dibujo.
+     · Mitad baja: sección nueva, determinista, en serpentina (cada fila se recorre casi entera) con piezas por
+       tema: tirolesas, vehículos que cruzan huecos, sombrillas, tejas flojas y bandas. Su primera fila es una
+       parada intermedia y la meta es la fila más ancha del nivel (arena del jefe).
+     Los mapas apaisados (1600 × 450) ya son el doble de anchos: solo crecen hacia abajo.
+     Todo se valida con la física real en las tres dificultades (tests/reach.js, tests/v58_*.test.js). */
+  // Se puede cargar sin config.js (herramientas y pruebas aisladas): los valores por defecto son los de CONFIG.
+  const CV = NS.CONFIG || { player: { h: 62 }, zip: { hang: 6 }, world: { sceneScale: 0.82 } };
+  const HAND = (CV.player.h + CV.zip.hang) / CV.world.sceneScale;   // ≈ 83 u de mapa: de los pies a la mano colgada
+  const rnd = (v) => Math.round(v);
+  const mirrorX = (q, W) => Object.assign({}, q, { x1: W - q.x2, x2: W - q.x1 });
+
+  function emptyMap(id, width, height) {
+    return { id, width, height, v58: true, art: [], surfaces: [], stairs: [], movers: [], pigeons: [], bouncers: [], crumbles: [],
+      belts: [], planks: [], water: [], gems: [], zips: [], blocks: [] };
+  }
+
+  /** Mitad alta: original + espejo unido por el centro (o solo el original si `wide` es falso). */
+  function doubleTop(base, wide, painted) {
+    const w = base.width, h = base.height, W = wide ? 2 * w : w;
+    const o = emptyMap(base.id + '_v58', W, h);
+    o.baseId = base.id;
+    o.art = wide ? [{ x: 0, y: 0, w, h, flip: false }, { x: w, y: 0, w, h, flip: true }] : [{ x: 0, y: 0, w, h, flip: false }];
+    for (const k of ['stairs', 'movers', 'pigeons', 'bouncers', 'crumbles', 'planks']) {
+      for (const q of base[k] || []) { o[k].push(Object.assign({}, q)); if (wide) o[k].push(mirrorX(q, W)); }
+    }
+    for (const q of base.belts || []) { o.belts.push(Object.assign({}, q)); if (wide) o.belts.push(Object.assign(mirrorX(q, W), { speed: -q.speed })); }
+    for (const q of base.water || []) {
+      o.water.push(Object.assign({}, q, { banks: (q.banks || []).slice() }));
+      if (wide) o.water.push(Object.assign(mirrorX(q, W), { banks: (q.banks || []).map((b) => (b === 'left' ? 'right' : 'left')) }));
+    }
+    for (const g of base.gems) { o.gems.push({ x: g.x, y: g.y }); if (wide) o.gems.push({ x: W - g.x, y: g.y }); }
+    // La meta baja a la sección nueva: las salidas originales quedan como cornisas normales; el espejo no tiene parada.
+    const L = base.surfaces.map((q) => { const s = Object.assign({}, q); delete s.exit; return s; });
+    const R = wide ? base.surfaces.map((q) => { const s = mirrorX(q, W); delete s.exit; delete s.start; delete s.startX; return s; }) : [];
+    const used = new Set();
+    for (const a of L) {
+      const b = wide && a.x2 >= w - 1 ? R.find((r) => !used.has(r) && r.x1 <= w + 1 && Math.abs(r.y - a.y) < 0.5) : null;
+      if (!b) { o.surfaces.push(a); continue; }
+      used.add(b);
+      const m = Object.assign({}, a, { x2: b.x2, joined: true });
+      if (!painted && !m.start && m.y > h * 0.85) {
+        // Cornisa baja que cruza el centro: se abre al medio para bajar a la sección nueva sin rodear.
+        if (w - 60 - m.x1 >= 50) o.surfaces.push(Object.assign({}, m, { x2: w - 60 }));
+        if (m.x2 - (w + 60) >= 50) o.surfaces.push(Object.assign({}, m, { x1: w + 60 }));
+      } else o.surfaces.push(m);
+    }
+    for (const b of R) if (!used.has(b)) o.surfaces.push(b);
+    return o;
+  }
+
+  /** Filas en serpentina entre yFirst y yExit (la fila de meta o la siguiente sección). dir > 0: se corre a la
+      derecha y se baja por el extremo derecho. Cada pieza conserva sólido el extremo de entrada de su fila. */
+  function genRows(o, yFirst, yExit, cfg, dir, markMid) {
+    const W = o.width, n = Math.max(1, rnd((yExit - yFirst) / 128)), gap = (yExit - yFirst) / n;
+    const pieces = cfg.pieces || ['plain'];
+    const span = (d) => (d > 0 ? [0, 0.85 * W] : [0.15 * W, W]);
+    for (let k = 0; k < n; k++) {
+      const yk = rnd(yFirst + k * gap), yn = rnd(yFirst + (k + 1) * gap), last = k === n - 1;
+      const [lo, hi] = span(dir), next = last ? [0.06 * W, 0.94 * W] : span(-dir);
+      const at = (f) => (dir > 0 ? lo + (hi - lo) * f : hi - (hi - lo) * f);   // fracción del recorrido desde la entrada
+      const before = o.surfaces.length;
+      const S = (x1, x2, extra) => { const a = Math.min(x1, x2), b = Math.max(x1, x2); if (b - a >= 40) o.surfaces.push(Object.assign({ x1: rnd(a), x2: rnd(b), y: yk, gen: true }, extra || {})); };
+      const gem = (x, y) => o.gems.push({ x: rnd(x), y: rnd(y) });
+      const walk = (x1, x2, m) => { const a = Math.min(x1, x2) + 30, b = Math.max(x1, x2) - 30; for (let i = 0; i < m; i++) gem(a + (b - a) * (i + 0.5) / m, yk - 36); };
+      const piece = pieces[(k + (cfg.offset || 0)) % pieces.length];
+      if (piece === 'zip') {
+        // Fila más corta; al salir por su extremo Sofía se cuelga sola del cable y baja hasta la entrada de la siguiente.
+        const xe = at(0.72);
+        S(dir > 0 ? lo : xe, dir > 0 ? xe : hi); walk(dir > 0 ? lo : xe, dir > 0 ? xe : hi, 3);
+        const hx = xe - dir * 18, hy = yk - HAND - 3;
+        const lx = dir > 0 ? next[1] - 36 : next[0] + 36, ly = yn - HAND + 14;
+        o.zips.push({ x1: rnd(hx), y1: rnd(hy), x2: rnd(lx), y2: rnd(ly), look: cfg.zipLook || 'cable' });
+        for (const f of [0.3, 0.55, 0.8]) gem(hx + (lx - hx) * f, hy + (ly - hy) * f + 45);
+      } else if (piece === 'vehicle') {
+        // Hueco que cruza un vehículo en vaivén (también se salta con carrera; si cae, llega a la fila de abajo).
+        const gl = Math.min(0.26 * W, 260), c = at(0.45), mw = gl * 0.68, range = gl * 0.26;
+        S(dir > 0 ? lo : c + gl / 2, dir > 0 ? c - gl / 2 : hi);
+        S(dir > 0 ? c + gl / 2 : lo, dir > 0 ? hi : c - gl / 2);
+        o.movers.push({ x1: rnd(c - mw / 2), x2: rnd(c + mw / 2), y: yk, range: rnd(range), vertical: 0, look: cfg.vehicle || 'carrito', speed: 0.95, gen: true });
+        walk(lo, c - gl / 2, 2); walk(c + gl / 2, hi, 2); gem(c, yk - 80);
+      } else if (piece === 'bounce') {
+        // Hueco con sombrilla (o pez/nave en vaivén) un poco más abajo: al caer en ella, Sofía sale disparada.
+        const gl = Math.min(0.2 * W, 200), c = at(0.5), bw = gl * 0.55;
+        S(dir > 0 ? lo : c + gl / 2, dir > 0 ? c - gl / 2 : hi);
+        S(dir > 0 ? c + gl / 2 : lo, dir > 0 ? hi : c - gl / 2);
+        const b = { x1: rnd(c - bw / 2), x2: rnd(c + bw / 2), y: yk + 30, look: cfg.bouncer || null, gen: true };
+        if (cfg.bounceMoving) o.pigeons.push(Object.assign(b, { range: rnd(gl * 0.12), vertical: 6, speed: 1.1 }));
+        else o.bouncers.push(b);
+        walk(lo, c - gl / 2, 2); walk(c + gl / 2, hi, 2);
+        gem(c, yk - 70); gem(c, yk - 125); gem(c - dir * gl * 0.3, yk - 95);
+      } else if (piece === 'crumble' || piece === 'belt') {
+        const a = at(0.3), b = at(0.7), m1 = Math.min(a, b), m2 = Math.max(a, b);
+        S(lo, m1); S(m2, hi);
+        if (piece === 'crumble') {
+          const tiles = Math.max(2, Math.floor((m2 - m1 + 8) / 78)), tw = (m2 - m1 - 8 * (tiles - 1)) / tiles;
+          for (let i = 0; i < tiles; i++) o.crumbles.push({ x1: rnd(m1 + i * (tw + 8)), x2: rnd(m1 + i * (tw + 8) + tw), y: yk, look: cfg.crumbleLook || null, gen: true });
+        } else o.belts.push({ x1: rnd(m1), x2: rnd(m2), y: yk, speed: (k % 2 ? 1 : -1) * dir * 90, gen: true });
+        walk(lo, m1, 2); walk(m2, hi, 2); gem((m1 + m2) / 2, yk - 36);
+      } else {
+        S(lo, hi); walk(lo, hi, 4);
+      }
+      if (markMid && k === 0) {
+        // Parada intermedia en la fila de entrada de la sección nueva.
+        const ex = dir > 0 ? lo + 40 : hi - 40;
+        const s = o.surfaces.slice(before).find((q) => q.x1 <= ex && q.x2 >= ex);
+        if (s) { s.mid = true; s.midX = rnd(ex + dir * 50); }
+      }
+      dir = -dir;
+    }
+    return dir;
+  }
+
+  /** Mar abierto: agua de lado a lado (flotación neutra), balsas, peces trampolín, pilares de coral y dos desagües
+      en el fondo por los que se baja en cascada a la sección siguiente. Devuelve la y bajo el fondo sólido. */
+  function genSea(o, y, cfg) {
+    const W = o.width, surf = y + 150, depth = cfg.depth || 900, bottom = surf + depth;
+    const d1 = 0.25 * W, d2 = 0.75 * W, dw = 46;
+    o.water.push({ x1: 0, x2: W, y: surf, depth, kind: 'mar', banks: [], sea: true, boss: !!cfg.boss,
+      drains: [{ x1: rnd(d1 - dw), x2: rnd(d1 + dw) }, { x1: rnd(d2 - dw), x2: rnd(d2 + dw) }] });
+    o.movers.push({ x1: rnd(0.08 * W), x2: rnd(0.2 * W), y: surf - 3, range: rnd(0.05 * W), vertical: 2, look: 'balsa', speed: 0.7, gen: true });
+    o.movers.push({ x1: rnd(0.6 * W), x2: rnd(0.72 * W), y: surf - 3, range: rnd(0.05 * W), vertical: 2, look: 'balsa', speed: 0.8, gen: true });
+    o.pigeons.push({ x1: rnd(0.4 * W), x2: rnd(0.47 * W), y: surf - 60, range: 80, vertical: 14, speed: 1.1, look: 'pez', gen: true });
+    o.pigeons.push({ x1: rnd(0.86 * W), x2: rnd(0.93 * W), y: surf - 60, range: 50, vertical: 14, speed: 1.3, look: 'pez', gen: true });
+    for (const f of [0.1, 0.5, 0.9]) o.blocks.push({ x1: rnd(f * W - 20), x2: rnd(f * W + 20), y1: rnd(bottom - depth * 0.45), y2: bottom, kind: 'coral' });
+    for (const dx of [d1, d2]) for (const dd of [0.2, 0.45, 0.7, 0.92]) o.gems.push({ x: rnd(dx), y: rnd(surf + depth * dd) });
+    o.gems.push({ x: rnd(0.435 * W), y: rnd(surf - 150) }, { x: rnd(0.895 * W), y: rnd(surf - 150) },
+      { x: rnd(0.14 * W), y: rnd(surf - 40) }, { x: rnd(0.66 * W), y: rnd(surf - 40) });
+    return bottom + 10;
+  }
+
+  /** Fila de meta: la más ancha del nivel (arena del jefe). */
+  function finishMap(o, yExit) {
+    const W = o.width;
+    o.surfaces.push({ x1: rnd(0.06 * W), x2: rnd(0.94 * W), y: rnd(yExit), exit: true, gen: true });
+    for (let i = 0; i < 5; i++) o.gems.push({ x: rnd(W * (0.15 + 0.175 * i)), y: rnd(yExit - 36) });
+    o.exitX = rnd(W / 2);
+    o.height = rnd(yExit + 34);
+  }
+
+  function buildV58(base, cfg) {
+    const o = doubleTop(base, !cfg.keepWidth, !!cfg.painted);
+    let yFirst = base.height + 118;
+    if (cfg.sea) yFirst = genSea(o, base.height, cfg.sea) + 150;
+    const yExit = yFirst + (cfg.rowsHeight || base.height - 152);
+    genRows(o, yFirst, yExit, cfg, cfg.startDir || 1, true);
+    finishMap(o, yExit);
+    return o;
+  }
+
+  /* Piezas y aspecto por nivel (vehicle/bouncer/crumbleLook/zipLook son solo arte: la física es la misma). */
+  const V58_CFG = {
+    escuela:              { painted: true, pieces: ['zip', 'plain', 'bounce', 'vehicle'], vehicle: 'carrito' },
+    guadalajara:          { keepWidth: true, pieces: ['vehicle', 'zip', 'bounce'], vehicle: 'camion' },
+    escuela_vecina:       { pieces: ['zip', 'crumble', 'vehicle', 'bounce'], vehicle: 'carrito' },
+    gdl_noche:            { pieces: ['vehicle', 'zip', 'bounce', 'crumble'], vehicle: 'camion', zipLook: 'cable' },
+    azoteas:              { pieces: ['crumble', 'zip', 'bounce', 'zip'], vehicle: 'carrito', zipLook: 'tendedero' },
+    escuela_ruinas:       { pieces: ['crumble', 'zip', 'vehicle', 'belt'], vehicle: 'carrito' },
+    centro_historico:     { pieces: ['vehicle', 'zip', 'bounce', 'crumble'], vehicle: 'camion' },
+    portales:             { painted: true, pieces: ['vehicle', 'zip', 'bounce', 'belt'], vehicle: 'camion' },
+    zapopan:              { pieces: ['zip', 'vehicle', 'crumble', 'bounce'], vehicle: 'camion' },
+    arcadas:              { pieces: ['belt', 'vehicle', 'zip', 'bounce'], vehicle: 'camion' },
+    metro:                { pieces: ['belt', 'vehicle', 'zip', 'belt'], vehicle: 'tren' },
+    mercado_tapatio:      { pieces: ['vehicle', 'bounce', 'zip', 'crumble'], vehicle: 'carrito' },
+    parque_metropolitano: { pieces: ['zip', 'vehicle', 'bounce', 'zip'], vehicle: 'carrito' },
+    tlaquepaque:          { keepWidth: true, pieces: ['bounce', 'zip', 'vehicle'], vehicle: 'carrito' },
+    anden_tren_ligero:    { pieces: ['vehicle', 'belt', 'zip', 'bounce'], vehicle: 'tren' },
+    plaza_jacarandas:     { pieces: ['zip', 'crumble', 'belt', 'vehicle', 'bounce'], vehicle: 'camion' }
+  };
+  /* Mar: costa (ruinas originales + espejo), mar abierto con el tiburón y templo hundido bajo los desagües.
+     Órbita: estación original + espejo y un descenso largo con cables de anclaje, naves y asteroides. */
+  const SUBMARINO_MAP = buildV58(SUBMARINO_BASE_MAP, { sea: { depth: 900, boss: true }, rowsHeight: 1000,
+    pieces: ['vehicle', 'zip', 'bounce', 'crumble', 'zip'], vehicle: 'manta', bouncer: 'pez', bounceMoving: true, crumbleLook: 'coral', zipLook: 'alga' });
+  SUBMARINO_MAP.id = 'submarino';
+  const ESPACIAL_MAP = buildV58(ESPACIAL_BASE_MAP, { rowsHeight: 2100,
+    pieces: ['zip', 'vehicle', 'bounce', 'zip', 'crumble', 'vehicle', 'zip', 'belt'], vehicle: 'nave', bouncer: 'nave', bounceMoving: true,
+    crumbleLook: 'asteroide', zipLook: 'anclaje' });
+  ESPACIAL_MAP.id = 'espacial';
 
   /* Cada tramo declara qué enemigos y obstáculos puede usar y con qué intensidad.
      La colocación concreta es determinista (semilla por tramo) y se valida con pruebas de alcanzabilidad.
@@ -603,20 +786,34 @@
      aunque una misión lo juegue en otra posición (world.js y game.js usan def.storyIndex, no el índice local). */
   LEVEL_SEQUENCE.forEach((d, i) => { d.storyIndex = i; });
 
+  /* V58 · Cada nivel de las misiones 1 y 2 usa su versión al doble. El mapa original queda en `baseMap`.
+     Con el cuádruple de área se reparten más enemigos y obstáculos (la colocación sigue siendo determinista). */
+  LEVEL_SEQUENCE.forEach((d) => {
+    const cfg = V58_CFG[d.id];
+    if (!cfg) throw new Error('nivel sin configuración V58: ' + d.id);
+    d.baseMap = d.map;
+    d.map = buildV58(d.map, cfg);
+    d.foeBudget = Math.round(d.foeBudget * 1.7);
+    d.obstacleBudget = Math.round(d.obstacleBudget * 1.6);
+    d.sideFoes = Math.round(d.sideFoes * 1.4);
+  });
+
   /* Niveles nuevos (misiones 3 y 4). storyIndex 16/17: su capítulo y letrero están en story.js. */
+  /* V58 · Mar y órbita son mundos completos trazados de borde a borde (sideWidth 0: sin sectores procedurales).
+     En el mar el tiburón patrulla el mar abierto; en órbita la gravedad es menor (saltos más largos y altos). */
   const SUBMARINO_LEVEL = {
     id: 'submarino', label: 'RUINAS SUMERGIDAS', file: 'assets/scenes/generated/submarino_fondo.png', map: SUBMARINO_MAP, skin: 'stone_moss', isNew: true,
-    tint: 0x9fd8e6, wash: 0x0a2e48, shade: 0.17, theme: 'submarino', room: 'alcantarilla', storyIndex: 16,
-    // Pirañas solo en pozas reales; ratas en cornisas secas de las ruinas.
-    foes: ['piranha', 'rat'], obstacles: ['spark', 'crate'], foeBudget: 8, obstacleBudget: 3, sideFoes: 3,
-    boss: { kind: 'shark', name: 'TIBURÓN GUARDIÁN DEL ARRECIFE', hp: 6 }, music: 12
+    tint: 0x9fd8e6, wash: 0x0a2e48, shade: 0.12, theme: 'submarino', room: 'alcantarilla', storyIndex: 16, sideWidth: 0,
+    // Pirañas solo en el agua; cangrejos en las cornisas secas de las ruinas.
+    foes: ['piranha', 'crab', 'piranha', 'crab'], obstacles: ['spark', 'crate'], foeBudget: 14, obstacleBudget: 5, sideFoes: 0,
+    boss: { kind: 'shark', name: 'TIBURÓN GUARDIÁN DEL ARRECIFE', hp: 7 }, music: 12
   };
   const ESPACIAL_LEVEL = {
     id: 'espacial', label: 'ESTACIÓN EN ÓRBITA', file: 'assets/scenes/generated/espacial_fondo.png', map: ESPACIAL_MAP, skin: 'scaffold', isNew: true,
-    tint: 0xc3c9ee, wash: 0x0b0a28, shade: 0.1, theme: 'espacial', room: 'alcantarilla', storyIndex: 17,
-    // Drones centinela de disparo anunciado; resto del nivel conserva sus trampas.
-    foes: ['drone', 'chile'], obstacles: ['spark', 'crate'], foeBudget: 8, obstacleBudget: 3, sideFoes: 3,
-    boss: { kind: 'drone', name: 'DRON CENTINELA', hp: 6 }, final: true, music: 15
+    tint: 0xc3c9ee, wash: 0x0b0a28, shade: 0.08, theme: 'espacial', room: 'alcantarilla', storyIndex: 17, sideWidth: 0, gravity: 0.72,
+    // Drones de disparo anunciado y robots que embisten.
+    foes: ['drone', 'robot', 'drone', 'robot'], obstacles: ['spark', 'crate'], foeBudget: 15, obstacleBudget: 5, sideFoes: 0,
+    boss: { kind: 'drone', name: 'DRON CENTINELA', hp: 7 }, final: true, music: 15
   };
 
   /* Misiones: separan el juego por mundos. Las 1 y 2 reúnen los 16 niveles existentes por su tema (sin cambiar su
@@ -631,5 +828,6 @@
 
   NS.LEVELS = { SCHOOL_MAP, GDL_MAP, SCHOOL_M, GDL_M, CENTRO_MAP, ZAPOPAN_MAP, SOFEVI_MAP, AZOTEAS_MAP, METRO_MAP, TLAQUE_MAP,
     PATIO_MAP, PASILLOS_MAP, NOCHE_MAP, CATEDRAL_MAP, BASILICA_MAP, TERMINAL_MAP, MERCADO_MAP, PARQUE_MAP, ANDEN_MAP, PLAZA_MAP,
-    SUBMARINO_MAP, ESPACIAL_MAP, SUBMARINO_LEVEL, ESPACIAL_LEVEL, MISSIONS, LEVEL_SEQUENCE, mirror };
+    SUBMARINO_MAP, ESPACIAL_MAP, SUBMARINO_V54_MAP, ESPACIAL_V54_MAP, SUBMARINO_BASE_MAP, ESPACIAL_BASE_MAP,
+    SUBMARINO_LEVEL, ESPACIAL_LEVEL, MISSIONS, LEVEL_SEQUENCE, mirror, buildV58, V58_CFG, HAND };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

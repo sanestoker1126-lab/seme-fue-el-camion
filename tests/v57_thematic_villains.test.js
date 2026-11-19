@@ -40,7 +40,9 @@ test('V57: dos misiones especiales usan enemigos propios, sin palomas submarinas
     assert.ok(f.y > f.waterZone.y && f.y < f.waterZone.y2);
     seen.set(f.waterZone.id, (seen.get(f.waterZone.id) || 0) + 1);
   }
-  assert.ok([...seen.values()].every(n => n <= 2), 'máximo dos pirañas por estanque');
+  // V58: máximo dos por poza; el mar abierto admite seis repartidas.
+  for (const f of sub.foes.filter(f => f.kind === 'piranha')) assert.ok(seen.get(f.waterZone.id) <= (f.waterZone.sea ? 6 : 2), 'pirañas por estanque');
+  assert.ok(sub.waters.some(z => z.sea), 'hay mar abierto');
   assert.ok(space.foes.some(f => f.kind === 'drone' && !f.isBoss), 'drones comunes en órbita');
   assert.ok(space.foes.some(f => f.kind === 'drone' && f.isBoss), 'dron centinela como jefe');
   assert.ok(space.foes.every(f => f.kind !== 'pigeon' && f.kind !== 'bat'), 'sin palomas/murciélagos en espacio');
@@ -152,8 +154,8 @@ test('V57: la cadena de evento y arte es consistente sin cambiar la geometría',
   assert.match(render, /f\.kind === 'drone'/);
   assert.match(render, /s\.kind === 'plasma'/);
   assert.match(read('sw.js'), /camion-v57-thematic-villains/);
-  assert.equal(LV.SUBMARINO_MAP.width, 940);
-  assert.equal(LV.SUBMARINO_MAP.height, 3072);
-  assert.equal(LV.ESPACIAL_MAP.width, 940);
-  assert.equal(LV.ESPACIAL_MAP.height, 3072);
+  // V58: los mundos especiales se rehicieron al doble (ver v54.test.js).
+  assert.equal(LV.SUBMARINO_MAP.width, 1520);
+  assert.equal(LV.ESPACIAL_MAP.width, 1520);
+  assert.ok(LV.SUBMARINO_MAP.height >= 3200 && LV.ESPACIAL_MAP.height >= 3200);
 });

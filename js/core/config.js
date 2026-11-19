@@ -6,8 +6,8 @@
   const NS = root.CAMION = root.CAMION || {};
 
   NS.CONFIG = {
-    version: '57.0.0',
-    build: 'v57-thematic-villains',
+    version: '58.0.0',
+    build: 'v58-mundos-al-doble',
 
     sim: {
       fixedDt: 1 / 60,      // paso fijo de simulación (60 Hz), independiente de la tasa de refresco
@@ -140,6 +140,9 @@
       normal:  { label: 'NORMAL',  lives: 3, foeSpeed: 1.0,  foeDensity: 1.0,  shotSpeed: 1.0,  reaction: 1.0,  fallDamage: 640, invulnMul: 1.0 },
       dificil: { label: 'DIFÍCIL', lives: 2, foeSpeed: 1.25, foeDensity: 1.35, shotSpeed: 1.2,  reaction: 0.8,  fallDamage: 560, invulnMul: 0.85 }
     },
+
+    // V58 · Orden a las gatitas (botón GATAS): Luna ataca al enemigo más cercano o Morita trae los cristales.
+    cats: { cooldown: 7, range: 330, gemRange: 360, fetchSpeed: 560 },
 
     camera: { easeX: 4.6, easeY: 3.35, lookAheadVx: 0.24, focusY: 0.42, leadVy: 0.105 }
   };

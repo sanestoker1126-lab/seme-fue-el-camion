@@ -159,8 +159,13 @@ test('plataformas visibles: solo se ocultan las que el fondo trae pintadas; jefe
   const W = NS.World.buildWorld({});
   for (const sc of W.scenes) {
     const surf = W.platforms.filter((p) => p.scene === sc.index && p.painted && p.kind === 'floor');
-    if (sc.artPainted) assert.ok(surf.every((p) => p.hidden), sc.id + ': cornisas pintadas en el fondo');
-    else assert.ok(surf.every((p) => !p.hidden && p.draw), sc.id + ': cornisas dibujadas por el juego');
+    // V58: en los niveles pintados se ocultan las cornisas trazadas sobre el arte (original y espejo); las de la
+    // mitad nueva (generadas) las dibuja el juego.
+    if (sc.artPainted) {
+      assert.ok(surf.filter((p) => !p.gen).every((p) => p.hidden), sc.id + ': cornisas pintadas en el fondo');
+      assert.ok(surf.filter((p) => p.gen).every((p) => !p.hidden && p.draw), sc.id + ': cornisas nuevas dibujadas por el juego');
+      assert.ok(surf.some((p) => p.gen), sc.id + ': tiene mitad nueva');
+    } else assert.ok(surf.every((p) => !p.hidden && p.draw), sc.id + ': cornisas dibujadas por el juego');
   }
   assert.ok(W.scenes.filter((s) => s.artPainted).map((s) => s.id).join() === 'escuela,portales');
   for (const f of W.foes.filter((q) => q.isBoss)) {

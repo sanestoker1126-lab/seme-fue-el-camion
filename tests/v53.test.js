@@ -71,6 +71,9 @@ test('agua del submarino: profunda, ninguna plataforma dentro y cada orilla con 
       const inside = p.y > z.y + 4 && p.y < z.y2 - 4 && p.x2 > z.x1 + 2 && p.x1 < z.x2 - 2;
       assert.ok(!inside, 'plataforma dentro del agua: ' + p.id);
     }
+    // V58: el mar abierto va de pared a pared del mundo; se sale por la superficie (balsas, peces) o buceando por
+    // sus desagües. Que no sea una trampa lo comprueba el análisis de alcanzabilidad.
+    if (z.sea) { assert.ok(z.drains.length >= 1, 'el mar tiene desagües'); continue; }
     for (const side of ['left', 'right']) {
       const edge = side === 'left' ? z.x1 : z.x2;
       const ground = W.platforms.some((p) => Math.abs(p.y - z.y) <= C.water.climbUp && (side === 'left' ? p.x2 >= edge - 6 && p.x1 < edge : p.x1 <= edge + 6 && p.x2 > edge));

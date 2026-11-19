@@ -26,8 +26,13 @@
     // V57: enemigos propios de submarino/espacio; no reutilizar palomas bajo el agua.
     piranha:{ flyer: true, w: 30, h: 20, hp: 1, speed: 82, sight: 110, contactRequiresCharge: true, windup: 0.46, charge: 0.42, recover: 0.7, chargeMul: 2.15, stomp: true, dash: true, hitK: 1.22 },
     shark:  { flyer: true, w: 82, h: 36, hp: 6, speed: 78, sight: 200, contactRequiresCharge: true, windup: 0.72, charge: 0.65, recover: 1.0, chargeMul: 2.2, stomp: true, dash: 'dizzy', hitK: 1.12 },
-    drone:  { flyer: true, w: 34, h: 28, hp: 1, speed: 73, sight: 350, windup: 0.64, recover: 0.7, shotSpeed: 205, cooldown: 2.4, stomp: true, dash: true, hitK: 1.9 }
+    drone:  { flyer: true, w: 34, h: 28, hp: 1, speed: 73, sight: 350, windup: 0.64, recover: 0.7, shotSpeed: 205, cooldown: 2.4, stomp: true, dash: true, hitK: 1.9 },
+    // V58: cangrejo de las ruinas (patrulla de lado y se apura al verte) y robot de la estación (embiste como el perro).
+    crab:   { walker: true, w: 34, h: 20, hp: 1, speed: 62, alertMul: 1.7, alertRange: 170, stomp: true, dash: true, minPlatform: 100, hitKW: 1.45, hitKH: 1.8 },
+    robot:  { walker: true, w: 36, h: 40, hp: 2, speed: 46, chargeMul: 3.4, sight: 250, windup: 0.6, charge: 0.75, recover: 0.95, stomp: true, dash: 'dizzy', minPlatform: 130, hitKW: 1.5, hitKH: 1.35 }
   };
+  // V58: los peces solo existen en su estanque; ahí Sofía sí los alcanza (y ellos a ella) aunque esté buceando.
+  const AQUATIC = new Set(['piranha', 'shark']);
 
   function create(kind, o) {
     const T = Object.assign({}, TYPES[kind]);
@@ -132,6 +137,7 @@
     }
 
       switch (f.kind) {
+      case 'crab':
       case 'rat': {
         if (f.state === 'recoil') { recoil(f, P, dt, ev, 'alert'); break; }
         if (f.state === 'dizzy') { if (f.stateT >= 0.5) setState(f, 'patrol'); break; }
@@ -146,6 +152,7 @@
       }
       case 'dog':
       case 'bravo':
+      case 'robot':
       case 'kid': {
         if (f.state === 'patrol') {
           if (walk(f, W, f.spd * 0.7, dt)) f.dir *= -1;
@@ -434,12 +441,15 @@
   function update(W, P, dt, ctx, ev) {
     const U = NS.util, CB = NS.CONFIG.combat, PH = NS.CONFIG.phys;
     ev = ev || [];
-    const hb = ctx.hurtbox();
+    const hbAll = ctx.hurtbox();
+    const body = ctx.bodybox ? ctx.bodybox() : hbAll;
     for (const f of W.foes) {
       if (f.dead) { f.deadT += dt; continue; }
       if (!ctx.active(f.x, f.y)) continue;
       updateFoe(f, W, P, dt, ctx, ev);
       if (P.dead || ctx.busy) continue;
+      // Sumergida, Sofía queda fuera del alcance de lo que vive en tierra, pero no del pez de su propio estanque.
+      const hb = AQUATIC.has(f.kind) && P.water && f.waterZone === P.water ? body : hbAll;
       const b = box(f);          // caja física (defensa)
       const hbx = hitBox(f);     // caja de combate (ofensa): cubre el cuerpo visible
       // Patada: alcance algo mayor y contra la caja de combate -> conecta donde se ve.
@@ -485,6 +495,7 @@
     }
 
     // Proyectiles: chocan con sólidos y (si caen) con plataformas; el dash los destruye.
+    const hb = hbAll;
     for (const s of W.shots) {
       const py = s.y;
       s.vy += (s.g || 0) * dt;
