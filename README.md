@@ -17,6 +17,21 @@ Es un sitio estático, sin dependencias. Para jugarlo:
 
 Controles en pantalla (táctil) y teclado. Se instala como app (PWA) y funciona sin conexión tras la primera carga.
 
+## Novedades V58
+
+Cada nivel mide **el doble** (más ancho y más hondo), con **tirolesas**, **vehículos** que cruzan huecos
+(camiones, carritos, trenes, balsas, mantas, naves), **peces trampolín**, una **parada intermedia** por nivel y
+fondos pintados **del tamaño de todo el nivel**. El submarino es un **mar abierto** de pared a pared (se bucea a
+cualquier profundidad y se baja por desagües) y en el espacio la gravedad es menor. Luna y Morita obedecen el botón
+**GATAS** (tecla **C** o **E**): Luna ataca al enemigo más cercano y, si no hay, Morita trae los cristales.
+
+La historia arranca con la cinemática **ARCHIVO 01 · La Toxi Familia** (prólogo) y, si terminas la última misión
+con las seis llaves USB (los seis objetos), se desbloquea la escena post-créditos **LEGEND OF PRESOS**.
+
+Detalle, medidas y validación: `CHANGELOG_V58.md`. Procedencia del arte nuevo: `assets/parallax/FUENTES.md`.
+
+**Controles en PC:** A/D o ←/→ mover · Espacio/W saltar · X/U patear · Shift/J dash · S/↓ bajar · C/E gatas · P pausa.
+
 ## Misiones (V53)
 
 El juego está separado en cuatro misiones; en el menú eliges misión y después la parada:

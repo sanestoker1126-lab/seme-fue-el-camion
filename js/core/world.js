@@ -380,7 +380,8 @@
       // Contenido hostil de la zona: una amenaza que escala con el tramo.
       const floorPl = { x1: rx + 20, x2: rx + RW - 120, y: floorTop, occupied: [] }; // tramo de patrulla (no pisa la salida)
       if (i >= 1) OB.addSpikes(W, { scope, x: rx + 380, y: floorTop, w: 40, scene: i, region: reg });
-      const guardKind = i >= 3 ? 'bravo' : i >= 1 ? 'dog' : 'rat';
+      // V58: en el mar vigila un cangrejo y en la órbita un robot (no una rata de alcantarilla).
+      const guardKind = sc.theme === 'submarino' ? 'crab' : sc.theme === 'espacial' ? 'robot' : i >= 3 ? 'bravo' : i >= 1 ? 'dog' : 'rat';
       addFoe(EN.create(guardKind, { x: rx + 230, y: floorTop, plat: floorPl, scene: i, region: reg, diff, rng }));
       if (i >= 2) addFoe(EN.create('bat', { x: rx + 470, y: ry + 22, scene: i, region: reg, diff, rng }));
     }

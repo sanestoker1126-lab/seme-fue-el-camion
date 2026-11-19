@@ -672,10 +672,12 @@
   };
   /* Mar: costa (ruinas originales + espejo), mar abierto con el tiburón y templo hundido bajo los desagües.
      Órbita: estación original + espejo y un descenso largo con cables de anclaje, naves y asteroides. */
-  const SUBMARINO_MAP = buildV58(SUBMARINO_BASE_MAP, { sea: { depth: 900, boss: true }, rowsHeight: 1000,
+  // Se parte de la versión V54 (tres secciones, 940 × 3072): al doble de ancho (1880) y con la mitad nueva debajo,
+  // así cada mundo mide el doble que en V54/V57 a lo ancho y a lo alto.
+  const SUBMARINO_MAP = buildV58(SUBMARINO_V54_MAP, { sea: { depth: 1000, boss: true }, rowsHeight: 1900,
     pieces: ['vehicle', 'zip', 'bounce', 'crumble', 'zip'], vehicle: 'manta', bouncer: 'pez', bounceMoving: true, crumbleLook: 'coral', zipLook: 'alga' });
   SUBMARINO_MAP.id = 'submarino';
-  const ESPACIAL_MAP = buildV58(ESPACIAL_BASE_MAP, { rowsHeight: 2100,
+  const ESPACIAL_MAP = buildV58(ESPACIAL_V54_MAP, { rowsHeight: 3100,
     pieces: ['zip', 'vehicle', 'bounce', 'zip', 'crumble', 'vehicle', 'zip', 'belt'], vehicle: 'nave', bouncer: 'nave', bounceMoving: true,
     crumbleLook: 'asteroide', zipLook: 'anclaje' });
   ESPACIAL_MAP.id = 'espacial';
@@ -807,14 +809,14 @@
     id: 'submarino', label: 'RUINAS SUMERGIDAS', file: 'assets/scenes/generated/submarino_fondo.png', map: SUBMARINO_MAP, skin: 'stone_moss', isNew: true,
     tint: 0x9fd8e6, wash: 0x0a2e48, shade: 0.12, theme: 'submarino', room: 'alcantarilla', storyIndex: 16, sideWidth: 0,
     // Pirañas solo en el agua; cangrejos en las cornisas secas de las ruinas.
-    foes: ['piranha', 'crab', 'piranha', 'crab'], obstacles: ['spark', 'crate'], foeBudget: 14, obstacleBudget: 5, sideFoes: 0,
+    foes: ['piranha', 'crab', 'piranha', 'crab'], obstacles: ['spark', 'crate'], foeBudget: 30, obstacleBudget: 10, sideFoes: 0,
     boss: { kind: 'shark', name: 'TIBURÓN GUARDIÁN DEL ARRECIFE', hp: 7 }, music: 12
   };
   const ESPACIAL_LEVEL = {
     id: 'espacial', label: 'ESTACIÓN EN ÓRBITA', file: 'assets/scenes/generated/espacial_fondo.png', map: ESPACIAL_MAP, skin: 'scaffold', isNew: true,
     tint: 0xc3c9ee, wash: 0x0b0a28, shade: 0.08, theme: 'espacial', room: 'alcantarilla', storyIndex: 17, sideWidth: 0, gravity: 0.72,
     // Drones de disparo anunciado y robots que embisten.
-    foes: ['drone', 'robot', 'drone', 'robot'], obstacles: ['spark', 'crate'], foeBudget: 15, obstacleBudget: 5, sideFoes: 0,
+    foes: ['drone', 'robot', 'drone', 'robot'], obstacles: ['spark', 'crate'], foeBudget: 30, obstacleBudget: 10, sideFoes: 0,
     boss: { kind: 'drone', name: 'DRON CENTINELA', hp: 7 }, final: true, music: 15
   };
 
