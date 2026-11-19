@@ -840,7 +840,7 @@
     const gems = [];
     const inBlock = (x, y, m) => (T.blocks || []).some((b) => x > b[0] - m && x < b[1] + m && y > b[2] - m && y < b[3] + m);
     for (const q of T.surfaces) {
-      const w = q[1] - q[0], n = Math.max(1, Math.min(6, Math.floor(w / 60)));
+      const w = q[1] - q[0], n = Math.max(1, Math.min(8, Math.floor(w / 45)));   // un rastro de cristales guía el recorrido
       for (let i = 0; i < n; i++) gems.push([q[0] + (w * (i + 0.5)) / n, q[2] - 22]);
     }
     for (const [pts, n] of T.seaTrails || []) for (const p of alongPath(pts, n)) if (!inBlock(p[0], p[1], 14)) gems.push(p);
@@ -1159,6 +1159,8 @@
       // V58.1: trazados sobre el arte de la Escuela Miguel Hidalgo (ver SCHOOL_TRACE).
       d.map = SCHOOL_MAPS[school]; d.file = SCHOOL_DIR + SCHOOL_ART[school].pages[0];
       d.art = 'painted'; d.stairsPainted = true; d.sideWidth = 0;
+      // Sin sectores laterales: sus enemigos pasan al recorrido del nivel (si no, la misión quedaría con menos).
+      d.foeBudget += d.sideFoes; d.sideFoes = 0;
     } else d.map = buildV58(d.map, cfg);
     d.foeBudget = Math.round(d.foeBudget * 1.7);
     d.obstacleBudget = Math.round(d.obstacleBudget * 1.6);
@@ -1175,7 +1177,8 @@
     tint: 0x9fd8e6, wash: 0x0a2e48, shade: 0.12, theme: 'submarino', room: 'alcantarilla', storyIndex: 16, sideWidth: 0,
     // Pirañas solo en el agua; cangrejos en las cornisas secas de las ruinas.
     // V58.1: el niño gordito de las piedras, con traje de buzo (atlas aportado), en las repisas secas.
-    foes: ['piranha', 'crab', 'kid', 'piranha', 'crab'], obstacles: ['spark', 'crate'], foeBudget: 30, obstacleBudget: 10, sideFoes: 0,
+    // Las pirañas topan en 6 (mar abierto); el resto del presupuesto va a cangrejos y niños en las repisas secas.
+    foes: ['crab', 'kid', 'piranha', 'crab', 'kid', 'piranha'], obstacles: ['spark', 'crate'], foeBudget: 38, obstacleBudget: 10, sideFoes: 0,
     boss: { kind: 'shark', name: 'TIBURÓN GUARDIÁN DEL ARRECIFE', hp: 7 }, music: 12
   };
   const ESPACIAL_LEVEL = {

@@ -6,8 +6,8 @@
   const NS = root.CAMION = root.CAMION || {};
 
   NS.CONFIG = {
-    version: '58.0.0',
-    build: 'v58-mundos-al-doble',
+    version: '58.1.0',
+    build: 'v58-1-mundos-pintados',
 
     sim: {
       fixedDt: 1 / 60,      // paso fijo de simulación (60 Hz), independiente de la tasa de refresco

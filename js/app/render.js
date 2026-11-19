@@ -446,6 +446,14 @@
         }
       }
     }
+    // Unión entre dos láminas apiladas (misión 1): bruma corta del color del cielo de la siguiente, sin corte seco.
+    for (let i = 0; i + 1 < W.scenes.length; i++) {
+      const a = W.scenes[i], b = W.scenes[i + 1], cb = depthCfg(b);
+      if (!depthCfg(a) || !cb || Math.abs(a.endY - b.startY) > 1 || a.endY < V.y1 - 90 || a.endY > V.y2 + 60) continue;
+      const g = ctx.createLinearGradient(0, a.endY - 90, 0, a.endY + 50);
+      g.addColorStop(0, hexA(cb.above, 0)); g.addColorStop(0.64, hexA(cb.above, 0.62)); g.addColorStop(1, hexA(cb.above, 0));
+      ctx.fillStyle = g; ctx.fillRect(V.x1, a.endY - 90, V.x2 - V.x1, 140);
+    }
     return list.length === W.scenes.length;
   }
   function backdropUrls() {

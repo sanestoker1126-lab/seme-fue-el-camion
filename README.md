@@ -17,6 +17,18 @@ Es un sitio estático, sin dependencias. Para jugarlo:
 
 Controles en pantalla (táctil) y teclado. Se instala como app (PWA) y funciona sin conexión tras la primera carga.
 
+## Novedades V58.1 · Mundos pintados
+
+La escuela, el mar y la Luna ahora son **una sola ilustración por nivel** con el recorrido **trazado sobre el
+dibujo**: se pisa lo que se ve (azoteas, balcones, escaleras, repisas de roca, el puente de cuerda, la cubierta del
+barco, los discos de la ciudad lunar). Arte nuevo: **Escuela Miguel Hidalgo** (misión 1), **Marino PRO V4** (misión 3)
+y **Espacio Luna PRO V5** (misión 4); cada uno reemplaza por completo al fondo anterior de su misión. Guadalajara,
+Los Portales y el Centro Histórico estrenan los fondos **Azoteas PRO V2**, con cornisas pintadas justo sobre sus
+plataformas. En la Luna, Sofía, Luna y Morita llevan **traje de astronauta**, y el niño de las piedras aparece con
+traje de buzo en el mar y de astronauta en la Luna.
+
+Detalle, medidas y límites: `CHANGELOG_V58_1.md`.
+
 ## Novedades V58
 
 Cada nivel mide **el doble** (más ancho y más hondo), con **tirolesas**, **vehículos** que cruzan huecos
@@ -61,7 +73,7 @@ Opciones incluye **Aspecto de Sofía** (original / uniforme / rosa).
 node --test tests/*.test.js
 ```
 
-Versión de desarrollo: **V57** (`js/core/config.js` → 57.0.0). La rama principal publicada continúa siendo V56 hasta fusionar este PR.
+Versión de desarrollo: **V58.1** (`js/core/config.js` → 58.1.0), en la rama `ccr-83eefefd-4flatp`.
 
 ## V54 · Submarino y Espacio ampliados
 
@@ -80,7 +92,9 @@ Las salidas de los mundos nuevos se representan como una escotilla y un módulo 
 de meta conserva el sistema del motor existente.
 
 
-## V55 · Parallax gráfico real en las misiones 3 y 4
+## V55 · Parallax gráfico real en las misiones 3 y 4 (retirado en V58.1)
+
+> V58.1 reemplazó estas capas SVG por el arte pintado de cada misión (ver Novedades V58.1).
 
 Se integraron cinco capas independientes por mundo en `assets/parallax/submarino/` y
 `assets/parallax/espacial/`: fondo lejano, profundidad, estructuras, elementos y
