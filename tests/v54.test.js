@@ -20,15 +20,23 @@ test('V54→V58: cada mundo especial mide el doble de ancho y de alto que en V54
     assert.ok(m.gems.every(g => g.x >= 0 && g.x <= m.width && g.y >= 0 && g.y <= m.height));
   }
 });
-test('V54: el fondo cubre toda la anchura; parallax con tres desplazamientos y salida temática', () => {
+// V58.1: el panorama/parallax de V54 se reemplazó por mundos pintados de una pieza (mar V4, Luna V5): la lámina queda
+// fija al mundo (el nivel está trazado sobre ella), cubre todo el ancho jugable y sus capas de ambiente tienen paralaje.
+test('V54→V58.1: el fondo de mar y Luna cubre el mundo entero, con paralaje en el ambiente y salida temática', () => {
   const r = fs.readFileSync(path.join(BASE, 'js/app/render.js'), 'utf8');
-  assert.match(r, /function drawMissionParallax\(/);
-  assert.match(r, /const B = G\.world\.bounds/);
-  assert.match(r, /sc\.drawH/);
+  assert.match(r, /function drawDepthArt\(/);
+  assert.match(r, /const A = sc\.map\.worldArt, k = sc\.scale \* A\.px, B = W\.bounds/);
+  assert.match(r, /dx = sc\.x0 - \(A\.x0 \|\| 0\) \* k, dw = A\.width \* k/);
   assert.match(r, /G\.cam\.y - sc\.startY/);
-  assert.match(r, /0\.34/);
+  assert.doesNotMatch(r, /function drawMissionParallax\(|function drawRealParallax\(|function drawSpecialScreen\(/);
   assert.match(r, /ESCOTILLA DE RESCATE/);
   assert.match(r, /MÓDULO DE REGRESO/);
+  for (const lvl of [NS.LEVELS.SUBMARINO_LEVEL, NS.LEVELS.ESPACIAL_LEVEL]) {
+    const W = NS.World.buildWorld({ levels: [lvl] }), sc = W.scenes[0], A = sc.map.worldArt, k = sc.scale * A.px;
+    const artX1 = sc.x0 - (A.x0 || 0) * k, artX2 = artX1 + A.width * k;
+    assert.ok(artX1 <= W.bounds.x1 + 0.5 && artX2 >= W.bounds.x2 - 0.5, lvl.id + ': la lámina cubre todo el ancho');
+    assert.ok(Math.abs(A.height * k - sc.drawH) < 2, lvl.id + ': y todo el alto');
+  }
 });
 test('V54: traje submarino real, capa espacial y selección de apariencias al empezar', () => {
   const r = fs.readFileSync(path.join(BASE, 'js/app/render.js'), 'utf8');

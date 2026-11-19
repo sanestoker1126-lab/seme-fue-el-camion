@@ -394,9 +394,7 @@
       ...Object.keys(NS.ART.SKINS).map((k) => 'assets/platforms/' + k + '.png'),
       ...(NS.ART.SWIM ? [NS.ART.SWIM.sheet] : []),   // V52: atlas de nado
       // V53: fondos de los mundos nuevos y gatitas submarinas.
-      'assets/scenes/generated/espacial_fondo.png',
       'assets/player/sofia/sofia_submarina_complementaria.png',
-      ...Object.values(R.PARALLAX_LAYERS || {}).flat(),
       ...(R.backdropUrls ? R.backdropUrls() : []),   // V58: fondos del ancho del mundo, mar y órbita
       ...Object.values(R.COMPANIONS_SUB || {}).flatMap((c) => [...c.idle, ...c.walk, c.shoulder])];
     for (const [kind, E] of Object.entries(NS.ART.ENEMY)) for (const f of Object.keys(E.frames)) essential.push('assets/enemies/v50/' + kind + '/' + f + '.png');

@@ -20,7 +20,7 @@
     const W = {
       version: C.version, difficulty: diffKey, seed,
       scenes: [], platforms: [], solids: [], hazards: [], foes: [], pickups: [], doors: [], rooms: [],
-      checkpoints: [], midpoints: [], signs: [], gates: [], shots: [], waters: [], zips: [], bounds: null, bus: null, goal: null, t: 0
+      checkpoints: [], midpoints: [], signs: [], gates: [], shots: [], waters: [], zips: [], cracks: [], bounds: null, bus: null, goal: null, t: 0
     };
     const counters = Object.create(null);
     const nid = (scope, kind) => {
@@ -194,6 +194,8 @@
         W.zips.push(z);
         return z;
       });
+      // V58.1: grietas en la roca pintada (solo dibujo; por ahí se cae a la caverna de abajo).
+      for (const c of m.cracks || []) W.cracks.push({ x1: X(c.x1), x2: X(c.x2), y1: Y(c.y1), y2: Y(c.y2), scene: sc.index });
       // V58.1: `draw: false` = relieve que ya pinta el arte (roca y meseta del mar trazadas sobre el dibujo).
       for (const q of m.blocks || []) addSolid({ scope, kind: q.kind || 'block', x1: X(q.x1), x2: X(q.x2), y1: Y(q.y1), y2: Y(q.y2), scene: sc.index, theme: sc.theme, draw: q.draw !== false });
       m.gems.forEach((q) => addGem(X(q.x), Y(q.y), sc.index, 'main', rng));

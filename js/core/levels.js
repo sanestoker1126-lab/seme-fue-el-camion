@@ -794,50 +794,163 @@
     return out;
   }
 
-  function buildMarineMap() {
-    const T = MARINE_TRACE, K = MARINE_PX, A = MARINE_ART;
-    const o = emptyMap('submarino', rnd(A.width * K), rnd(A.height * K));
+  /** Escalones de una escalera pintada: n peldaños de (x1, y1) a (x2, y2) en px del arte, alto ≤ 8 px por peldaño
+      (≈ 14 u de mundo: se suben y bajan caminando). */
+  function stairRun(x1, y1, x2, y2) {
+    const n = Math.max(2, Math.ceil(Math.abs(y2 - y1) / 8)), w = (x2 - x1) / n, out = [];
+    for (let i = 0; i < n; i++) {
+      const a = x1 + w * i, b = a + w;
+      out.push([Math.min(a, b) - 2, Math.max(a, b) + 2, y1 + ((y2 - y1) * (i + 0.5)) / n]);
+    }
+    return out;
+  }
+
+  /** Mundo pintado de una pieza (mar V4, luna V5): el mapa se arma en px del arte (x desde `A.x0`) × `A.px`. */
+  function buildPaintedMap(id, T, A) {
+    const K = A.px, x0 = A.x0 || 0, cropW = A.cropW || A.width;
+    const o = emptyMap(id, rnd(cropW * K), rnd(A.height * K));
     o.worldArt = A;   // el renderer dibuja esta lámina fija al mundo (ver render.js · DEPTH_ART)
-    const X = (v) => rnd(v * K);
-    const surf = (q) => Object.assign({ x1: X(q[0]), x2: X(q[1]), y: X(q[2]) }, q[3] || {});
+    const X = (v) => rnd((v - x0) * K), Y = (v) => rnd(v * K);
+    const surf = (q) => Object.assign({ x1: X(q[0]), x2: X(q[1]), y: Y(q[2]) }, q[3] || {});
     o.surfaces = T.surfaces.map((q) => {
       const s = surf(q);
       if (s.startX !== undefined) s.startX = X(s.startX);
       if (s.midX !== undefined) s.midX = X(s.midX);
       return s;
     });
-    o.stairs = T.stairs.map(surf);
-    o.planks = T.planks.map((q) => Object.assign(surf(q), { painted: true }));   // puente de cuerda pintado
-    o.blocks = T.blocks.map((b) => ({ x1: X(b[0]), x2: X(b[1]), y1: X(b[2]), y2: X(b[3]), kind: 'roca', draw: false }));
-    o.water.push({ x1: 0, x2: o.width, y: X(T.sea.y), depth: X(T.sea.y2) - X(T.sea.y), kind: 'mar', banks: [], sea: true, boss: true,
-      drains: T.sea.drains.map((d) => ({ x1: X(d[0]), x2: X(d[1]) })), breach: true });
-    o.movers = T.movers.map((q) => ({ x1: X(q.x1), x2: X(q.x2), y: X(q.y), range: X(q.range), vertical: q.vertical, speed: q.speed, look: q.look }));
-    o.pigeons = T.pigeons.map((q) => ({ x1: X(q.x1), x2: X(q.x2), y: X(q.y), range: X(q.range), vertical: q.vertical, speed: q.speed, look: q.look }));
-    o.bouncers = T.bouncers.map((q) => ({ x1: X(q[0]), x2: X(q[1]), y: X(q[2]), look: q[3], painted: true }));
-    // La cadena ya está pintada en el arte (curva): el cable físico es su recta de mejor ajuste y no se dibuja encima.
-    o.zips = T.zips.map((z) => ({ x1: X(z.x1), y1: X(z.y1), x2: X(z.x2), y2: X(z.y2), look: z.look, painted: z.look === 'cadena' }));
+    const stairs = (T.stairs || []).concat(...(T.stairRuns || []).map((r) => stairRun(...r)));
+    o.stairs = stairs.map(surf);
+    o.planks = (T.planks || []).map((q) => Object.assign(surf(q), { painted: true }));   // pasarelas pintadas
+    o.blocks = (T.blocks || []).map((b) => ({ x1: X(b[0]), x2: X(b[1]), y1: Y(b[2]), y2: Y(b[3]), kind: 'roca', draw: false }));
+    if (T.sea) {
+      o.water.push({ x1: 0, x2: o.width, y: Y(T.sea.y), depth: Y(T.sea.y2) - Y(T.sea.y), kind: 'mar', banks: [], sea: true, boss: true,
+        drains: T.sea.drains.map((d) => ({ x1: X(d[0]), x2: X(d[1]) })), breach: true });
+    }
+    const mv = (q) => ({ x1: X(q.x1), x2: X(q.x2), y: Y(q.y), range: rnd(q.range * K), vertical: q.vertical, speed: q.speed, look: q.look });
+    o.movers = (T.movers || []).map(mv);
+    o.pigeons = (T.pigeons || []).map(mv);
+    o.bouncers = (T.bouncers || []).map((q) => ({ x1: X(q[0]), x2: X(q[1]), y: Y(q[2]), look: q[3], painted: true }));
+    // Una cadena pintada en el arte (curva) es tirolesa: el cable físico es su recta de mejor ajuste y no se dibuja encima.
+    o.zips = (T.zips || []).map((z) => ({ x1: X(z.x1), y1: Y(z.y1), x2: X(z.x2), y2: Y(z.y2), look: z.look, painted: z.look === 'cadena' }));
+    // Grietas en la roca pintada (solo dibujo): por ahí se baja de una caverna a la de abajo.
+    o.cracks = (T.cracks || []).map((c) => ({ x1: X(c[0]), x2: X(c[1]), y1: Y(c[2]), y2: Y(c[3]) }));
     o.exitX = X(T.exitX);
-    // Cristales (px del arte): sobre cada repisa, en el mar abierto, a lo largo de las tirolesas y en las brechas.
+    // Cristales (px del arte): sobre cada repisa, en el mar abierto, a lo largo de las tirolesas, en brechas y grietas.
     const gems = [];
-    const inBlock = (x, y, m) => T.blocks.some((b) => x > b[0] - m && x < b[1] + m && y > b[2] - m && y < b[3] + m);
+    const inBlock = (x, y, m) => (T.blocks || []).some((b) => x > b[0] - m && x < b[1] + m && y > b[2] - m && y < b[3] + m);
     for (const q of T.surfaces) {
       const w = q[1] - q[0], n = Math.max(1, Math.min(6, Math.floor(w / 60)));
       for (let i = 0; i < n; i++) gems.push([q[0] + (w * (i + 0.5)) / n, q[2] - 22]);
     }
-    for (const [pts, n] of T.seaTrails) for (const p of alongPath(pts, n)) if (!inBlock(p[0], p[1], 14)) gems.push(p);
-    for (const z of T.zips) for (const f of [0.25, 0.45, 0.65]) gems.push([z.x1 + (z.x2 - z.x1) * f, z.y1 + (z.y2 - z.y1) * f + 21]);
-    for (const d of T.sea.drains) for (const dy of [40, 95]) gems.push([(d[0] + d[1]) / 2, T.sea.y2 + dy]);
-    for (const q of T.movers.concat(T.pigeons)) gems.push([(q.x1 + q.x2) / 2, q.y - 34]);
-    o.gems = gems.map(([x, y]) => ({ x: X(x), y: X(y) }));
+    for (const [pts, n] of T.seaTrails || []) for (const p of alongPath(pts, n)) if (!inBlock(p[0], p[1], 14)) gems.push(p);
+    for (const z of T.zips || []) for (const f of [0.25, 0.45, 0.65]) gems.push([z.x1 + (z.x2 - z.x1) * f, z.y1 + (z.y2 - z.y1) * f + 21]);
+    if (T.sea) for (const d of T.sea.drains) for (const dy of [40, 95]) gems.push([(d[0] + d[1]) / 2, T.sea.y2 + dy]);
+    for (const c of T.cracks || []) for (const f of [0.3, 0.7]) gems.push([(c[0] + c[1]) / 2, c[2] + (c[3] - c[2]) * f]);
+    for (const q of (T.movers || []).concat(T.pigeons || [])) gems.push([(q.x1 + q.x2) / 2, q.y - 34]);
+    for (const g of T.extraGems || []) gems.push(g);
+    o.gems = gems.map(([x, y]) => ({ x: X(x), y: Y(y) }));
     return o;
   }
-  const SUBMARINO_MAP = buildMarineMap();
-  /* Órbita: estación original + espejo y un descenso largo con cables de anclaje, naves y asteroides. Parte de la
-     versión V54 (tres secciones, 940 × 3072): al doble de ancho (1880) y con la mitad nueva debajo. */
-  const ESPACIAL_MAP = buildV58(ESPACIAL_V54_MAP, { rowsHeight: 3100,
-    pieces: ['zip', 'vehicle', 'bounce', 'zip', 'crumble', 'vehicle', 'zip', 'belt'], vehicle: 'nave', bouncer: 'nave', bounceMoving: true,
-    crumbleLook: 'asteroide', zipLook: 'anclaje' });
-  ESPACIAL_MAP.id = 'espacial';
+  const SUBMARINO_MAP = buildPaintedMap('submarino', MARINE_TRACE, MARINE_ART);
+  const buildMarineMap = () => buildPaintedMap('submarino', MARINE_TRACE, MARINE_ART);
+
+  /* ============ V58.1 · Luna trazada sobre el arte «Espacio Luna Parallax PRO V5» ============
+     Ilustración vertical de 1680 × 3072 px en tres páginas (estación y superficie lunar → cavernas de cristal →
+     salón del portal → ciudad bajo la Luna). Solo la franja central (x 315–1365 px) es dibujo nítido: los costados
+     son extensión desenfocada y quedan fuera del mundo. El nivel se trazó sobre lo dibujado: cubiertas de la estación,
+     plataforma de aterrizaje, pasarelas con barandal, repisas de roca, puentes, el estrado del portal y los discos de
+     la ciudad. La banda de roca que separa las cavernas de la ciudad se cruza por dos grietas. Gravedad 0,72.
+     Coordenadas en px del arte (x de la página completa); y = línea de los pies. */
+  const LUNAR_ART = Object.freeze({
+    width: 1680, height: 3072, px: 2.1, x0: 315, cropW: 1050,
+    pages: ['page_01.webp', 'page_02.webp', 'page_03.webp'], pageH: 1024
+  });
+  const LUNAR_TRACE = {
+    surfaces: [
+      // Estación y superficie lunar
+      [330, 515, 160, { start: true, startX: 385 }],   // cubierta alta de la estación
+      [315, 640, 300],     // cubierta baja (cajas)
+      [600, 705, 325],     // terraza de la antena
+      [330, 735, 451],     // cima del acantilado y plataforma con franjas
+      [830, 1365, 492],    // plataforma de aterrizaje y base lunar
+      [315, 610, 580],     // repisa con barandal
+      [600, 960, 645],     // pasarela de los faroles y estandartes
+      [1010, 1365, 662],   // suelo bajo los arcos
+      [315, 770, 748],     // puerta de la caverna y barrera
+      // Entrada de la caverna
+      [690, 905, 815],     // puente metálico con franjas
+      [950, 1180, 865],    // repisa derecha (escalera)
+      [315, 640, 925],     // repisa bajo el tubo
+      [315, 600, 1075],    // repisa de las cajas
+      [620, 750, 1105],    // pasarela sobre la torre
+      [1130, 1365, 1120],  // repisa de los cristales
+      [760, 900, 1165],    // puente de la caverna
+      // Cavernas de cristal
+      [500, 720, 1240],    // repisa de cristales
+      [700, 830, 1290],    // roca flotante
+      [930, 1100, 1228],   // pasarela de madera
+      [1080, 1200, 1255],  // plataforma metálica
+      [800, 960, 1315],    // isla flotante
+      [1130, 1365, 1340],  // repisa derecha
+      [880, 1110, 1405],   // acueducto
+      [315, 610, 1490],    // repisa del monolito
+      [610, 810, 1500],    // piso de la torre en ruinas
+      [820, 960, 1480],    // losa central
+      [1240, 1310, 1505],  // casa de la escalera
+      // Salón del portal
+      [380, 600, 1690],    // repisa de los hongos
+      [690, 760, 1765],    // descanso de la escalera
+      [315, 500, 1825],    // cristales gigantes
+      [700, 860, 1815],    // camino al portal
+      [860, 1010, 1800, { mid: true, midX: 900 }],   // estrado del portal: parada intermedia
+      [1080, 1300, 1845],  // templo
+      [455, 585, 1906],    // balcón dorado
+      [840, 1000, 1905],   // pasarelas bajas
+      [950, 1150, 1925],
+      [1000, 1365, 1960],  // repisa de roca
+      // Banda de roca (sólida; dos grietas la cruzan hacia la ciudad)
+      [315, 380, 2030],
+      [425, 600, 2030],
+      [600, 950, 2088],
+      [950, 1100, 2045],
+      [1150, 1365, 2045],
+      // Ciudad bajo la Luna
+      [1100, 1240, 2300],  // balcón de la ciudad
+      [315, 450, 2310],    // repisa izquierda
+      [470, 620, 2420],    // balcón alto
+      [315, 500, 2475],    // balcón del barandal
+      [860, 1120, 2535],   // gran disco
+      [500, 780, 2595],    // plataforma de las cúpulas
+      [760, 1130, 2632],   // discos de los arcos
+      [1170, 1365, 2650],  // repisa de cristales
+      [440, 730, 2700],    // terraza izquierda
+      [950, 1270, 2778],   // cúpula baja
+      [500, 710, 2845],    // muelle izquierdo
+      [315, 470, 2905],    // roca de los cristales
+      [960, 1170, 2995],   // borde dorado derecho
+      [560, 760, 3025, { exit: true }]                 // borde dorado izquierdo: salida (arena del dron)
+    ],
+    stairRuns: [
+      [940, 1565, 1240, 1505],   // puente inclinado de los hongos
+      [600, 1690, 720, 1765],    // escalera del salón
+      [1150, 862, 1250, 805]     // escalera de la repisa derecha
+    ],
+    movers: [
+      { x1: 975, x2: 1065, y: 1330, range: 55, vertical: 6, speed: 0.8, look: 'nave' },    // OVNI entre la isla y la repisa
+      { x1: 640, x2: 730, y: 2490, range: 70, vertical: 8, speed: 0.75, look: 'nave' }     // OVNI en la ciudad
+    ],
+    bouncers: [[492, 560, 1642, 'hongo']],   // hongo luminoso pintado del salón
+    zips: [
+      { x1: 696, y1: 284, x2: 1000, y2: 459, look: 'anclaje' },   // de la estación a la plataforma de aterrizaje
+      { x1: 1138, y1: 1300, x2: 905, y2: 1372, look: 'anclaje' }, // de la repisa derecha al acueducto
+      { x1: 1180, y1: 2610, x2: 985, y2: 2745, look: 'anclaje' }  // en la ciudad, a la cúpula baja
+    ],
+    // La banda de roca es sólida (no se dibuja: es el arte) salvo en sus dos grietas, que son pozos hacia la ciudad.
+    blocks: [[315, 380, 2032, 2178], [425, 600, 2032, 2178], [600, 950, 2090, 2182], [950, 1100, 2047, 2182], [1150, 1365, 2047, 2178]],
+    cracks: [[380, 425, 2030, 2180], [1100, 1150, 2045, 2182]],
+    exitX: 660
+  };
+  const ESPACIAL_MAP = buildPaintedMap('espacial', LUNAR_TRACE, LUNAR_ART);
 
   /* Cada tramo declara qué enemigos y obstáculos puede usar y con qué intensidad.
      La colocación concreta es determinista (semilla por tramo) y se valida con pruebas de alcanzabilidad.
@@ -972,7 +1085,8 @@
     boss: { kind: 'shark', name: 'TIBURÓN GUARDIÁN DEL ARRECIFE', hp: 7 }, music: 12
   };
   const ESPACIAL_LEVEL = {
-    id: 'espacial', label: 'ESTACIÓN EN ÓRBITA', file: 'assets/scenes/generated/espacial_fondo.png', map: ESPACIAL_MAP, skin: 'scaffold', isNew: true,
+    id: 'espacial', label: 'LUNA HUECA', file: 'assets/parallax/espacial/depth_v5/background/page_01.webp', map: ESPACIAL_MAP, skin: 'scaffold', isNew: true,
+    art: 'painted', stairsPainted: true,
     tint: 0xc3c9ee, wash: 0x0b0a28, shade: 0.08, theme: 'espacial', room: 'alcantarilla', storyIndex: 17, sideWidth: 0, gravity: 0.72,
     // Drones de disparo anunciado y robots que embisten.
     foes: ['drone', 'robot', 'drone', 'robot'], obstacles: ['spark', 'crate'], foeBudget: 30, obstacleBudget: 10, sideFoes: 0,
@@ -993,5 +1107,5 @@
     PATIO_MAP, PASILLOS_MAP, NOCHE_MAP, CATEDRAL_MAP, BASILICA_MAP, TERMINAL_MAP, MERCADO_MAP, PARQUE_MAP, ANDEN_MAP, PLAZA_MAP,
     SUBMARINO_MAP, ESPACIAL_MAP, SUBMARINO_V54_MAP, ESPACIAL_V54_MAP, SUBMARINO_BASE_MAP, ESPACIAL_BASE_MAP,
     SUBMARINO_LEVEL, ESPACIAL_LEVEL, MISSIONS, LEVEL_SEQUENCE, mirror, buildV58, V58_CFG, HAND,
-    MARINE_ART, MARINE_PX, buildMarineMap };
+    MARINE_ART, MARINE_PX, buildMarineMap, LUNAR_ART, buildPaintedMap };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

@@ -47,7 +47,7 @@
     { title: 'PLAZA DE LAS JACARANDAS', line: 'El último guardián espera en la plaza. Después, solo queda llegar a la terminal.', driver: '¡Corre, el camión está por arrancar!' },
     // V53 · Misiones nuevas (16 submarino, 17 espacial).
     { title: 'RUINAS SUMERGIDAS', line: 'El atajo se hundió: cruza las ruinas y bucea por los cristales del fondo.', driver: 'Burbujas y un claxon lejano bajo el agua…' },
-    { title: 'ESTACIÓN EN ÓRBITA', line: 'Ni el espacio la detiene: salta entre asteroides hasta el módulo de salida.', driver: 'La estación avisa: último acople de la ruta 6.' }
+    { title: 'LUNA HUECA', line: 'Ni el espacio la detiene: baja de la estación lunar por las cavernas de cristal hasta la ciudad bajo la Luna.', driver: 'La estación avisa: último acople de la ruta 6.' }
   ];
 
   /* Objetos perdidos: uno por tramo, en su zona inferior. */

@@ -8,7 +8,7 @@ cada archivo, qué se le hizo y qué falta, para no atribuir a un paquete algo q
 | `escuela/azotea_superior`, `escuela/escuela_ruinas`, `escuela/patio_salida` | `ESCUELA_PARALLAX_16_9_ASSETS-1.zip` | WebP copiados sin recomprimir |
 | `guadalajara/azoteas`, `guadalajara/mercado_parque`, `guadalajara/barrios_inferiores` | `GUADALAJARA_PARALLAX_WEBP_ANDROID.zip` | WebP copiados sin recomprimir |
 | `marino/depth_v4/` (3 páginas WebP + 7 capas PNG) | `SE_ME_FUE_EL_CAMION_MARINO_PARALLAX_PRO_V4.zip` (V58.1) | Copiados sin recomprimir; SHA-256 iguales a su manifiesto. **Único fondo del mar**: el de `SOFIA_PARALLAX_MARINO.zip`, las capas SVG de V55 y `submarino_fondo.png` se retiraron |
-| `espacial/` (`panorama`, `decoracion`) | `SOFIA_PARALLAX_ESPACIAL.zip` | PNG → WebP (quality 92–93, alfa sin pérdida) |
+| `espacial/depth_v5/` (3 páginas WebP + 5 de sus 7 capas PNG) | `SE_ME_FUE_EL_CAMION_ESPACIO_LUNA_PARALLAX_PRO_V5-1.zip` (V58.1) | Copiados sin recomprimir; SHA-256 iguales a su manifiesto. **Único fondo de la Luna**: el de `SOFIA_PARALLAX_ESPACIAL.zip`, las capas SVG de V55 y `espacial_fondo.png` se retiraron |
 
 Todas las capas de escuela y Guadalajara miden 1536 × 864 (16:9). Los panoramas marino y espacial miden
 2172 × 724; `decoracion` mide 1774 × 887.
@@ -58,3 +58,16 @@ python3 -I tools/arte/componentes_atlas.py subidas/marino/fauna.png 200 1500
   (`manus/release-candidate-v58.1-fase4`) que no existe en el repositorio. Se integró a mano.
 - La ilustración incluye una casa con forma de piña bajo el mar (ya venía en el fondo marino anterior). Para una
   venta comercial conviene revisarla: recuerda mucho a una caricatura conocida.
+
+## V58.1 · Luna «Espacio Luna Parallax PRO V5»
+
+- Tres páginas de 1680 × 1024 (estación y superficie lunar → cavernas de cristal → salón del portal → ciudad bajo la
+  Luna). Solo la franja x 315–1365 px es dibujo nítido (lo demás es extensión desenfocada): el mundo usa esa franja.
+  El nivel se trazó sobre el dibujo (`levels.js` · `LUNAR_TRACE`); la banda de roca entre las cavernas y la ciudad es
+  sólida y se cruza por dos grietas dibujadas por el juego.
+- Capas usadas: estrellas y escombros (cielo), polvo de caverna y luz de cristales (cavernas), en mosaico y con
+  paralaje. El OVNI de `04_naves_satelites` es la plataforma «nave». **No se usaron** `02_nebula_galactica` (un velo
+  casi opaco que apagaba el cielo pintado) ni `03_planetas_ordenados` (el cielo pintado ya trae planetas y quedaban
+  encimados sobre el suelo lunar).
+- Su `space_platform_locations.csv` (79 referencias) es de otro mapa (1976 × 5960 u), igual que el del mar: no se usó.
+- Los dos ZIP `…PRO_V5-1.zip` recibidos son idénticos (mismo SHA-256).

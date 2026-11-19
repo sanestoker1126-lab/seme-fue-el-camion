@@ -68,10 +68,9 @@ test('V56: renderer uses visible world clip and original background sequence', (
   assert.match(r, /ctx\.clip\(\)/);
   assert.match(r, /function drawToxiThreat\(/);
   // V58: los fondos cubren todo el nivel (drawSceneBands) y mar/órbita usan su panorama; la atmósfera sigue encima.
-  // V58.1: el mar es un mundo pintado (drawDepthArt) y no pasa por drawBackdrop.
-  assert.match(r, /if \(special\) drawSpaceDeco\(G, V, T\); else if \(!depth\) drawBackdrop\(G, V\); drawStreet\(G, V, T\); drawToxiAtmosphere\(G, V, T\)/);
+  // V58.1: mar y Luna son mundos pintados (drawDepthArt) y no pasan por drawBackdrop; la atmósfera sigue encima.
+  assert.match(r, /if \(depth\) drawCracks\(G, V, T\); else drawBackdrop\(G, V\); drawStreet\(G, V, T\); drawToxiAtmosphere\(G, V, T\)/);
   assert.match(r, /function drawSceneBands\(/);
-  assert.match(r, /drawRealParallax\(G, V, sc, 4, 5\)/);
 });
 
 test('V56: PWA precaches new files and invalidates V55 cache', () => {

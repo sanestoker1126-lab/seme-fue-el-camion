@@ -242,23 +242,6 @@
   /* Los fondos V53 son imágenes compuestas; V54 las utiliza como capa profunda
      continua, con partículas intermedia y cercana a distinta velocidad. */
 
-  /* V55 · Capas de parallax REALES e independientes.
-     Cada SVG tiene un escenario completo y solo la capa 0 es opaca. No se
-     escalan imágenes V54 a la altura de la misión ni se usa mosaico espejo.
-     La velocidad relativa de cada capa es configurable (0.1 .. 1.0).
-     Se recorta la imagen al viewport para reducir rasterización en móviles. */
-  // V58.1: el mar ya no usa estas capas (su único fondo es el arte V4, ver DEPTH_ART).
-  const PARALLAX_LAYERS = Object.freeze({
-    espacial: [
-      'assets/parallax/espacial/00_fondo_lejano.svg',
-      'assets/parallax/espacial/01_profundidad.svg',
-      'assets/parallax/espacial/02_estructuras.svg',
-      'assets/parallax/espacial/03_elementos.svg',
-      'assets/parallax/espacial/04_primer_plano.svg'
-    ]
-  });
-  const PARALLAX_SPEED = Object.freeze([0.10, 0.22, 0.40, 0.68, 1.00]);
-
   /* ---------- V58 · Fondos del tamaño de todo el nivel ----------
      Cada tramo pinta su fondo de pared a pared del mundo (incluidos los sectores laterales) y en toda su altura.
      Las capas 16:9 aportadas (escuela y Guadalajara) se escalan a la altura de la franja y, si la franja es más ancha,
@@ -283,9 +266,6 @@
     anden_tren_ligero: { bottom: GDL('barrios_inferiores') },
     plaza_jacarandas: { bottom: GDL('azoteas') }
   };
-  const SPECIAL_ART = {
-    espacial: { pano: PXD + 'espacial/panorama.webp', deco: PXD + 'espacial/decoracion.webp' }
-  };
   /* ---------- V58.1 · Mundos pintados de una pieza ----------
      El mar es UNA ilustración vertical (páginas apiladas) fija al mundo: el nivel está trazado sobre ella, así que
      no hay paralaje en la arquitectura (las repisas dibujadas son las plataformas). Encima, las capas de ambiente
@@ -302,9 +282,26 @@
           ['layers/04_corales_medios.png', 0.4], ['layers/05_plancton_flotante.png', 0.48]] },
         { f: 0.62, near: true, layers: [['layers/06_burbujas_ligeras.png', 0.43], ['layers/07_arrecife_cercano.png', 0.3]] }
       ],
-      above: '#438efa', below: '#083c7b'
+      above: '#438efa', below: '#093d7c'
+    },
+    // Luna V5: páginas de 1680 px (solo la franja central es nítida y es la que queda dentro del mundo; ver
+    // LUNAR_ART.x0). Sus capas miden 1024 × 768 y están hechas para repetirse: van en mosaico y solo en su zona
+    // (cielo arriba; polvo y luz de cristales en las cavernas). Planetas y naves no van como capa: el cielo pintado ya
+    // los trae; el OVNI de la capa de naves se usa como plataforma (aspecto 'nave').
+    espacial: {
+      dir: PXD + 'espacial/depth_v5/',
+      pages: ['background/page_01.webp', 'background/page_02.webp', 'background/page_03.webp'],
+      fx: [
+        { f: 0.12, zone: [0, 0.125], tile: 760, layers: [['layers/01_estrellas_lejanas.png', 0.61], ['layers/05_basura_meteoritos.png', 0.42]] },
+        { f: 0.4, zone: [0.3, 1], tile: 820, layers: [['layers/06_polvo_caverna.png', 0.45]] },
+        { f: 0.62, near: true, zone: [0.33, 1], tile: 1500, layers: [['layers/07_luz_cristales.png', 0.3]] }
+      ],
+      above: '#1c2141', below: '#32455c'
     }
   };
+  // Sprites recortados de las capas V5 (px de la capa): OVNI de 04_naves_satelites.
+  const UFO = { src: PXD + 'espacial/depth_v5/layers/04_naves_satelites.png', box: [590, 72, 289, 106], rim: 0.42 };
+  const hexA = (h, a) => `rgba(${parseInt(h.slice(1, 3), 16)},${parseInt(h.slice(3, 5), 16)},${parseInt(h.slice(5, 7), 16)},${a})`;
   const depthCfg = (sc) => (sc && sc.map && sc.map.worldArt && DEPTH_ART[sc.theme]) || null;
   function depthUrls() {
     const out = [];
@@ -328,10 +325,48 @@
         c.width = Math.max(1, Math.round(first.naturalWidth / 2)); c.height = Math.max(1, Math.round(first.naturalHeight / 2));
         const x = c.getContext('2d');
         ims.forEach((im, i) => { if (im) { x.globalAlpha = g.layers[i][1]; x.drawImage(im, 0, 0, c.width, c.height); } });
-        return { canvas: c, f: g.f, near: !!g.near };
+        return { canvas: c, f: g.f, near: !!g.near, zone: g.zone || null, tile: g.tile || 0 };
       }).filter(Boolean);
     });
     return null;
+  }
+  /* Plano de ambiente en mosaico, solo dentro de su zona (fracciones del alto del tramo), con paralaje propio. */
+  function drawDepthTiles(g, G, sc, B, xx1, xx2, yy1, yy2) {
+    const zy1 = sc.startY + sc.drawH * g.zone[0], zy2 = sc.startY + sc.drawH * g.zone[1];
+    const y1 = Math.max(yy1, zy1), y2 = Math.min(yy2, zy2);
+    if (y2 <= y1 || xx2 <= xx1) return;
+    const tw = g.tile, th = tw * g.canvas.height / g.canvas.width;
+    const ox = B.x1 + (G.cam.x - B.x1) * (1 - g.f), oy = zy1 + (G.cam.y - zy1) * (1 - g.f);
+    const sx = xx1 - ((((xx1 - ox) % tw) + tw) % tw), sy = y1 - ((((y1 - oy) % th) + th) % th);
+    ctx.save(); ctx.beginPath(); ctx.rect(xx1, y1, xx2 - xx1, y2 - y1); ctx.clip();
+    for (let y = sy; y < y2; y += th) for (let x = sx; x < xx2; x += tw) ctx.drawImage(g.canvas, x, y, tw + 0.5, th + 0.5);
+    ctx.restore();
+  }
+  /* Grietas en la roca pintada (luna): pozo oscuro con bordes quebrados, brillo de cristal y polvo que cae. */
+  function drawCracks(G, V, T) {
+    for (const c of G.world.cracks || []) {
+      if (c.x2 < V.x1 || c.x1 > V.x2 || c.y2 < V.y1 || c.y1 > V.y2) continue;
+      const w = c.x2 - c.x1, h = c.y2 - c.y1, n = 7;
+      const edge = (k, side) => (side < 0 ? c.x1 : c.x2) - side * (((k * 7919) % 5) + (k % 2 ? 3 : 0));
+      ctx.save(); ctx.beginPath();
+      for (let k = 0; k <= n; k++) { const y = c.y1 + (h * k) / n; if (k) ctx.lineTo(edge(k, -1), y); else ctx.moveTo(edge(k, -1), y); }
+      for (let k = n; k >= 0; k--) ctx.lineTo(edge(k + 2, 1), c.y1 + (h * k) / n);
+      ctx.closePath();
+      const g = ctx.createLinearGradient(c.x1, 0, c.x2, 0);
+      g.addColorStop(0, 'rgba(10,6,24,0.97)'); g.addColorStop(0.5, 'rgba(26,14,52,0.93)'); g.addColorStop(1, 'rgba(10,6,24,0.97)');
+      ctx.fillStyle = g; ctx.fill();
+      ctx.strokeStyle = 'rgba(176,132,255,0.55)'; ctx.lineWidth = 1.6; ctx.stroke();
+      ctx.restore();
+      // Bordes de roca quebrada a cada lado (no un puente encima) y luz de la ciudad que asoma abajo.
+      for (const [ex, dir] of [[c.x1, 1], [c.x2, -1]]) tri(ex - dir * 7, c.y1 - 2, ex + dir * 6, c.y1 - 1, ex - dir * 4, c.y1 + 9, '#a9aec4', 0.9);
+      const gl = ctx.createLinearGradient(0, c.y2 - 40, 0, c.y2);
+      gl.addColorStop(0, 'rgba(150,110,255,0)'); gl.addColorStop(1, 'rgba(150,110,255,0.45)');
+      ctx.fillStyle = gl; ctx.fillRect(c.x1 + 3, c.y2 - 40, w - 6, 40);
+      for (let i = 0; i < 4; i++) {
+        const k = ((T * 0.6 + i * 0.29) % 1), px = c.x1 + w * (0.2 + i * 0.2);
+        circle(px, c.y1 + k * h, 1.6, '#d7c8ff', 0.7 * (1 - k));
+      }
+    }
   }
   /* Dibuja el mundo pintado (si el tramo lo tiene). Devuelve true si se encargó del fondo. */
   function drawDepthArt(G, V) {
@@ -351,13 +386,18 @@
       return true;
     }
     if (ropt.depthPages !== false) pages.forEach((im, i) => {
-      const dy = sc.startY + i * A.pageH * k, dh = A.pageH * k, dx = sc.x0, dw = A.width * k;
+      const dy = sc.startY + i * A.pageH * k, dh = A.pageH * k, dx = sc.x0 - (A.x0 || 0) * k, dw = A.width * k;
       const x1 = Math.max(V.x1, dx), x2 = Math.min(V.x2, dx + dw), y1 = Math.max(V.y1, dy), y2 = Math.min(V.y2, dy + dh);
       if (x2 <= x1 || y2 <= y1) return;
       // Medio px de solape con la página siguiente (sin costura por redondeo), sin salirse de la imagen.
       const sy = (y1 - dy) / k, sh = Math.min(A.pageH - sy, (y2 - y1) / k + 0.5);
       if (sh > 0) ctx.drawImage(im, (x1 - dx) / k, sy, (x2 - x1) / k, sh, x1, y1, x2 - x1, sh * k);
     });
+    if (V.y2 > sc.endY - 90) {
+      const g = ctx.createLinearGradient(0, sc.endY - 90, 0, sc.endY);
+      g.addColorStop(0, hexA(cfg.below, 0)); g.addColorStop(1, hexA(cfg.below, 1));
+      ctx.fillStyle = g; ctx.fillRect(V.x1, sc.endY - 90, V.x2 - V.x1, 90);
+    }
     const groups = ropt.depthFx === false ? null : depthFx(sc.theme, cfg);
     if (groups && groups.length) {
       const v = G.view, xx1 = Math.max(V.x1, B.x1), xx2 = Math.min(V.x2, B.x2), yy1 = Math.max(V.y1, sc.startY), yy2 = Math.min(V.y2, sc.endY);
@@ -366,6 +406,7 @@
       const xP = Math.max(0, Math.min(xTravel, G.cam.x - B.x1)), yP = Math.max(0, Math.min(yTravel, G.cam.y - sc.startY));
       for (const g of groups) {
         if (qScale < 0.7) break;   // modo ligero: el arte solo (las capas de ambiente son tenues y cuestan dibujo)
+        if (g.tile) { drawDepthTiles(g, G, sc, B, xx1, xx2, yy1, yy2); continue; }
         const dw = xTravel * g.f + vw + 220, dh = yTravel * g.f + vh + 180;
         const dx = B.x1 + xP * (1 - g.f) - 110, dy = sc.startY + yP * (1 - g.f) - 90;
         const x1 = Math.max(xx1, dx), y1 = Math.max(yy1, dy), x2 = Math.min(xx2, dx + dw), y2 = Math.min(yy2, dy + dh);
@@ -376,15 +417,11 @@
     }
     return true;
   }
-  // Recortes (en px de la lámina) de los sprites de las láminas aportadas.
-  const DECO = { asteroide: [21, 19, 321, 237], asteroideLargo: [365, 66, 380, 162], hielo: [1143, 23, 277, 233], lava: [1473, 22, 277, 228],
-    satelite: [37, 270, 598, 211], antena: [710, 254, 384, 238], roto: [1212, 275, 527, 199], anillo: [33, 489, 485, 370],
-    base: [1273, 505, 455, 350], estacion: [573, 559, 657, 246] };
   function backdropUrls() {
     const out = new Set();
     for (const b of Object.values(BACKDROPS)) for (const part of [b.top, b.bottom]) for (const [srcs] of part || []) for (const src of srcs) out.add(src);
-    for (const a of Object.values(SPECIAL_ART)) for (const src of Object.values(a)) out.add(src);
-    for (const c of Object.values(DEPTH_ART)) for (const p of c.pages) out.add(c.dir + p);   // V58.1: páginas del mundo pintado
+    for (const c of Object.values(DEPTH_ART)) for (const p of c.pages) out.add(c.dir + p);   // V58.1: páginas de los mundos pintados
+    out.add(UFO.src);
     return [...out];
   }
 
@@ -445,7 +482,7 @@
     const n = W.scenes.length;
     for (let i = 0; i < n; i++) {
       const sc = W.scenes[i];
-      if (SPECIAL_ART[sc.theme]) continue;
+      if (depthCfg(sc)) continue;   // mundo pintado: lo dibuja drawDepthArt
       const y1 = i === 0 ? Math.min(sc.startY, B.y1) - 80 : sc.startY, y2 = i === n - 1 ? B.y2 + 240 : sc.endY;
       if (y2 < V.y1 || y1 > V.y2) continue;
       const split = sc.map.art && sc.map.art.length ? sc.startY + sc.map.art[0].h * sc.scale : sc.endY;
@@ -498,51 +535,6 @@
         }
       }
     }
-  }
-
-  /* Órbita: panorama en coordenadas de pantalla que recorre la lámina completa según el avance por el nivel
-     (técnica de los módulos aportados), con estrellas por encima. */
-  function drawSpecialScreen(G, T) {
-    const W = G.world;
-    if (W.scenes.length !== 1) return false;
-    const sc = W.scenes[0], art = SPECIAL_ART[sc.theme];
-    if (!art) return false;
-    const pano = image(art.pano);
-    if (!ready(pano)) return false;
-    const B = W.bounds, v = G.view, iw = pano.naturalWidth, ih = pano.naturalHeight;
-    const p = Math.max(0, Math.min(1, (G.cam.x - B.x1) / Math.max(1, B.x2 - B.x1 - v.w)));
-    const py = Math.max(0, Math.min(1, (G.cam.y - B.y1) / Math.max(1, B.y2 - B.y1 - v.h)));
-    const s = Math.max(cw / iw, ch / ih) * 1.22, bw = iw * s, bh = ih * s;
-    ctx.drawImage(pano, -p * (bw - cw), -(0.35 + 0.3 * py) * (bh - ch), bw, bh);
-    fillRect(0, 0, cw, ch, '#04081c', 0.12 + py * 0.18);
-    for (let i = 0; i < 60; i++) {
-      const x = ((hash(i, 11) / 997 * cw - G.cam.x * 0.05 * dpr) % cw + cw) % cw, y = ((hash(i, 29) / 997 * ch - G.cam.y * 0.04 * dpr) % ch + ch) % ch;
-      circle(x, y, (0.6 + (i % 3) * 0.45) * dpr, '#e9efff', 0.35 + 0.35 * Math.sin(T * 1.3 + i) ** 2);
-    }
-    return true;
-  }
-
-  /* Decoración del espacio en el mundo (asteroides, satélites y estaciones) a media velocidad: da profundidad. */
-  function drawSpaceDeco(G, V, T) {
-    const W = G.world, sc = W.scenes[0];
-    if (!sc || sc.theme !== 'espacial') return;
-    const sheet = image(SPECIAL_ART.espacial.deco);
-    if (!ready(sheet)) return;
-    if (!W._deco) {
-      const kinds = ['satelite', 'asteroide', 'anillo', 'lava', 'antena', 'asteroideLargo', 'base', 'hielo', 'roto', 'estacion'];
-      W._deco = [];
-      for (let i = 0, y = sc.startY + 120; y < sc.endY; i++, y += 330) {
-        const k = kinds[i % kinds.length], r = DECO[k], w = (k === 'anillo' || k === 'base' || k === 'estacion' ? 230 : 130) * (0.8 + (hash(i, 5) % 40) / 100);
-        W._deco.push({ k, r, w, h: w * r[3] / r[2], x: W.bounds.x1 + ((hash(i, 17) / 997) * 0.8 + 0.1) * (W.bounds.x2 - W.bounds.x1), y, f: 0.55 + (i % 3) * 0.12, ph: i });
-      }
-    }
-    ctx.globalAlpha = 0.62;
-    for (const d of W._deco) {
-      const dx = d.x + (G.cam.x + G.view.w / 2 - d.x) * (1 - d.f) - d.w / 2, dy = d.y + (G.cam.y + G.view.h / 2 - d.y) * (1 - d.f) + Math.sin(T * 0.3 + d.ph) * 6;
-      if (!inView(V, dx, dy, dx + d.w, dy + d.h)) continue;
-      ctx.drawImage(sheet, d.r[0], d.r[1], d.r[2], d.r[3], dx, dy, d.w, d.h);
-    }
-    ctx.globalAlpha = 1;
   }
 
   /* ---------- V58 · Tirolesas ---------- */
@@ -603,14 +595,14 @@
         return;
       }
     }
-    if (look === 'nave' || look === 'asteroide') {
-      const sheet = image(SPECIAL_ART.espacial.deco);
+    if (look === 'nave') {
+      // V58.1: el OVNI de la capa de naves de la Luna V5; Sofía pisa el borde del platillo (la cúpula queda detrás).
+      const sheet = image(UFO.src);
       if (ready(sheet)) {
-        const r = look === 'nave' ? DECO.estacion : DECO.asteroideLargo, top = look === 'nave' ? 0.22 : 0.12;
-        const dw = w * 1.06, dh = dw * r[3] / r[2];
-        ctx.drawImage(sheet, r[0], r[1], r[2], r[3], x - w * 0.03, y - dh * top, dw, dh);
-        if (look === 'nave') { for (let i = 0; i < 3; i++) circle(x - 6 - i * 7, y + dh * 0.3, 3 - i * 0.7, '#7fe9ff', 0.6 - i * 0.15); }
-        fillRect(x + 6, y - 1, w - 12, 2.5, '#9ee7ff', 0.6);
+        const r = UFO.box, dw = w * 1.18, dh = dw * r[3] / r[2], bob = Math.sin(T * 2.2 + x * 0.01) * 0.8;
+        ellipse(x + w / 2, y + dh * 0.62, dw * 0.32, 5, '#b98cff', 0.25 + 0.12 * Math.sin(T * 5 + x));   // haz bajo el platillo
+        ctx.drawImage(sheet, r[0], r[1], r[2], r[3], x + w / 2 - dw / 2, y - dh * UFO.rim + bob, dw, dh);
+        fillRect(x + 8, y - 1, w - 16, 2, '#c9b5ff', 0.5);
         return;
       }
     }
@@ -679,18 +671,6 @@
     if (!drawSkinned('hazard', x, x + w, y, SKIN_H.moving)) fillRR(x, y, w, 10, 3, '#8d5639');
   }
 
-  /* Bajo cada cubierta de la órbita, una cadena de asteroides chicos (no uno gigante estirado). */
-  function drawAsteroidBase(p) {
-    const sheet = image(SPECIAL_ART.espacial.deco);
-    if (!ready(sheet)) return;
-    const w = p.x2 - p.x1, n = Math.max(1, Math.round(w / 210)), step = w / n;
-    for (let i = 0; i < n; i++) {
-      const r = (Math.abs(Math.round(p.x1 * 0.37 + p.y * 0.11)) + i) % 2 ? DECO.asteroideLargo : DECO.asteroide;
-      const dw = Math.min(step * 0.96, 190), dh = dw * r[3] / r[2] * 0.62, cx = p.x1 + step * (i + 0.5);
-      ctx.drawImage(sheet, r[0], r[1] + r[3] * 0.18, r[2], r[3] * 0.82, cx - dw / 2, p.y + 3, dw, dh);
-    }
-  }
-
   function drawCoral(s, V) {
     const x1 = s.x1, w = s.x2 - s.x1, top = Math.max(s.y1, V.y1 - 10), bot = Math.min(s.y2, V.y2 + 10);
     if (bot <= top) return;
@@ -727,153 +707,7 @@
     }
   }
 
-  /* Rasterización diferida: cada vector se pinta UNA vez en un canvas local de
-     960×1300 y se reutiliza durante el juego. Se descartan los de la misión
-     anterior cuando cambia el mundo para reducir uso de RAM en Android. */
-  const parallaxRaster = new Map();
-  let parallaxRasterTheme = null;
-  function preparedParallax(theme, src) {
-    const original = image(src);
-    if (!ready(original)) return null;
-    if (theme !== parallaxRasterTheme) {
-      parallaxRaster.clear();
-      parallaxRasterTheme = theme;
-    }
-    if (parallaxRaster.has(src)) return parallaxRaster.get(src);
-    const canvas = document.createElement('canvas');
-    canvas.width = original.naturalWidth;
-    canvas.height = original.naturalHeight;
-    const pctx = canvas.getContext('2d', { alpha: true });
-    if (!pctx) return original;
-    try { pctx.drawImage(original, 0, 0, canvas.width, canvas.height); }
-    catch (_) { return original; }
-    parallaxRaster.set(src, canvas);
-    return canvas;
-  }
-
-  function drawRealParallax(G, V, sc, begin, end) {
-    const list = PARALLAX_LAYERS[sc.theme];
-    if (!list) return false;
-    const B = G.world.bounds, v = G.view;
-    const xx1 = Math.max(V.x1, B.x1), xx2 = Math.min(V.x2, B.x2);
-    const yy1 = Math.max(V.y1, sc.startY), yy2 = Math.min(V.y2, sc.endY);
-    if (xx2 <= xx1 || yy2 <= yy1) return true;
-    const width = B.x2 - B.x1, height = sc.drawH;
-    const vw = Math.min(width, v.w), vh = Math.min(height, v.h);
-    const xTravel = Math.max(0, width - vw), yTravel = Math.max(0, height - vh);
-    const xProgress = Math.max(0, Math.min(xTravel, G.cam.x - B.x1));
-    const yProgress = Math.max(0, Math.min(yTravel, G.cam.y - sc.startY));
-    ctx.save();
-    ctx.beginPath(); ctx.rect(xx1, yy1, xx2 - xx1, yy2 - yy1); ctx.clip();
-    if (begin === 0) fillRect(xx1, yy1, xx2 - xx1, yy2 - yy1, sc.theme === 'submarino' ? '#052940' : '#080b25');
-    for (let i = begin; i < end; i++) {
-      const im = preparedParallax(sc.theme, list[i]);
-      if (!im) continue;
-      const speed = PARALLAX_SPEED[i], padX = 110, padY = 90;
-      const dw = xTravel * speed + vw + padX * 2;
-      const dh = yTravel * speed + vh + padY * 2;
-      const dx = B.x1 + xProgress * (1 - speed) - padX;
-      const dy = sc.startY + yProgress * (1 - speed) - padY;
-      const x1 = Math.max(xx1, dx), y1 = Math.max(yy1, dy);
-      const x2 = Math.min(xx2, dx + dw), y2 = Math.min(yy2, dy + dh);
-      if (x2 <= x1 || y2 <= y1) continue;
-      const iw = im.naturalWidth || im.width, ih = im.naturalHeight || im.height;
-      const sx = (x1 - dx) * iw / dw, sy = (y1 - dy) * ih / dh;
-      const sw = (x2 - x1) * iw / dw, sh = (y2 - y1) * ih / dh;
-      ctx.globalAlpha = i === 4 ? 0.88 : 1;
-      ctx.drawImage(im, sx, sy, sw, sh, x1, y1, x2 - x1, y2 - y1);
-    }
-    ctx.globalAlpha = 1;
-    ctx.restore();
-    return true;
-  }
-
-  function drawMissionParallax(G, V, sc) {
-    const B = G.world.bounds;
-    const x1 = Math.max(V.x1, B.x1), x2 = Math.min(V.x2, B.x2);
-    const y1 = Math.max(V.y1, sc.startY), y2 = Math.min(V.y2, sc.endY);
-    if (x2 <= x1 || y2 <= y1) return;
-    const marine = sc.theme === 'submarino', span = B.x2 - B.x1;
-    ctx.save();
-    ctx.beginPath(); ctx.rect(x1, y1, x2 - x1, y2 - y1); ctx.clip();
-    fillRect(x1, y1, x2 - x1, y2 - y1, marine ? '#062d40' : '#070c29');
-    const im = tintedImage(sc.file, sc.tint);
-    sc.missingArt = !im;
-    if (im) {
-      const iw = im.naturalWidth || im.width, ih = im.naturalHeight || im.height;
-      const scale = Math.max(span * 1.3 / iw, sc.drawH / (ih * 1.5));
-      const tw = iw * scale, th = ih * scale;
-      const left = (B.x1 + B.x2 - tw) / 2 - (G.cam.x - (B.x1 + B.x2) / 2) * 0.06;
-      const top = sc.startY - th * 0.35 - (G.cam.y - sc.startY) * 0.13;
-      const first = Math.floor((y1 - top) / th) - 1;
-      const last = Math.ceil((y2 - top) / th);
-      ctx.globalAlpha = 0.94;
-      for (let row = first; row <= last; row++) {
-        const y = top + row * th;
-        if (y > y2 || y + th < y1) continue;
-        if (Math.abs(row % 2) === 1) {
-          ctx.save(); ctx.translate(left, y + th); ctx.scale(1, -1);
-          ctx.drawImage(im, 0, 0, iw, ih, 0, 0, tw, th); ctx.restore();
-        } else ctx.drawImage(im, left, y, tw, th);
-      }
-      ctx.globalAlpha = 1;
-    }
-    const height = sc.drawH;
-    // Elementos lejanos: brillo y partículas.
-    for (let i = 0; i < 86; i++) {
-      const x = B.x1 + ((hash(i, 41) / 997 * span - G.cam.x * 0.075) % span + span) % span;
-      const y = sc.startY + ((hash(i, 61) / 997 * height - (G.cam.y - sc.startY) * 0.16) % height + height) % height;
-      if (x < x1 - 6 || x > x2 + 6 || y < y1 - 6 || y > y2 + 6) continue;
-      circle(x, y, 0.7 + i % 4 * 0.5, marine ? '#c4f6ed' : '#e9efff', marine ? 0.3 : 0.7);
-    }
-    // Elementos próximos: burbujas y escombros, con otro factor de paralaje.
-    for (let i = 0; i < 38; i++) {
-      const x = B.x1 + ((hash(i + 120, 13) / 997 * span - G.cam.x * 0.27) % span + span) % span;
-      const y = sc.startY + ((hash(i + 120, 57) / 997 * height - (G.cam.y - sc.startY) * 0.34) % height + height) % height;
-      if (x < x1 - 20 || x > x2 + 20 || y < y1 - 20 || y > y2 + 20) continue;
-      const r = 2 + i % 5 * 1.4;
-      if (marine) ring(x, y, r, r, '#d5fbff', 0.34, 0.9);
-      else { circle(x, y, r, '#9ca5bd', 0.35); circle(x - 1, y - 1, r * 0.22, '#f0f6ff', 0.42); }
-    }
-    if (sc.shade) fillRect(x1, y1, x2 - x1, y2 - y1, hex(sc.wash), sc.shade * 0.4);
-    ctx.restore();
-  }
-
-  function drawBackdrop(G, V) {
-    const W = G.world, B = W.bounds;
-    if (!W.scenes.some((sc) => PARALLAX_LAYERS[sc.theme])) { drawSceneBands(G, V); return; }
-    // Cielo del atardecer sobre la azotea de la escuela (inicio de la historia).
-    if (V.y1 < 0) {
-      const g = ctx.createLinearGradient(0, -600, 0, 0);
-      g.addColorStop(0, '#0b1830'); g.addColorStop(0.6, '#3a3f66'); g.addColorStop(1, '#c46a4c');
-      ctx.fillStyle = g; ctx.fillRect(V.x1, Math.max(V.y1, -900), V.x2 - V.x1, Math.min(0, V.y2) - Math.max(V.y1, -900));
-      for (let i = 0; i < 40; i++) {
-        const sx = B.x1 + (hash(i, 7) / 997) * (B.x2 - B.x1), sy = -600 + (hash(i, 3) / 997) * 420;
-        if (sx > V.x1 && sx < V.x2 && sy > V.y1 && sy < V.y2) circle(sx, sy, 1.2, '#ffffff', 0.5);
-      }
-    }
-    // Barrios laterales: fachadas con ventanas, según el tramo.
-    for (const sc of W.scenes) {
-      if (sc.endY < V.y1 || sc.startY > V.y2) continue;
-      if (PARALLAX_LAYERS[sc.theme]) {
-        // Si falla la descarga de los gráficos nuevos, se conserva el fondo V54.
-        if (ready(image(PARALLAX_LAYERS[sc.theme][0]))) drawRealParallax(G, V, sc, 0, 4);
-        else drawMissionParallax(G, V, sc);
-        continue;
-      }
-      const school = sc.theme === 'escuela', night = sc.shade;
-      const base = school ? '#1f3442' : '#3a2f35', alt = school ? '#253f4f' : '#45373a';
-      for (const side of [-1, 1]) {
-        const x1 = side < 0 ? B.x1 : sc.x0 + sc.drawW, x2 = side < 0 ? sc.x0 : B.x2;
-        if (x2 < V.x1 || x1 > V.x2) continue;
-        const y1 = Math.max(sc.startY, V.y1), y2 = Math.min(sc.endY, V.y2);
-        fillRect(Math.max(x1, V.x1), y1, Math.min(x2, V.x2) - Math.max(x1, V.x1), y2 - y1, base);
-        drawBuildingFacade(sc, side, x1, x2, y1, y2, W.t);
-        // Sombra hacia el muro exterior y velo nocturno del tramo.
-        if (night > 0) fillRect(Math.max(x1, V.x1), y1, Math.min(x2, V.x2) - Math.max(x1, V.x1), y2 - y1, hex(sc.wash), night * 1.3);
-      }
-    }
-  }
+  function drawBackdrop(G, V) { drawSceneBands(G, V); }
 
   /* V56 · Capa de atmósfera urbana. Decoración determinista sin colisiones y
      recortada al área visible; mantiene intactos fondos, parallax y plataformas. */
@@ -1523,12 +1357,8 @@
     }
     const shaking = p.crState === 'shake';
     const jit = shaking ? Math.sin(t * 70 + p.x1) * 1.6 : 0;
-    if (p.look === 'asteroide' || p.look === 'coral') {
-      const sheet = image(SPECIAL_ART.espacial.deco);
-      if (p.look === 'asteroide' && ready(sheet)) {
-        const r = DECO.asteroideLargo, dw = w * 1.1, dh = dw * r[3] / r[2];
-        ctx.drawImage(sheet, r[0], r[1], r[2], r[3], p.x1 - w * 0.05 + jit, p.y - dh * 0.12 + (shaking ? Math.abs(jit) : 0), dw, dh);
-      } else { fillRR(p.x1 + jit, p.y, w, 12, 5, '#d1527f'); fillRect(p.x1 + jit + 3, p.y, w - 6, 3, '#ffb3c8'); }
+    if (p.look === 'coral') {
+      fillRR(p.x1 + jit, p.y, w, 12, 5, '#d1527f'); fillRect(p.x1 + jit + 3, p.y, w - 6, 3, '#ffb3c8');
       if (shaking) for (let i = 0; i < 3; i++) circle(p.x1 + w * (0.2 + i * 0.3), p.y + 14 + ((t * 60 + i * 7) % 10), 1.6, '#ffd3e0', 0.8);
       return;
     }
@@ -1618,7 +1448,6 @@
       const skin = room ? (p.theme === 'alcantarilla' ? 'stone_moss' : 'concrete') : (p.skin || (sc && sc.skin) || (p.theme === 'escuela' ? 'concrete' : 'stone_rocks'));
       if (p.kind === 'stair') { drawStep(p, skin); continue; }
       if (p.kind === 'moving' && p.look) { drawLookPlatform(p, T, G); continue; }
-      if (p.theme === 'espacial' && p.kind === 'floor' && p.region === 'main') drawAsteroidBase(p);
       if (p.kind === 'moving') {
         if (drawSkinned('hazard', x, x + w, y, SKIN_H.moving)) { line(x + 7, y + SKIN_H.moving + 1, x + w - 7, y + SKIN_H.moving + 1, '#9fffe8', 0.45, 1); continue; }
       } else if (drawSkinned(skin, x, x + w, y, room ? SKIN_H.room : p.sector ? SKIN_H.side : SKIN_H.floor)) continue;
@@ -2607,12 +2436,9 @@
     ctx.setTransform(k, 0, 0, k, ox, oy);
     const V = { x1: G.cam.x - 40, x2: G.cam.x + v.w + 40, y1: G.cam.y - 60, y2: G.cam.y + v.h + 60 };
     const W = G.world;
-    // V58.1: el mar es un mundo pintado fijo al mundo (DEPTH_ART). V58: la órbita usa un panorama en pantalla (antes de
-    // aplicar la cámara); el resto, fondos del ancho del mundo.
-    let special = false;
+    // V58.1: mar y Luna son mundos pintados fijos al mundo (DEPTH_ART); el resto, fondos del ancho del mundo.
     const depth = !G.room && drawDepthArt(G, V);
-    if (!G.room && !depth) { ctx.setTransform(1, 0, 0, 1, 0, 0); special = drawSpecialScreen(G, T); ctx.setTransform(k, 0, 0, k, ox, oy); }
-    if (!G.room) { if (special) drawSpaceDeco(G, V, T); else if (!depth) drawBackdrop(G, V); drawStreet(G, V, T); drawToxiAtmosphere(G, V, T); }
+    if (!G.room) { if (depth) drawCracks(G, V, T); else drawBackdrop(G, V); drawStreet(G, V, T); drawToxiAtmosphere(G, V, T); }
     for (const r of W.rooms) drawRoomBackground(r, V);
     drawWaters(G, V, false);
     drawCascades(G, V, T);
@@ -2631,8 +2457,6 @@
     drawWaters(G, V, true);
     drawWaterFx(G, V);
     drawParticles(G, V);
-    // Solo el primer plano se dibuja delante de Sofía; los bordes dejan libre el corredor.
-    if (!G.room && !special && !depth) for (const sc of W.scenes) if (PARALLAX_LAYERS[sc.theme] && ready(image(PARALLAX_LAYERS[sc.theme][0]))) drawRealParallax(G, V, sc, 4, 5);
     if (debug) drawDebug(G);
     if (G.transition) {
       const tr = G.transition, a = 1 - Math.abs(tr.t / tr.dur - 0.45) / 0.45;
@@ -2642,6 +2466,6 @@
     drawCinematic(G, T);
   }
 
-  NS.Render = { init, resize, draw, preload, setQuality, setOptions, image, ready, NINA, NINA_DIR, NINA_VARIANT_DIR, COMPANIONS, COMPANIONS_SUB, PAINTERS, PARALLAX_LAYERS, PARALLAX_SPEED,
-    BACKDROPS, SPECIAL_ART, DEPTH_ART, backdropUrls, depthUrls, toggleDebug: () => (debug = !debug), get debug() { return debug; } };
+  NS.Render = { init, resize, draw, preload, setQuality, setOptions, image, ready, NINA, NINA_DIR, NINA_VARIANT_DIR, COMPANIONS, COMPANIONS_SUB, PAINTERS,
+    BACKDROPS, DEPTH_ART, backdropUrls, depthUrls, toggleDebug: () => (debug = !debug), get debug() { return debug; } };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

@@ -1,4 +1,4 @@
-// V58.1 · Mar trazado sobre el arte «Marino Parallax PRO V4»: único fondo marino, plataformas sobre lo dibujado.
+// V58.1 · Mundos pintados de una pieza: mar «Marino PRO V4» y Luna «Espacio Luna PRO V5». Cada arte es el único fondo de su misión y el nivel está trazado sobre lo dibujado.
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -70,4 +70,53 @@ test('el arte V4 es el único fondo del mar: archivos, precarga y sin rastros de
     assert.ok(!fs.existsSync(path.join(ROOT, 'assets/parallax/marino/' + old)), 'sigue en disco: ' + old);
   }
   assert.ok(!fs.existsSync(path.join(ROOT, 'assets/scenes/generated/submarino_fondo.png')));
+});
+
+// ---------- Luna «Espacio Luna Parallax PRO V5» ----------
+test('la Luna sale del arte V5: franja nítida × px, más del doble que V54, gravedad 0,72', () => {
+  const m = LV.ESPACIAL_MAP, A = LV.LUNAR_ART;
+  assert.equal(m.worldArt, A);
+  assert.deepEqual([A.width, A.height, A.pageH, A.x0, A.cropW], [1680, 3072, 1024, 315, 1050]);
+  assert.equal(m.width, Math.round(A.cropW * A.px));
+  assert.equal(m.height, Math.round(A.height * A.px));
+  assert.ok(m.width >= 2 * 940 && m.height >= 2 * 3072, 'más del doble que V54');
+  assert.equal(LV.ESPACIAL_LEVEL.art, 'painted');
+  assert.equal(LV.ESPACIAL_LEVEL.gravity, 0.72);
+  assert.ok(m.gems.length >= 150, 'cristales: ' + m.gems.length);
+});
+
+test('Luna: lo trazado no se dibuja; la banda de roca es sólida salvo en sus dos grietas', () => {
+  const W = NS.World.buildWorld({ levels: [LV.ESPACIAL_LEVEL] });
+  const main = W.platforms.filter((p) => p.region === 'main' && !p.transition);
+  assert.ok(main.filter((p) => p.kind === 'floor').every((p) => p.hidden && !p.draw), 'repisas pintadas');
+  assert.ok(main.filter((p) => p.kind === 'stair').length >= 20 && main.filter((p) => p.kind === 'stair').every((p) => p.hidden), 'escaleras pintadas');
+  assert.deepEqual(main.filter((p) => p.look).map((p) => p.look).sort(), ['hongo', 'nave', 'nave']);
+  const rocks = W.solids.filter((s) => s.kind === 'roca');
+  assert.ok(rocks.length === 5 && rocks.every((s) => s.draw === false));
+  assert.equal(W.cracks.length, 2);
+  for (const c of W.cracks) {
+    assert.ok(rocks.every((b) => b.x2 <= c.x1 + 0.5 || b.x1 >= c.x2 - 0.5), 'la grieta es un pozo libre');
+    assert.ok(c.x2 - c.x1 >= C.player.w + 20, 'cabe Sofía');
+  }
+  assert.equal(W.zips.filter((z) => z.look === 'anclaje').length, 3);
+  assert.equal(W.gravityMul, 0.72);
+  assert.ok(W.foes.some((f) => f.kind === 'robot') && W.foes.some((f) => f.kind === 'drone' && f.isBoss));
+});
+
+test('el arte V5 es el único fondo de la Luna: archivos, precarga y sin el panorama ni la decoración anteriores', () => {
+  const r = read('js/app/render.js'), sw = read('sw.js'), main = read('js/app/main.js');
+  const dir = 'assets/parallax/espacial/depth_v5/';
+  const files = [...LV.LUNAR_ART.pages.map((p) => dir + 'background/' + p),
+    ...['01_estrellas_lejanas', '04_naves_satelites', '05_basura_meteoritos', '06_polvo_caverna', '07_luz_cristales'].map((n) => dir + 'layers/' + n + '.png')];
+  for (const f of files) {
+    assert.ok(fs.existsSync(path.join(ROOT, f)), 'falta ' + f);
+    assert.ok(sw.includes(f), 'sin precargar ' + f);
+  }
+  assert.match(r, /04_naves_satelites\.png', box: \[590, 72, 289, 106\]/, 'el OVNI de la capa de naves es la plataforma nave');
+  for (const old of ['espacial/panorama.webp', 'espacial/decoracion.webp', 'espacial_fondo.png', 'SPECIAL_ART']) {
+    for (const [name, src] of [['render.js', r], ['sw.js', sw], ['main.js', main]]) assert.ok(!src.includes(old), `${name} aún usa ${old}`);
+  }
+  for (const f of ['assets/parallax/espacial/panorama.webp', 'assets/parallax/espacial/decoracion.webp', 'assets/scenes/generated/espacial_fondo.png']) {
+    assert.ok(!fs.existsSync(path.join(ROOT, f)), 'sigue en disco: ' + f);
+  }
 });
