@@ -670,13 +670,170 @@
     anden_tren_ligero:    { pieces: ['vehicle', 'belt', 'zip', 'bounce'], vehicle: 'tren' },
     plaza_jacarandas:     { pieces: ['zip', 'crumble', 'belt', 'vehicle', 'bounce'], vehicle: 'camion' }
   };
-  /* Mar: costa (ruinas originales + espejo), mar abierto con el tiburón y templo hundido bajo los desagües.
-     Órbita: estación original + espejo y un descenso largo con cables de anclaje, naves y asteroides. */
-  // Se parte de la versión V54 (tres secciones, 940 × 3072): al doble de ancho (1880) y con la mitad nueva debajo,
-  // así cada mundo mide el doble que en V54/V57 a lo ancho y a lo alto.
-  const SUBMARINO_MAP = buildV58(SUBMARINO_V54_MAP, { sea: { depth: 1000, boss: true }, rowsHeight: 1900,
-    pieces: ['vehicle', 'zip', 'bounce', 'crumble', 'zip'], vehicle: 'manta', bouncer: 'pez', bounceMoving: true, crumbleLook: 'coral', zipLook: 'alga' });
-  SUBMARINO_MAP.id = 'submarino';
+  /* ============ V58.1 · Mar trazado sobre el arte «Marino Parallax PRO V4» ============
+     El fondo del mar es una sola ilustración vertical de 971 × 2928 px (isla → mar abierto → ciudad hundida →
+     abismo), fija al mundo. Cada plataforma está trazada sobre lo que el dibujo ya muestra (repisas de roca, puente
+     de cuerda, cubierta y techo del barco, capiteles, piso de las cuevas, hongos gigantes) y no se dibuja encima;
+     lo que no está en el dibujo (barca, manta, pez, cuerda de la tirolesa, brechas) sí se dibuja.
+     · Isla (aire): de la cima al mirador, escaleras, puente de cuerda y peldaños hasta la roca grande.
+     · Mar abierto: superficie en la línea de espuma de la roca grande; el fondo es el camino de la meseta de la
+       casa-piña y sus puentes. Las dos brechas de esos puentes son los desagües por los que se baja.
+     · Ciudad hundida y abismo (aire, como el templo de V58): Poseidón, columnas, el barco con su cadena (tirolesa),
+       cuevas y arrecifes hasta la salida.
+     Coordenadas en px del arte; y = línea de los pies. El mapa usa MARINE_PX unidades por px (× 0,82 en el mundo):
+     1,72 u de mundo por px, así mide más del doble que V54 (940 × 3072) a lo ancho y a lo alto. */
+  const MARINE_PX = 2.1;
+  const MARINE_ART = Object.freeze({
+    width: 971, height: 2928, px: MARINE_PX,
+    pages: ['01_marino_base_isla.webp', '02_marino_base_ciudad.webp', '03_marino_base_abismo.webp'], pageH: 976
+  });
+  const MARINE_TRACE = {
+    // [x1, x2, y, opciones]
+    surfaces: [
+      [135, 600, 270, { start: true, startX: 215 }],   // sendero de la cima y mirador
+      [0, 135, 292],      // sendero izquierdo
+      [255, 448, 440],    // repisa al pie de la escalera
+      [452, 722, 497],    // repisa derecha alta
+      [0, 105, 500],      // repisa de las flores
+      [182, 482, 638],    // repisa media (entrada del puente de cuerda)
+      [706, 950, 668],    // repisa de las palmeras
+      [448, 690, 712],    // repisa sobre la cueva
+      [112, 212, 718],    // roca de la cascada
+      [100, 200, 795],    // repisa baja de la cascada
+      [280, 480, 808],    // repisa baja izquierda
+      [550, 722, 896],    // peldaños de roca hacia el mar
+      [685, 808, 958],
+      [770, 932, 1012],
+      [616, 696, 1045],   // roca del hongo naranja
+      [700, 900, 1073, { mid: true, midX: 760 }],      // roca grande: parada intermedia antes del mar
+      [45, 100, 1004],    // rocas de la orilla, junto a la cascada
+      [140, 215, 999],
+      // Ciudad hundida (bajo el fondo del mar)
+      [250, 372, 1770],   // repisa bajo la meseta
+      [88, 200, 1800],    // arco en ruinas
+      [40, 82, 1845],     // columna rota
+      [0, 100, 1962],     // repisa de los peces
+      [125, 258, 1966],   // hombro de Poseidón
+      [110, 216, 2045],   // pedestal del tridente
+      [410, 470, 2050],   // capitel
+      [688, 758, 2032],   // proa del barco
+      [758, 845, 2055],   // cubierta del barco
+      [862, 971, 2022],   // techo de la cabina
+      [800, 971, 2136],   // repisa bajo el barco
+      [0, 200, 2165],     // repisa alta izquierda
+      [200, 300, 2188],   // sendero de piedra
+      [300, 420, 2218],
+      [470, 570, 2177],   // repisa de la columna
+      [592, 760, 2181],   // roca flotante central
+      [470, 700, 2310],   // repisa larga
+      [228, 296, 2264],   // capitel de la cueva
+      [0, 470, 2392],     // piso de la cueva izquierda
+      [830, 971, 2334],   // repisa de los corales
+      [680, 830, 2386],   // fin de la cadena
+      [640, 760, 2434],   // repisa pequeña
+      [620, 800, 2515],   // repisa derecha baja
+      [800, 971, 2500],   // repisa de los hongos
+      [0, 400, 2628],     // repisa del barco hundido
+      [400, 500, 2650],   // repisa del cofre
+      [298, 490, 2688],   // escalones del arrecife
+      [115, 332, 2758],
+      [520, 630, 2750],   // roca media
+      [722, 900, 2766],   // piso de la cueva derecha
+      [540, 792, 2826, { exit: true }],                // arrecife del fondo: salida
+      [470, 540, 2848]
+    ],
+    // Escaleras de piedra de la isla (peldaños: se bajan caminando).
+    stairs: [
+      [210, 240, 333], [211, 262, 347], [215, 280, 363], [231, 296, 377], [244, 311, 392], [260, 327, 406], [270, 342, 421],
+      [427, 485, 727], [411, 470, 742], [399, 460, 756], [389, 450, 769], [376, 442, 782],
+      [470, 514, 822], [485, 532, 836], [500, 551, 852], [520, 570, 866], [539, 589, 879]
+    ],
+    planks: [[482, 545, 650], [545, 655, 664], [655, 708, 656]],   // puente de cuerda (se baja con BAJAR)
+    sea: { y: 1155, y2: 1690, drains: [[262, 312], [632, 688]] },
+    // Relieve sólido del mar (no se dibuja: es la roca y la meseta pintadas).
+    blocks: [
+      [700, 900, 1080, 1160], [640, 971, 1160, 1300], [560, 880, 1300, 1440],   // roca grande y su base sumergida
+      [0, 205, 1503, 1532],                                                       // repisa del arco
+      [200, 262, 1636, 1690], [312, 560, 1636, 1690],                             // meseta de la casa-piña
+      [560, 632, 1664, 1690], [688, 760, 1668, 1690],                             // puente de arco (brecha al medio)
+      [750, 870, 1668, 1690], [840, 971, 1614, 1640], [870, 971, 1664, 1690]       // repisa del caracol y de los hongos
+    ],
+    movers: [
+      { x1: 300, x2: 382, y: 1152, range: 120, vertical: 2, speed: 0.7, look: 'bote' },     // barca en la superficie
+      { x1: 600, x2: 700, y: 1872, range: 110, vertical: 6, speed: 0.9, look: 'manta' }     // manta bajo la brecha
+    ],
+    pigeons: [{ x1: 500, x2: 566, y: 2580, range: 45, vertical: 8, speed: 1.1, look: 'pez' }],
+    bouncers: [[835, 955, 2412, 'hongo'], [652, 768, 2752, 'hongo']],   // hongos gigantes pintados
+    zips: [
+      { x1: 600, y1: 229, x2: 905, y2: 636, look: 'cuerda' },     // del mirador a las palmeras
+      { x1: 872, y1: 2140, x2: 735, y2: 2390, look: 'cadena' }    // cadena del barco hundido
+    ],
+    // Estelas de cristales en el mar abierto: puntos de paso y cuántos cristales se reparten a lo largo.
+    seaTrails: [
+      [[[610, 1190], [520, 1262], [420, 1360], [330, 1480], [287, 1600]], 10],   // de la roca grande a la brecha izquierda
+      [[[940, 1470], [860, 1520], [760, 1560], [660, 1625]], 7],                  // bajo la roca, hacia la brecha del puente
+      [[[40, 1240], [180, 1290], [320, 1250], [470, 1300], [600, 1262]], 9],      // ola bajo la cascada
+      [[[215, 1590], [300, 1500], [385, 1468], [470, 1500], [555, 1590]], 7],     // arco sobre la casa-piña
+      [[[30, 1478], [180, 1478]], 3],                                             // sobre la repisa del arco
+      [[[70, 1572], [130, 1572]], 2]                                              // dentro del arco
+    ],
+    exitX: 666
+  };
+  /** Puntos repartidos a lo largo de una polilínea (por longitud). */
+  function alongPath(pts, n) {
+    const seg = [];
+    let total = 0;
+    for (let i = 1; i < pts.length; i++) { const l = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); seg.push(l); total += l; }
+    const out = [];
+    for (let k = 0; k < n; k++) {
+      let d = n === 1 ? total / 2 : (total * k) / (n - 1), i = 0;
+      while (i < seg.length - 1 && d > seg[i]) { d -= seg[i]; i++; }
+      const t = seg[i] ? Math.min(1, d / seg[i]) : 0;
+      out.push([pts[i][0] + (pts[i + 1][0] - pts[i][0]) * t, pts[i][1] + (pts[i + 1][1] - pts[i][1]) * t]);
+    }
+    return out;
+  }
+
+  function buildMarineMap() {
+    const T = MARINE_TRACE, K = MARINE_PX, A = MARINE_ART;
+    const o = emptyMap('submarino', rnd(A.width * K), rnd(A.height * K));
+    o.worldArt = A;   // el renderer dibuja esta lámina fija al mundo (ver render.js · DEPTH_ART)
+    const X = (v) => rnd(v * K);
+    const surf = (q) => Object.assign({ x1: X(q[0]), x2: X(q[1]), y: X(q[2]) }, q[3] || {});
+    o.surfaces = T.surfaces.map((q) => {
+      const s = surf(q);
+      if (s.startX !== undefined) s.startX = X(s.startX);
+      if (s.midX !== undefined) s.midX = X(s.midX);
+      return s;
+    });
+    o.stairs = T.stairs.map(surf);
+    o.planks = T.planks.map((q) => Object.assign(surf(q), { painted: true }));   // puente de cuerda pintado
+    o.blocks = T.blocks.map((b) => ({ x1: X(b[0]), x2: X(b[1]), y1: X(b[2]), y2: X(b[3]), kind: 'roca', draw: false }));
+    o.water.push({ x1: 0, x2: o.width, y: X(T.sea.y), depth: X(T.sea.y2) - X(T.sea.y), kind: 'mar', banks: [], sea: true, boss: true,
+      drains: T.sea.drains.map((d) => ({ x1: X(d[0]), x2: X(d[1]) })), breach: true });
+    o.movers = T.movers.map((q) => ({ x1: X(q.x1), x2: X(q.x2), y: X(q.y), range: X(q.range), vertical: q.vertical, speed: q.speed, look: q.look }));
+    o.pigeons = T.pigeons.map((q) => ({ x1: X(q.x1), x2: X(q.x2), y: X(q.y), range: X(q.range), vertical: q.vertical, speed: q.speed, look: q.look }));
+    o.bouncers = T.bouncers.map((q) => ({ x1: X(q[0]), x2: X(q[1]), y: X(q[2]), look: q[3], painted: true }));
+    // La cadena ya está pintada en el arte (curva): el cable físico es su recta de mejor ajuste y no se dibuja encima.
+    o.zips = T.zips.map((z) => ({ x1: X(z.x1), y1: X(z.y1), x2: X(z.x2), y2: X(z.y2), look: z.look, painted: z.look === 'cadena' }));
+    o.exitX = X(T.exitX);
+    // Cristales (px del arte): sobre cada repisa, en el mar abierto, a lo largo de las tirolesas y en las brechas.
+    const gems = [];
+    const inBlock = (x, y, m) => T.blocks.some((b) => x > b[0] - m && x < b[1] + m && y > b[2] - m && y < b[3] + m);
+    for (const q of T.surfaces) {
+      const w = q[1] - q[0], n = Math.max(1, Math.min(6, Math.floor(w / 60)));
+      for (let i = 0; i < n; i++) gems.push([q[0] + (w * (i + 0.5)) / n, q[2] - 22]);
+    }
+    for (const [pts, n] of T.seaTrails) for (const p of alongPath(pts, n)) if (!inBlock(p[0], p[1], 14)) gems.push(p);
+    for (const z of T.zips) for (const f of [0.25, 0.45, 0.65]) gems.push([z.x1 + (z.x2 - z.x1) * f, z.y1 + (z.y2 - z.y1) * f + 21]);
+    for (const d of T.sea.drains) for (const dy of [40, 95]) gems.push([(d[0] + d[1]) / 2, T.sea.y2 + dy]);
+    for (const q of T.movers.concat(T.pigeons)) gems.push([(q.x1 + q.x2) / 2, q.y - 34]);
+    o.gems = gems.map(([x, y]) => ({ x: X(x), y: X(y) }));
+    return o;
+  }
+  const SUBMARINO_MAP = buildMarineMap();
+  /* Órbita: estación original + espejo y un descenso largo con cables de anclaje, naves y asteroides. Parte de la
+     versión V54 (tres secciones, 940 × 3072): al doble de ancho (1880) y con la mitad nueva debajo. */
   const ESPACIAL_MAP = buildV58(ESPACIAL_V54_MAP, { rowsHeight: 3100,
     pieces: ['zip', 'vehicle', 'bounce', 'zip', 'crumble', 'vehicle', 'zip', 'belt'], vehicle: 'nave', bouncer: 'nave', bounceMoving: true,
     crumbleLook: 'asteroide', zipLook: 'anclaje' });
@@ -805,8 +962,10 @@
   /* Niveles nuevos (misiones 3 y 4). storyIndex 16/17: su capítulo y letrero están en story.js. */
   /* V58 · Mar y órbita son mundos completos trazados de borde a borde (sideWidth 0: sin sectores procedurales).
      En el mar el tiburón patrulla el mar abierto; en órbita la gravedad es menor (saltos más largos y altos). */
+  // V58.1: `art: 'painted'` — las repisas, escaleras y hongos están dibujados en el arte marino V4 (no se dibujan encima).
   const SUBMARINO_LEVEL = {
-    id: 'submarino', label: 'RUINAS SUMERGIDAS', file: 'assets/scenes/generated/submarino_fondo.png', map: SUBMARINO_MAP, skin: 'stone_moss', isNew: true,
+    id: 'submarino', label: 'RUINAS SUMERGIDAS', file: 'assets/parallax/marino/depth_v4/backgrounds/01_marino_base_isla.webp', map: SUBMARINO_MAP, skin: 'stone_moss', isNew: true,
+    art: 'painted', stairsPainted: true,
     tint: 0x9fd8e6, wash: 0x0a2e48, shade: 0.12, theme: 'submarino', room: 'alcantarilla', storyIndex: 16, sideWidth: 0,
     // Pirañas solo en el agua; cangrejos en las cornisas secas de las ruinas.
     foes: ['piranha', 'crab', 'piranha', 'crab'], obstacles: ['spark', 'crate'], foeBudget: 30, obstacleBudget: 10, sideFoes: 0,
@@ -833,5 +992,6 @@
   NS.LEVELS = { SCHOOL_MAP, GDL_MAP, SCHOOL_M, GDL_M, CENTRO_MAP, ZAPOPAN_MAP, SOFEVI_MAP, AZOTEAS_MAP, METRO_MAP, TLAQUE_MAP,
     PATIO_MAP, PASILLOS_MAP, NOCHE_MAP, CATEDRAL_MAP, BASILICA_MAP, TERMINAL_MAP, MERCADO_MAP, PARQUE_MAP, ANDEN_MAP, PLAZA_MAP,
     SUBMARINO_MAP, ESPACIAL_MAP, SUBMARINO_V54_MAP, ESPACIAL_V54_MAP, SUBMARINO_BASE_MAP, ESPACIAL_BASE_MAP,
-    SUBMARINO_LEVEL, ESPACIAL_LEVEL, MISSIONS, LEVEL_SEQUENCE, mirror, buildV58, V58_CFG, HAND };
+    SUBMARINO_LEVEL, ESPACIAL_LEVEL, MISSIONS, LEVEL_SEQUENCE, mirror, buildV58, V58_CFG, HAND,
+    MARINE_ART, MARINE_PX, buildMarineMap };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

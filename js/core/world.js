@@ -154,12 +154,13 @@
       }));
       // Tablones de madera (se atraviesan con BAJAR): ramas, andamios, rejillas.
       sc.planks = (m.planks || []).map((q) => addPlatform({
-        scope, kind: 'thin', x1: X(q.x1), x2: X(q.x2), y: Y(q.y), h: 9, drop: true, draw: true, painted: true,
-        theme: sc.theme, scene: sc.index, plank: true
+        scope, kind: 'thin', x1: X(q.x1), x2: X(q.x2), y: Y(q.y), h: 9, drop: true, draw: !(sc.artPainted && q.painted), painted: true,
+        hidden: !!(sc.artPainted && q.painted), theme: sc.theme, scene: sc.index, plank: true
       }));
+      // V58.1: un trampolín `painted` (hongo gigante del arte marino) ya está dibujado: solo se anima el rebote.
       sc.bouncers = (m.bouncers || []).map((q) => addPlatform({
         scope, kind: 'bounce', x1: X(q.x1), x2: X(q.x2), y: Y(q.y), h: 10, drop: false, draw: true, painted: true,
-        theme: sc.theme, scene: sc.index, umbrella: true, look: q.look || null
+        theme: sc.theme, scene: sc.index, umbrella: true, look: q.look || null, artPainted: !!(sc.artPainted && q.painted)
       }));
       for (const b of sc.bouncers) reserve(b, b.x1, b.x2);
       // V52 · Agua (lagos, pilas): profunda si mide al menos CONFIG.water.shallowDepth (se nada); si no, se vadea.
@@ -167,7 +168,7 @@
       // Un lado con suelo a la altura del agua no lleva pared: ahí la orilla es ese suelo.
       sc.waters = (m.water || []).map((q) => {
         const z = { id: nid(scope, 'agua'), x1: X(q.x1), x2: X(q.x2), y: Y(q.y), y2: Y(q.y + q.depth), scene: sc.index,
-          theme: sc.theme, kind: q.kind || 'lago', banks: q.banks || [], sea: !!q.sea, boss: !!q.boss,
+          theme: sc.theme, kind: q.kind || 'lago', banks: q.banks || [], sea: !!q.sea, boss: !!q.boss, breach: !!q.breach,
           drains: (q.drains || []).map((d) => ({ x1: X(d.x1), x2: X(d.x2) })) };
         z.deep = z.y2 - z.y >= C.water.shallowDepth;
         (W.waters = W.waters || []).push(z);
@@ -189,11 +190,12 @@
       });
       // V58 · Tirolesas (cables entre dos anclas) y bloques sólidos dibujados (pilares de coral).
       sc.zips = (m.zips || []).map((q) => {
-        const z = PHY.makeZip(X(q.x1), Y(q.y1), X(q.x2), Y(q.y2), { id: nid(scope, 'tirolesa'), scene: sc.index, theme: sc.theme, look: q.look || 'cable' });
+        const z = PHY.makeZip(X(q.x1), Y(q.y1), X(q.x2), Y(q.y2), { id: nid(scope, 'tirolesa'), scene: sc.index, theme: sc.theme, look: q.look || 'cable', painted: !!(sc.artPainted && q.painted) });
         W.zips.push(z);
         return z;
       });
-      for (const q of m.blocks || []) addSolid({ scope, kind: q.kind || 'block', x1: X(q.x1), x2: X(q.x2), y1: Y(q.y1), y2: Y(q.y2), scene: sc.index, theme: sc.theme });
+      // V58.1: `draw: false` = relieve que ya pinta el arte (roca y meseta del mar trazadas sobre el dibujo).
+      for (const q of m.blocks || []) addSolid({ scope, kind: q.kind || 'block', x1: X(q.x1), x2: X(q.x2), y1: Y(q.y1), y2: Y(q.y2), scene: sc.index, theme: sc.theme, draw: q.draw !== false });
       m.gems.forEach((q) => addGem(X(q.x), Y(q.y), sc.index, 'main', rng));
       const start = sc.surfaces.find((s) => s.start);
       sc.startPlatform = start;

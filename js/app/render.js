@@ -247,14 +247,8 @@
      escalan imágenes V54 a la altura de la misión ni se usa mosaico espejo.
      La velocidad relativa de cada capa es configurable (0.1 .. 1.0).
      Se recorta la imagen al viewport para reducir rasterización en móviles. */
+  // V58.1: el mar ya no usa estas capas (su único fondo es el arte V4, ver DEPTH_ART).
   const PARALLAX_LAYERS = Object.freeze({
-    submarino: [
-      'assets/parallax/submarino/00_fondo_lejano.svg',
-      'assets/parallax/submarino/01_profundidad.svg',
-      'assets/parallax/submarino/02_estructuras.svg',
-      'assets/parallax/submarino/03_elementos.svg',
-      'assets/parallax/submarino/04_primer_plano.svg'
-    ],
     espacial: [
       'assets/parallax/espacial/00_fondo_lejano.svg',
       'assets/parallax/espacial/01_profundidad.svg',
@@ -290,18 +284,107 @@
     plaza_jacarandas: { bottom: GDL('azoteas') }
   };
   const SPECIAL_ART = {
-    submarino: { pano: PXD + 'marino/panorama_marino.webp', reef: PXD + 'marino/arrecife.webp', fauna: PXD + 'marino/fauna.webp' },
     espacial: { pano: PXD + 'espacial/panorama.webp', deco: PXD + 'espacial/decoracion.webp' }
   };
+  /* ---------- V58.1 · Mundos pintados de una pieza ----------
+     El mar es UNA ilustración vertical (páginas apiladas) fija al mundo: el nivel está trazado sobre ella, así que
+     no hay paralaje en la arquitectura (las repisas dibujadas son las plataformas). Encima, las capas de ambiente
+     del paquete (luz, niebla, ruinas, corales, plancton, burbujas, arrecife) con paralaje real, fundidas UNA vez a
+     media resolución en dos planos (lejano y cercano): 2 dibujos por cuadro en vez de 7. Medido con la CPU frenada,
+     cada capa a pantalla completa cuesta 1,5–2 ms por software; en modo ligero (equipo lento) no se dibujan.
+     La geometría (ancho, alto, px por unidad de mapa) viene del mapa (worldArt). */
+  const DEPTH_ART = {
+    submarino: {
+      dir: PXD + 'marino/depth_v4/',
+      pages: ['backgrounds/01_marino_base_isla.webp', 'backgrounds/02_marino_base_ciudad.webp', 'backgrounds/03_marino_base_abismo.webp'],
+      fx: [
+        { f: 0.22, layers: [['layers/01_caudales_superficie.png', 0.48], ['layers/02_neblina_distante.png', 0.36], ['layers/03_ruinas_lejanas.png', 0.34],
+          ['layers/04_corales_medios.png', 0.4], ['layers/05_plancton_flotante.png', 0.48]] },
+        { f: 0.62, near: true, layers: [['layers/06_burbujas_ligeras.png', 0.43], ['layers/07_arrecife_cercano.png', 0.3]] }
+      ],
+      above: '#438efa', below: '#083c7b'
+    }
+  };
+  const depthCfg = (sc) => (sc && sc.map && sc.map.worldArt && DEPTH_ART[sc.theme]) || null;
+  function depthUrls() {
+    const out = [];
+    for (const c of Object.values(DEPTH_ART)) { for (const p of c.pages) out.push(c.dir + p); for (const g of c.fx) for (const [src] of g.layers) out.push(c.dir + src); }
+    return out;
+  }
+  // Planos de ambiente fundidos (por tema). Las capas originales se sueltan al terminar (memoria en Android).
+  const depthFxCache = new Map();
+  function depthFx(theme, cfg) {
+    let st = depthFxCache.get(theme);
+    if (st) return st.groups;
+    st = { groups: null };
+    depthFxCache.set(theme, st);
+    if (typeof Image !== 'function' || typeof document === 'undefined') return null;
+    const load = (src) => new Promise((res) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = cfg.dir + src; });
+    Promise.all(cfg.fx.map((g) => Promise.all(g.layers.map(([src]) => load(src))))).then((sets) => {
+      st.groups = sets.map((ims, gi) => {
+        const g = cfg.fx[gi], first = ims.find(Boolean);
+        if (!first) return null;
+        const c = document.createElement('canvas');
+        c.width = Math.max(1, Math.round(first.naturalWidth / 2)); c.height = Math.max(1, Math.round(first.naturalHeight / 2));
+        const x = c.getContext('2d');
+        ims.forEach((im, i) => { if (im) { x.globalAlpha = g.layers[i][1]; x.drawImage(im, 0, 0, c.width, c.height); } });
+        return { canvas: c, f: g.f, near: !!g.near };
+      }).filter(Boolean);
+    });
+    return null;
+  }
+  /* Dibuja el mundo pintado (si el tramo lo tiene). Devuelve true si se encargó del fondo. */
+  function drawDepthArt(G, V) {
+    const W = G.world;
+    if (W.scenes.length !== 1) return false;
+    const sc = W.scenes[0], cfg = depthCfg(sc);
+    if (!cfg) return false;
+    const A = sc.map.worldArt, k = sc.scale * A.px, B = W.bounds;
+    const pages = cfg.pages.map((p) => image(cfg.dir + p));
+    sc.missingArt = !pages.every(ready);   // sin arte, las repisas trazadas se dibujan (respaldo)
+    // Arriba y abajo de la lámina: su propio color de borde (la cámara puede asomarse por encima del inicio).
+    if (V.y1 < sc.startY) fillRect(V.x1, V.y1, V.x2 - V.x1, sc.startY - V.y1 + 1, cfg.above);
+    if (V.y2 > sc.endY) fillRect(V.x1, sc.endY - 1, V.x2 - V.x1, V.y2 - sc.endY + 1, cfg.below);
+    if (sc.missingArt) {
+      const y1 = Math.max(V.y1, sc.startY), y2 = Math.min(V.y2, sc.endY);
+      if (y2 > y1) { const g = ctx.createLinearGradient(0, sc.startY, 0, sc.endY); g.addColorStop(0, cfg.above); g.addColorStop(1, cfg.below); ctx.fillStyle = g; ctx.fillRect(V.x1, y1, V.x2 - V.x1, y2 - y1); }
+      return true;
+    }
+    if (ropt.depthPages !== false) pages.forEach((im, i) => {
+      const dy = sc.startY + i * A.pageH * k, dh = A.pageH * k, dx = sc.x0, dw = A.width * k;
+      const x1 = Math.max(V.x1, dx), x2 = Math.min(V.x2, dx + dw), y1 = Math.max(V.y1, dy), y2 = Math.min(V.y2, dy + dh);
+      if (x2 <= x1 || y2 <= y1) return;
+      // Medio px de solape con la página siguiente (sin costura por redondeo), sin salirse de la imagen.
+      const sy = (y1 - dy) / k, sh = Math.min(A.pageH - sy, (y2 - y1) / k + 0.5);
+      if (sh > 0) ctx.drawImage(im, (x1 - dx) / k, sy, (x2 - x1) / k, sh, x1, y1, x2 - x1, sh * k);
+    });
+    const groups = ropt.depthFx === false ? null : depthFx(sc.theme, cfg);
+    if (groups && groups.length) {
+      const v = G.view, xx1 = Math.max(V.x1, B.x1), xx2 = Math.min(V.x2, B.x2), yy1 = Math.max(V.y1, sc.startY), yy2 = Math.min(V.y2, sc.endY);
+      const width = B.x2 - B.x1, vw = Math.min(width, v.w), vh = Math.min(sc.drawH, v.h);
+      const xTravel = Math.max(0, width - vw), yTravel = Math.max(0, sc.drawH - vh);
+      const xP = Math.max(0, Math.min(xTravel, G.cam.x - B.x1)), yP = Math.max(0, Math.min(yTravel, G.cam.y - sc.startY));
+      for (const g of groups) {
+        if (qScale < 0.7) break;   // modo ligero: el arte solo (las capas de ambiente son tenues y cuestan dibujo)
+        const dw = xTravel * g.f + vw + 220, dh = yTravel * g.f + vh + 180;
+        const dx = B.x1 + xP * (1 - g.f) - 110, dy = sc.startY + yP * (1 - g.f) - 90;
+        const x1 = Math.max(xx1, dx), y1 = Math.max(yy1, dy), x2 = Math.min(xx2, dx + dw), y2 = Math.min(yy2, dy + dh);
+        if (x2 <= x1 || y2 <= y1) continue;
+        const iw = g.canvas.width, ih = g.canvas.height;
+        ctx.drawImage(g.canvas, (x1 - dx) * iw / dw, (y1 - dy) * ih / dh, (x2 - x1) * iw / dw, (y2 - y1) * ih / dh, x1, y1, x2 - x1, y2 - y1);
+      }
+    }
+    return true;
+  }
   // Recortes (en px de la lámina) de los sprites de las láminas aportadas.
   const DECO = { asteroide: [21, 19, 321, 237], asteroideLargo: [365, 66, 380, 162], hielo: [1143, 23, 277, 233], lava: [1473, 22, 277, 228],
     satelite: [37, 270, 598, 211], antena: [710, 254, 384, 238], roto: [1212, 275, 527, 199], anillo: [33, 489, 485, 370],
     base: [1273, 505, 455, 350], estacion: [573, 559, 657, 246] };
-  const FISH = [[272, 198, 260, 174], [578, 177, 244, 127], [895, 221, 215, 100], [1260, 334, 272, 166], [468, 417, 245, 122], [1746, 247, 247, 125]];
   function backdropUrls() {
     const out = new Set();
     for (const b of Object.values(BACKDROPS)) for (const part of [b.top, b.bottom]) for (const [srcs] of part || []) for (const src of srcs) out.add(src);
     for (const a of Object.values(SPECIAL_ART)) for (const src of Object.values(a)) out.add(src);
+    for (const c of Object.values(DEPTH_ART)) for (const p of c.pages) out.add(c.dir + p);   // V58.1: páginas del mundo pintado
     return [...out];
   }
 
@@ -417,8 +500,8 @@
     }
   }
 
-  /* Mar y órbita: panorama en coordenadas de pantalla que recorre la lámina completa según el avance por el nivel
-     (técnica de los módulos aportados), con arrecife y bancos de peces o estrellas por encima. */
+  /* Órbita: panorama en coordenadas de pantalla que recorre la lámina completa según el avance por el nivel
+     (técnica de los módulos aportados), con estrellas por encima. */
   function drawSpecialScreen(G, T) {
     const W = G.world;
     if (W.scenes.length !== 1) return false;
@@ -431,37 +514,10 @@
     const py = Math.max(0, Math.min(1, (G.cam.y - B.y1) / Math.max(1, B.y2 - B.y1 - v.h)));
     const s = Math.max(cw / iw, ch / ih) * 1.22, bw = iw * s, bh = ih * s;
     ctx.drawImage(pano, -p * (bw - cw), -(0.35 + 0.3 * py) * (bh - ch), bw, bh);
-    const marine = sc.theme === 'submarino';
-    if (marine) {
-      // Cuanto más hondo, más oscuro (sin tapar el arte en la superficie).
-      const g = ctx.createLinearGradient(0, 0, 0, ch);
-      g.addColorStop(0, `rgba(2,24,48,${0.08 + py * 0.45})`); g.addColorStop(1, `rgba(1,12,30,${0.25 + py * 0.5})`);
-      ctx.fillStyle = g; ctx.fillRect(0, 0, cw, ch);
-      const fauna = image(art.fauna), reef = image(art.reef);
-      if (ready(fauna)) {
-        ctx.globalAlpha = 0.5;
-        for (let i = 0; i < 4; i++) {
-          const f = FISH[i % FISH.length], fw = Math.min(cw * 0.12, 120) * (0.7 + (i % 3) * 0.25), fh = fw * f[3] / f[2];
-          const span = cw + fw * 2, x = (((i * 0.31 * span + T * (18 + i * 7) - G.cam.x * (0.08 + i * 0.03) * dpr) % span) + span) % span - fw;
-          const y = ch * (0.18 + 0.17 * i) + Math.sin(T * 0.6 + i) * 6 * dpr;
-          ctx.save(); ctx.translate(x + fw / 2, y); if (i % 2) ctx.scale(-1, 1);
-          ctx.drawImage(fauna, f[0], f[1], f[2], f[3], -fw / 2, -fh / 2, fw, fh); ctx.restore();
-        }
-        ctx.globalAlpha = 1;
-      }
-      if (ready(reef)) {
-        const rh = ch * 0.34, rw = rh * reef.naturalWidth / (reef.naturalHeight * 0.36);
-        const off = (((G.cam.x * 0.35 * dpr) % rw) + rw) % rw;
-        ctx.globalAlpha = 0.55 + py * 0.25;
-        for (let x = -off; x < cw; x += rw) ctx.drawImage(reef, 0, reef.naturalHeight * 0.64, reef.naturalWidth, reef.naturalHeight * 0.36, x, ch - rh, rw + 1, rh);
-        ctx.globalAlpha = 1;
-      }
-    } else {
-      fillRect(0, 0, cw, ch, '#04081c', 0.12 + py * 0.18);
-      for (let i = 0; i < 60; i++) {
-        const x = ((hash(i, 11) / 997 * cw - G.cam.x * 0.05 * dpr) % cw + cw) % cw, y = ((hash(i, 29) / 997 * ch - G.cam.y * 0.04 * dpr) % ch + ch) % ch;
-        circle(x, y, (0.6 + (i % 3) * 0.45) * dpr, '#e9efff', 0.35 + 0.35 * Math.sin(T * 1.3 + i) ** 2);
-      }
+    fillRect(0, 0, cw, ch, '#04081c', 0.12 + py * 0.18);
+    for (let i = 0; i < 60; i++) {
+      const x = ((hash(i, 11) / 997 * cw - G.cam.x * 0.05 * dpr) % cw + cw) % cw, y = ((hash(i, 29) / 997 * ch - G.cam.y * 0.04 * dpr) % ch + ch) % ch;
+      circle(x, y, (0.6 + (i % 3) * 0.45) * dpr, '#e9efff', 0.35 + 0.35 * Math.sin(T * 1.3 + i) ** 2);
     }
     return true;
   }
@@ -495,23 +551,31 @@
     for (const p of W.platforms) if (p.region === 'main' && x >= p.x1 - 2 && x <= p.x2 + 2 && p.y > y + 4 && p.y < y + 230 && p.y < best) best = p.y;
     return best === Infinity ? y + 38 : best;
   }
-  const ZIP_COLORS = { cable: ['#1d1a17', '#c9d2d8'], tendedero: ['#efe6d2', '#ffffff'], alga: ['#2f8f63', '#8ff0b8'], anclaje: ['#355a7a', '#9ee7ff'] };
+  const ZIP_COLORS = { cable: ['#1d1a17', '#c9d2d8'], tendedero: ['#efe6d2', '#ffffff'], alga: ['#2f8f63', '#8ff0b8'], anclaje: ['#355a7a', '#9ee7ff'],
+    cuerda: ['#7a5432', '#d8b98a'] };
   function drawZips(G, V, T) {
     for (const z of G.world.zips || []) {
       const x1 = Math.min(z.ax, z.bx), x2 = Math.max(z.ax, z.bx);
       if (x2 < V.x1 - 30 || x1 > V.x2 + 30 || z.by < V.y1 - 30 || z.ay > V.y2 + 240) continue;
-      if (z.poleA === undefined) { z.poleA = poleBase(G.world, z.ax, z.ay); z.poleB = poleBase(G.world, z.bx, z.by); }
-      const [c1, c2] = ZIP_COLORS[z.look] || ZIP_COLORS.cable;
-      for (const [x, y, yb] of [[z.ax, z.ay, z.poleA], [z.bx, z.by, z.poleB]]) {
-        fillRect(x - 3, y - 8, 6, yb - y + 8, '#2c3138'); fillRect(x - 1, y - 8, 2, yb - y + 8, '#8a929c', 0.55);
-        fillRect(x - 9, y - 10, 18, 4, '#2c3138'); circle(x, y, 4.2, '#c9d2d8'); circle(x, y, 1.8, '#2c3138');
+      // V58.1: la cadena del barco ya está pintada (y la cuerda se ata al mirador y a una palmera): sin postes de metal;
+      // en la pintada solo se ven las señales de sentido, tenues.
+      const painted = !!z.painted, rope = z.look === 'cuerda';
+      if (!painted) {
+        if (z.poleA === undefined) { z.poleA = poleBase(G.world, z.ax, z.ay); z.poleB = poleBase(G.world, z.bx, z.by); }
+        const [c1, c2] = ZIP_COLORS[z.look] || ZIP_COLORS.cable;
+        if (rope) for (const [x, y] of [[z.ax, z.ay], [z.bx, z.by]]) { circle(x, y, 4.5, '#5a3b22'); circle(x, y, 2.2, '#c79a5e'); }
+        else for (const [x, y, yb] of [[z.ax, z.ay, z.poleA], [z.bx, z.by, z.poleB]]) {
+          fillRect(x - 3, y - 8, 6, yb - y + 8, '#2c3138'); fillRect(x - 1, y - 8, 2, yb - y + 8, '#8a929c', 0.55);
+          fillRect(x - 9, y - 10, 18, 4, '#2c3138'); circle(x, y, 4.2, '#c9d2d8'); circle(x, y, 1.8, '#2c3138');
+        }
+        line(z.ax, z.ay, z.bx, z.by, c1, 1, rope ? 3.2 : 2.6);
+        line(z.ax, z.ay - 1, z.bx, z.by - 1, c2, 0.55, 1);
+        if (rope) for (let s = 8; s < z.len - 6; s += 9) { const px = z.ax + z.ux * s, py = z.ay + z.uy * s; line(px - 2, py - 1.5, px + 2, py + 1.5, '#4a2f1b', 0.6, 1); }
       }
-      line(z.ax, z.ay, z.bx, z.by, c1, 1, 2.6);
-      line(z.ax, z.ay - 1, z.bx, z.by - 1, c2, 0.55, 1);
       // Señales de sentido que avanzan por el cable.
       for (let s = ((T * 70) % 80) + 20; s < z.len - 20; s += 80) {
         const px = z.ax + z.ux * s, py = z.ay + z.uy * s;
-        tri(px + z.ux * 5, py + z.uy * 5 - 3, px - z.ux * 4, py - z.uy * 4 - 7, px - z.ux * 4, py - z.uy * 4 + 1, '#d9ff65', 0.55);
+        tri(px + z.ux * 5, py + z.uy * 5 - 3, px - z.ux * 4, py - z.uy * 4 - 7, px - z.ux * 4, py - z.uy * 4 + 1, '#d9ff65', painted ? 0.32 : 0.55);
       }
       if (z.look === 'tendedero') for (let s = 30, k = 0; s < z.len - 24; s += 34, k++) {
         const px = z.ax + z.ux * s, py = z.ay + z.uy * s;
@@ -551,16 +615,35 @@
       }
     }
     if (look === 'pez') {
-      const fauna = image(SPECIAL_ART.submarino.fauna);
-      if (ready(fauna)) {
-        const f = FISH[(Math.abs(Math.round(p.baseX1 || x)) >> 3) % FISH.length], dw = w * 1.25, dh = dw * f[3] / f[2];
-        ctx.save(); ctx.translate(x + w / 2, y + dh * 0.42);
-        if (mv < 0) ctx.scale(-1, 1);
-        ctx.rotate(Math.sin(T * 4 + x) * 0.05);
-        ctx.drawImage(fauna, f[0], f[1], f[2], f[3], -dw / 2, -dh / 2, dw, dh); ctx.restore();
-        tri(x + w / 2 - 6, y - 12, x + w / 2 + 6, y - 12, x + w / 2, y - 20, '#ffe27a', 0.5 + 0.35 * Math.sin(T * 6 + x));
-        return;
-      }
+      // V58.1: pez tropical dibujado (naranja con franjas, como los del arrecife del arte V4); el lomo es la plataforma.
+      const bh = Math.max(14, w * 0.34), wag = Math.sin(T * 7 + x * 0.05) * 0.35;
+      ctx.save(); ctx.translate(x + w / 2, y + bh * 0.52);
+      if (mv < 0) ctx.scale(-1, 1);
+      ctx.rotate(Math.sin(T * 3 + x) * 0.04);
+      ctx.save(); ctx.translate(-w * 0.46, 0); ctx.rotate(wag);
+      ctx.fillStyle = '#e8641f'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-w * 0.24, -bh * 0.55); ctx.quadraticCurveTo(-w * 0.17, 0, -w * 0.24, bh * 0.55); ctx.closePath(); ctx.fill();
+      ctx.restore();
+      ctx.fillStyle = '#f08a2a'; ctx.beginPath(); ctx.moveTo(-w * 0.12, -bh * 0.46); ctx.quadraticCurveTo(w * 0.06, -bh * 0.95, w * 0.2, -bh * 0.44); ctx.closePath(); ctx.fill();
+      ellipse(0, 0, w * 0.5, bh * 0.5, '#f58a24');
+      ellipse(w * 0.05, -bh * 0.12, w * 0.4, bh * 0.28, '#ffb04a', 0.85);
+      for (const sx of [-0.16, 0.18]) { ctx.fillStyle = '#fff6ea'; ctx.beginPath(); ctx.ellipse(w * sx, 0, w * 0.05, bh * 0.47, 0, 0, Math.PI * 2); ctx.fill(); }
+      circle(w * 0.36, -bh * 0.1, Math.max(2, bh * 0.12), '#fffdf5'); circle(w * 0.37, -bh * 0.1, Math.max(1.2, bh * 0.07), '#1a1410');
+      ctx.restore();
+      tri(x + w / 2 - 6, y - 12, x + w / 2 + 6, y - 12, x + w / 2, y - 20, '#ffe27a', 0.45 + 0.3 * Math.sin(T * 6 + x));
+      return;
+    }
+    if (look === 'bote') {
+      // V58.1: barca de madera (misma madera que el puente de cuerda del arte) flotando en la superficie.
+      const bob = Math.sin(T * 1.6 + x * 0.01) * 1.2;
+      ctx.save(); ctx.translate(0, bob);
+      ctx.fillStyle = '#6b4226'; ctx.beginPath(); ctx.moveTo(x - 10, y - 2); ctx.lineTo(x + w + 10, y - 2);
+      ctx.quadraticCurveTo(x + w + 2, y + 17, x + w - 14, y + 19); ctx.lineTo(x + 14, y + 19); ctx.quadraticCurveTo(x - 2, y + 17, x - 10, y - 2); ctx.fill();
+      for (let i = 1; i <= 2; i++) line(x - 6 + i * 2, y + i * 6, x + w + 6 - i * 2, y + i * 6, '#4a2c18', 0.8, 1.2);
+      fillRR(x - 10, y - 4, w + 20, 5, 2, '#c79a5e');
+      fillRect(x + w * 0.3, y - 2, 4, 6, '#8a5a35'); fillRect(x + w * 0.66, y - 2, 4, 6, '#8a5a35');
+      line(x + w * 0.62, y - 10, x + w + 22, y + 20, '#a07448', 0.95, 2.4);   // remo
+      ctx.restore();
+      return;
     }
     if (look === 'manta') {
       const flap = Math.sin(T * 3 + x * 0.01) * 6;
@@ -624,17 +707,22 @@
     for (const z of G.world.waters || []) {
       for (const d of z.drains || []) {
         if (d.x2 < V.x1 || d.x1 > V.x2 || z.y2 > V.y2) continue;
-        if (d.fallTo === undefined) d.fallTo = poleBase(G.world, (d.x1 + d.x2) / 2, z.y2 + 12) || z.y2 + 200;
+        // V58.1: bajo una brecha del mar pintado la cascada se deshace en el agua si no hay repisa cerca (sin salpicar el aire).
+        if (d.fallTo === undefined) {
+          const cx = (d.x1 + d.x2) / 2, pb = poleBase(G.world, cx, z.y2 + 12);
+          const near = G.world.platforms.some((p) => p.region === 'main' && p.kind !== 'moving' && cx >= p.x1 - 2 && cx <= p.x2 + 2 && p.y > z.y2 + 16 && p.y < z.y2 + 200);
+          d.splash = !z.breach || near; d.fallTo = d.splash ? pb : z.y2 + 240;
+        }
         const y1 = z.y2, y2 = Math.min(d.fallTo, V.y2 + 20), w = d.x2 - d.x1;
         if (y2 <= V.y1) continue;
-        const g = ctx.createLinearGradient(0, y1, 0, y2);
-        g.addColorStop(0, 'rgba(120,220,255,0.55)'); g.addColorStop(1, 'rgba(120,220,255,0.12)');
+        const g = ctx.createLinearGradient(0, y1, 0, d.splash ? y2 : d.fallTo);
+        g.addColorStop(0, 'rgba(120,220,255,0.55)'); g.addColorStop(1, d.splash ? 'rgba(120,220,255,0.12)' : 'rgba(120,220,255,0)');
         ctx.fillStyle = g; ctx.fillRect(d.x1 + 4, y1, w - 8, y2 - y1);
         for (let i = 0; i < 5; i++) {
           const sx = d.x1 + 8 + i * (w - 16) / 4, off = (T * 260 + i * 37) % 60;
           for (let yy = y1 + off; yy < y2; yy += 60) line(sx, yy, sx, Math.min(y2, yy + 22), '#e9fbff', 0.5, 1.6);
         }
-        ellipse((d.x1 + d.x2) / 2, d.fallTo, w * 0.6, 6, '#e9fbff', 0.35 + 0.15 * Math.sin(T * 8));
+        if (d.splash) ellipse((d.x1 + d.x2) / 2, d.fallTo, w * 0.6, 6, '#e9fbff', 0.35 + 0.15 * Math.sin(T * 8));
       }
     }
   }
@@ -801,12 +889,14 @@
       const iw = x2 - x1, ih = y2 - y1;
       ctx.save();
       ctx.beginPath(); ctx.rect(x1, y1, iw, ih); ctx.clip();
-      // Velo muy tenue, sin oscurecer siluetas ni perder contraste del nivel.
-      fillRect(x1, y1, iw, ih, p.haze, p.intensity * 0.105);
+      // Velo muy tenue, sin oscurecer siluetas ni perder contraste del nivel. V58.1: en los mundos pintados de una pieza
+      // (mar V4) no hay velo ni motivos: el arte trae su propio ambiente; solo queda el letrero del tramo.
+      const paintedWorld = !!depthCfg(sc);
+      if (!paintedWorld) fillRect(x1, y1, iw, ih, p.haze, p.intensity * 0.105);
       const left = sc.x0 + 17, right = sc.x0 + sc.drawW - 17;
       const first = Math.max(0, Math.floor((y1 - sc.startY) / 136));
       const last = Math.min(Math.ceil((sc.endY - sc.startY) / 136), Math.ceil((y2 - sc.startY) / 136));
-      for (let n = first; n <= last; n++) {
+      for (let n = first; n <= (paintedWorld ? first - 1 : last); n++) {
         const yy = sc.startY + 52 + n * 136;
         const h = hash(n + 37, (sc.index + 1) * 53) / 997;
         const drift = Math.sin(T * (p.motif === 'bubbles' ? 1.1 : 0.45) + n * 2.4) * (p.motif === 'bubbles' ? 9 : 3);
@@ -1490,6 +1580,18 @@
     tri(cx - 6, p.y - r - 12, cx + 6, p.y - r - 12, cx, p.y - r - 20, '#ffe27a', 0.45 + 0.35 * Math.sin(t * 6 + p.x1));
   }
 
+  /* V58.1 · Hongo gigante pintado en el arte: no se redibuja; solo brilla suave (se ve que rebota) y, al rebotar,
+     lanza un destello y esporas. */
+  function drawPaintedBounce(p, G) {
+    const t = G.world.t, cx = (p.x1 + p.x2) / 2, w = p.x2 - p.x1, since = t - (p.bounceT ?? -9);
+    ellipse(cx, p.y + 3, w * 0.5, 7, '#9ff8ff', 0.1 + 0.06 * Math.sin(t * 3 + p.x1));
+    if (since < 0.45) {
+      const k = since / 0.45;
+      ring(cx, p.y + 2, w * (0.45 + k * 0.35), 7 + k * 10, '#d8fbff', 0.55 * (1 - k), 2.5);
+      for (let i = 0; i < 6; i++) circle(cx + (i - 2.5) * w * 0.14, p.y - k * (26 + (i % 3) * 14), 2.2, '#e8d7ff', 0.7 * (1 - k));
+    }
+  }
+
   function drawPlatforms(G, V) {
     const T = G.world.t;
     for (const p of G.world.platforms) {
@@ -1498,7 +1600,7 @@
       if (debug && (p.painted || p.hidden)) { line(p.x1, p.y, p.x2, p.y, p.drop ? '#ff44ed' : '#45ff9a', 0.95, 2); if (p.hidden) continue; }
       if (p.hidden && !(sc && sc.missingArt)) continue; // cornisa pintada en el propio fondo
       const x = p.x1, y = p.y, w = p.x2 - p.x1, h = p.h || 12;
-      if (p.kind === 'bounce') { if (p.umbrella) drawUmbrella(p, T, G); else drawAwning(p, T); continue; }
+      if (p.kind === 'bounce') { if (p.artPainted) drawPaintedBounce(p, G); else if (p.umbrella) drawUmbrella(p, T, G); else drawAwning(p, T); continue; }
       if (p.kind === 'pigeon') { if (p.look) drawLookPlatform(p, T, G); else drawPigeon(p, T); continue; }
       if (p.kind === 'crumble') { drawCrumble(p, T); continue; }
       if (p.kind === 'belt') { drawBelt(p, T); continue; }
@@ -1566,7 +1668,8 @@
     for (const s of G.world.solids) {
       if (!inView(V, s.x1, s.y1, s.x2, s.y2)) continue;
       const x1 = Math.max(s.x1, V.x1 - 10), x2 = Math.min(s.x2, V.x2 + 10), y1 = Math.max(s.y1, V.y1 - 10), y2 = Math.min(s.y2, V.y2 + 10);
-      if (s.kind === 'street' || (s.kind === 'wall' && false)) continue;
+      // `draw: false`: sólido que ya pinta otra capa (orillas de las pozas, roca y meseta del mar pintado).
+      if (s.kind === 'street' || s.draw === false) continue;
       if (s.kind === 'wall') {
         fillRect(x1, y1, x2 - x1, y2 - y1, '#0c151d');
         fillRect(s.side < 0 ? s.x2 - 8 : s.x1, y1, 8, y2 - y1, '#22323e');
@@ -2190,11 +2293,49 @@
   const SWIM_STATE = { swimFloat: 'float', swim: 'surf', swimUnder: 'under', swimDown: 'down', swimUp: 'up', swimUpDiag: 'upDiag',
     swimDash: 'dash', swimHurt: 'hurt', waterLeap: 'leap', wade: 'wade', wadeRun: 'wadeRun', diveIn: 'diveIn' };
   const waterGrad = new WeakMap();
+  /* V58.1 · Brecha en el puente pintado del fondo del mar (desagüe): se "rompe" el tramo de puente con un hueco de
+     agua honda, bordes de piedra quebrada y escombros que caen. */
+  function drawBreach(d, z, T) {
+    const x1 = d.x1, x2 = d.x2, w = x2 - x1, top = z.y2 - 58, bot = z.y2 + 26;
+    const yk = (k) => top + (k / 6) * (bot - top), wob = (k) => (k % 2 ? 6 : 0) + Math.sin(k * 2.3) * 3;
+    ctx.save();
+    ctx.beginPath();
+    for (let k = 0; k <= 6; k++) { if (k) ctx.lineTo(x1 + wob(k), yk(k)); else ctx.moveTo(x1 + wob(k), yk(k)); }
+    for (let k = 6; k >= 0; k--) ctx.lineTo(x2 - wob(k + 1), yk(k));
+    ctx.closePath();
+    const g = ctx.createLinearGradient(0, top, 0, bot);
+    g.addColorStop(0, 'rgba(22,110,150,0.82)'); g.addColorStop(1, 'rgba(8,44,92,0.9)');
+    ctx.fillStyle = g; ctx.fill();
+    ctx.strokeStyle = 'rgba(52,72,70,0.9)'; ctx.lineWidth = 2.5; ctx.stroke();
+    ctx.restore();
+    // Bordes quebrados: trozos de piedra con musgo encima, a cada lado de la brecha.
+    for (const [ex, dir] of [[x1, 1], [x2, -1]]) {
+      for (let i = 0; i < 3; i++) {
+        const yy = top + 8 + i * 17, ww = 8 + ((i * 5) % 7), hh = 9 + (i % 2) * 4;
+        ctx.fillStyle = '#7d8f87'; ctx.beginPath(); ctx.moveTo(ex - dir * 3, yy); ctx.lineTo(ex + dir * ww, yy + 2); ctx.lineTo(ex + dir * (ww - 3), yy + hh); ctx.lineTo(ex - dir * 3, yy + hh - 1); ctx.closePath(); ctx.fill();
+        fillRect(Math.min(ex - dir * 3, ex + dir * ww), yy - 1, ww + 3, 2.5, '#86b84c', 0.9);
+      }
+    }
+    for (let i = 0; i < 3; i++) {
+      const k = ((T * 0.8 + i * 0.37) % 1), px = x1 + w * (0.25 + i * 0.25) + Math.sin(T * 3 + i) * 3;
+      fillRR(px - 3, z.y2 + k * 70, 6, 5, 1.5, '#7d8c84', 0.8 * (1 - k));
+    }
+  }
+
   function drawWaters(G, V, front) {
     const W = G.world, T = W.t;
     for (const z of W.waters || []) {
       if (z.x2 + 14 < V.x1 || z.x1 - 14 > V.x2 || z.y2 + 16 < V.y1 || z.y - 10 > V.y2) continue;
       const w = z.x2 - z.x1, h = z.y2 - z.y, fountain = z.kind === 'fuente';
+      if (!front && z.breach) {
+        // V58.1 · Mar pintado: el arte ya muestra el agua y el fondo (la meseta y sus puentes). Solo un velo tenue y
+        // las brechas de los puentes por donde se baja.
+        let g = waterGrad.get(z);
+        if (!g) { g = ctx.createLinearGradient(0, z.y, 0, z.y2); g.addColorStop(0, 'rgba(120,225,240,0.05)'); g.addColorStop(1, 'rgba(6,42,74,0.16)'); waterGrad.set(z, g); }
+        ctx.fillStyle = g; ctx.fillRect(z.x1, z.y, w, h);
+        for (const d of z.drains || []) drawBreach(d, z, T);
+        continue;
+      }
       if (!front) {
         // Fondo y paredes de la poza (piedra), luego el cuerpo del agua con degradado.
         const stone = fountain ? '#8f7f86' : z.sea ? '#2b5560' : '#3f4a3a', stoneTop = fountain ? '#d9cfd4' : '#6f7d5c';
@@ -2223,7 +2364,8 @@
         continue;
       }
       // Delante: tinte translúcido (lo sumergido se ve bajo el agua) y superficie con olas.
-      fillRect(z.x1, z.y + 3, w, h - 3, fountain ? '#4fb3d1' : '#1f6f93', fountain ? 0.22 : z.sea ? 0.1 : 0.3);
+      // V58.1: en el mar pintado no hay velo delantero (el arte ya se ve bajo el agua): solo la superficie.
+      if (!z.breach) fillRect(z.x1, z.y + 3, w, h - 3, fountain ? '#4fb3d1' : '#1f6f93', fountain ? 0.22 : z.sea ? 0.1 : 0.3);
       ctx.globalAlpha = 0.9; ctx.strokeStyle = '#d6f8ff'; ctx.lineWidth = 2; ctx.beginPath();
       for (let x = z.x1; x <= z.x2; x += 6) {
         const yy = z.y + Math.sin(x * 0.07 + T * 2.4) * 1.6 + Math.sin(x * 0.023 - T * 1.3) * 1.2;
@@ -2465,10 +2607,12 @@
     ctx.setTransform(k, 0, 0, k, ox, oy);
     const V = { x1: G.cam.x - 40, x2: G.cam.x + v.w + 40, y1: G.cam.y - 60, y2: G.cam.y + v.h + 60 };
     const W = G.world;
-    // V58: mar y órbita usan un panorama en pantalla (antes de aplicar la cámara); el resto, fondos del ancho del mundo.
+    // V58.1: el mar es un mundo pintado fijo al mundo (DEPTH_ART). V58: la órbita usa un panorama en pantalla (antes de
+    // aplicar la cámara); el resto, fondos del ancho del mundo.
     let special = false;
-    if (!G.room) { ctx.setTransform(1, 0, 0, 1, 0, 0); special = drawSpecialScreen(G, T); ctx.setTransform(k, 0, 0, k, ox, oy); }
-    if (!G.room) { if (special) drawSpaceDeco(G, V, T); else drawBackdrop(G, V); drawStreet(G, V, T); drawToxiAtmosphere(G, V, T); }
+    const depth = !G.room && drawDepthArt(G, V);
+    if (!G.room && !depth) { ctx.setTransform(1, 0, 0, 1, 0, 0); special = drawSpecialScreen(G, T); ctx.setTransform(k, 0, 0, k, ox, oy); }
+    if (!G.room) { if (special) drawSpaceDeco(G, V, T); else if (!depth) drawBackdrop(G, V); drawStreet(G, V, T); drawToxiAtmosphere(G, V, T); }
     for (const r of W.rooms) drawRoomBackground(r, V);
     drawWaters(G, V, false);
     drawCascades(G, V, T);
@@ -2488,7 +2632,7 @@
     drawWaterFx(G, V);
     drawParticles(G, V);
     // Solo el primer plano se dibuja delante de Sofía; los bordes dejan libre el corredor.
-    if (!G.room && !special) for (const sc of W.scenes) if (PARALLAX_LAYERS[sc.theme] && ready(image(PARALLAX_LAYERS[sc.theme][0]))) drawRealParallax(G, V, sc, 4, 5);
+    if (!G.room && !special && !depth) for (const sc of W.scenes) if (PARALLAX_LAYERS[sc.theme] && ready(image(PARALLAX_LAYERS[sc.theme][0]))) drawRealParallax(G, V, sc, 4, 5);
     if (debug) drawDebug(G);
     if (G.transition) {
       const tr = G.transition, a = 1 - Math.abs(tr.t / tr.dur - 0.45) / 0.45;
@@ -2499,5 +2643,5 @@
   }
 
   NS.Render = { init, resize, draw, preload, setQuality, setOptions, image, ready, NINA, NINA_DIR, NINA_VARIANT_DIR, COMPANIONS, COMPANIONS_SUB, PAINTERS, PARALLAX_LAYERS, PARALLAX_SPEED,
-    BACKDROPS, SPECIAL_ART, backdropUrls, toggleDebug: () => (debug = !debug), get debug() { return debug; } };
+    BACKDROPS, SPECIAL_ART, DEPTH_ART, backdropUrls, depthUrls, toggleDebug: () => (debug = !debug), get debug() { return debug; } };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

@@ -394,7 +394,7 @@
       ...Object.keys(NS.ART.SKINS).map((k) => 'assets/platforms/' + k + '.png'),
       ...(NS.ART.SWIM ? [NS.ART.SWIM.sheet] : []),   // V52: atlas de nado
       // V53: fondos de los mundos nuevos y gatitas submarinas.
-      'assets/scenes/generated/submarino_fondo.png', 'assets/scenes/generated/espacial_fondo.png',
+      'assets/scenes/generated/espacial_fondo.png',
       'assets/player/sofia/sofia_submarina_complementaria.png',
       ...Object.values(R.PARALLAX_LAYERS || {}).flat(),
       ...(R.backdropUrls ? R.backdropUrls() : []),   // V58: fondos del ancho del mundo, mar y órbita

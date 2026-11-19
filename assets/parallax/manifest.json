@@ -27,33 +27,6 @@
   ],
   "order": "far-to-near",
   "themes": {
-    "submarino": [
-      {
-        "src": "assets/parallax/submarino/00_fondo_lejano.svg",
-        "speed": 0.1,
-        "front": false
-      },
-      {
-        "src": "assets/parallax/submarino/01_profundidad.svg",
-        "speed": 0.22,
-        "front": false
-      },
-      {
-        "src": "assets/parallax/submarino/02_estructuras.svg",
-        "speed": 0.4,
-        "front": false
-      },
-      {
-        "src": "assets/parallax/submarino/03_elementos.svg",
-        "speed": 0.68,
-        "front": false
-      },
-      {
-        "src": "assets/parallax/submarino/04_primer_plano.svg",
-        "speed": 1,
-        "front": true
-      }
-    ],
     "espacial": [
       {
         "src": "assets/parallax/espacial/00_fondo_lejano.svg",
@@ -84,5 +57,6 @@
   },
   "alpha": true,
   "tile": false,
-  "remark": "Se dibujan secciones de cada SVG según la cámara; la última capa se renderiza sobre el jugador sin tapar el pasillo central."
+  "remark": "Se dibujan secciones de cada SVG según la cámara; la última capa se renderiza sobre el jugador sin tapar el pasillo central.",
+  "nota_v58_1": "El mar (submarino) usa el arte pintado V4 (assets/parallax/marino/depth_v4); sus capas SVG de V55 se retiraron."
 }

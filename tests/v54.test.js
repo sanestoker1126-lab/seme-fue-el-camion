@@ -11,7 +11,7 @@ test('V54→V58: cada mundo especial mide el doble de ancho y de alto que en V54
   // V54 los triplicó (940 × 3072); V58 parte de esa versión, la refleja a lo ancho y le agrega la mitad nueva debajo.
   for (const [m, old] of [[NS.LEVELS.SUBMARINO_MAP, NS.LEVELS.SUBMARINO_V54_MAP], [NS.LEVELS.ESPACIAL_MAP, NS.LEVELS.ESPACIAL_V54_MAP]]) {
     assert.equal(old.width, 940); assert.equal(old.height, 3072);
-    assert.equal(m.width, old.width * 2);
+    assert.ok(m.width >= old.width * 2, m.id + ' ancho ' + m.width);   // V58.1: el mar, trazado sobre el arte V4, mide 2039
     assert.ok(m.height >= old.height * 2, m.id + ' alto ' + m.height);
     assert.equal(m.surfaces.filter(p => p.start).length, 1);
     assert.equal(m.surfaces.filter(p => p.exit).length, 1);

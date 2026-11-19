@@ -1,4 +1,4 @@
-# Arte de parallax (V58) · procedencia y estado
+# Arte de parallax (V58 / V58.1) · procedencia y estado
 
 Todo el arte de esta carpeta lo aportó el autor del juego en cinco paquetes. Aquí se registra de dónde salió
 cada archivo, qué se le hizo y qué falta, para no atribuir a un paquete algo que no traía.
@@ -7,7 +7,7 @@ cada archivo, qué se le hizo y qué falta, para no atribuir a un paquete algo q
 |---|---|---|
 | `escuela/azotea_superior`, `escuela/escuela_ruinas`, `escuela/patio_salida` | `ESCUELA_PARALLAX_16_9_ASSETS-1.zip` | WebP copiados sin recomprimir |
 | `guadalajara/azoteas`, `guadalajara/mercado_parque`, `guadalajara/barrios_inferiores` | `GUADALAJARA_PARALLAX_WEBP_ANDROID.zip` | WebP copiados sin recomprimir |
-| `marino/` (`panorama_marino`, `arrecife`, `fauna`) | `SOFIA_PARALLAX_MARINO.zip` | PNG → WebP (quality 92–93, alfa sin pérdida) |
+| `marino/depth_v4/` (3 páginas WebP + 7 capas PNG) | `SE_ME_FUE_EL_CAMION_MARINO_PARALLAX_PRO_V4.zip` (V58.1) | Copiados sin recomprimir; SHA-256 iguales a su manifiesto. **Único fondo del mar**: el de `SOFIA_PARALLAX_MARINO.zip`, las capas SVG de V55 y `submarino_fondo.png` se retiraron |
 | `espacial/` (`panorama`, `decoracion`) | `SOFIA_PARALLAX_ESPACIAL.zip` | PNG → WebP (quality 92–93, alfa sin pérdida) |
 
 Todas las capas de escuela y Guadalajara miden 1536 × 864 (16:9). Los panoramas marino y espacial miden
@@ -46,3 +46,15 @@ python3 -I tools/arte/importar_parallax.py subidas .
 python3 -I tools/arte/componentes_atlas.py subidas/espacial/decoracion.png 40 2500   # cajas de los sprites
 python3 -I tools/arte/componentes_atlas.py subidas/marino/fauna.png 200 1500
 ```
+
+## V58.1 · Mar «Marino Parallax PRO V4»
+
+- Una ilustración vertical de 971 × 2928 px en tres páginas (isla → ciudad hundida → abismo) y siete capas de
+  ambiente RGBA de 640 × 1536. El nivel del mar se **volvió a trazar sobre el dibujo** (`levels.js` ·
+  `MARINE_TRACE`): cada repisa, escalera, el puente de cuerda, la cubierta del barco, capiteles y pisos de cueva son
+  colisiones reales y no se dibujan encima.
+- Lo que el paquete NO resolvía y no se usó: su `platform_reference.csv` (67 referencias) es de **otro mapa**
+  (1976 × 5960 u, secciones repetidas) que no corresponde al mar de V58; su instalador exige una rama
+  (`manus/release-candidate-v58.1-fase4`) que no existe en el repositorio. Se integró a mano.
+- La ilustración incluye una casa con forma de piña bajo el mar (ya venía en el fondo marino anterior). Para una
+  venta comercial conviene revisarla: recuerda mucho a una caricatura conocida.

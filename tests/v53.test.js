@@ -126,7 +126,8 @@ test('aspecto de Sofía: variantes uniforme y rosa completas (15 frames), mismas
 
 test('precarga sin conexión: los fondos nuevos están en el service worker y existen', () => {
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
-  for (const f of ['assets/scenes/generated/submarino_fondo.png', 'assets/scenes/generated/espacial_fondo.png']) {
+  // V58.1: el mar usa su arte pintado V4 (el fondo anterior se retiró del juego).
+  for (const f of ['assets/parallax/marino/depth_v4/backgrounds/01_marino_base_isla.webp', 'assets/scenes/generated/espacial_fondo.png']) {
     assert.ok(sw.includes(f), 'sin precargar: ' + f);
     assert.ok(fs.existsSync(path.join(ROOT, f)), 'no existe: ' + f);
   }

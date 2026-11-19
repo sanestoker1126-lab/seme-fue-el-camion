@@ -86,8 +86,8 @@ function simulate(W, sub, A, x, vx, policy, probe) {
   const resetCrumbles = () => { for (const c of crumbles) { c.crState = 'solid'; c.crT = 0; c.gone = false; } };
   resetCrumbles();
   let airborne = false, steps = 0, result = null, dashed = false, apexSeen = false, airSteps = 0, landFall = 0;
-  // V58: el mar abierto es hondo; desde el agua se simula más tiempo (bucear hasta un desagüe tarda).
-  const maxSteps = isW && A.water.sea ? 480 : 260;
+  // V58: el mar abierto es hondo; desde el agua se simula más tiempo (bucear hasta un desagüe o cruzarlo tarda).
+  const maxSteps = isW && A.water.sea ? 720 : 260;
   for (; steps < maxSteps; steps++) {
     sub.t += 1 / 60;
     NS.Physics.updatePlatforms(sub, sub.t);
@@ -131,6 +131,21 @@ function policiesFor(A) {
       }
       out.push([st, (i) => ({ jumpPressed: i === 1, jumpHeld: true })]);
       out.push([st, (i) => ({ downHeld: i < 70 })]);
+    }
+    // V58.1: en el mar abierto (flotación neutra) se bucea a cualquier profundidad: bajar hasta varias
+    // profundidades y nadar de lado a lado ahí (entradas reales; lo recorrido marca los cristales visitados).
+    // Líneas cada 48 u (el radio de recogida es 29), desde las dos paredes y el centro, hacia ambos lados. Al llegar
+    // a la profundidad se frena con ARRIBA (sin eso la inercia del buceo la hunde ~75 u más), como haría un jugador.
+    if (A.water.sea) {
+      const z = A.water;
+      for (const sx of [A.x1 + 18, (A.x1 + A.x2) / 2, A.x2 - 18]) {
+        for (let yT = z.y + 60; yT < z.y2 - 20; yT += 48) {
+          for (const d of [-1, 1]) {
+            out.push([{ x: sx, vx: 0 }, (i, P) => (P.y < yT - 40 ? { downHeld: true }
+              : { left: d < 0, right: d > 0, upHeld: P.vy > 25 })]);
+          }
+        }
+      }
     }
     // V58: bucear hasta cada desagüe del fondo (en línea recta y avanzando hacia él desde los extremos).
     for (const d of A.water.drains || []) {

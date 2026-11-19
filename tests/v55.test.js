@@ -5,8 +5,10 @@ const path = require('node:path');
 const ROOT = path.join(__dirname, '..');
 const read = path => fs.readFileSync(require('node:path').join(ROOT, path),'utf8');
 const names=['00_fondo_lejano','01_profundidad','02_estructuras','03_elementos','04_primer_plano'];
-test('V55: 10 SVG de parallax originales, cinco por misión, sin scripts ni referencias externas',()=>{
- for(const theme of ['submarino','espacial']){
+// V58.1: el mar usa su arte pintado V4 (assets/parallax/marino/depth_v4); sus capas SVG de V55 se retiraron.
+test('V55: SVG de parallax originales (órbita), cinco capas, sin scripts ni referencias externas; las del mar se retiraron',()=>{
+ assert.ok(!fs.existsSync(path.join(ROOT,'assets/parallax/submarino')),'las capas SVG del mar ya no existen');
+ for(const theme of ['espacial']){
   for(const filename of names){
    const p='assets/parallax/'+theme+'/'+filename+'.svg';
    const src=read(p);
@@ -21,7 +23,8 @@ test('V55: 10 SVG de parallax originales, cinco por misión, sin scripts ni refe
 test('V55: manifiesto de cinco capas y factores de paralaje por misión',()=>{
  const m=JSON.parse(read('assets/parallax/manifest.json'));
  assert.deepEqual(m.speeds,[.1,.22,.4,.68,1]);
- for(const theme of ['submarino','espacial']){
+ assert.ok(!m.themes.submarino,'el mar ya no está en el manifiesto de capas SVG');
+ for(const theme of ['espacial']){
   assert.equal(m.themes[theme].length,5);
   for(const layer of m.themes[theme])assert.ok(fs.existsSync(path.join(ROOT,layer.src)));
   assert.ok(m.themes[theme][4].front);
