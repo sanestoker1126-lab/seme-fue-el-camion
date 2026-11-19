@@ -111,24 +111,33 @@
 
   /* Fondo teñido cacheado (una vez por par archivo+tinte). */
   const tinted = new Map();
-  function tintedImage(src, tint) {
+  /* `maxW`: ancho máximo del lienzo cacheado. V58.1: los fondos PRO de Guadalajara miden 1536 × 2504; reducirlos UNA vez
+     al tamaño que el nivel realmente muestra evita reescalarlos cada cuadro (con la CPU frenada ×4 Portales bajó a
+     12 fps por eso). */
+  function tintedImage(src, tint, maxW = 0) {
     const im = image(src);
     if (!ready(im)) return null;
-    if (tint === 0xffffff) return im;
-    const key = src + '|' + tint;
+    const k = maxW && im.naturalWidth > maxW ? maxW / im.naturalWidth : 1;
+    if (tint === 0xffffff && k === 1) return im;
+    const key = src + '|' + tint + '|' + k.toFixed(4);
     if (tinted.has(key)) return tinted.get(key);
     const c = document.createElement('canvas');
-    c.width = im.naturalWidth; c.height = im.naturalHeight;
+    c.width = Math.round(im.naturalWidth * k); c.height = Math.round(im.naturalHeight * k);
     const x = c.getContext('2d');
-    x.drawImage(im, 0, 0);
-    x.globalCompositeOperation = 'multiply';
-    x.fillStyle = hex(tint);
-    x.fillRect(0, 0, c.width, c.height);
-    x.globalCompositeOperation = 'destination-in';
-    x.drawImage(im, 0, 0);
+    x.imageSmoothingQuality = 'high';
+    x.drawImage(im, 0, 0, c.width, c.height);
+    if (tint !== 0xffffff) {
+      x.globalCompositeOperation = 'multiply';
+      x.fillStyle = hex(tint);
+      x.fillRect(0, 0, c.width, c.height);
+      x.globalCompositeOperation = 'destination-in';
+      x.drawImage(im, 0, 0, c.width, c.height);
+    }
     tinted.set(key, c);
     return c;
   }
+  // Ancho al que se cachea el fondo de un tramo: el de su panel en el mundo × 1,6 (nitidez con zoom y pantallas densas).
+  const sceneArtW = (sc) => Math.round(Math.max(640, sc.map.width * sc.scale * 1.6 / ((sc.map.art && sc.map.art.length > 1) ? 2 : 1)));
 
   let canvas, ctx, dpr = 1, cw = 1, ch = 1, debug = false, qScale = 1;
   // V50: opciones visuales (menú OPCIONES).
@@ -267,11 +276,8 @@
   const PXD = 'assets/parallax/';
   // Dos planos por franja (rendimiento en Android): uno lejano y la arquitectura, cada uno a su velocidad. Si un plano
   // lista varias capas, se funden UNA vez en un lienzo (cielo + nubes) y se dibujan como una sola imagen.
-  const ESC = (sec) => [[[PXD + 'escuela/' + sec + '/00_fondo_distante.webp'], 0.08], [[PXD + 'escuela/' + sec + '/01_arquitectura.webp', PXD + 'escuela/' + sec + '/02_vegetacion.webp'], 0.45]];
   const GDL = (sec) => [[[PXD + 'guadalajara/' + sec + '/00_cielo_degradado.webp', PXD + 'guadalajara/' + sec + '/01_nubes_reales.webp'], 0.1], [[PXD + 'guadalajara/' + sec + '/02_arquitectura_anclada.webp'], 0.55]];
   const BACKDROPS = {
-    escuela: { top: ESC('azotea_superior'), bottom: ESC('patio_salida') },
-    escuela_ruinas: { top: ESC('escuela_ruinas'), bottom: ESC('patio_salida') },
     guadalajara: { bottom: GDL('barrios_inferiores') },
     gdl_noche: { bottom: GDL('barrios_inferiores') },
     azoteas: { top: GDL('azoteas'), bottom: GDL('azoteas') },
@@ -293,7 +299,6 @@
   const DEPTH_ART = {
     submarino: {
       dir: PXD + 'marino/depth_v4/',
-      pages: ['backgrounds/01_marino_base_isla.webp', 'backgrounds/02_marino_base_ciudad.webp', 'backgrounds/03_marino_base_abismo.webp'],
       fx: [
         { f: 0.22, layers: [['layers/01_caudales_superficie.png', 0.48], ['layers/02_neblina_distante.png', 0.36], ['layers/03_ruinas_lejanas.png', 0.34],
           ['layers/04_corales_medios.png', 0.4], ['layers/05_plancton_flotante.png', 0.48]] },
@@ -307,23 +312,28 @@
     // los trae; el OVNI de la capa de naves se usa como plataforma (aspecto 'nave').
     espacial: {
       dir: PXD + 'espacial/depth_v5/',
-      pages: ['background/page_01.webp', 'background/page_02.webp', 'background/page_03.webp'],
       fx: [
         { f: 0.12, zone: [0, 0.125], tile: 760, layers: [['layers/01_estrellas_lejanas.png', 0.61], ['layers/05_basura_meteoritos.png', 0.42]] },
         { f: 0.4, zone: [0.3, 1], tile: 820, layers: [['layers/06_polvo_caverna.png', 0.45]] },
         { f: 0.62, near: true, zone: [0.33, 1], tile: 1500, layers: [['layers/07_luz_cristales.png', 0.3]] }
       ],
       above: '#1c2141', below: '#32455c'
-    }
+    },
+    // Escuela Miguel Hidalgo (misión 1): tres láminas apiladas, sin capas de ambiente (sus capas de árboles
+    // translúcidos se encimaban sobre la fachada y no aportaban).
+    escuela: { dir: '', fx: [], above: '#4b8fd8', below: '#575b66' }
   };
   // Sprites recortados de las capas V5 (px de la capa): OVNI de 04_naves_satelites.
   const UFO = { src: PXD + 'espacial/depth_v5/layers/04_naves_satelites.png', box: [590, 72, 289, 106], rim: 0.42 };
   const hexA = (h, a) => `rgba(${parseInt(h.slice(1, 3), 16)},${parseInt(h.slice(3, 5), 16)},${parseInt(h.slice(5, 7), 16)},${a})`;
   const depthCfg = (sc) => (sc && sc.map && sc.map.worldArt && DEPTH_ART[sc.theme]) || null;
+  // Páginas de todos los mundos pintados (de los mapas) y capas de ambiente (de DEPTH_ART).
   function depthUrls() {
-    const out = [];
-    for (const c of Object.values(DEPTH_ART)) { for (const p of c.pages) out.push(c.dir + p); for (const g of c.fx) for (const [src] of g.layers) out.push(c.dir + src); }
-    return out;
+    const out = new Set(), L = NS.LEVELS || {};
+    const maps = [L.SUBMARINO_MAP, L.ESPACIAL_MAP, ...(L.LEVEL_SEQUENCE || []).map((d) => d.map)];
+    for (const m of maps) if (m && m.worldArt) for (const p of m.worldArt.pages) out.add(m.worldArt.dir + p);
+    for (const c of Object.values(DEPTH_ART)) for (const g of c.fx) for (const [src] of g.layers) out.add(c.dir + src);
+    return [...out];
   }
   // Planos de ambiente fundidos (por tema). Las capas originales se sueltan al terminar (memoria en Android).
   const depthFxCache = new Map();
@@ -385,59 +395,63 @@
       }
     }
   }
-  /* Dibuja el mundo pintado (si el tramo lo tiene). Devuelve true si se encargó del fondo. */
+  /* Dibuja los tramos pintados de una pieza (mar, Luna, escuela). Devuelve true si TODOS los tramos lo son (entonces
+     no hace falta el fondo por franjas); los tramos sin lámina los sigue dibujando drawSceneBands. */
   function drawDepthArt(G, V) {
-    const W = G.world;
-    if (W.scenes.length !== 1) return false;
-    const sc = W.scenes[0], cfg = depthCfg(sc);
-    if (!cfg) return false;
-    const A = sc.map.worldArt, k = sc.scale * A.px, B = W.bounds;
-    const pages = cfg.pages.map((p) => image(cfg.dir + p));
-    sc.missingArt = !pages.every(ready);   // sin arte, las repisas trazadas se dibujan (respaldo)
-    // Arriba y abajo de la lámina: su propio color de borde (la cámara puede asomarse por encima del inicio).
-    if (V.y1 < sc.startY) fillRect(V.x1, V.y1, V.x2 - V.x1, sc.startY - V.y1 + 1, cfg.above);
-    if (V.y2 > sc.endY) fillRect(V.x1, sc.endY - 1, V.x2 - V.x1, V.y2 - sc.endY + 1, cfg.below);
-    if (sc.missingArt) {
-      const y1 = Math.max(V.y1, sc.startY), y2 = Math.min(V.y2, sc.endY);
-      if (y2 > y1) { const g = ctx.createLinearGradient(0, sc.startY, 0, sc.endY); g.addColorStop(0, cfg.above); g.addColorStop(1, cfg.below); ctx.fillStyle = g; ctx.fillRect(V.x1, y1, V.x2 - V.x1, y2 - y1); }
-      return true;
-    }
-    if (ropt.depthPages !== false) pages.forEach((im, i) => {
-      const dy = sc.startY + i * A.pageH * k, dh = A.pageH * k, dx = sc.x0 - (A.x0 || 0) * k, dw = A.width * k;
-      const x1 = Math.max(V.x1, dx), x2 = Math.min(V.x2, dx + dw), y1 = Math.max(V.y1, dy), y2 = Math.min(V.y2, dy + dh);
-      if (x2 <= x1 || y2 <= y1) return;
-      // Medio px de solape con la página siguiente (sin costura por redondeo), sin salirse de la imagen.
-      const sy = (y1 - dy) / k, sh = Math.min(A.pageH - sy, (y2 - y1) / k + 0.5);
-      if (sh > 0) ctx.drawImage(im, (x1 - dx) / k, sy, (x2 - x1) / k, sh, x1, y1, x2 - x1, sh * k);
-    });
-    if (V.y2 > sc.endY - 90) {
-      const g = ctx.createLinearGradient(0, sc.endY - 90, 0, sc.endY);
-      g.addColorStop(0, hexA(cfg.below, 0)); g.addColorStop(1, hexA(cfg.below, 1));
-      ctx.fillStyle = g; ctx.fillRect(V.x1, sc.endY - 90, V.x2 - V.x1, 90);
-    }
-    const groups = ropt.depthFx === false ? null : depthFx(sc.theme, cfg);
-    if (groups && groups.length) {
-      const v = G.view, xx1 = Math.max(V.x1, B.x1), xx2 = Math.min(V.x2, B.x2), yy1 = Math.max(V.y1, sc.startY), yy2 = Math.min(V.y2, sc.endY);
-      const width = B.x2 - B.x1, vw = Math.min(width, v.w), vh = Math.min(sc.drawH, v.h);
-      const xTravel = Math.max(0, width - vw), yTravel = Math.max(0, sc.drawH - vh);
-      const xP = Math.max(0, Math.min(xTravel, G.cam.x - B.x1)), yP = Math.max(0, Math.min(yTravel, G.cam.y - sc.startY));
-      for (const g of groups) {
-        if (qScale < 0.7) break;   // modo ligero: el arte solo (las capas de ambiente son tenues y cuestan dibujo)
-        if (g.tile) { drawDepthTiles(g, G, sc, B, xx1, xx2, yy1, yy2); continue; }
-        const dw = xTravel * g.f + vw + 220, dh = yTravel * g.f + vh + 180;
-        const dx = B.x1 + xP * (1 - g.f) - 110, dy = sc.startY + yP * (1 - g.f) - 90;
-        const x1 = Math.max(xx1, dx), y1 = Math.max(yy1, dy), x2 = Math.min(xx2, dx + dw), y2 = Math.min(yy2, dy + dh);
-        if (x2 <= x1 || y2 <= y1) continue;
-        const iw = g.canvas.width, ih = g.canvas.height;
-        ctx.drawImage(g.canvas, (x1 - dx) * iw / dw, (y1 - dy) * ih / dh, (x2 - x1) * iw / dw, (y2 - y1) * ih / dh, x1, y1, x2 - x1, y2 - y1);
+    const W = G.world, list = W.scenes.filter((sc) => depthCfg(sc));
+    if (!list.length) return false;
+    const first = W.scenes[0], last = W.scenes[W.scenes.length - 1], B = W.bounds;
+    const c0 = depthCfg(first), c1 = depthCfg(last);
+    // Arriba y abajo de las láminas: su propio color de borde (la cámara puede asomarse por encima del inicio).
+    if (c0 && V.y1 < first.startY) fillRect(V.x1, V.y1, V.x2 - V.x1, first.startY - V.y1 + 1, c0.above);
+    if (c1 && V.y2 > last.endY) fillRect(V.x1, last.endY - 1, V.x2 - V.x1, V.y2 - last.endY + 1, c1.below);
+    for (const sc of list) {
+      if (sc.endY < V.y1 - 2 || sc.startY > V.y2 + 2) continue;
+      const cfg = depthCfg(sc), A = sc.map.worldArt, k = sc.scale * A.px;
+      const pages = A.pages.map((p) => image(A.dir + p));
+      sc.missingArt = !pages.every(ready);   // sin arte, las repisas trazadas se dibujan (respaldo)
+      if (sc.missingArt) {
+        const y1 = Math.max(V.y1, sc.startY), y2 = Math.min(V.y2, sc.endY);
+        if (y2 > y1) { const g = ctx.createLinearGradient(0, sc.startY, 0, sc.endY); g.addColorStop(0, cfg.above); g.addColorStop(1, cfg.below); ctx.fillStyle = g; ctx.fillRect(V.x1, y1, V.x2 - V.x1, y2 - y1); }
+        continue;
+      }
+      if (ropt.depthPages !== false) pages.forEach((im, i) => {
+        const dy = sc.startY + i * A.pageH * k, dh = A.pageH * k, dx = sc.x0 - (A.x0 || 0) * k, dw = A.width * k;
+        const x1 = Math.max(V.x1, dx), x2 = Math.min(V.x2, dx + dw), y1 = Math.max(V.y1, dy), y2 = Math.min(V.y2, dy + dh);
+        if (x2 <= x1 || y2 <= y1) return;
+        // Medio px de solape con la página siguiente (sin costura por redondeo), sin salirse de la imagen.
+        const sy = (y1 - dy) / k, sh = Math.min(A.pageH - sy, (y2 - y1) / k + 0.5);
+        if (sh > 0) ctx.drawImage(im, (x1 - dx) / k, sy, (x2 - x1) / k, sh, x1, y1, x2 - x1, sh * k);
+      });
+      // Fundido del pie de la última lámina hacia su color de borde (sin corte recto sobre la salida).
+      if (sc === last && V.y2 > sc.endY - 90) {
+        const g = ctx.createLinearGradient(0, sc.endY - 90, 0, sc.endY);
+        g.addColorStop(0, hexA(cfg.below, 0)); g.addColorStop(1, hexA(cfg.below, 1));
+        ctx.fillStyle = g; ctx.fillRect(V.x1, sc.endY - 90, V.x2 - V.x1, 90);
+      }
+      const groups = ropt.depthFx === false || !cfg.fx.length ? null : depthFx(sc.theme, cfg);
+      if (groups && groups.length && qScale >= 0.7) {   // modo ligero: el arte solo (las capas de ambiente cuestan dibujo)
+        const v = G.view, xx1 = Math.max(V.x1, B.x1), xx2 = Math.min(V.x2, B.x2), yy1 = Math.max(V.y1, sc.startY), yy2 = Math.min(V.y2, sc.endY);
+        const width = B.x2 - B.x1, vw = Math.min(width, v.w), vh = Math.min(sc.drawH, v.h);
+        const xTravel = Math.max(0, width - vw), yTravel = Math.max(0, sc.drawH - vh);
+        const xP = Math.max(0, Math.min(xTravel, G.cam.x - B.x1)), yP = Math.max(0, Math.min(yTravel, G.cam.y - sc.startY));
+        for (const g of groups) {
+          if (g.tile) { drawDepthTiles(g, G, sc, B, xx1, xx2, yy1, yy2); continue; }
+          const dw = xTravel * g.f + vw + 220, dh = yTravel * g.f + vh + 180;
+          const dx = B.x1 + xP * (1 - g.f) - 110, dy = sc.startY + yP * (1 - g.f) - 90;
+          const x1 = Math.max(xx1, dx), y1 = Math.max(yy1, dy), x2 = Math.min(xx2, dx + dw), y2 = Math.min(yy2, dy + dh);
+          if (x2 <= x1 || y2 <= y1) continue;
+          const iw = g.canvas.width, ih = g.canvas.height;
+          ctx.drawImage(g.canvas, (x1 - dx) * iw / dw, (y1 - dy) * ih / dh, (x2 - x1) * iw / dw, (y2 - y1) * ih / dh, x1, y1, x2 - x1, y2 - y1);
+        }
       }
     }
-    return true;
+    return list.length === W.scenes.length;
   }
   function backdropUrls() {
     const out = new Set();
     for (const b of Object.values(BACKDROPS)) for (const part of [b.top, b.bottom]) for (const [srcs] of part || []) for (const src of srcs) out.add(src);
-    for (const c of Object.values(DEPTH_ART)) for (const p of c.pages) out.add(c.dir + p);   // V58.1: páginas de los mundos pintados
+    for (const src of depthUrls()) if (!/\/layers\//.test(src)) out.add(src);   // V58.1: páginas de los mundos pintados
     out.add(UFO.src);
     return [...out];
   }
@@ -545,7 +559,7 @@
           blitCrop(own, dx, dy, dw, dh, r.flip, V);
           // V58.1 · Capa de cornisas del arte PRO (Guadalajara): pintada en las colisiones reales de este mapa, con el
           // mismo tinte del fondo. Donde el doble de V58 abrió un corte al centro, la cornisa no se pinta (sería piso falso).
-          const ov = sc.def.overlay ? tintedImage(sc.def.overlay, sc.tint) : null;
+          const ov = sc.def.overlay ? tintedImage(sc.def.overlay, sc.tint, sceneArtW(sc)) : null;
           if (ov) {
             const gaps = (sc.map.seamGaps || []).map((g) => ({ x1: sc.x0 + g.x1 * sc.scale, x2: sc.x0 + g.x2 * sc.scale, y: sc.startY + g.y * sc.scale }))
               .filter((g) => g.x2 > dx && g.x1 < dx + dw && g.y > dy && g.y < dy + dh);
@@ -559,8 +573,12 @@
           }
           // Rótulos: en la copia espejo se vuelven a pintar al derecho (si no, se leerían al revés).
           if (r.flip && r.text) {
-            const iw = own.naturalWidth || own.width, k = dw / iw;
-            for (const [tx, ty, tw, th] of r.text) blitCrop(own, dx + (iw - tx - tw) * k, dy + ty * k, tw * k, th * k, false, V, tx, ty, tw, th);
+            // Los rectángulos están en px del arte original (1 px por unidad de mapa); el lienzo puede estar reducido.
+            const iw = own.naturalWidth || own.width, k = dw / iw, q = iw / r.w;
+            for (const [tx0, ty0, tw0, th0] of r.text) {
+              const tx = tx0 * q, ty = ty0 * q, tw = tw0 * q, th = th0 * q;
+              blitCrop(own, dx + (iw - tx - tw) * k, dy + ty * k, tw * k, th * k, false, V, tx, ty, tw, th);
+            }
           }
           if (sc.shade > 0) fillRect(Math.max(dx, V.x1), Math.max(dy, V.y1), Math.min(dx + dw, V.x2) - Math.max(dx, V.x1), Math.min(dy + dh, V.y2) - Math.max(dy, V.y1), hex(sc.wash), sc.shade);
         }
@@ -855,7 +873,7 @@
   const bgCache = new Map();
   const vignetteCache = new WeakMap(); // tramo → degradado de la viñeta (se rehace si cambia el mundo)
   function sceneSource(sc) {
-    if (sc.file) return tintedImage(sc.file, sc.tint);
+    if (sc.file) return tintedImage(sc.file, sc.tint, sceneArtW(sc));
     if (!sc.bg) return null;
     if (bgCache.has(sc.bg)) return bgCache.get(sc.bg);
     const painter = PAINTERS[sc.bg];
@@ -2499,7 +2517,7 @@
     ctx.setTransform(k, 0, 0, k, ox, oy);
     const V = { x1: G.cam.x - 40, x2: G.cam.x + v.w + 40, y1: G.cam.y - 60, y2: G.cam.y + v.h + 60 };
     const W = G.world;
-    // V58.1: mar y Luna son mundos pintados fijos al mundo (DEPTH_ART); el resto, fondos del ancho del mundo.
+    // V58.1: mar, Luna y escuela son mundos pintados fijos al mundo (DEPTH_ART); el resto, fondos del ancho del mundo.
     const depth = !G.room && drawDepthArt(G, V);
     if (!G.room) { if (depth) drawCracks(G, V, T); else drawBackdrop(G, V); drawStreet(G, V, T); drawToxiAtmosphere(G, V, T); }
     for (const r of W.rooms) drawRoomBackground(r, V);

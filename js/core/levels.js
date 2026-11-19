@@ -685,7 +685,7 @@
      1,72 u de mundo por px, así mide más del doble que V54 (940 × 3072) a lo ancho y a lo alto. */
   const MARINE_PX = 2.1;
   const MARINE_ART = Object.freeze({
-    width: 971, height: 2928, px: MARINE_PX,
+    dir: 'assets/parallax/marino/depth_v4/backgrounds/', width: 971, height: 2928, px: MARINE_PX,
     pages: ['01_marino_base_isla.webp', '02_marino_base_ciudad.webp', '03_marino_base_abismo.webp'], pageH: 976
   });
   const MARINE_TRACE = {
@@ -863,7 +863,7 @@
      la ciudad. La banda de roca que separa las cavernas de la ciudad se cruza por dos grietas. Gravedad 0,72.
      Coordenadas en px del arte (x de la página completa); y = línea de los pies. */
   const LUNAR_ART = Object.freeze({
-    width: 1680, height: 3072, px: 2.1, x0: 315, cropW: 1050,
+    dir: 'assets/parallax/espacial/depth_v5/background/', width: 1680, height: 3072, px: 2.1, x0: 315, cropW: 1050,
     pages: ['page_01.webp', 'page_02.webp', 'page_03.webp'], pageH: 1024
   });
   const LUNAR_TRACE = {
@@ -953,13 +953,96 @@
   };
   const ESPACIAL_MAP = buildPaintedMap('espacial', LUNAR_TRACE, LUNAR_ART);
 
+  /* ============ V58.1 · Escuela Miguel Hidalgo (paquete «Plataformas alineadas V3») ============
+     Tres ilustraciones verticales de la escuela (aulas superiores → patio → conserjería y entrada), una por nivel de la
+     misión 1, apiladas. Cada nivel se trazó sobre su dibujo: azotea, balcones de los salones, escaleras, cafetería,
+     terrazas, andador techado, patio, banqueta y cancha; la entrada termina en la calle frente al camión escolar.
+     Las alturas de las losas salen de las cornisas rojas detectadas en el propio arte. La cafetería y las banquetas
+     son tablones (se atraviesan con BAJAR). Los tres miden 2101 u de mapa de ancho (px distinto por lámina) para que
+     se apilen sin huecos. Coordenadas en px del arte; y = línea de los pies. */
+  const SCHOOL_DIR = 'assets/scenes/school_miguel_hidalgo/';
+  const schoolArt = (file, width) => Object.freeze({ dir: SCHOOL_DIR, pages: [file], width, height: 2496, pageH: 2496, px: 2101 / width });
+  const SCHOOL_ART = [schoolArt('01_aulas_superiores.webp', 1501), schoolArt('02_patio_escolar.webp', 1476), schoolArt('03_conserjeria_entrada.webp', 1521)];
+  const SCHOOL_TRACE = [
+    { // 01 · Aulas superiores (tutorial): [0] parada, [2] escaleras, [5] mitad, [7] parte baja (letreros del tutorial).
+      surfaces: [
+        [605, 745, 194, { start: true, startX: 660 }],   // azotea: techo del cuarto del tinaco
+        [0, 450, 142],       // techo del letrero ESCUELA MIGUEL HIDALGO
+        [0, 165, 712],       // descanso arriba de la escalera izquierda
+        [0, 1380, 334],      // azotea (se baja por la orilla derecha)
+        [150, 1501, 525],    // balcón del tercer piso
+        [0, 1130, 1205, { mid: true, midX: 200 }],   // terraza frente a los salones
+        [300, 1501, 712],    // balcón del segundo piso
+        [0, 1350, 2135],     // banqueta de la planta baja
+        [150, 1500, 1011],   // techo del bloque de salones
+        [1265, 1501, 1365],  // descanso de la escalera derecha
+        [0, 1265, 1445],     // andador techado (bancas)
+        [900, 1350, 1548],   // techo del edificio junto al domo
+        [1270, 1501, 1800],  // muro de piedra con árbol
+        [0, 1130, 1905],     // patio bajo el domo
+        [120, 1501, 2250, { exit: true }]   // cancha de básquetbol: salida (arena del jefe)
+      ],
+      planks: [[470, 1501, 925]],   // cafetería
+      stairRuns: [[165, 712, 470, 925], [1130, 1205, 1265, 1365], [1135, 1815, 1315, 2105]],
+      zips: [{ x1: 918, y1: 1486, x2: 300, y2: 1860, look: 'tendedero' }],
+      exitX: 800
+    },
+    { // 02 · Patio escolar
+      surfaces: [
+        [0, 580, 302, { start: true, startX: 140 }],   // azotea (lado izquierdo)
+        [585, 760, 202],     // techo del tinaco
+        [0, 130, 700],       // descanso arriba de la escalera izquierda
+        [580, 1350, 335],    // azotea (lado derecho)
+        [150, 760, 513],     // balcón del tercer piso (izquierda)
+        [760, 1476, 530],    // balcón del tercer piso (derecha)
+        [380, 1476, 704],    // balcón del segundo piso
+        [0, 1260, 1000],     // techo del bloque de salones
+        [1380, 1476, 1170],  // descanso de la escalera derecha
+        [40, 1380, 1268, { mid: true, midX: 200 }],   // andador techado
+        [0, 1300, 1470],     // patio de juegos (rayuela, resbaladilla)
+        [1250, 1476, 1650],  // descanso junto al domo
+        [0, 1310, 1976],     // patio bajo el domo
+        [0, 1400, 2255],     // banqueta de la planta baja
+        [150, 1476, 2390, { exit: true }]   // cancha: salida
+      ],
+      planks: [[390, 1476, 885]],   // cafetería
+      stairRuns: [[130, 700, 390, 885], [1260, 1000, 1400, 1165]],
+      zips: [{ x1: 1268, y1: 1588, x2: 300, y2: 1927, look: 'tendedero' }],
+      exitX: 800
+    },
+    { // 03 · Conserjería y entrada (la misión termina en la calle frente al camión escolar)
+      surfaces: [
+        [0, 1400, 283, { start: true, startX: 100 }],   // azotea
+        [150, 450, 129],     // techo del letrero
+        [600, 750, 171],     // techo del tinaco
+        [130, 1521, 435],    // balcón del tercer piso
+        [0, 150, 572],       // descanso arriba de la escalera izquierda
+        [0, 1030, 930, { mid: true, midX: 120 }],   // terraza frente a los salones
+        [380, 1400, 572],    // balcón del segundo piso
+        [150, 1350, 807],    // techo del bloque de salones
+        [1150, 1521, 1050],  // descanso de la escalera derecha
+        [150, 1150, 1100],   // andador techado
+        [900, 1350, 1199],   // jardineras de la derecha
+        [0, 900, 1345],      // patio bajo el domo
+        [0, 1400, 1700],     // cancha
+        [900, 1450, 1898],   // techo de la conserjería
+        [0, 1400, 2400, { exit: true }]   // calle frente a la escuela y el camión escolar: salida
+      ],
+      planks: [[450, 1400, 720], [0, 1100, 1610], [0, 1521, 2190]],   // cafetería, banqueta y acera de la entrada
+      stairRuns: [[150, 572, 450, 720], [1030, 930, 1150, 1050]],
+      zips: [{ x1: 882, y1: 1836, x2: 100, y2: 2351, look: 'tendedero' }],
+      exitX: 700
+    }
+  ];
+  const SCHOOL_MAPS = SCHOOL_TRACE.map((T, i) => buildPaintedMap(['escuela', 'escuela_vecina', 'escuela_ruinas'][i] + '_mh', T, SCHOOL_ART[i]));
+
   /* Cada tramo declara qué enemigos y obstáculos puede usar y con qué intensidad.
      La colocación concreta es determinista (semilla por tramo) y se valida con pruebas de alcanzabilidad.
      art: 'painted' → el fondo trae pintadas las cornisas (no se dibujan encima).
      skin: textura de las plataformas (assets/platforms/<skin>.png).  bg: fondo procedural cuando no hay archivo. */
   const LEVEL_SEQUENCE = [
     {
-      id: 'escuela', label: 'LA ESCUELA', file: 'assets/scenes/escuela_fondo.png', map: SCHOOL_MAP, art: 'painted', stairsPainted: true, skin: 'concrete',
+      id: 'escuela', label: 'LA ESCUELA', file: 'assets/scenes/school_miguel_hidalgo/01_aulas_superiores.webp', map: SCHOOL_MAP, art: 'painted', stairsPainted: true, skin: 'concrete',
       tint: 0xffffff, wash: 0x244a4b, shade: 0.035, theme: 'escuela', room: 'sotano',
       foes: ['rat'], obstacles: ['crate', 'spikes'], foeBudget: 3, obstacleBudget: 2, sideFoes: 1,
       boss: { kind: 'dog', name: 'PERRO FURIOSO', hp: 4 },
@@ -974,7 +1057,7 @@
       boss: { kind: 'kid', name: 'DUEÑO DEL PERRO · 12 AÑOS', hp: 4 }, music: 1
     },
     {
-      id: 'escuela_vecina', label: 'EL PATIO DE LA SECUNDARIA', file: 'assets/scenes/generated/escuela_patio_tarde.png', map: PATIO_MAP, skin: 'concrete',
+      id: 'escuela_vecina', label: 'EL PATIO DE LA SECUNDARIA', file: 'assets/scenes/school_miguel_hidalgo/02_patio_escolar.webp', map: PATIO_MAP, skin: 'concrete',
       tint: 0xcdd8db, wash: 0x52664d, shade: 0.075, theme: 'escuela', room: 'sotano',
       foes: ['rat', 'dog', 'chile'], obstacles: ['spark', 'spikes', 'crate', 'pot'], foeBudget: 6, obstacleBudget: 4, sideFoes: 2,
       boss: { kind: 'chile', name: 'CHILE DE LA SECUNDARIA', hp: 4 }, music: 2
@@ -992,7 +1075,7 @@
       boss: { kind: 'chile', name: 'CHILE DEL TENDEDERO', hp: 5 }, music: 4
     },
     {
-      id: 'escuela_ruinas', label: 'PASILLOS DE LA ESCUELA BAJO LA LLUVIA', file: 'assets/scenes/generated/escuela_pasillo_lluvia.png', map: PASILLOS_MAP, skin: 'concrete',
+      id: 'escuela_ruinas', label: 'PASILLOS DE LA ESCUELA BAJO LA LLUVIA', file: 'assets/scenes/school_miguel_hidalgo/03_conserjeria_entrada.webp', map: PASILLOS_MAP, skin: 'concrete',
       tint: 0xaabda6, wash: 0x304b36, shade: 0.19, theme: 'escuela', room: 'sotano',
       foes: ['bat', 'chile', 'dog', 'rat'], obstacles: ['spikes', 'spark', 'crate', 'puddle'], foeBudget: 7, obstacleBudget: 5, sideFoes: 3,
       boss: { kind: 'bravo', name: 'PERRO GUARDIÁN', hp: 5 }, music: 5
@@ -1071,7 +1154,12 @@
     const cfg = V58_CFG[d.id];
     if (!cfg) throw new Error('nivel sin configuración V58: ' + d.id);
     d.baseMap = d.map;
-    d.map = buildV58(d.map, cfg);
+    const school = ['escuela', 'escuela_vecina', 'escuela_ruinas'].indexOf(d.id);
+    if (school >= 0) {
+      // V58.1: trazados sobre el arte de la Escuela Miguel Hidalgo (ver SCHOOL_TRACE).
+      d.map = SCHOOL_MAPS[school]; d.file = SCHOOL_DIR + SCHOOL_ART[school].pages[0];
+      d.art = 'painted'; d.stairsPainted = true; d.sideWidth = 0;
+    } else d.map = buildV58(d.map, cfg);
     d.foeBudget = Math.round(d.foeBudget * 1.7);
     d.obstacleBudget = Math.round(d.obstacleBudget * 1.6);
     d.sideFoes = Math.round(d.sideFoes * 1.4);
@@ -1114,5 +1202,5 @@
     PATIO_MAP, PASILLOS_MAP, NOCHE_MAP, CATEDRAL_MAP, BASILICA_MAP, TERMINAL_MAP, MERCADO_MAP, PARQUE_MAP, ANDEN_MAP, PLAZA_MAP,
     SUBMARINO_MAP, ESPACIAL_MAP, SUBMARINO_V54_MAP, ESPACIAL_V54_MAP, SUBMARINO_BASE_MAP, ESPACIAL_BASE_MAP,
     SUBMARINO_LEVEL, ESPACIAL_LEVEL, MISSIONS, LEVEL_SEQUENCE, mirror, buildV58, V58_CFG, HAND,
-    MARINE_ART, MARINE_PX, buildMarineMap, LUNAR_ART, buildPaintedMap };
+    MARINE_ART, MARINE_PX, buildMarineMap, LUNAR_ART, buildPaintedMap, SCHOOL_ART, SCHOOL_MAPS };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

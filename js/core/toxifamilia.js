@@ -42,7 +42,7 @@
       durationMs: 11000, fx: 'lluvia', cast: [SOFIA({ sprite: ST + 'run_02.png', x: 46, entrance: 'enter-left' }), LUNA({ bottom: 14, x: 18 }), MORITA({ bottom: 14, x: 78 })] },
     { id: 'e3_start', tag: 'ESCENA 3 · EL FRENTE CONJUNTO', title: 'OBJETIVO: CRUZA LA CIUDAD. RECUPERA LAS 6 LLAVES. SOBREVIVE.',
       text: 'Sofía truena los nudillos. El HUD de combate parpadea y se enciende línea por línea.\n[ INSERT COIN / PRESS START ]',
-      background: 'assets/scenes/escuela_fondo.png', durationMs: 9000, fx: 'hud',
+      background: 'assets/scenes/school_miguel_hidalgo/01_aulas_superiores.webp', durationMs: 9000, fx: 'hud',
       cast: [SOFIA({ sprite: ST + 'kick_01.png', scale: 1.4, x: 50 }), LUNA({ bottom: 14, x: 22 }), MORITA({ bottom: 14, x: 77 })],
       nextMission: { mission: 0, tramo: 0 } }
   ];

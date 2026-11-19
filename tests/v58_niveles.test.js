@@ -12,7 +12,9 @@ const inp = (o) => Object.assign({}, NONE, o || {});
 test('cada nivel crece al doble: los verticales en ancho y alto; los apaisados en alto', () => {
   for (const d of LV.LEVEL_SEQUENCE) {
     const b = d.baseMap, m = d.map;
-    if (b.width >= 1200) { assert.equal(m.width, b.width, d.id); assert.equal(m.height, b.height * 2, d.id); }
+    // V58.1: la escuela se trazó sobre su lámina (Escuela Miguel Hidalgo): más del doble en ancho y alto.
+    if (m.worldArt) { assert.ok(m.width >= b.width * 2 && m.height >= b.height * 2, d.id); }
+    else if (b.width >= 1200) { assert.equal(m.width, b.width, d.id); assert.equal(m.height, b.height * 2, d.id); }
     else { assert.equal(m.width, b.width * 2, d.id); assert.equal(m.height, b.height * 2, d.id); }
     assert.equal(m.surfaces.filter((s) => s.start).length, 1, d.id + ': una parada');
     assert.equal(m.surfaces.filter((s) => s.exit).length, 1, d.id + ': una meta');
@@ -21,7 +23,7 @@ test('cada nivel crece al doble: los verticales en ancho y alto; los apaisados e
     const exit = m.surfaces.find((s) => s.exit);
     assert.ok((exit.x2 - exit.x1) * C.world.sceneScale >= 600, d.id + ': la meta es una arena amplia');
     // Plataformas largas para correr: la sección nueva tiene filas de al menos 300 u de mundo.
-    assert.ok(m.surfaces.some((s) => s.gen && (s.x2 - s.x1) * C.world.sceneScale >= 300), d.id + ': filas largas');
+    assert.ok(m.surfaces.some((s) => (s.gen || m.worldArt) && (s.x2 - s.x1) * C.world.sceneScale >= 300), d.id + ': filas largas');
   }
 });
 

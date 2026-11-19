@@ -20,13 +20,19 @@ test('cada uno de los 16 niveles tiene su propio trazado (antes 10 repetían 2 m
   // V58.1: los fondos «Guadalajara Azoteas PRO V2» se hicieron sobre estos mismos trazados (su capa de cornisas cae en las
   // colisiones): Guadalajara (apaisado: solo crece hacia abajo) y Centro Histórico también son pintados.
   const painted = { escuela: LV.SCHOOL_MAP, portales: LV.GDL_MAP, centro_historico: LV.CATEDRAL_MAP, guadalajara: LV.SOFEVI_MAP };
-  for (const d of SEQ.filter((q) => q.art === 'painted')) {
+  // V58.1: los tres niveles de la escuela se trazaron sobre el arte de la Escuela Miguel Hidalgo (mundo pintado
+  // de una pieza: worldArt). Su trazado es propio y mide más del doble que el original.
+  for (const d of SEQ.filter((q) => q.map.worldArt)) {
+    assert.ok(['escuela', 'escuela_vecina', 'escuela_ruinas'].includes(d.id), d.id);
+    assert.equal(d.art, 'painted');
+    assert.ok(d.map.width >= d.baseMap.width * 2 && d.map.height >= d.baseMap.height * 2, d.id + ': más del doble');
+    assert.ok(fs.existsSync(path.join(ROOT, d.map.worldArt.dir + d.map.worldArt.pages[0])), d.id + ': lámina');
+  }
+  for (const d of SEQ.filter((q) => q.art === 'painted' && !q.map.worldArt)) {
     assert.equal(d.baseMap, painted[d.id], d.id);
     if (d.baseMap.width >= 1200) { assert.deepEqual(d.map.art.map(({ x, y, w, h, flip }) => ({ x, y, w, h, flip })), [{ x: 0, y: 0, w: d.baseMap.width, h: d.baseMap.height, flip: false }]); continue; }
     assert.equal(d.map.width, d.baseMap.width * 2, d.id + ': el doble de ancho');
     assert.deepEqual(d.map.art.map(({ x, y, w, h, flip }) => ({ x, y, w, h, flip })), [{ x: 0, y: 0, w: d.baseMap.width, h: d.baseMap.height, flip: false }, { x: d.baseMap.width, y: 0, w: d.baseMap.width, h: d.baseMap.height, flip: true }]);
-    // Solo el arte de la escuela trae rótulos (se pintan al derecho en el espejo); el de los Portales PRO V2 no tiene.
-    if (d.id === 'escuela') assert.ok(d.map.art[1].text && d.map.art[1].text.length >= 1, d.id + ': rótulos al derecho en el espejo');
     if (d.overlay) assert.ok(fs.existsSync(path.join(ROOT, d.overlay)), d.id + ': capa de cornisas');
   }
 });
@@ -52,9 +58,14 @@ test('integridad de todos los mapas: una parada, una salida amplia, todo dentro 
 });
 
 test('tablones: se pisan desde arriba, se cruzan saltando desde abajo y BAJAR los atraviesa', () => {
-  const W0 = NS.World.buildWorld({ levels: [SEQ.find((d) => d.baseMap === LV.PATIO_MAP)] });
+  // Un tablón del mapa es una plataforma delgada atravesable; se dibuja salvo que el arte ya lo pinte (V58.1: la
+  // cafetería y las banquetas de la escuela Miguel Hidalgo vienen en su lámina).
+  const W0 = NS.World.buildWorld({ levels: [SEQ.find((d) => d.id === 'parque_metropolitano')] });
   const built = W0.platforms.find((p) => p.plank);
   assert.ok(built && built.kind === 'thin' && built.drop && built.draw, 'el tablón del mapa es una plataforma delgada atravesable y visible');
+  const WS = NS.World.buildWorld({ levels: [SEQ.find((d) => d.baseMap === LV.PATIO_MAP)] });
+  const sp = WS.platforms.filter((p) => p.plank);
+  assert.ok(sp.length && sp.every((p) => p.kind === 'thin' && p.drop && p.hidden), 'escuela: tablones pintados en su lámina');
   const W = miniWorld({ platforms: [{ x1: -60, x2: 60, y: 0, kind: 'thin', drop: true, h: 9, plank: true }, { x1: -300, x2: 300, y: 120 }] });
   const plank = W.platforms[0], floor = W.platforms[1];
   // 1) Saltando desde el piso de abajo lo atraviesa y aterriza encima.

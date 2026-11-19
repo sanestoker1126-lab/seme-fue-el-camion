@@ -62,7 +62,8 @@ test('el arte V4 es el único fondo del mar: archivos, precarga y sin rastros de
   for (const f of files) {
     assert.ok(fs.existsSync(path.join(ROOT, f)), 'falta ' + f);
     assert.ok(sw.includes(f), 'sin precargar ' + f);
-    assert.ok(r.includes(f.replace(dir, '')), 'el renderer no usa ' + f);
+    if (f.includes('/layers/')) assert.ok(r.includes(f.replace(dir, '')), 'el renderer no usa ' + f);
+    else assert.ok(LV.SUBMARINO_MAP.worldArt.pages.some((p) => f.endsWith(p)), 'el mapa no usa ' + f);
   }
   assert.match(r, /function drawDepthArt\(/);
   for (const old of ['panorama_marino', 'arrecife.webp', 'fauna.webp', 'parallax/submarino/', 'submarino_fondo.png']) {

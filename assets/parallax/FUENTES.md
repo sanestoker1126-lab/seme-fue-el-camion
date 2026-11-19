@@ -5,7 +5,7 @@ cada archivo, qué se le hizo y qué falta, para no atribuir a un paquete algo q
 
 | Carpeta | Paquete de origen | Qué se hizo |
 |---|---|---|
-| `escuela/azotea_superior`, `escuela/escuela_ruinas`, `escuela/patio_salida` | `ESCUELA_PARALLAX_16_9_ASSETS-1.zip` | WebP copiados sin recomprimir |
+| ~~`escuela/…`~~ (retirado en V58.1) | `ESCUELA_PARALLAX_16_9_ASSETS-1.zip` (llegó truncado) | Sustituido por la Escuela Miguel Hidalgo (abajo) |
 | `guadalajara/azoteas`, `guadalajara/mercado_parque`, `guadalajara/barrios_inferiores` | `GUADALAJARA_PARALLAX_WEBP_ANDROID.zip` | WebP copiados sin recomprimir |
 | `marino/depth_v4/` (3 páginas WebP + 7 capas PNG) | `SE_ME_FUE_EL_CAMION_MARINO_PARALLAX_PRO_V4.zip` (V58.1) | Copiados sin recomprimir; SHA-256 iguales a su manifiesto. **Único fondo del mar**: el de `SOFIA_PARALLAX_MARINO.zip`, las capas SVG de V55 y `submarino_fondo.png` se retiraron |
 | `espacial/depth_v5/` (3 páginas WebP + 5 de sus 7 capas PNG) | `SE_ME_FUE_EL_CAMION_ESPACIO_LUNA_PARALLAX_PRO_V5-1.zip` (V58.1) | Copiados sin recomprimir; SHA-256 iguales a su manifiesto. **Único fondo de la Luna**: el de `SOFIA_PARALLAX_ESPACIAL.zip`, las capas SVG de V55 y `espacial_fondo.png` se retiraron |
@@ -95,3 +95,17 @@ python3 -I tools/arte/componentes_atlas.py subidas/marino/fauna.png 200 1500
 No se usaron: `sofia_cuadros` y `sofia_variacion_roja` (otro vestuario que no corresponde a Sofía en el resto del juego),
 las animaciones de salto/daño/victoria/derrota de las gatas (el juego no tiene esos estados para ellas) ni las hojas
 fuente generadas.
+
+## V58.1 · Escuela Miguel Hidalgo (`assets/scenes/school_miguel_hidalgo/`)
+
+- Del paquete `ESCUELA_MIGUEL_HIDALGO_PLATAFORMAS_ALINEADAS_V3`: las tres láminas `01_aulas_superiores` (1501 × 2496),
+  `02_patio_escolar` (1476 × 2496) y `03_conserjeria_entrada` (1521 × 2496), sin recomprimir (SHA-256 iguales a su
+  manifiesto). Se usó la versión original de la lámina 01: la `_aligned` está deformada para otro mapa.
+- Su «alineación» y su `platform_coordinates_v3.csv` son de otra versión de los mapas (1096 × 1812): no corresponden a
+  la escuela del juego. Por eso los tres niveles de la misión 1 **se volvieron a trazar sobre las láminas**
+  (`levels.js` · `SCHOOL_TRACE`); las alturas de las losas salen de las cornisas rojas detectadas en el propio arte.
+- No se usaron sus tres capas de árboles translúcidos (1776 × 2368, 6,9 MB): encimadas sobre la fachada se veían como
+  fantasmas. Tampoco su módulo de «arquitectura bajo las plataformas»: con el trazado sobre el arte ya no hace falta.
+- Se retiraron el fondo anterior de la escuela (`escuela_fondo.png`, `generated/escuela_patio_tarde.png`,
+  `generated/escuela_pasillo_lluvia.png`) y las capas `escuela/` del paquete truncado. Las escenas de cinemática que
+  los usaban ahora usan las láminas nuevas.

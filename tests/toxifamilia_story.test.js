@@ -37,7 +37,7 @@ test('admite escenas validas sin alterar el orden original', () => {
   const manifest = loadManifest();
   const scenes = manifest.validate([
     { id: 'escena_01', tag: 'APERTURA', title: 'Escena de prueba', text: 'Texto de prueba',
-      background: 'assets/scenes/generated/escuela_patio_tarde.png',
+      background: 'assets/scenes/school_miguel_hidalgo/02_patio_escolar.webp',
       cast: [{ name: 'Actor de prueba', sprite: 'assets/player/sofia/run_01.png', x: 35, bottom: 20 }],
       durationMs: 4000 },
     { id: 'escena_02', title: 'Desenlace', text: 'Texto de prueba', nextMission: { mission: 0, tramo: 0 } }

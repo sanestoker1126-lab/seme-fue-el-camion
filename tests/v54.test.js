@@ -25,7 +25,7 @@ test('V54→V58: cada mundo especial mide el doble de ancho y de alto que en V54
 test('V54→V58.1: el fondo de mar y Luna cubre el mundo entero, con paralaje en el ambiente y salida temática', () => {
   const r = fs.readFileSync(path.join(BASE, 'js/app/render.js'), 'utf8');
   assert.match(r, /function drawDepthArt\(/);
-  assert.match(r, /const A = sc\.map\.worldArt, k = sc\.scale \* A\.px, B = W\.bounds/);
+  assert.match(r, /const cfg = depthCfg\(sc\), A = sc\.map\.worldArt, k = sc\.scale \* A\.px;/);
   assert.match(r, /dx = sc\.x0 - \(A\.x0 \|\| 0\) \* k, dw = A\.width \* k/);
   assert.match(r, /G\.cam\.y - sc\.startY/);
   assert.doesNotMatch(r, /function drawMissionParallax\(|function drawRealParallax\(|function drawSpecialScreen\(/);
