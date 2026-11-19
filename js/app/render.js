@@ -49,6 +49,23 @@
       idle: subFrames('morita', 'idle_sub', 6), walk: subFrames('morita', 'walk_sub', 4),
       shoulder: 'assets/companions/sub/morita_shoulder_sub.png', scale: 0.066, tint: '#d2e2ec' }
   };
+  // V58.1 · Gatitas astronautas (atlas aportado: Luna blanca, Morita gris). Mismo lienzo de 224 px que las de tierra.
+  // El paquete trae reposo, dos pasos y salto: el reposo se repite en las poses de alerta/olfateo (no hay otras).
+  const spaceCat = (cat, name, scale, tint) => {
+    const f = (n) => `assets/companions/space/${cat}_${n}.webp`;
+    return { name, src: f('idle'), idle: Array(6).fill(f('idle')), walk: [f('walk_a'), f('walk_b')], shoulder: f('idle'), scale, tint };
+  };
+  const COMPANIONS_SPACE = { luna: spaceCat('luna', 'LUNA', 0.068, '#fffdf4'), morita: spaceCat('morita', 'MORITA', 0.066, '#d7d9df') };
+  /* V58.1 · Sofía astronauta (Luna V5): atlas aportados (falda roja). Lienzo 256 × 240 con los pies en (128, 232), todas
+     las poses a la misma escala (igualadas por el ancho del casco). No hay patada propia: se usan las poses de salto con
+     la pierna al frente; trepar usa los pasos. */
+  const ASTRO_DIR = 'assets/player/astronauta/';
+  const ASTRO = {
+    idle: ['idle'], run: ['walk_a', 'walk_b'], fastRun: ['walk_a', 'walk_b'], jump: ['rise'], fall: ['fall'], land: ['land'],
+    climb: ['walk_a', 'walk_b'], dash: ['dash'], kick: ['kick_1', 'kick_2', 'kick_2', 'kick_1'], hurt: ['hurt'], dead: ['down'],
+    cheer: ['victory_1', 'victory_2', 'victory_3'], zip: ['victory_2']
+  };
+  const ASTRO_META = [1, 128, 232];
   const BUS_FRAMES = [1, 2, 3, 4].map((n) => 'assets/vehicles/camion_frame_0' + n + '.png');
   const FRAME_MS = { idle: 180, run: 92, fastRun: 64, jump: 110, fall: 180, land: 75, climb: 125, dash: 50, kick: 58, hurt: 100, dead: 260, cheer: 170 };
   // Escala base: un cuadro con k = 1 mide ≈ 61 u de pie, igual que la caja de colisión (62 u).
@@ -526,6 +543,20 @@
           const dx = sc.x0 + r.x * sc.scale, dy = sc.startY + r.y * sc.scale, dw = r.w * sc.scale, dh = r.h * sc.scale;
           if (!inView(V, dx, dy, dx + dw, dy + dh)) continue;
           blitCrop(own, dx, dy, dw, dh, r.flip, V);
+          // V58.1 · Capa de cornisas del arte PRO (Guadalajara): pintada en las colisiones reales de este mapa, con el
+          // mismo tinte del fondo. Donde el doble de V58 abrió un corte al centro, la cornisa no se pinta (sería piso falso).
+          const ov = sc.def.overlay ? tintedImage(sc.def.overlay, sc.tint) : null;
+          if (ov) {
+            const gaps = (sc.map.seamGaps || []).map((g) => ({ x1: sc.x0 + g.x1 * sc.scale, x2: sc.x0 + g.x2 * sc.scale, y: sc.startY + g.y * sc.scale }))
+              .filter((g) => g.x2 > dx && g.x1 < dx + dw && g.y > dy && g.y < dy + dh);
+            if (gaps.length) {
+              ctx.save(); ctx.beginPath(); ctx.rect(dx, dy, dw, dh);
+              for (const g of gaps) ctx.rect(g.x2, g.y - 40, g.x1 - g.x2, 80);   // sentido contrario: agujero (regla nonzero)
+              ctx.clip();
+            }
+            blitCrop(ov, dx, dy, dw, dh, r.flip, V);
+            if (gaps.length) ctx.restore();
+          }
           // Rótulos: en la copia espejo se vuelven a pintar al derecho (si no, se leerían al revés).
           if (r.flip && r.text) {
             const iw = own.naturalWidth || own.width, k = dw / iw;
@@ -1742,6 +1773,8 @@
   const EDIR = 'assets/enemies/v50/';
   const ESPR = {
     kid: { sc: 0.46, scBoss: 0.62 },
+    kid_astronauta: { sc: 0.46, scBoss: 0.62, ext: '.webp' },   // V58.1 · atlas aportados del niño gordito
+    kid_buzo: { sc: 0.46, scBoss: 0.62, ext: '.webp' },
     rat: { sc: 0.5, scBoss: 0.6 },
     dog: { sc: 0.52, scBoss: 0.66 }
   };
@@ -1749,10 +1782,30 @@
     const E = NS.ART && NS.ART.ENEMY[kind];
     return E && E.states[state] ? E.states[state] : null;
   };
+  const espr = (kind) => EDIR + kind + '/';
   function enemyReady(kind) {
     const w = enemyFrames(kind, 'walk');
-    return !!(w && ready(image(EDIR + kind + '/' + w[0] + '.png')));
+    return !!(w && ready(image(espr(kind) + w[0] + ((ESPR[kind] && ESPR[kind].ext) || '.png'))));
   }
+  // V58.1 · Cuadros del niño con traje (lienzo 280 × 250, pies en 140, 242). Lanza piedra con su propia animación.
+  const KID_SUIT = {
+    states: { idle: ['idle_01', 'idle_02', 'idle_03', 'idle_04'], walk: ['walk_01', 'walk_02', 'walk_03', 'walk_04', 'walk_05'],
+      alert: ['guard', 'throw_prepare'], aim: ['throw_prepare', 'throw_windup', 'throw_release', 'throw_projectile'],
+      hurt: ['hurt'], dizzy: ['hurt'], dead: ['hurt', 'jump_air'] },
+    frames: {}
+  };
+  for (const l of Object.values(KID_SUIT.states)) for (const n of l) KID_SUIT.frames[n] = [140, 242];
+  if (NS.ART && NS.ART.ENEMY) { NS.ART.ENEMY.kid_astronauta = KID_SUIT; NS.ART.ENEMY.kid_buzo = KID_SUIT; }
+  const KID_ROCK = EDIR + 'kid_piedra.webp';
+  /** Archivos de los personajes con traje (V58.1), para precarga y caché sin conexión. */
+  function castUrls() {
+    const out = new Set([KID_ROCK]);
+    for (const l of Object.values(ASTRO)) for (const n of l) out.add(ASTRO_DIR + n + '.webp');
+    for (const c of Object.values(COMPANIONS_SPACE)) for (const f of [...c.idle, ...c.walk, c.shoulder]) out.add(f);
+    for (const k of ['kid_astronauta', 'kid_buzo']) for (const n of Object.keys(KID_SUIT.frames)) out.add(EDIR + k + '/' + n + '.webp');
+    return [...out];
+  }
+  const enemyExt = (kind) => (ESPR[kind] && ESPR[kind].ext) || '.png';
   function drawEnemySprite(f, T, kind) {
     const E = NS.ART.ENEMY[kind], def = ESPR[kind];
     const pick = (...names) => { for (const n of names) { const l = enemyFrames(kind, n); if (l && l.length) return l; } return E.states.walk; };
@@ -1775,7 +1828,7 @@
       idx = Math.floor(T * fps + f.x * 0.05) % list.length;
     }
     const name = list[Math.max(0, idx)];
-    const img = image(EDIR + kind + '/' + name + '.png');
+    const img = image(espr(kind) + name + (def.ext || '.png'));
     if (!ready(img)) return;
     const anc = E.frames[name] || [img.naturalWidth / 2, img.naturalHeight];
     const bravo = f.kind === 'bravo';
@@ -1816,7 +1869,10 @@
       if (f.x < V.x1 - 50 || f.x > V.x2 + 50 || f.y < V.y1 - 60 || f.y > V.y2 + 50) continue;
       if (f.dead && f.deadT > 0.45) continue;
       const a = f.dead ? 1 - f.deadT / 0.45 : 1;
-      const sk = f.kind === 'bravo' ? 'dog' : f.kind;
+      // V58.1: en el mar y en la Luna el niño lleva traje de buzo o de astronauta (si sus cuadros cargaron).
+      const fTheme = f.kind === 'kid' && f.scene >= 0 && G.world.scenes[f.scene] ? G.world.scenes[f.scene].theme : null;
+      const suit = fTheme === 'submarino' ? 'kid_buzo' : fTheme === 'espacial' ? 'kid_astronauta' : null;
+      const sk = f.kind === 'bravo' ? 'dog' : suit && enemyReady(suit) ? suit : f.kind;
       const useSprite = !!ESPR[sk] && enemyReady(sk);
       drawToxiThreat(f, T);
       drawBossFX(f, T);
@@ -2002,6 +2058,12 @@
         circle(s.x, s.y, s.r, '#d59bff', 0.92);
         circle(s.x, s.y, 2.4, '#ffffff');
       }
+      else if (s.kind === 'stone' && ready(image(KID_ROCK))) {
+        // V58.1: la piedra del atlas del niño (gira mientras vuela).
+        const rk = image(KID_ROCK), d = s.r * 2.6;
+        ctx.save(); ctx.translate(s.x, s.y); ctx.rotate((G.world.t * 9 + s.x * 0.05) % (Math.PI * 2));
+        ctx.drawImage(rk, -d / 2, -d * rk.naturalHeight / rk.naturalWidth / 2, d, d * rk.naturalHeight / rk.naturalWidth); ctx.restore();
+      }
       else if (s.kind === 'stone') {
         circle(s.x, s.y + 1, s.r + 2, '#0a0806', 0.3);          // sombra/contorno
         circle(s.x, s.y, s.r, '#6f655a');                        // piedra
@@ -2102,7 +2164,7 @@
     const lunaY = luna?.y ?? foot, moritaY = morita?.y ?? foot;
     const lunaMoving = luna ? luna.moving : playerMoving, moritaMoving = morita ? morita.moving : playerMoving;
     const scNow = G.world && G.world.scenes[G.tramo];
-    const SET = scNow && scNow.theme === 'submarino' ? COMPANIONS_SUB : COMPANIONS;
+    const SET = scNow && scNow.theme === 'submarino' ? COMPANIONS_SUB : scNow && scNow.theme === 'espacial' && ready(image(COMPANIONS_SPACE.luna.src)) ? COMPANIONS_SPACE : COMPANIONS;
     drawCompanion(SET.luna, lunaX, lunaY, T, -2 + stride, luna ? luna.face < 0 : P.face < 0, lunaShoulder,
       lunaWarn ? 'alert' : action, luna?.phase ?? 0, lunaMoving, luna?.mode ?? 'follow');
     drawCompanion(SET.morita, moritaX, moritaY, T, -1 - stride * 0.7, morita ? morita.face < 0 : P.face > 0, moritaShoulder,
@@ -2346,7 +2408,8 @@
     if (outfit === 'buzo' && drawDiver(G, alpha)) return;
     let yOff = 0;
     if (P.dead) { const t = Math.min(1, G.timers.dying / 0.9); yOff = -Math.sin(t * Math.PI) * 42; }
-    const state = P.state, list = NINA[state] || NINA.idle;
+    const astro = outfit === 'astronauta' && ready(image(ASTRO_DIR + 'idle.webp'));
+    const state = P.state, list = (astro ? ASTRO[state] || ASTRO.idle : NINA[state] || NINA.idle);
     let ix;
     // Estados de "una sola pasada" usan el tiempo dentro del estado; los ciclos, el reloj de animación.
     if (state === 'kick') ix = Math.min(list.length - 1, Math.floor((0.22 - P.kickT) / 0.22 * list.length));
@@ -2354,8 +2417,8 @@
     else if (state === 'dead') ix = 0;
     else ix = Math.floor(P.animT * 1000 / (FRAME_MS[state] || 100)) % list.length;
     const name = list[Math.max(0, Math.min(list.length - 1, ix))];
-    const im = image(ninaSrc(name));
-    const meta = (NS.ART && NS.ART.SOFIA[name]) || [1, 96, 218];
+    const im = image(astro ? ASTRO_DIR + name + '.webp' : ninaSrc(name));
+    const meta = astro ? ASTRO_META : (NS.ART && NS.ART.SOFIA[name]) || [1, 96, 218];
     ctx.save();
     ctx.globalAlpha = alpha;
     ctx.translate(P.x, foot + yOff);
@@ -2386,7 +2449,7 @@
       fillRR(-7, -17, 5, 16, 2, '#172432'); fillRR(2, -17, 5, 16, 2, '#172432'); fillRect(-7, -35, 14, 3, '#d9ff65');
     }
     ctx.restore();
-    if (outfit === 'astronauta') drawAstronautGear(P, alpha);
+    if (outfit === 'astronauta' && !astro) drawAstronautGear(P, alpha);
     if (P.zip) {
       const hy = P.y - P.h / 2 - NS.CONFIG.zip.hang;
       fillRR(P.x - 8, hy - 10, 16, 8, 3, '#2c3138'); circle(P.x - 3, hy - 1, 2.6, '#c9d2d8'); circle(P.x + 4, hy - 1, 2.6, '#c9d2d8');
@@ -2467,5 +2530,5 @@
   }
 
   NS.Render = { init, resize, draw, preload, setQuality, setOptions, image, ready, NINA, NINA_DIR, NINA_VARIANT_DIR, COMPANIONS, COMPANIONS_SUB, PAINTERS,
-    BACKDROPS, DEPTH_ART, backdropUrls, depthUrls, toggleDebug: () => (debug = !debug), get debug() { return debug; } };
+    BACKDROPS, DEPTH_ART, backdropUrls, depthUrls, castUrls, enemyExt, COMPANIONS_SPACE, toggleDebug: () => (debug = !debug), get debug() { return debug; } };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

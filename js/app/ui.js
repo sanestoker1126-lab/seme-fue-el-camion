@@ -17,7 +17,7 @@
     const missionUnlocked = (save, id) => (save.missions && save.missions[id]) || 0;
     const CINEMATIC = [
       { tag: 'CAPÍTULO 01 · DESPUÉS DE LA POSADA', title: 'EL ÚLTIMO CAMIÓN SE FUE', text: 'Terminó tarde la posada de la escuela. Sofía llegó a la azotea justo para ver cómo la ruta 6 partía sin ella.', bg: 'assets/scenes/escuela_fondo.png' },
-      { tag: 'CAPÍTULO 02 · LUNA Y MORITA', title: 'HAY QUE BAJAR', text: 'Sus gatitas la acompañan por techos, patios y túneles. En el camino, seis cosas de su mochila quedaron atrás.', bg: 'assets/scenes/generated/centro_historico_guadalajara.png' },
+      { tag: 'CAPÍTULO 02 · LUNA Y MORITA', title: 'HAY QUE BAJAR', text: 'Sus gatitas la acompañan por techos, patios y túneles. En el camino, seis cosas de su mochila quedaron atrás.', bg: 'assets/scenes/guadalajara_pro_v2/bg_centro_historico_pro_v2.webp' },
       { tag: 'CAPÍTULO 03 · TU MISIÓN', title: 'ALCANZA LA TERMINAL', text: 'Cruza cuatro misiones —la escuela, Guadalajara, el fondo del mar y el espacio—, vence a los jefes y llega al camión. Los seis objetos son opcionales y mejoran el final. ¡Empieza a bajar!', bg: 'assets/scenes/generated/terminal_guadalajara_amanecer.png' }
     ];
     const CINEMATIC_SECONDS = 6;
@@ -274,7 +274,7 @@
     function paintBossCinematic() {
       const c = bossCineData.scenes[bossCineIndex], word = $('bossCineWord');
       $('bossCinematic').dataset.kind = bossCineData.kind;
-      const bg = bossCineData.kind === 'dog' ? 'assets/scenes/generated/escuela_patio_tarde.png' : 'assets/scenes/generated/centro_historico_guadalajara.png';
+      const bg = bossCineData.kind === 'dog' ? 'assets/scenes/generated/escuela_patio_tarde.png' : 'assets/scenes/guadalajara_pro_v2/bg_centro_historico_pro_v2.webp';
       const stage = $('bossCineScene');
       stage.style.backgroundImage = 'linear-gradient(180deg,rgba(4,14,26,.48),rgba(4,12,24,.9)),url("' + bg + '")';
       stage.style.backgroundSize = 'cover'; stage.style.backgroundPosition = 'center';

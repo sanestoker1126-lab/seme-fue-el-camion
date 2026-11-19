@@ -167,7 +167,8 @@ test('plataformas visibles: solo se ocultan las que el fondo trae pintadas; jefe
       assert.ok(surf.some((p) => p.gen), sc.id + ': tiene mitad nueva');
     } else assert.ok(surf.every((p) => !p.hidden && p.draw), sc.id + ': cornisas dibujadas por el juego');
   }
-  assert.ok(W.scenes.filter((s) => s.artPainted).map((s) => s.id).join() === 'escuela,portales');
+  // V58.1: los tres niveles con fondo «Guadalajara Azoteas PRO V2» también son pintados (cornisas en sus colisiones).
+  assert.equal(W.scenes.filter((s) => s.artPainted).map((s) => s.id).join(), 'escuela,guadalajara,centro_historico,portales');
   for (const f of W.foes.filter((q) => q.isBoss)) {
     const arena = f.arena;
     assert.ok(arena && arena.w >= 200, f.id + ': arena amplia (' + (arena && arena.w.toFixed(0)) + ' u)');

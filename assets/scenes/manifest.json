@@ -15,8 +15,8 @@
     },
     {
       "id": "centro_historico",
-      "file": "generated/centro_historico_guadalajara.png",
-      "role": "Centro Histórico de Guadalajara scenery band",
+      "file": "guadalajara_pro_v2/bg_centro_historico_pro_v2.webp",
+      "role": "Centro Histórico de Guadalajara (V58.1: Guadalajara Azoteas PRO V2)",
       "palette": "cantera cálida, azul de hora dorada, luces coloniales"
     },
     {

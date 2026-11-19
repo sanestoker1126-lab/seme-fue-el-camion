@@ -71,3 +71,27 @@ python3 -I tools/arte/componentes_atlas.py subidas/marino/fauna.png 200 1500
   encimados sobre el suelo lunar).
 - Su `space_platform_locations.csv` (79 referencias) es de otro mapa (1976 × 5960 u), igual que el del mar: no se usó.
 - Los dos ZIP `…PRO_V5-1.zip` recibidos son idénticos (mismo SHA-256).
+
+## V58.1 · Guadalajara «Azoteas PRO V2» (`assets/scenes/guadalajara_pro_v2/`)
+
+- Tres fondos (Guadalajara 1920 × 540, Portales y Centro Histórico 1536 × 2504) y sus capas de cornisas RGBA. Se
+  comprobó que las superficies de su manifiesto son **idénticas** a las de `SOFEVI_MAP`, `GDL_MAP` y `CATEDRAL_MAP`
+  (8, 10 y 5 superficies): las cornisas caen sobre las colisiones reales. Los tres niveles pasan a ser pintados (la
+  capa de cornisas es la plataforma visible; en el espejo de V58 se refleja junto con el fondo y no se pinta sobre el
+  corte central que V58 abre en la cornisa baja del Centro Histórico).
+- Se retiraron `guadalajara_fondo.png`, `generated/sofevi_centro_zigzag.png` y `generated/centro_historico_guadalajara.png`
+  (las dos escenas de cinemática que usaban la última ahora usan el fondo nuevo del Centro Histórico).
+- Límite (lo dice su propio informe): las cornisas siguen las colisiones, pero no todos los balcones del dibujo son
+  pisables; en el nivel apaisado algunas cornisas cruzan la fachada pintada.
+
+## V58.1 · Personajes (atlas aportados, marcados por su autor como preliminares)
+
+| Uso en el juego | Origen | Qué se hizo |
+|---|---|---|
+| Sofía astronauta (Luna): reposo, pasos, salto, caída, aterrizaje, golpe, daño, derrota, victoria | `ATLAS_ESPACIAL_V58_1_PERSONAJES_4_ATLAS_RGBA` (sofia_roja) + `…SALTO_DANO_VICTORIA_DERROTA_PRELIMINAR` (sofia_falda_roja) | Recorte, escala igualada por el ancho del casco (los cuadros del segundo paquete no tienen escala constante), lienzo 256 × 240 con pies en (128, 232), WebP |
+| Luna y Morita astronautas (Luna) | mismo paquete (gato_blanco = Luna, gato_gris = Morita, por el color de las gatas del juego) | Lienzo 224 × 224 como las de tierra, WebP |
+| Niño gordito de las piedras: buzo (mar) y astronauta (Luna), con su piedra | `NINO_GORDITO_ASTRONAUTA_BUZO_ATLAS_RGBA_JSON_V58_1_COMPLETO` | Lienzo 280 × 250 con el pivote del atlas en los pies, WebP |
+
+No se usaron: `sofia_cuadros` y `sofia_variacion_roja` (otro vestuario que no corresponde a Sofía en el resto del juego),
+las animaciones de salto/daño/victoria/derrota de las gatas (el juego no tiene esos estados para ellas) ni las hojas
+fuente generadas.

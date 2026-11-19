@@ -17,11 +17,17 @@ test('cada uno de los 16 niveles tiene su propio trazado (antes 10 repetían 2 m
   assert.equal(new Set(ids).size, SEQ.length, 'trazados repetidos: ' + ids.join(','));
   // Los dos niveles con arte pintado conservan el trazado sobre el que se pintó su fondo (V58: es la base de su
   // versión al doble, cuya mitad alta lo reproduce tal cual a la izquierda y reflejado a la derecha).
+  // V58.1: los fondos «Guadalajara Azoteas PRO V2» se hicieron sobre estos mismos trazados (su capa de cornisas cae en las
+  // colisiones): Guadalajara (apaisado: solo crece hacia abajo) y Centro Histórico también son pintados.
+  const painted = { escuela: LV.SCHOOL_MAP, portales: LV.GDL_MAP, centro_historico: LV.CATEDRAL_MAP, guadalajara: LV.SOFEVI_MAP };
   for (const d of SEQ.filter((q) => q.art === 'painted')) {
-    assert.ok(d.baseMap === LV.SCHOOL_MAP || d.baseMap === LV.GDL_MAP, d.id);
+    assert.equal(d.baseMap, painted[d.id], d.id);
+    if (d.baseMap.width >= 1200) { assert.deepEqual(d.map.art.map(({ x, y, w, h, flip }) => ({ x, y, w, h, flip })), [{ x: 0, y: 0, w: d.baseMap.width, h: d.baseMap.height, flip: false }]); continue; }
     assert.equal(d.map.width, d.baseMap.width * 2, d.id + ': el doble de ancho');
     assert.deepEqual(d.map.art.map(({ x, y, w, h, flip }) => ({ x, y, w, h, flip })), [{ x: 0, y: 0, w: d.baseMap.width, h: d.baseMap.height, flip: false }, { x: d.baseMap.width, y: 0, w: d.baseMap.width, h: d.baseMap.height, flip: true }]);
-    assert.ok(d.map.art[1].text && d.map.art[1].text.length >= 1, d.id + ': rótulos que se pintan al derecho en el espejo');
+    // Solo el arte de la escuela trae rótulos (se pintan al derecho en el espejo); el de los Portales PRO V2 no tiene.
+    if (d.id === 'escuela') assert.ok(d.map.art[1].text && d.map.art[1].text.length >= 1, d.id + ': rótulos al derecho en el espejo');
+    if (d.overlay) assert.ok(fs.existsSync(path.join(ROOT, d.overlay)), d.id + ': capa de cornisas');
   }
 });
 

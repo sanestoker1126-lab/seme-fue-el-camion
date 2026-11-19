@@ -542,6 +542,7 @@
       const m = Object.assign({}, a, { x2: b.x2, joined: true });
       if (!painted && !m.start && m.y > h * 0.85) {
         // Cornisa baja que cruza el centro: se abre al medio para bajar a la sección nueva sin rodear.
+        (o.seamGaps = o.seamGaps || []).push({ x1: w - 60, x2: w + 60, y: m.y });
         if (w - 60 - m.x1 >= 50) o.surfaces.push(Object.assign({}, m, { x2: w - 60 }));
         if (m.x2 - (w + 60) >= 50) o.surfaces.push(Object.assign({}, m, { x1: w + 60 }));
       } else o.surfaces.push(m);
@@ -660,7 +661,7 @@
     azoteas:              { pieces: ['crumble', 'zip', 'bounce', 'zip'], vehicle: 'carrito', zipLook: 'tendedero' },
     escuela_ruinas:       { pieces: ['crumble', 'zip', 'vehicle', 'belt'], vehicle: 'carrito' },
     centro_historico:     { pieces: ['vehicle', 'zip', 'bounce', 'crumble'], vehicle: 'camion' },
-    portales:             { painted: true, pieces: ['vehicle', 'zip', 'bounce', 'belt'], vehicle: 'camion', text: [[135, 8, 315, 85], [2, 650, 141, 32], [527, 695, 82, 32]] },
+    portales:             { painted: true, pieces: ['vehicle', 'zip', 'bounce', 'belt'], vehicle: 'camion' },
     zapopan:              { pieces: ['zip', 'vehicle', 'crumble', 'bounce'], vehicle: 'camion' },
     arcadas:              { pieces: ['belt', 'vehicle', 'zip', 'bounce'], vehicle: 'camion' },
     metro:                { pieces: ['belt', 'vehicle', 'zip', 'belt'], vehicle: 'tren' },
@@ -965,7 +966,9 @@
       tutorial: true, music: 0
     },
     {
-      id: 'guadalajara', label: 'EL CENTRO DE GUADALAJARA', file: 'assets/scenes/generated/sofevi_centro_zigzag.png', map: SOFEVI_MAP, ledges2d: true, skin: 'stone_long',
+      // V58.1 · «Guadalajara Azoteas PRO V2»: fondo nuevo + capa de cornisas dibujadas EXACTAMENTE en las colisiones de este mapa.
+      id: 'guadalajara', label: 'EL CENTRO DE GUADALAJARA', file: 'assets/scenes/guadalajara_pro_v2/bg_guadalajara_pro_v2.webp', overlay: 'assets/scenes/guadalajara_pro_v2/architecture_guadalajara_pro_v2.png',
+      map: SOFEVI_MAP, art: 'painted', stairsPainted: true, ledges2d: true, skin: 'stone_long',
       tint: 0xffffff, wash: 0x805633, shade: 0.045, theme: 'guadalajara', room: 'alcantarilla',
       foes: ['rat', 'dog', 'pigeon'], obstacles: ['pot', 'puddle', 'crate'], foeBudget: 5, obstacleBudget: 3, sideFoes: 2,
       boss: { kind: 'kid', name: 'DUEÑO DEL PERRO · 12 AÑOS', hp: 4 }, music: 1
@@ -995,13 +998,15 @@
       boss: { kind: 'bravo', name: 'PERRO GUARDIÁN', hp: 5 }, music: 5
     },
     {
-      id: 'centro_historico', label: 'CENTRO HISTÓRICO DE GUADALAJARA', file: 'assets/scenes/generated/centro_historico_guadalajara.png', map: CATEDRAL_MAP, skin: 'stone_rocks',
+      id: 'centro_historico', label: 'CENTRO HISTÓRICO DE GUADALAJARA', file: 'assets/scenes/guadalajara_pro_v2/bg_centro_historico_pro_v2.webp', overlay: 'assets/scenes/guadalajara_pro_v2/architecture_centro_historico_pro_v2.png',
+      map: CATEDRAL_MAP, art: 'painted', stairsPainted: true, skin: 'stone_rocks',
       tint: 0xc1a98d, wash: 0x513b2f, shade: 0.12, theme: 'guadalajara', room: 'alcantarilla',
       foes: ['dog', 'pigeon', 'bat', 'chile'], obstacles: ['pot', 'spark', 'crate', 'puddle'], foeBudget: 8, obstacleBudget: 5, sideFoes: 3,
       boss: { kind: 'pigeon', name: 'PALOMA JEFA', hp: 4 }, music: 6
     },
     {
-      id: 'portales', label: 'GUADALAJARA, JALISCO · LOS PORTALES', file: 'assets/scenes/guadalajara_fondo.png', map: GDL_MAP, art: 'painted', skin: 'stone_moss', isNew: true,
+      id: 'portales', label: 'GUADALAJARA, JALISCO · LOS PORTALES', file: 'assets/scenes/guadalajara_pro_v2/bg_portales_pro_v2.webp', overlay: 'assets/scenes/guadalajara_pro_v2/architecture_portales_pro_v2.png',
+      map: GDL_MAP, art: 'painted', skin: 'stone_moss', isNew: true,
       tint: 0xffffff, wash: 0x5a3828, shade: 0.06, theme: 'guadalajara', room: 'alcantarilla',
       foes: ['pigeon', 'dog', 'kid', 'bat'], obstacles: ['pot', 'puddle', 'spark', 'crate'], foeBudget: 8, obstacleBudget: 5, sideFoes: 3,
       boss: { kind: 'kid', name: 'EL DUEÑO DEL PERRO · REVANCHA', hp: 5 }, music: 7
@@ -1081,7 +1086,8 @@
     art: 'painted', stairsPainted: true,
     tint: 0x9fd8e6, wash: 0x0a2e48, shade: 0.12, theme: 'submarino', room: 'alcantarilla', storyIndex: 16, sideWidth: 0,
     // Pirañas solo en el agua; cangrejos en las cornisas secas de las ruinas.
-    foes: ['piranha', 'crab', 'piranha', 'crab'], obstacles: ['spark', 'crate'], foeBudget: 30, obstacleBudget: 10, sideFoes: 0,
+    // V58.1: el niño gordito de las piedras, con traje de buzo (atlas aportado), en las repisas secas.
+    foes: ['piranha', 'crab', 'kid', 'piranha', 'crab'], obstacles: ['spark', 'crate'], foeBudget: 30, obstacleBudget: 10, sideFoes: 0,
     boss: { kind: 'shark', name: 'TIBURÓN GUARDIÁN DEL ARRECIFE', hp: 7 }, music: 12
   };
   const ESPACIAL_LEVEL = {
@@ -1089,7 +1095,8 @@
     art: 'painted', stairsPainted: true,
     tint: 0xc3c9ee, wash: 0x0b0a28, shade: 0.08, theme: 'espacial', room: 'alcantarilla', storyIndex: 17, sideWidth: 0, gravity: 0.72,
     // Drones de disparo anunciado y robots que embisten.
-    foes: ['drone', 'robot', 'drone', 'robot'], obstacles: ['spark', 'crate'], foeBudget: 30, obstacleBudget: 10, sideFoes: 0,
+    // V58.1: el niño gordito de las piedras, con traje de astronauta (atlas aportado).
+    foes: ['drone', 'robot', 'kid', 'drone', 'robot'], obstacles: ['spark', 'crate'], foeBudget: 30, obstacleBudget: 10, sideFoes: 0,
     boss: { kind: 'drone', name: 'DRON CENTINELA', hp: 7 }, final: true, music: 15
   };
 

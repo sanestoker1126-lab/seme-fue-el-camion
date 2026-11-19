@@ -385,7 +385,7 @@
     root.requestAnimationFrame(frame);
     const S = NS.LEVELS.LEVEL_SEQUENCE;
     const essential = [
-      ...S.map((d) => d.file).filter(Boolean), 'assets/backgrounds/atlas_parallax_city.webp',
+      ...S.map((d) => d.file).filter(Boolean), ...S.map((d) => d.overlay).filter(Boolean), 'assets/backgrounds/atlas_parallax_city.webp',
       'assets/companions/luna.png', 'assets/companions/morita.png', 'assets/companions/luna_shoulder.png', 'assets/companions/morita_shoulder.png',
       ...Object.values(R.COMPANIONS).flatMap((c) => [...c.idle, ...c.walk]),
       'assets/vehicles/camion_frame_01.png', 'assets/vehicles/camion_frame_02.png', 'assets/vehicles/camion_frame_03.png', 'assets/vehicles/camion_frame_04.png', 'assets/audio/motor_camion_guadalajara_v25.mp3', 'assets/audio/luna_ronroneo_v31.mp3', 'assets/audio/morita_ronroneo_v31.mp3', 'assets/audio/luna_alerta_v31.mp3', 'assets/audio/morita_alerta_v31.mp3', 'assets/audio/sofia_otro_gato_usuario_v38.mp3',
@@ -397,7 +397,8 @@
       'assets/player/sofia/sofia_submarina_complementaria.png',
       ...(R.backdropUrls ? R.backdropUrls() : []),   // V58: fondos del ancho del mundo, mar y órbita
       ...Object.values(R.COMPANIONS_SUB || {}).flatMap((c) => [...c.idle, ...c.walk, c.shoulder])];
-    for (const [kind, E] of Object.entries(NS.ART.ENEMY)) for (const f of Object.keys(E.frames)) essential.push('assets/enemies/v50/' + kind + '/' + f + '.png');
+    for (const [kind, E] of Object.entries(NS.ART.ENEMY)) for (const f of Object.keys(E.frames)) essential.push('assets/enemies/v50/' + kind + '/' + f + (R.enemyExt ? R.enemyExt(kind) : '.png'));
+    if (R.castUrls) essential.push(...R.castUrls());   // V58.1: Sofía y gatitas astronautas, niño con traje
     let timer;
     const res = await Promise.race([R.preload(essential), new Promise((r) => { timer = setTimeout(() => r(null), 1500); })]);
     clearTimeout(timer);
