@@ -21,7 +21,8 @@
       airTopFoot: footY, prevFoot: footY, state: 'idle', stateT: 0, animT: 0,
       shield: false, magnetT: 0, dead: false, cheer: false, onSlip: false, frozen: false,
       water: null, submerged: false, waterT: 0, swimCD: 0, leapT: 0, wade: null, wadeT: 0, waterBelow: null,  // V52: agua
-      zip: null, zipS: 0, zipV: 0, zipCD: 0, zipT: 0                                                         // V58: tirolesa
+      zip: null, zipS: 0, zipV: 0, zipCD: 0, zipT: 0,                                                        // V58: tirolesa
+      rope: null, ropeA: 0, ropeW: 0, ropeL: 0, ropeCD: 0, ropeT: 0                                          // V58.2: cuerda
     };
   }
 
@@ -210,6 +211,9 @@
       P.vy = up ? -WT.dashV * 0.55 : down ? WT.dashV * 0.55 : P.vy * 0.3;
       ev.push({ type: 'swimDash' }); impulse = true;
     }
+    // V58.2: en el MAR ABIERTO también se patea nadando (hay cangrejos y niños buzos en las repisas sumergidas).
+    // En pozas y lagos sigue sin patada (regla de V52).
+    if (z.sea && inp.kickPressed && P.kickCD <= 0 && !stunned && P.dashT <= 0) { P.kickT = 0.22; P.kickCD = 0.45; ev.push({ type: 'kick' }); }
     // SALTAR: en la superficie sale del agua de un salto; sumergida es una brazada hacia arriba.
     if (inp.jumpPressed && !stunned && P.dashT <= 0) {
       if (atSurface) {
@@ -357,6 +361,98 @@
     return ev;
   }
 
+  /* ---------- V58.2 · Cuerdas para columpiarse ----------
+     Cuerda colgada de un ancla (ax, ay), de largo `len` (del ancla a la punta). En reposo cuelga vertical. Sofía se
+     agarra al tocarla en el aire con la mano (a cualquier altura entre `minLen` y la punta) y queda como un péndulo:
+     ángulo `ropeA` desde la vertical (positivo a la derecha) y velocidad angular `ropeW`. IZQ/DER impulsan el
+     columpio, ARRIBA trepa, SALTAR la suelta con la velocidad del arco más un impulso hacia arriba y BAJAR la deja
+     caer. Mientras cuelga no acumula altura de caída. Un sólido en el arco la suelta. */
+  function ropeTip(r) { return { x: r.ax, y: r.ay + r.len }; }
+
+  function tryGrabRope(P, W, prevX, prevY, ev) {
+    const R = NS.CONFIG.rope;
+    const hy = P.y - P.h / 2 - R.hang, phy = prevY - P.h / 2 - R.hang;
+    for (const r of W.ropes) {
+      if (r === P.ropeLast && P.ropeCD > 0) continue;
+      if (hy < r.ay + R.minLen || hy > r.ay + r.len + 6) continue;
+      const dx = P.x - r.ax, pdx = prevX - r.ax;
+      // La mano toca la cuerda (o la cruzó en este paso: a buena velocidad se pasa de largo).
+      if (Math.abs(dx) > R.grab && !(dx * pdx < 0 && Math.abs(phy - hy) < 40)) continue;
+      // Agarrada cerca del ancla se desliza hasta media cuerda (un péndulo corto casi no columpia).
+      const d0 = Math.max(R.minLen, Math.min(r.len, hy - r.ay)), d = Math.max(d0, r.len * R.slideTo);
+      const a = Math.asin(Math.max(-0.6, Math.min(0.6, dx / d0)));
+      P.rope = r; P.ropeL = d0; P.ropeLT = d; P.ropeA = a; P.ropeT = 0;
+      // Conserva el impulso: la componente tangente de la velocidad se vuelve velocidad angular.
+      const vt = P.vx * Math.cos(a) - P.vy * Math.sin(a);
+      P.ropeW = Math.max(-R.maxW, Math.min(R.maxW, vt / d));
+      P.dashT = 0; P.ground = null; P.coyote = 0; P.jumpBuffer = 0; P.dropT = 0; P.noCut = false;
+      P.airDashes = NS.CONFIG.phys.airDashes; P.airTopFoot = P.y + P.h / 2;
+      placeOnRope(P);
+      ev.push({ type: 'ropeGrab', rope: r });
+      return true;
+    }
+    return false;
+  }
+  function placeOnRope(P) {
+    const R = NS.CONFIG.rope, r = P.rope, a = P.ropeA, d = P.ropeL;
+    P.x = r.ax + d * Math.sin(a);
+    P.y = r.ay + d * Math.cos(a) + P.h / 2 + R.hang;
+    P.vx = P.ropeW * d * Math.cos(a);
+    P.vy = -P.ropeW * d * Math.sin(a);
+  }
+
+  function ropeStep(P, W, inp, dt, ev) {
+    const R = NS.CONFIG.rope, PH = NS.CONFIG.phys, r = P.rope;
+    const prevX = P.x, prevY = P.y, prevFoot = prevY + P.h / 2;
+    P.prevFoot = prevFoot; P.ground = null; P.wade = null; P.onSlip = false;
+    P.ropeT += dt;
+    const release = (cd) => { P.ropeLast = r; P.rope = null; P.ropeCD = cd; P.airTopFoot = P.y + P.h / 2; r.relA = P.ropeA * 0.6; r.relT = W.t || 0; };
+    if (inp.kickPressed && P.kickCD <= 0 && P.stunT <= 0) { P.kickT = 0.22; P.kickCD = 0.45; ev.push({ type: 'kick' }); }
+    const dir = (inp.right ? 1 : 0) - (inp.left ? 1 : 0);
+    if (dir) P.face = dir;
+    if ((inp.jumpPressed && P.stunT <= 0.1) || inp.downPressed) {
+      const a = P.ropeA, v = P.ropeW * P.ropeL;
+      P.vx = v * Math.cos(a) * R.releaseKeep + dir * 40;
+      if (inp.jumpPressed) {
+        P.vy = Math.min(-v * Math.sin(a), 0) * R.releaseKeep + PH.jump * R.jumpBoost; P.noCut = false;
+        ev.push({ type: 'ropeJump', rope: r }); ev.push({ type: 'jump' });
+      } else { P.vy = Math.max(-v * Math.sin(a), 40); ev.push({ type: 'ropeDrop', rope: r }); }
+      release(R.cooldown);
+      P.x += P.vx * dt; resolveX(P, W, prevX, ev);
+      P.y += P.vy * dt; resolveY(P, W, prevY, ev);
+      P.ground = null; P.airTopFoot = P.y + P.h / 2;
+      return ev;
+    }
+    // Péndulo con impulso: la gravedad del mundo, el empuje del jugador y un poco de roce.
+    const g = PH.gravity * (W.gravityMul || 1);
+    let acc = -(g / P.ropeL) * Math.sin(P.ropeA) + dir * R.pump / P.ropeL;
+    P.ropeW += acc * dt;
+    P.ropeW *= Math.max(0, 1 - R.damp * dt);
+    P.ropeW = Math.max(-R.maxW, Math.min(R.maxW, P.ropeW));
+    P.ropeA += P.ropeW * dt;
+    if (Math.abs(P.ropeA) > R.maxA) { P.ropeA = Math.sign(P.ropeA) * R.maxA; P.ropeW = 0; }
+    if (inp.upHeld) { P.ropeLT = Math.max(R.minLen, P.ropeLT - R.climb * dt); P.ropeL = Math.min(P.ropeL, P.ropeLT); }
+    else if (P.ropeL < P.ropeLT) P.ropeL = Math.min(P.ropeLT, P.ropeL + R.slide * dt);   // se desliza por la cuerda
+    placeOnRope(P);
+    const wantX = P.x, wantY = P.y;
+    resolveX(P, W, prevX, ev);
+    resolveY(P, W, prevY, ev);
+    let landed = P.ground;
+    if (!landed && P.vy > 0) { const pl = findOneWayLanding(P, W, prevFoot); if (pl) { P.y = pl.y - P.h / 2; landed = pl; } }
+    if (landed) {
+      P.ground = landed; P.vy = 0; P.vx *= 0.5;
+      release(0.25);
+      ev.push({ type: 'ropeEnd', rope: r, landed: true });
+      ev.push({ type: 'land', fall: 0, plat: landed, offset: Math.abs(P.x - (landed.x1 + landed.x2) / 2) });
+    } else if (Math.abs(P.x - wantX) > 0.01 || Math.abs(P.y - wantY) > 0.01) {
+      P.vx = 0; P.vy = Math.max(0, P.vy);
+      release(R.cooldown);
+      ev.push({ type: 'ropeEnd', rope: r, blocked: true });
+    }
+    P.airTopFoot = P.y + P.h / 2;
+    return ev;
+  }
+
   /**
    * Avanza al jugador un paso fijo.
    * inp: {left,right,jumpPressed,jumpHeld,dashPressed,downPressed}
@@ -377,12 +473,20 @@
     if (P.dashT > 0) { P.dashT = Math.max(0, P.dashT - dt); if (P.dashT === 0) ev.push({ type: 'dashEnd' }); }
     P.leapT = Math.max(0, P.leapT - dt);
     P.zipCD = Math.max(0, (P.zipCD || 0) - dt);
+    P.ropeCD = Math.max(0, (P.ropeCD || 0) - dt);
 
     // 0) V58 · Colgada de una tirolesa (si el cable entra en agua profunda, la suelta y nada).
     if (P.zip) {
       const zw = waterAt(W, P);
       if (zw && zw.deep) { P.zip = null; P.zipCD = 0.3; }
       else return zipStep(P, W, inp, dt, ev);
+    }
+
+    // 0) V58.2 · Colgada de una cuerda (si el arco entra en agua profunda, la suelta y nada).
+    if (P.rope) {
+      const rw = waterAt(W, P);
+      if (rw && rw.deep) { P.ropeLast = P.rope; P.rope = null; P.ropeCD = 0.3; }
+      else return ropeStep(P, W, inp, dt, ev);
     }
 
     // 0) V52 · Agua profunda: se nada (mientras sale de un salto, la zona se ignora hasta que deja el agua).
@@ -526,6 +630,8 @@
     if (P.wade && P.ground && Math.abs(P.vx) > 110 && Math.floor(P.wadeT * 4) !== Math.floor((P.wadeT - dt) * 4)) ev.push({ type: 'wadeSplash', zone: P.wade, x: P.x });
     // V58 · Tirolesa: en el aire, al tocar un cable se cuelga (no recién golpeada ni recién soltada).
     if (!P.ground && P.zipCD <= 0 && P.hurtT <= 0.05 && W.zips && W.zips.length) tryGrabZip(P, W, prevX, prevY, ev);
+    // V58.2 · Cuerda: en el aire, al tocarla con la mano se agarra (no recién golpeada).
+    if (!P.ground && !P.zip && P.hurtT <= 0.05 && W.ropes && W.ropes.length) tryGrabRope(P, W, prevX, prevY, ev);
     // Teja floja: pisarla la hace temblar; medio segundo después se cae (el juego avisa con un evento).
     if (P.ground && P.ground.kind === 'crumble' && P.ground.crState === 'solid') {
       P.ground.crState = 'shake'; P.ground.crT = 0;
@@ -542,6 +648,7 @@
     else if (P.water) {
       const fy = P.water.y + P.h * NS.CONFIG.water.floatOffset;
       if (P.hurtT > 0) s = 'swimHurt';
+      else if (P.kickT > 0) s = 'swimKick';     // V58.2: patada nadando
       else if (P.dashT > 0) s = 'swimDash';
       else if (P.submerged || P.y > fy + 12) s = P.vy > 70 ? 'swimDown' : P.vy < -70 ? (Math.abs(P.vx) > 60 ? 'swimUpDiag' : 'swimUp') : 'swimUnder';
       else s = Math.abs(P.vx) > 40 ? 'swim' : 'swimFloat';
@@ -549,6 +656,7 @@
     else if (P.leapT > 0 && !P.ground && P.vy < 0 && P.hurtT <= 0) s = 'waterLeap';
     else if (P.hurtT > 0) s = 'hurt';
     else if (P.zip) s = 'zip';
+    else if (P.rope) s = 'swing';
     else if (P.kickT > 0) s = 'kick';
     else if (P.dashT > 0) s = 'dash';
     else if (P.landT > 0 && P.ground) s = 'land';
@@ -571,5 +679,11 @@
     return Object.assign({ ax, ay, bx, by, len, ux: (bx - ax) / len, uy: (by - ay) / len, sin: (by - ay) / len, slope: (by - ay) / (bx - ax) }, extra || {});
   }
 
-  NS.Physics = { createPlayer, updatePlatforms, stepPlayer, updateState, isSlippery, waterAt, floatYOf, makeZip, zipY };
+  /** V58.2: cuerda colgante (ancla y largo). */
+  function makeRope(ax, ay, len, extra) {
+    if (!(len >= NS.CONFIG.rope.minLen + 20)) throw new Error('cuerda demasiado corta');
+    return Object.assign({ ax, ay, len }, extra || {});
+  }
+
+  NS.Physics = { createPlayer, updatePlatforms, stepPlayer, updateState, isSlippery, waterAt, floatYOf, makeZip, zipY, makeRope, ropeTip };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

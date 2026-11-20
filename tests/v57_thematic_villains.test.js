@@ -27,10 +27,13 @@ function player(x,y) {
 test('V57: dos misiones especiales usan enemigos propios, sin palomas submarinas', () => {
   const sub = NS.World.buildWorld({ levels: [LV.SUBMARINO_LEVEL] });
   const space = NS.World.buildWorld({ levels: [LV.ESPACIAL_LEVEL] });
-  const shark = sub.foes.find(f => f.kind === 'shark' && f.isBoss);
-  assert.ok(shark, 'tiburón guardián submarino');
+  // V58.2: el jefe del mar es Poseidón (custodia la escotilla); los tiburones pasan a ser enemigos comunes del mar.
+  const shark = sub.foes.find(f => f.kind === 'poseidon' && f.isBoss);
+  assert.ok(shark, 'Poseidón, jefe submarino');
   assert.ok(shark.waterZone && shark.waterZone.deep, 'jefe dentro de agua profunda');
   assert.ok(shark.y > shark.waterZone.y && shark.y < shark.waterZone.y2, 'jefe no flota fuera del agua');
+  assert.ok(sub.foes.some(f => f.kind === 'shark' && !f.isBoss && f.waterZone && f.waterZone.deep), 'tiburones comunes en el mar');
+  assert.ok(sub.foes.some(f => f.kind === 'pulpo' && f.waterZone), 'pulpos en el mar');
   assert.ok(sub.foes.some(f => f.kind === 'piranha' && !f.isBoss), 'pirañas en el mundo submarino');
   assert.ok(sub.foes.every(f => f.kind !== 'pigeon' && f.kind !== 'bat'), 'no palomas ni murciélagos en mundo marino');
   const seen = new Map();

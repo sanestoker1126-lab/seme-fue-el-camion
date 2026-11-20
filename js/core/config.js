@@ -6,7 +6,7 @@
   const NS = root.CAMION = root.CAMION || {};
 
   NS.CONFIG = {
-    version: '58.1.0',
+    version: '58.2.0',
     build: 'v58-1-mundos-pintados',
 
     sim: {
@@ -142,6 +142,23 @@
     },
 
     // V58 · Orden a las gatitas (botón GATAS): Luna ataca al enemigo más cercano o Morita trae los cristales.
+    // V58.2 · Cuerdas para columpiarse (péndulo). Ángulos en radianes, velocidades angulares en rad/s.
+    rope: {
+      grab: 16,             // distancia horizontal de la mano a la cuerda para agarrarla
+      hang: 6,              // la mano queda `hang` u sobre la caja de Sofía (igual que en la tirolesa)
+      minLen: 40,           // no se agarra más cerca del ancla que esto
+      slideTo: 0.62,        // si se agarra más arriba, se desliza hasta este punto de la cuerda (fracción del largo)
+      slide: 380,           // velocidad de ese deslizamiento (u/s)
+      pump: 520,            // empuje tangencial de IZQ/DER (u/s²)
+      damp: 0.08,           // roce del columpio (por segundo)
+      maxA: 1.3,            // ángulo máximo (≈ 75°)
+      maxW: 6,
+      climb: 90,            // ARRIBA trepa (u/s)
+      jumpBoost: 0.5,       // SALTAR suelta con la velocidad del arco + medio salto hacia arriba
+      releaseKeep: 1.0,
+      cooldown: 0.4
+    },
+
     cats: { cooldown: 7, range: 330, gemRange: 360, fetchSpeed: 560 },
 
     camera: { easeX: 4.6, easeY: 3.35, lookAheadVx: 0.24, focusY: 0.42, leadVy: 0.105 }

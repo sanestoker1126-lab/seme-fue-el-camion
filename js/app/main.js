@@ -64,6 +64,15 @@
   Object.defineProperty(opt, 'music', { get: () => opt.musicVol > 0, enumerable: false });
   Object.defineProperty(opt, 'sfx', { get: () => opt.sfxVol > 0, enumerable: false });
   const cinematicSeen = () => !opt.cinematics || store.get('camion-cinematic-seen', '0') === '1';
+  // V58.2: la llegada al mar (Sofía asombrada + recuerdo con su papito Estoker) se ve la primera vez que empieza la misión 3.
+  const MARINE_CINE_KEY = 'camion-cinematic-marino-seen';
+  const marineCineSeen = () => store.get(MARINE_CINE_KEY, '0') === '1';
+  const refreshCineMenu = () => { if (NS.ToxiPlayer) NS.ToxiPlayer.refreshMenu(!!G.save.epilogue, marineCineSeen()); };
+  // El reproductor carga después de este archivo: al estar listo recibe el vestuario y pinta los botones del menú.
+  root.addEventListener('camion:toxiplayer-ready', () => {
+    if (NS.ToxiPlayer.setLook) NS.ToxiPlayer.setLook(opt.ninaLook);
+    refreshCineMenu();
+  });
   const FOE_TIPS = {
     rat: 'RATA · cae encima, patéala o usa DASH',
     dog: 'PERRO · avisa antes de embestir: salta y contraataca',
@@ -73,7 +82,9 @@
     pigeon: 'PALOMA · suelta «regalitos» si pasas debajo',
     kid: 'NIÑO · lanza piedras de lejos y embiste de cerca',
     piranha: 'PIRAÑA · vigila el agua y esquiva su carrera',
-    shark: 'TIBURÓN · espera a que termine de embestir',
+    shark: 'TIBURÓN · espera a que termine de embestir y golpéalo mareado',
+    pulpo: 'PULPO · se infla antes de lanzar tinta: esquívala o rómpela con DASH',
+    poseidon: 'POSEIDÓN · embiste con el tridente y lanza olas: golpéalo cuando quede mareado',
     drone: 'DRON · esquiva la marca y destruye su plasma con DASH',
     crab: 'CANGREJO · corre de lado: písalo, patéalo o usa DASH',
     robot: 'ROBOT · embiste tras encender su visor: salta y golpéalo cuando se maree'
@@ -106,6 +117,7 @@
   function applyOptions() {
     G.assist.catsHelp = opt.catsHelp; G.assist.relaxed = opt.relaxed;
     R.setOptions({ shake: { normal: 1, suave: 0.45, no: 0 }[opt.shake], landingRing: opt.landingRing, ninaLook: opt.ninaLook });
+    if (NS.ToxiPlayer && NS.ToxiPlayer.setLook) NS.ToxiPlayer.setLook(opt.ninaLook);
     const zf = { cerca: 0.86, normal: 1, lejos: 1.2 }[opt.zoom] || 1;
     G.viewScale = zf;
     const body = document.body;
@@ -144,7 +156,7 @@
   }
 
   function resetProgress() {
-    for (const key of [SAVE_KEY, 'camion-v35-save', 'camion-v34-save', 'camion-v33-save', 'camion-unlocked', 'camion-best-score', 'camion-descent-best', 'camion-cinematic-seen']) {
+    for (const key of [SAVE_KEY, 'camion-v35-save', 'camion-v34-save', 'camion-v33-save', 'camion-unlocked', 'camion-best-score', 'camion-descent-best', 'camion-cinematic-seen', MARINE_CINE_KEY]) {
       try { root.localStorage.removeItem(key); } catch (_) { /* sin almacenamiento */ }
     }
     for (let i = 0; i < 40; i++) { try { root.localStorage.removeItem('camion-boss-cinematic-v38-scene-' + i); } catch (_) { /* nada */ } }
@@ -152,6 +164,7 @@
     G.save = NS.Game.defaultSave();
     store.set(SAVE_KEY, JSON.stringify(G.save));
     ui.paintMenu(G, opt);
+    refreshCineMenu();
     ui.toast('PROGRESO BORRADO', 2, 2);
   }
 
@@ -167,6 +180,10 @@
     if (!skipIntro && mission === 0 && tramo === 0 && !cinematicSeen()) {
       if (NS.ToxiPlayer && NS.ToxiPlayer.play({ set: 'prologo', onDone: go })) return;
       ui.showCinematic(go);
+    } else if (!skipIntro && mission === 2 && tramo === 0 && opt.cinematics && !marineCineSeen() && NS.ToxiPlayer) {
+      // Terminarla o saltarla cuenta como vista (se repite desde el menú) y en ambos casos empieza la misión.
+      const dive = () => { store.set(MARINE_CINE_KEY, '1'); refreshCineMenu(); go(); };
+      if (!NS.ToxiPlayer.play({ set: 'marino', look: opt.ninaLook, finishLabel: '¡AL AGUA!', onDone: dive })) go();
     } else go();
   }
   function playStory() {
@@ -252,7 +269,7 @@
         case 'dying': audio.stop(); audio.sfx('lose'); break;
         case 'gameover': ui.showGameOver(e, G); break;
         case 'victoryStart': audio.stop(); audio.sfx('honk'); audio.sfx('motor'); audio.sfx('win'); audio.sfx('luna'); audio.sfx('morita'); break;
-        case 'victory': ui.showVictory(e); if (NS.ToxiPlayer) NS.ToxiPlayer.refreshMenu(!!G.save.epilogue); break;
+        case 'victory': ui.showVictory(e); refreshCineMenu(); break;
         case 'gem': audio.sfx('gem'); break;
         case 'power': audio.sfx('power'); break;
         case 'key': audio.sfx('key'); break;
@@ -271,8 +288,13 @@
           break;
         case 'companionPurr': audio.sfx(e.cat === 'morita' ? 'moritaPurr' : 'lunaPurr'); break;
         case 'catCommand': audio.sfx('cats'); audio.sfx(e.cat === 'morita' ? 'moritaAlert' : 'lunaAlert'); audio.vibrate && audio.vibrate(25); break;
+        case 'catScratch': audio.sfx('stomp'); audio.sfx('luna'); break;   // V58.2: el arañazo de Luna al caer sobre el enemigo
+        case 'ropeGrab': audio.sfx('zip'); break;
+        case 'ropeJump': case 'ropeDrop': audio.sfx('zipOff'); break;
         case 'crate': audio.sfx('stomp'); break;
         case 'enemyDiscovered':
+          // V58.2: el otro gato maúlla al encontrar un enemigo (con su propio enfriamiento en audio.js).
+          if (e.foe && !e.foe.dead && (e.foe.scene | 0) >= G.tramo) audio.sfx('otroGato');
           if (e.foe?.isBoss) {
             if ((e.foe.scene | 0) < G.tramo) break; // jefe de un tramo ya superado que asoma arriba: sin aviso
             e.foe.bossIntroStart = animT;
@@ -381,7 +403,7 @@
     G.newRun({ startTramo: 0, difficulty: opt.difficulty });
     G.state = 'menu'; G.drainEvents();
     ui.paintMenu(G, opt); ui.show('menu');
-    if (NS.ToxiPlayer) NS.ToxiPlayer.refreshMenu(!!G.save.epilogue);
+    refreshCineMenu();
     root.requestAnimationFrame(frame);
     const S = NS.LEVELS.LEVEL_SEQUENCE;
     const essential = [

@@ -750,7 +750,16 @@
       [470, 514, 822], [485, 532, 836], [500, 551, 852], [520, 570, 866], [539, 589, 879]
     ],
     planks: [[482, 545, 650], [545, 655, 664], [655, 708, 656]],   // puente de cuerda (se baja con BAJAR)
-    sea: { y: 1155, y2: 1690, drains: [[262, 312], [632, 688]] },
+    // V58.2 · El mar es TODO lo que queda bajo la isla: del agua junto a la roca grande hasta el lecho marino, donde
+    // está la escotilla de rescate (la salida). Solo la isla se camina; lo demás se nada.
+    sea: { y: 1155, toStreet: true },
+    // Brechas dibujadas en los puentes de la meseta (se bucea a través de ellas).
+    breaches: [[262, 312, 1636, 1690], [632, 688, 1664, 1690]],
+    // Carriles de nado de peces, tiburones y pulpos: [y, x1, x2] (libres de roca).
+    swimLanes: [[1230, 20, 620], [1360, 20, 540], [1470, 220, 560], [1580, 20, 560], [1760, 380, 960], [1900, 280, 680],
+      [2060, 480, 960], [2240, 20, 460], [2440, 300, 800], [2560, 20, 620], [2700, 620, 960], [2870, 20, 520]],
+    // V58.2: liana para columpiarse en la isla (de la repisa de las flores hacia abajo).
+    ropes: [{ x: 131.8, y: 347.9, len: 75.5, look: 'liana' }],
     // Relieve sólido del mar (no se dibuja: es la roca y la meseta pintadas).
     blocks: [
       [700, 900, 1080, 1160], [640, 971, 1160, 1300], [560, 880, 1300, 1440],   // roca grande y su base sumergida
@@ -760,14 +769,11 @@
       [750, 870, 1668, 1690], [840, 971, 1614, 1640], [870, 971, 1664, 1690]       // repisa del caracol y de los hongos
     ],
     movers: [
-      { x1: 300, x2: 382, y: 1152, range: 120, vertical: 2, speed: 0.7, look: 'bote' },     // barca en la superficie
-      { x1: 600, x2: 700, y: 1872, range: 110, vertical: 6, speed: 0.9, look: 'manta' }     // manta bajo la brecha
+      { x1: 300, x2: 382, y: 1152, range: 120, vertical: 2, speed: 0.7, look: 'bote' }      // barca en la superficie
     ],
-    pigeons: [{ x1: 500, x2: 566, y: 2580, range: 45, vertical: 8, speed: 1.1, look: 'pez' }],
-    bouncers: [[835, 955, 2412, 'hongo'], [652, 768, 2752, 'hongo']],   // hongos gigantes pintados
     zips: [
       { x1: 600, y1: 229, x2: 905, y2: 636, look: 'cuerda' },     // del mirador a las palmeras
-      { x1: 872, y1: 2140, x2: 735, y2: 2390, look: 'cadena' }    // cadena del barco hundido
+      { x1: 472, y1: 767, x2: 720, y2: 1040, look: 'cuerda' }     // de la repisa baja a la roca grande
     ],
     // Estelas de cristales en el mar abierto: puntos de paso y cuántos cristales se reparten a lo largo.
     seaTrails: [
@@ -824,9 +830,15 @@
     o.planks = (T.planks || []).map((q) => Object.assign(surf(q), { painted: true }));   // pasarelas pintadas
     o.blocks = (T.blocks || []).map((b) => ({ x1: X(b[0]), x2: X(b[1]), y1: Y(b[2]), y2: Y(b[3]), kind: 'roca', draw: false }));
     if (T.sea) {
-      o.water.push({ x1: 0, x2: o.width, y: Y(T.sea.y), depth: Y(T.sea.y2) - Y(T.sea.y), kind: 'mar', banks: [], sea: true, boss: true,
-        drains: T.sea.drains.map((d) => ({ x1: X(d[0]), x2: X(d[1]) })), breach: true });
+      // toStreet: el mar baja hasta el lecho (la calle de la meta); world.js fija su fondo ahí. Sin desagües.
+      const y2 = T.sea.toStreet ? A.height : T.sea.y2;
+      o.water.push({ x1: 0, x2: o.width, y: Y(T.sea.y), depth: Y(y2) - Y(T.sea.y), kind: 'mar', banks: [], sea: true, boss: true,
+        drains: (T.sea.drains || []).map((d) => ({ x1: X(d[0]), x2: X(d[1]) })), breach: true, toStreet: !!T.sea.toStreet });
     }
+    o.breaches = (T.breaches || []).map((b) => ({ x1: X(b[0]), x2: X(b[1]), y1: Y(b[2]), y2: Y(b[3]) }));
+    o.swimLanes = (T.swimLanes || []).map((l) => ({ y: Y(l[0]), x1: X(l[1]), x2: X(l[2]) }));
+    // V58.2: cuerdas para columpiarse { x, y (ancla), len } en px del arte.
+    o.ropes = (T.ropes || []).map((r) => ({ x: X(r.x), y: Y(r.y), len: rnd(r.len * K), look: r.look || 'cuerda', arc: !!r.arc, base: r.base !== undefined ? Y(r.base) : undefined }));
     const mv = (q) => ({ x1: X(q.x1), x2: X(q.x2), y: Y(q.y), range: rnd(q.range * K), vertical: q.vertical, speed: q.speed, look: q.look });
     o.movers = (T.movers || []).map(mv);
     o.pigeons = (T.pigeons || []).map(mv);
@@ -845,7 +857,14 @@
     }
     for (const [pts, n] of T.seaTrails || []) for (const p of alongPath(pts, n)) if (!inBlock(p[0], p[1], 14)) gems.push(p);
     for (const z of T.zips || []) for (const f of [0.25, 0.45, 0.65]) gems.push([z.x1 + (z.x2 - z.x1) * f, z.y1 + (z.y2 - z.y1) * f + 21]);
-    if (T.sea) for (const d of T.sea.drains) for (const dy of [40, 95]) gems.push([(d[0] + d[1]) / 2, T.sea.y2 + dy]);
+    if (T.sea) for (const d of T.sea.drains || []) for (const dy of [40, 95]) gems.push([(d[0] + d[1]) / 2, T.sea.y2 + dy]);
+    for (const b of T.breaches || []) for (const dy of [-30, 30, 90]) gems.push([(b[0] + b[1]) / 2, b[3] + dy]);
+    for (const r of T.ropes || []) {
+      // El cuerpo cuelga ~38 u de mundo bajo la mano (≈ 38 / (0,82·px) px) y la mano queda a 0,62 del largo.
+      const d = r.len * 0.62, body = 38 / (0.82 * K);
+      const angs = r.arc ? [-60, -35, 35, 60] : [0];
+      for (const a of angs) { const t = a * Math.PI / 180; gems.push([r.x + d * Math.sin(t), r.y + d * Math.cos(t) + body]); }
+    }
     for (const c of T.cracks || []) for (const f of [0.3, 0.7]) gems.push([(c[0] + c[1]) / 2, c[2] + (c[3] - c[2]) * f]);
     for (const q of (T.movers || []).concat(T.pigeons || [])) gems.push([(q.x1 + q.x2) / 2, q.y - 34]);
     for (const g of T.extraGems || []) gems.push(g);
@@ -949,6 +968,11 @@
     // La banda de roca es sólida (no se dibuja: es el arte) salvo en sus dos grietas, que son pozos hacia la ciudad.
     blocks: [[315, 380, 2032, 2178], [425, 600, 2032, 2178], [600, 950, 2090, 2182], [950, 1100, 2047, 2182], [1150, 1365, 2047, 2178]],
     cracks: [[380, 425, 2030, 2180], [1100, 1150, 2045, 2182]],
+    // V58.2: cables para columpiarse (entre repisas) y uno de arco en la superficie lunar (base = piso, px).
+    ropes: [
+      { x: 890.5, y: 2842.6, len: 75.5, look: 'cable' }, { x: 832.5, y: 2382.7, len: 75.5, look: 'cable' },
+      { x: 1034.5, y: 1647.5, len: 75.5, look: 'cable' }, { x: 1114.8, y: 324.6, len: 87.1, look: 'cable', arc: true, base: 491.9 }
+    ],
     exitX: 660
   };
   const ESPACIAL_MAP = buildPaintedMap('espacial', LUNAR_TRACE, LUNAR_ART);
@@ -983,6 +1007,7 @@
         [120, 1501, 2250, { exit: true }]   // cancha de básquetbol: salida (arena del jefe)
       ],
       planks: [[470, 1501, 925]],   // cafetería
+      ropes: [{ x: 914.8, y: 83.6, len: 130.7, look: 'columpio', arc: true, base: 334.6 }],   // V58.2: columpio en la azotea
       stairRuns: [[165, 712, 470, 925], [1130, 1205, 1265, 1365], [1135, 1815, 1315, 2105]],
       zips: [{ x1: 918, y1: 1486, x2: 300, y2: 1860, look: 'tendedero' }],
       exitX: 800
@@ -1006,6 +1031,8 @@
         [150, 1476, 2390, { exit: true }]   // cancha: salida
       ],
       planks: [[390, 1476, 885]],   // cafetería
+      ropes: [{ x: 931.5, y: 88.2, len: 128.5, look: 'columpio', arc: true, base: 335 },        // V58.2: columpios del patio
+        { x: 322.8, y: 1021.2, len: 128.5, look: 'columpio', arc: true, base: 1268 }, { x: 282.7, y: 2008.2, len: 128.5, look: 'columpio', arc: true, base: 2254.9 }],
       stairRuns: [[130, 700, 390, 885], [1260, 1000, 1400, 1165]],
       zips: [{ x1: 1268, y1: 1588, x2: 300, y2: 1927, look: 'tendedero' }],
       exitX: 800
@@ -1059,7 +1086,7 @@
     {
       id: 'escuela_vecina', label: 'EL PATIO DE LA SECUNDARIA', file: 'assets/scenes/school_miguel_hidalgo/02_patio_escolar.webp', map: PATIO_MAP, skin: 'concrete',
       tint: 0xcdd8db, wash: 0x52664d, shade: 0.075, theme: 'escuela', room: 'sotano',
-      foes: ['rat', 'dog', 'chile'], obstacles: ['spark', 'spikes', 'crate', 'pot'], foeBudget: 6, obstacleBudget: 4, sideFoes: 2,
+      foes: ['rat', 'kid', 'dog', 'chile'], obstacles: ['spark', 'spikes', 'crate', 'pot'], foeBudget: 6, obstacleBudget: 4, sideFoes: 2,   // V58.2: + el niño de las piedras
       boss: { kind: 'chile', name: 'CHILE DE LA SECUNDARIA', hp: 4 }, music: 2
     },
     {
@@ -1077,7 +1104,7 @@
     {
       id: 'escuela_ruinas', label: 'PASILLOS DE LA ESCUELA BAJO LA LLUVIA', file: 'assets/scenes/school_miguel_hidalgo/03_conserjeria_entrada.webp', map: PASILLOS_MAP, skin: 'concrete',
       tint: 0xaabda6, wash: 0x304b36, shade: 0.19, theme: 'escuela', room: 'sotano',
-      foes: ['bat', 'chile', 'dog', 'rat'], obstacles: ['spikes', 'spark', 'crate', 'puddle'], foeBudget: 7, obstacleBudget: 5, sideFoes: 3,
+      foes: ['bat', 'kid', 'chile', 'dog', 'rat'], obstacles: ['spikes', 'spark', 'crate', 'puddle'], foeBudget: 7, obstacleBudget: 5, sideFoes: 3,   // V58.2: + el niño
       boss: { kind: 'bravo', name: 'PERRO GUARDIÁN', hp: 5 }, music: 5
     },
     {
@@ -1177,9 +1204,10 @@
     tint: 0x9fd8e6, wash: 0x0a2e48, shade: 0.12, theme: 'submarino', room: 'alcantarilla', storyIndex: 16, sideWidth: 0,
     // Pirañas solo en el agua; cangrejos en las cornisas secas de las ruinas.
     // V58.1: el niño gordito de las piedras, con traje de buzo (atlas aportado), en las repisas secas.
-    // Las pirañas topan en 6 (mar abierto); el resto del presupuesto va a cangrejos y niños en las repisas secas.
-    foes: ['crab', 'kid', 'piranha', 'crab', 'kid', 'piranha'], obstacles: ['spark', 'crate'], foeBudget: 38, obstacleBudget: 10, sideFoes: 0,
-    boss: { kind: 'shark', name: 'TIBURÓN GUARDIÁN DEL ARRECIFE', hp: 7 }, music: 12
+    // V58.2: mar completo. Pirañas, tiburones y pulpos nadan en sus carriles (topes 6/2/4); cangrejos y niños buzos
+    // en las repisas (secas o sumergidas). El jefe es Poseidón, que custodia la escotilla del lecho marino.
+    foes: ['crab', 'piranha', 'kid', 'pulpo', 'shark', 'crab', 'piranha', 'kid', 'pulpo', 'piranha'], obstacles: ['spark', 'crate'], foeBudget: 40, obstacleBudget: 8, sideFoes: 0,
+    boss: { kind: 'poseidon', name: 'POSEIDÓN, REY DEL MAR', hp: 8 }, music: 12
   };
   const ESPACIAL_LEVEL = {
     id: 'espacial', label: 'LUNA HUECA', file: 'assets/parallax/espacial/depth_v5/background/page_01.webp', map: ESPACIAL_MAP, skin: 'scaffold', isNew: true,

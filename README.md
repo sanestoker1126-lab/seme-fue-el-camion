@@ -17,6 +17,18 @@ Es un sitio estático, sin dependencias. Para jugarlo:
 
 Controles en pantalla (táctil) y teclado. Se instala como app (PWA) y funciona sin conexión tras la primera carga.
 
+## Novedades V58.2 · La llegada al mar
+
+El mar es **completamente submarino**: solo en la isla se camina; abajo todo se nada, hasta la escotilla del lecho
+marino (la meta). La primera vez que se empieza la misión 3 hay una **cinemática nueva**: Sofía llega a la isla
+sorprendida y confundida, recuerda cuando su **papito Estoker** la paseaba ahí de pequeña y él le platica los peligros
+del mar (se repite desde el menú). Nuevos en el mar: **pulpo** que lanza tinta y **Poseidón, rey del mar** como jefe.
+El **niño de las piedras** está en los cuatro mundos, hay **cuerdas para columpiarse** (escuela, mar y Luna) además
+de las tirolesas, maúlla **el otro gato** al descubrir enemigos y las gatas **ayudan con animación propia** (Luna
+salta y araña, Morita trae los cristales).
+
+Detalle, validación y límites: `CHANGELOG_V58_2.md`.
+
 ## Novedades V58.1 · Mundos pintados
 
 La escuela, el mar y la Luna ahora son **una sola ilustración por nivel** con el recorrido **trazado sobre el
@@ -73,7 +85,7 @@ Opciones incluye **Aspecto de Sofía** (original / uniforme / rosa).
 node --test tests/*.test.js
 ```
 
-Versión de desarrollo: **V58.1** (`js/core/config.js` → 58.1.0), en la rama `ccr-83eefefd-4flatp`.
+Versión de desarrollo: **V58.2** (`js/core/config.js` → 58.2.0), en la rama `ccr-83eefefd-4flatp`.
 
 ## V54 · Submarino y Espacio ampliados
 

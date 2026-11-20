@@ -175,7 +175,7 @@
       c.warningCat = c.nextCat;
       c.nextCat = c.nextCat === 'luna' ? 'morita' : 'luna';
       const agent = c.agents && c.agents[c.warningCat];
-      if (agent && agent.mode !== 'assist') { agent.mode = 'alert'; agent.modeT = 1.65; }
+      if (agent && agent.mode !== 'assist' && agent.mode !== 'pounce' && agent.mode !== 'fetch') { agent.mode = 'alert'; agent.modeT = 1.65; }
       if (c.meowCD <= 0) {
         c.meowCD = 2.8;
         emit('companionWarning', { cat: c.warningCat, kind: c.warningKind });
@@ -223,6 +223,26 @@
         a.phase += dt * (a.moving ? 2.8 : 0.9);
         a.modeT = Math.max(0, a.modeT - dt);
 
+        if (a.mode === 'pounce' && a.pounce) {
+          const pz = a.pounce, f = a.target;
+          pz.t += dt / 0.36;
+          const k = Math.min(1, pz.t), tx = f ? f.x - Math.sign(f.x - pz.x0 || 1) * 6 : pz.x0, ty = f ? f.y - (f.h || 20) * 0.35 : pz.y0;
+          a.x = pz.x0 + (tx - pz.x0) * k; a.y = pz.y0 + (ty - pz.y0) * k - Math.sin(k * Math.PI) * 58;
+          a.face = tx < pz.x0 ? -1 : 1; a.moving = true; a.vx = 0;
+          if (pz.t >= 1 && !pz.hit) { pz.hit = true; catStrike(f); }
+          if (pz.t >= 1.55) { a.mode = 'return'; a.pounce = null; a.target = null; }
+          continue;
+        }
+        if (a.mode === 'fetch' && a.fetch) {
+          const fz = a.fetch;
+          fz.t += dt;
+          const goingOut = fz.t < 0.45, k = goingOut ? fz.t / 0.45 : Math.min(1, (fz.t - 0.45) / 0.5);
+          const fx0 = goingOut ? fz.x0 : fz.tx, fy0 = goingOut ? fz.y0 : fz.ty, fx1 = goingOut ? fz.tx : P.x + side * 46, fy1 = goingOut ? fz.ty : P.y + P.h / 2;
+          a.x = fx0 + (fx1 - fx0) * k; a.y = fy0 + (fy1 - fy0) * k - Math.sin(k * Math.PI) * 26;
+          a.face = fx1 < fx0 ? -1 : 1; a.moving = true; a.vx = 0;
+          if (fz.t >= 0.95) { a.mode = 'follow'; a.fetch = null; }
+          continue;
+        }
         if (a.mode === 'assist' && (!a.target || a.target.dead || a.modeT <= 0)) {
           a.target = null; a.mode = 'return';
         }
@@ -245,7 +265,7 @@
         }
 
         // V58: en la tirolesa las dos viajan en los hombros de Sofía.
-        if (P.zip && a.mode !== 'assist') { a.mode = 'shoulder'; a.modeT = 0.35; }
+        if ((P.zip || P.rope) && a.mode !== 'assist' && a.mode !== 'pounce') { a.mode = 'shoulder'; a.modeT = 0.35; }
         if (COMPANION_IDLE_MODES.has(a.mode) && a.modeT <= 0) a.mode = a.mode === 'explore' ? 'return' : 'follow';
         if (a.mode === 'return') {
           const homeX = companionAnchorX(P.x + side * 48, P);
@@ -269,7 +289,7 @@
           tx = nearLeft ? z.x1 - 16 - (side < 0 ? 20 : 0) : z.x2 + 16 + (side > 0 ? 20 : 0);
           ty = z.y - 3;
         }
-        if (a.mode === 'shoulder' && P.zip) { a.x = P.x + side * 12; a.y = foot; a.vx = 0; }
+        if (a.mode === 'shoulder' && (P.zip || P.rope)) { a.x = P.x + side * 12; a.y = foot; a.vx = 0; }
 
         const dx = tx - a.x, dy = ty - a.y;
         if (Math.hypot(dx, dy) > 230) {
@@ -307,7 +327,7 @@
       c.warningT = Math.max(c.warningT, 0.78);
       c.action = 'assist'; c.actionT = 0.78;
       const agent = c.agents && c.agents[c.warningCat];
-      if (agent) { agent.mode = 'assist'; agent.modeT = 0.58; agent.target = target; }
+      if (agent && agent.mode !== 'pounce' && agent.mode !== 'fetch') { agent.mode = 'assist'; agent.modeT = 0.58; agent.target = target; }
       emit('companionAssist', { cat: c.warningCat, foe: target });
     }
 
@@ -322,11 +342,10 @@
         .sort((a, b) => Math.hypot(a.x - P.x, a.y - P.y) - Math.hypot(b.x - P.x, b.y - P.y));
       c.cmdCD = CC.cooldown; c.cmdMax = CC.cooldown;
       if (near.length) {
-        const f = near[0], agent = c.agents && c.agents.luna, ev = [];
-        if (f.isBoss && EN.bossArmored(f, P)) { f.state = 'dizzy'; f.stateT = 0; }
-        else EN.hit(f, 'cat', ev, f.x - (Math.sign(f.x - P.x) || 1) * 20);
-        for (const e of ev) handleWorldEvent(e);
-        if (agent) { agent.mode = 'assist'; agent.modeT = 0.7; agent.target = f; }
+        const f = near[0], agent = c.agents && c.agents.luna;
+        // V58.2: Luna salta en arco hasta el enemigo y lo araña al caer (el golpe llega con ella, no antes).
+        if (agent) { agent.mode = 'pounce'; agent.modeT = 1.4; agent.target = f; agent.pounce = { t: 0, x0: agent.x, y0: agent.y, hit: false }; }
+        else catStrike(f);
         c.warningCat = 'luna'; c.warningKind = 'enemy'; c.action = 'assist'; c.actionT = 0.7; c.lastCmd = 'luna';
         burst(f.x, f.y - 14, 0xfff3c4, 16);
         emit('catCommand', { cat: 'luna', foe: f });
@@ -339,7 +358,12 @@
         if (Math.hypot(g.x - P.x, g.y - P.y) < CC.gemRange) { g.fetchT = 2.2; n++; (W._chasing = W._chasing || new Set()).add(g); }
       }
       const agent = c.agents && c.agents.morita;
-      if (agent) { agent.mode = 'explore'; agent.modeT = 0.9; }
+      // V58.2: Morita corre hasta donde están los cristales y vuelve con ellos (vuelan detrás de ella hacia Sofía).
+      const fetched = W.pickups.filter((g) => g.fetchT > 0 && !g.got);
+      if (agent && fetched.length) {
+        const far = fetched.reduce((b, g) => (Math.hypot(g.x - P.x, g.y - P.y) > Math.hypot(b.x - P.x, b.y - P.y) ? g : b));
+        agent.mode = 'fetch'; agent.modeT = 1.4; agent.fetch = { t: 0, x0: agent.x, y0: agent.y, tx: far.x, ty: far.y + 14 };
+      } else if (agent) { agent.mode = 'explore'; agent.modeT = 0.9; }
       c.action = 'excited'; c.actionT = 0.9; c.lastCmd = 'morita';
       emit('catCommand', { cat: 'morita', gems: n });
       message('catCmd', n ? ST.MESSAGES.catsFetch.replace('{n}', n) : ST.MESSAGES.catsNothing, 1.4, 2);
@@ -347,11 +371,24 @@
       return 'morita';
     }
 
+    /** V58.2: el arañazo de Luna (al llegar su salto). Un jefe que embiste de frente solo queda mareado. */
+    function catStrike(f) {
+      const P = G.P, ev = [];
+      if (!f || f.dead) return;
+      if (f.isBoss && EN.bossArmored(f, P)) { f.state = 'dizzy'; f.stateT = 0; }
+      else EN.hit(f, 'cat', ev, f.x - (Math.sign(f.x - P.x) || 1) * 20);
+      for (const e of ev) handleWorldEvent(e);
+      burst(f.x, f.y - 14, 0xfff3c4, 16);
+      (G.catFx = G.catFx || []).push({ kind: 'claw', x: f.x, y: f.y - (f.h || 24) * 0.55, t: 0, dir: Math.sign(f.x - P.x) || 1 });
+      emit('catScratch', { cat: 'luna', foe: f });
+    }
+
     /* ---------- Daño ---------- */
     function hurt(srcX, srcY, kind) {
       const P = G.P, CB = C.combat;
       if (G.state !== 'playing' || P.invuln > 0 || P.dead || G.godMode) return false;
       if (P.zip) { P.zip = null; P.zipCD = 0.6; }   // V58: un golpe la suelta de la tirolesa
+      if (P.rope) { P.ropeLast = P.rope; P.rope = null; P.ropeCD = 0.6; }   // V58.2: y de la cuerda
       const dir = U.sign(P.x - srcX) || -P.face || 1;
       if (P.shield) {
         P.shield = false;
@@ -370,6 +407,10 @@
       if (kind !== 'fall') { P.vx = dir * CB.knockX; P.vy = CB.knockY; P.noCut = true; P.ground = null; }
       G.shakeT = Math.max(G.shakeT, 0.3);
       emit('hurt', { kind, lives: G.run.lives, x: P.x, y: P.y });
+      if (G.companions && G.companions.agents && kind !== 'fall') {
+        for (const name of COMPANION_NAMES) { const a = G.companions.agents[name]; if (a && a.mode !== 'pounce' && a.mode !== 'fetch') { a.mode = 'alert'; a.modeT = 0.8; } }
+        G.companions.hissT = 0.8;
+      }
       burst(P.x, P.y - 10, 0xff6b69, 14);
       if (G.run.lives <= 0) die();
       return true;
@@ -377,7 +418,7 @@
 
     function die() {
       const P = G.P;
-      P.zip = null;
+      P.zip = null; P.rope = null;
       P.dead = true; P.vx = 0; P.vy = P.water ? 40 : -260; P.ground = null; P.noCut = true;   // en el agua se hunde
       G.state = 'dying'; G.timers.dying = 0;
       G.run.deaths++;
@@ -675,7 +716,8 @@
           updateGates();
           updateSigns();
           if (!G.run.busSeen && !G.room && P.y > W.bounds.streetY - 520) { G.run.busSeen = true; emit('busSeen'); }
-          if (P.ground === W.street && U.overlap(U.bodyRect(P), W.goal)) startVictory();
+          // V58.2: en el mar que baja hasta el lecho, la escotilla se alcanza buceando.
+          if ((P.ground === W.street || (P.water && P.water.toStreet)) && U.overlap(U.bodyRect(P), W.goal)) startVictory();
           // Red de seguridad: posición inválida o fuera de todo volumen jugable.
           const lost = !Number.isFinite(P.x) || !Number.isFinite(P.y) || P.y > W.bounds.y2 + 300 ||
             (!G.room && (P.x < W.bounds.x1 - 200 || P.x > W.bounds.x2 + 200));
@@ -687,6 +729,9 @@
       if (G.waterFx) updateWaterFx(dt);
       for (const f of G.fx) { f.x += f.vx * dt; f.y += f.vy * dt; f.vy += 220 * dt; f.life -= dt; }
       if (G.fx.length) G.fx = G.fx.filter((f) => f.life > 0);
+      // V58.2: efectos de las gatitas (arañazo) y su bufido al ver a Sofía herida.
+      if (G.catFx && G.catFx.length) { for (const f of G.catFx) f.t += dt; G.catFx = G.catFx.filter((f) => f.t < 0.42); }
+      if (G.companions && G.companions.hissT > 0) G.companions.hissT = Math.max(0, G.companions.hissT - dt);
     }
 
     function rescue() {

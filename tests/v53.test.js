@@ -69,11 +69,14 @@ test('agua del submarino: profunda, ninguna plataforma dentro y cada orilla con 
   for (const z of deep) {
     for (const p of W.platforms) {
       const inside = p.y > z.y + 4 && p.y < z.y2 - 4 && p.x2 > z.x1 + 2 && p.x1 < z.x2 - 2;
-      assert.ok(!inside, 'plataforma dentro del agua: ' + p.id);
+      // V58.2: el mar abierto ocupa todo lo que hay bajo la isla; sus repisas sumergidas existen (ahí caminan
+      // cangrejos y niños buzos) y quedan marcadas: Sofía las atraviesa nadando y no las usa para puertas ni obstáculos.
+      if (z.sea) assert.ok(!inside || p.underwater, 'repisa sumergida sin marcar: ' + p.id);
+      else assert.ok(!inside, 'plataforma dentro del agua: ' + p.id);
     }
-    // V58: el mar abierto va de pared a pared del mundo; se sale por la superficie (balsas, peces) o buceando por
-    // sus desagües. Que no sea una trampa lo comprueba el análisis de alcanzabilidad.
-    if (z.sea) { assert.ok(z.drains.length >= 1, 'el mar tiene desagües'); continue; }
+    // V58.2: el mar abierto va de pared a pared y baja hasta el lecho, donde está la escotilla (la meta). Que no sea
+    // una trampa lo comprueba el análisis de alcanzabilidad (se llega buceando).
+    if (z.sea) { assert.ok(z.toStreet && Math.abs(z.y2 - W.bounds.streetY) < 1, 'el mar llega al lecho de la escotilla'); continue; }
     for (const side of ['left', 'right']) {
       const edge = side === 'left' ? z.x1 : z.x2;
       const ground = W.platforms.some((p) => Math.abs(p.y - z.y) <= C.water.climbUp && (side === 'left' ? p.x2 >= edge - 6 && p.x1 < edge : p.x1 <= edge + 6 && p.x2 > edge));

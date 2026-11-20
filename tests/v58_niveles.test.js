@@ -27,15 +27,17 @@ test('cada nivel crece al doble: los verticales en ancho y alto; los apaisados e
   }
 });
 
-test('mar abierto y órbita: mundo de borde a borde, mar con desagües y jefe, gravedad menor en órbita', () => {
+test('mar completo y órbita: mundo de borde a borde, mar hasta el lecho con Poseidón, gravedad menor en órbita', () => {
   const sea = NS.World.buildWorld({ levels: [LV.SUBMARINO_LEVEL] });
   const z = sea.waters.find((q) => q.sea);
-  assert.ok(z && z.deep && z.drains.length === 2);
+  // V58.2: bajo la isla todo es mar: llega hasta el lecho, donde está la escotilla (meta). Se baja nadando.
+  assert.ok(z && z.deep && z.toStreet && z.drains.length === 0);
+  assert.ok(Math.abs(z.y2 - sea.bounds.streetY) < 1, 'el mar llega al lecho');
+  assert.ok(sea.goal.y1 < z.y2 && sea.goal.y2 > z.y2 - 1 && sea.goal.x1 > z.x1 && sea.goal.x2 < z.x2, 'la escotilla está en el lecho del mar');
   assert.ok(Math.abs(z.x1 - sea.bounds.x1) < 2 && Math.abs(z.x2 - sea.bounds.x2) < 2, 'el mar va de pared a pared');
-  const bottoms = sea.solids.filter((s) => s.water === z.id && s.bottom);
-  for (const d of z.drains) assert.ok(bottoms.every((s) => s.x2 <= d.x1 + 0.01 || s.x1 >= d.x2 - 0.01), 'el fondo tiene hueco en el desagüe');
+  assert.ok(sea.breaches.length === 2, 'dos brechas en los puentes de la meseta');
   const shark = sea.foes.find((f) => f.isBoss);
-  assert.equal(shark.kind, 'shark'); assert.equal(shark.waterZone, z, 'el tiburón patrulla el mar abierto');
+  assert.equal(shark.kind, 'poseidon'); assert.equal(shark.waterZone, z, 'Poseidón está en el mar, sobre la salida');
   assert.ok(sea.foes.some((f) => f.kind === 'crab'), 'cangrejos en las ruinas');
   const orbit = NS.World.buildWorld({ levels: [LV.ESPACIAL_LEVEL] });
   assert.equal(orbit.gravityMul, 0.72);
@@ -94,8 +96,13 @@ test('GATAS: Luna derrota al enemigo cercano; sin enemigos, Morita trae los cris
   P.x = rat.x - 90; P.y = rat.plat.y - P.h / 2; P.ground = rat.plat; G.updateCamera(0, true);
   G.drainEvents();
   G.step(DT, inp({ catsPressed: true }));
-  assert.ok(rat.dead, 'Luna derribó a la rata');
-  assert.ok(G.drainEvents().some((e) => e.type === 'catCommand' && e.cat === 'luna'));
+  // V58.2: Luna salta en arco hasta la rata y la araña al caer (≈ 0,36 s): el golpe llega con ella.
+  const ev1 = G.drainEvents();
+  assert.ok(ev1.some((e) => e.type === 'catCommand' && e.cat === 'luna'));
+  assert.ok(!rat.dead && G.companions.agents.luna.mode === 'pounce', 'Luna va en el aire');
+  let scratched = false;
+  for (let i = 0; i < 30 && !scratched; i++) { G.step(DT, inp()); scratched = G.drainEvents().some((e) => e.type === 'catScratch'); }
+  assert.ok(scratched && rat.dead, 'Luna derribó a la rata al caer sobre ella');
   assert.ok(G.companions.cmdCD > 0, 'enfriamiento');
   G.step(DT, inp({ catsPressed: true }));
   assert.ok(!G.drainEvents().some((e) => e.type === 'catCommand'), 'no se repite durante el enfriamiento');

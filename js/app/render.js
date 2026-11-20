@@ -26,7 +26,9 @@
     hurt: ['land_01'],
     dead: ['dive_01'],
     cheer: ['cheer_01', 'cheer_02', 'cheer_03'],
-    zip: ['cheer_02']                 // V58: colgada de la tirolesa (puño en alto sobre el cable)
+    zip: ['cheer_02'],                // V58: colgada de la tirolesa (puño en alto sobre el cable)
+    swing: ['cheer_02'],              // V58.2: colgada de una cuerda
+    swimKick: ['kick_01', 'kick_02', 'kick_03', 'kick_04']
   };
   const COMPANIONS = {
     luna: { name: 'LUNA', src: 'assets/companions/luna.png',
@@ -63,7 +65,7 @@
   const ASTRO = {
     idle: ['idle'], run: ['walk_a', 'walk_b'], fastRun: ['walk_a', 'walk_b'], jump: ['rise'], fall: ['fall'], land: ['land'],
     climb: ['walk_a', 'walk_b'], dash: ['dash'], kick: ['kick_1', 'kick_2', 'kick_2', 'kick_1'], hurt: ['hurt'], dead: ['down'],
-    cheer: ['victory_1', 'victory_2', 'victory_3'], zip: ['victory_2']
+    cheer: ['victory_1', 'victory_2', 'victory_3'], zip: ['victory_2'], swing: ['victory_2']
   };
   const ASTRO_META = [1, 128, 232];
   const BUS_FRAMES = [1, 2, 3, 4].map((n) => 'assets/vehicles/camion_frame_0' + n + '.png');
@@ -633,6 +635,38 @@
       if (z.look === 'alga') for (let s = 26, k = 0; s < z.len - 20; s += 30, k++) {
         const px = z.ax + z.ux * s, py = z.ay + z.uy * s, sw = Math.sin(T * 2 + k) * 3;
         line(px, py, px + sw, py + 12, '#3fae7a', 0.8, 2.2);
+      }
+    }
+  }
+
+  /* ---------- V58.2 · Cuerdas para columpiarse ----------
+     columpio: estructura de patio (dos postes en A y travesaño) con llanta; liana: rama y bejuco con hojas;
+     cable: viga metálica y cable de acero. Si Sofía cuelga, la cuerda sigue su ángulo; suelta, oscila y se calma. */
+  function drawRopes(G, V, T) {
+    const P = G.P, R = NS.CONFIG.rope;
+    for (const r of G.world.ropes || []) {
+      if (r.ax < V.x1 - 220 || r.ax > V.x2 + 220 || r.ay > V.y2 + 20 || r.ay + r.len < V.y1 - 200) continue;
+      const held = P.rope === r;
+      let a = held ? P.ropeA : Math.sin(T * 1.3 + r.ax * 0.01) * 0.045;
+      if (!held && r.relT !== undefined) { const dtR = G.world.t - r.relT; if (dtR < 4) a += r.relA * Math.exp(-1.2 * dtR) * Math.cos(dtR * 3.4); }
+      const tipX = r.ax + Math.sin(a) * r.len, tipY = r.ay + Math.cos(a) * r.len;
+      if (r.look === 'columpio') {
+        const base = r.base || r.ay + 290, half = 150;
+        for (const sx of [-1, 1]) { line(r.ax + sx * half, r.ay, r.ax + sx * (half + 26), base, '#2f6fae', 1, 5); line(r.ax + sx * half, r.ay, r.ax + sx * (half - 26), base, '#2f6fae', 1, 5); }
+        fillRR(r.ax - half - 8, r.ay - 6, half * 2 + 16, 9, 3, '#e8453c');
+        line(r.ax - 8, r.ay, tipX - 8, tipY, '#6b6f78', 1, 1.8); line(r.ax + 8, r.ay, tipX + 8, tipY, '#6b6f78', 1, 1.8);
+        ctx.save(); ctx.translate(tipX, tipY + 6); ctx.rotate(-a); fillRR(-15, -3, 30, 9, 4, '#262a30'); fillRR(-11, -1, 22, 4, 2, '#4a5059'); ctx.restore();
+      } else if (r.look === 'liana') {
+        fillRR(r.ax - 34, r.ay - 9, 68, 12, 6, '#5a3b22'); circle(r.ax - 30, r.ay - 10, 9, '#2f8f3e', 0.9); circle(r.ax + 28, r.ay - 12, 11, '#3fae4f', 0.9); circle(r.ax + 2, r.ay - 15, 10, '#2f8f3e', 0.9);
+        line(r.ax, r.ay, tipX, tipY, '#3d7a2a', 1, 4); line(r.ax, r.ay, tipX, tipY, '#7fc95a', 0.7, 1.4);
+        for (let k = 0.15; k < 1; k += 0.17) { const lx = r.ax + Math.sin(a) * r.len * k, ly = r.ay + Math.cos(a) * r.len * k; ellipse(lx + 5, ly, 5, 2.6, '#4fb85a', 0.9); }
+      } else {
+        fillRR(r.ax - 30, r.ay - 8, 60, 10, 3, '#8a96a8'); fillRect(r.ax - 30, r.ay - 8, 60, 2, '#d7e3f2');
+        line(r.ax, r.ay, tipX, tipY, '#c9d2d8', 1, 2.4); line(r.ax, r.ay, tipX, tipY, '#4a5664', 0.6, 0.8);
+        ring(tipX, tipY + 3, 5, 5, '#9ee7ff', 0.9, 2);
+      }
+      if (!held && G.state === 'playing' && Math.hypot(P.x - r.ax, P.y - (r.ay + r.len)) < 260) {
+        tri(tipX - 6, tipY + 18, tipX + 6, tipY + 18, tipX, tipY + 10, '#d9ff65', 0.45 + 0.35 * Math.sin(T * 6));   // aviso: se puede agarrar
       }
     }
   }
@@ -1742,7 +1776,7 @@
     fillRect(x - 3, y - 1, 6, 4, '#ffe14a');
   }
 
-  const BOSS_GLOW = { dog: '#ff984f', kid: '#ff6868', chile: '#ff593f', bat: '#b48cff', pigeon: '#63d9ed', bravo: '#ff625b', rat: '#d9ff65', piranha: '#76ffca', shark: '#6cefff', drone: '#b69bff' };
+  const BOSS_GLOW = { dog: '#ff984f', kid: '#ff6868', chile: '#ff593f', bat: '#b48cff', pigeon: '#63d9ed', bravo: '#ff625b', rat: '#d9ff65', piranha: '#76ffca', shark: '#6cefff', drone: '#b69bff', pulpo: '#d58bff', poseidon: '#7ff0ff' };
   function drawBossFX(f, T) {
     if (!f.isBoss) return;
     const color = BOSS_GLOW[f.kind] || '#ffd35a', cx = f.x;
@@ -1889,6 +1923,37 @@
     if ((f.state === 'windup' || f.state === 'aim') && !f.dead) bang(f.x, f.y - dh * 0.86, T);
   }
 
+  /* ---------- V58.2 · Enemigos marinos con atlas (paquete «Sofía · enemigos marinos R1») ----------
+     Cuadros recortados: [x, y, w, h, cx, cy] (cx, cy = posición del recorte dentro de su celda, para que no tiemble).
+     El arte mira a la derecha. `hurt` es la caja del cuerpo dentro de la celda (guía del paquete) para escalar. */
+  const MARINE_DIR = 'assets/enemies/marinos/';
+  const MARINE_ART = {"shark":{"src":"tiburon","cell":[321,216],"frames":[[34,28,253,160,34,28],[372,36,218,143,51,36],[694,45,217,125,52,45],[1011,41,224,134,48,41],[1342,38,205,140,58,38],[1656,44,218,128,51,44],[58,261,204,126,58,45],[360,248,242,152,39,32],[691,246,222,156,49,30],[1018,246,211,156,55,30],[1335,242,219,163,51,26],[1659,233,212,182,54,17],[54,441,213,198,54,9],[377,468,209,144,56,36],[674,473,257,134,32,41],[979,474,289,132,16,42],[1296,475,296,130,12,43],[1614,472,303,135,9,40],[20,690,280,131,20,42],[362,686,239,140,41,38],[690,684,224,144,48,36],[1009,681,228,150,46,33],[1336,681,216,150,52,33],[1665,680,201,152,60,32],[63,906,195,132,63,42],[388,899,187,145,67,35],[690,891,224,161,48,27],[1017,890,212,163,54,26],[1336,890,216,164,52,26],[1659,895,213,153,54,31],[49,1112,222,151,49,32],[377,1115,208,146,56,35],[699,1121,206,133,57,41]],"anims":{"swim":[[0,1,2,3,4,5,6],100,1],"bite":[[7,8,9,10,11,12,13],91,0],"dash_bite":[[14,15,16,17,18],77,0],"hurt":[[19,20,21,22,23,24,25],111,0],"death":[[26,27,28,29,30,31,32],143,0]},"fx":[[9,9,137,107]]},"piranha":{"src":"pirana","cell":[289,180],"frames":[[35,11,218,157,35,11],[328,15,210,150,39,15],[619,20,206,140,41,20],[907,17,208,146,40,17],[1196,17,208,145,40,17],[1487,15,205,150,42,15],[42,200,205,140,42,20],[334,204,198,131,45,24],[618,207,209,126,40,27],[904,198,214,144,37,18],[1185,198,231,144,29,18],[1471,200,237,139,26,20],[9,372,271,156,9,12],[327,386,213,127,38,26],[626,380,193,140,48,20],[913,374,197,151,46,14],[1192,377,217,145,36,17],[1478,369,223,162,33,9],[31,551,227,157,31,11],[328,555,211,149,39,15],[622,555,200,150,44,15],[923,563,177,134,56,23],[1217,557,167,145,61,17],[1496,557,186,146,51,17],[59,730,171,160,59,10],[344,731,178,158,55,11],[630,732,184,156,52,12],[923,736,176,147,56,16],[1204,732,192,156,48,12],[1493,734,193,152,48,14],[44,920,201,139,44,20],[344,921,178,138,55,21],[626,923,193,133,48,23],[919,924,184,132,52,24],[1179,923,242,133,23,23]],"anims":{"swim":[[0,1,2,3,4,5,6],83,1],"bite":[[7,8,9,10,11,12,13],77,0],"hurt":[[14,15,16,17,18,19,20],111,0],"stun":[[21,22,23,24,25,26,27],167,1],"death":[[28,29,30,31,32,33,34],143,0]},"fx":[[25,9,199,142],[296,20,154,120],[535,20,175,119],[789,13,164,134],[1037,18,167,123],[61,186,126,108],[258,179,231,121],[521,194,202,92],[787,191,168,97],[1033,189,174,102]]},"pulpo":{"src":"pulpo","cell":[322,196],"frames":[[40,9,242,178,40,9],[368,9,229,177,46,9],[692,12,226,171,48,12],[1007,12,240,172,41,12],[1326,12,245,172,38,12],[1648,12,245,172,38,12],[55,231,212,125,55,35],[370,232,225,123,48,36],[691,233,228,122,47,37],[1006,229,242,129,40,33],[1328,229,242,129,40,33],[1646,231,250,125,36,35],[49,414,224,151,49,22],[366,411,233,157,44,19],[681,409,247,161,37,17],[1003,409,248,162,37,17],[1311,410,275,159,23,18],[1648,418,245,144,38,26],[53,620,215,131,53,32],[374,608,218,155,52,20],[676,608,257,155,32,20],[992,616,269,139,26,28],[1311,624,275,124,23,36],[1636,625,270,122,26,37],[62,807,197,150,62,23],[367,808,231,147,45,24],[690,808,229,147,46,24],[1005,807,244,150,39,23],[1323,807,251,150,35,23],[1619,815,304,134,9,31],[52,999,218,158,52,19],[375,998,215,159,53,18],[698,1001,213,154,54,21],[1020,1007,213,141,54,27],[1339,1010,220,135,51,30],[1663,1022,215,111,53,42],[48,1223,226,102,48,47]],"anims":{"idle":[[0,1,2,3,4,5],143,1],"swim":[[6,7,8,9,10,11],111,1],"bite":[[12,13,14,15,16,17],91,0],"tentacle_slam":[[18,19,20,21,22,23],111,0],"ink_attack":[[24,25,26,27,28,29],125,0],"hurt":[[30,31,32,33],111,0],"death":[[34,35,36],200,0]},"fx":null},"poseidon":{"src":"poseidon","cell":[323,267],"frames":[[34,9,254,249,34,9],[359,18,251,230,36,18],[676,32,263,202,30,32],[998,43,265,180,29,43],[1319,52,269,163,27,52],[1645,65,262,137,30,65],[67,279,188,242,67,12],[388,281,192,238,65,14],[683,286,248,228,37,19],[981,299,298,202,12,32],[1301,310,305,180,9,43],[1631,293,291,215,16,26],[58,547,206,241,58,13],[371,553,226,229,48,19],[682,553,251,229,36,19],[995,561,270,213,26,27],[1304,560,299,214,12,26],[1633,563,286,208,18,29],[56,818,211,232,56,17],[376,826,217,217,53,25],[699,821,216,226,53,20],[1009,845,243,179,40,44],[1330,866,246,137,38,65],[1633,867,287,135,18,66]],"anims":{"idle_swim":[[0,1,2,3,4,5],111,1],"trident_attack":[[6,7,8,9,10,11],100,0],"tidal_attack":[[12,13,14,15,16,17],125,0],"hurt":[[18,19,20],125,0],"death":[[21,22,23],167,0]},"fx":[[35,37,108,97],[187,19,160,133],[377,9,136,153]]}};
+  const MARINE_BODY = { shark: 193, piranha: 173, pulpo: 193, poseidon: 194 };
+  const marineReady = (kind) => !!MARINE_ART[kind] && ready(image(MARINE_DIR + MARINE_ART[kind].src + '.webp'));
+  function marineAnim(f) {
+    const k = f.kind, st = f.state;
+    if (f.dead) return ['death', f.deadT];
+    if (f.flash > 0) return ['hurt', 0.2 - f.flash];
+    if (k === 'poseidon') return st === 'windup' || st === 'charge' ? ['trident_attack', f.stateT] : st === 'aim' ? ['tidal_attack', f.stateT] : st === 'dizzy' ? ['hurt', f.stateT % 0.4] : ['idle_swim', null];
+    if (k === 'pulpo') return st === 'aim' ? ['ink_attack', f.stateT] : st === 'dizzy' ? ['hurt', f.stateT % 0.45] : [Math.abs(f.dir) ? 'swim' : 'idle', null];
+    if (k === 'shark') return st === 'windup' ? ['bite', f.stateT] : st === 'charge' ? ['dash_bite', f.stateT] : st === 'dizzy' ? ['hurt', f.stateT % 0.8] : ['swim', null];
+    return st === 'windup' || st === 'charge' ? ['bite', f.stateT] : st === 'dizzy' ? ['stun', null] : ['swim', null];   // piraña
+  }
+  function drawMarineFoe(f, T) {
+    const A = MARINE_ART[f.kind], im = image(MARINE_DIR + A.src + '.webp');
+    const [name, t] = marineAnim(f), an = A.anims[name] || A.anims.swim || A.anims.idle_swim;
+    const [list, ms, loop] = an;
+    const i = t === null || loop ? Math.floor((T * 1000 + f.phase * 400) / ms) % list.length : Math.min(list.length - 1, Math.floor(Math.max(0, t) * 1000 / ms));
+    const fr = A.frames[list[i]], s = (f.w * 1.25) / MARINE_BODY[f.kind];
+    const [cw, ch] = A.cell;
+    ctx.save();
+    ctx.translate(f.x, f.y + (f.dead ? 0 : Math.sin(T * 2.2 + f.phase) * 1.5));
+    if (f.dir < 0) ctx.scale(-1, 1);
+    ctx.drawImage(im, fr[0], fr[1], fr[2], fr[3], (-cw / 2 + fr[4]) * s, (-ch / 2 + fr[5]) * s, fr[2] * s, fr[3] * s);
+    ctx.restore();
+    if ((f.state === 'windup' || f.state === 'aim') && !f.dead) bang(f.x, f.y - ch * s * 0.42, T);
+  }
+
   function drawFoes(G, V, T) {
     const t9 = T * 9;
     for (const f of G.world.foes) {
@@ -1900,6 +1965,7 @@
       const suit = fTheme === 'submarino' ? 'kid_buzo' : fTheme === 'espacial' ? 'kid_astronauta' : null;
       const sk = f.kind === 'bravo' ? 'dog' : suit && enemyReady(suit) ? suit : f.kind;
       const useSprite = !!ESPR[sk] && enemyReady(sk);
+      const marine = !useSprite && marineReady(f.kind);   // V58.2: piraña, tiburón, pulpo y Poseidón con su atlas
       drawToxiThreat(f, T);
       drawBossFX(f, T);
       ctx.save();
@@ -1907,10 +1973,11 @@
         const punch = Math.sin(Math.min(1, f.flash / 0.2) * Math.PI) * 0.12;
         ctx.translate(f.x, f.y); ctx.scale(1 + punch, 1 - punch); ctx.translate(-f.x, -f.y);
       }
-      if (f.dead && !useSprite) { ctx.globalAlpha = a; ctx.translate(f.x, f.y); ctx.scale(1, -1); ctx.translate(-f.x, -f.y + 18); }
+      if (f.dead && !useSprite && !marine) { ctx.globalAlpha = a; ctx.translate(f.x, f.y); ctx.scale(1, -1); ctx.translate(-f.x, -f.y + 18); }
       else if (f.dead) ctx.globalAlpha = a;
       const b = Math.sin(t9 + f.x) * 1.5, d = f.dir, fl = f.flash > 0;
       if (useSprite) { drawEnemySprite(f, T, sk); }
+      else if (marine) { drawMarineFoe(f, T); }
       else if (f.kind === 'piranha' || f.kind === 'shark') {
         // V57: siluetas acuáticas con hitbox próxima al cuerpo; giro horizontal,
         // cola y aletas animadas. No genera ni requiere sprites imaginarios.
@@ -2076,6 +2143,20 @@
     for (const s of G.world.shots) {
       if (s.x < V.x1 || s.x > V.x2 || s.y < V.y1 || s.y > V.y2) continue;
       if (s.kind === 'poop') { circle(s.x, s.y, 7, '#ffffff', 0.25); circle(s.x, s.y, 4.5, '#f2f2ea'); }
+      else if (s.kind === 'ink') {
+        // V58.2: tinta del pulpo (mancha morada con gotas que se quedan atrás).
+        for (let k = 1; k <= 3; k++) circle(s.x - s.vx * 0.02 * k, s.y - s.vy * 0.02 * k, s.r * (0.7 - k * 0.15), '#3b1747', 0.5 - k * 0.12);
+        circle(s.x, s.y, s.r, '#2a0f35'); circle(s.x - s.r * 0.3, s.y - s.r * 0.35, s.r * 0.32, '#8d4fa8', 0.7);
+      }
+      else if (s.kind === 'tide') {
+        // V58.2: ola de Poseidón (remolino del paquete, girando; si no cargó, anillos de agua).
+        const fxIm = image(MARINE_DIR + 'poseidon_fx.webp'), fx = MARINE_ART.poseidon.fx;
+        if (fx && ready(fxIm)) {
+          const r = fx[2] || fx[0], d = s.r * 3.2;
+          ctx.save(); ctx.translate(s.x, s.y); ctx.rotate((G.world.t * 6) % (Math.PI * 2));
+          ctx.drawImage(fxIm, r[0], r[1], r[2], r[3], -d / 2, -d / 2 * r[3] / r[2], d, d * r[3] / r[2]); ctx.restore();
+        } else { ring(s.x, s.y, s.r, s.r, '#9ff3ff', 0.85, 3); ring(s.x, s.y, s.r * 0.6, s.r * 0.6, '#e9fbff', 0.7, 2); }
+      }
       else if (s.kind === 'plasma') {
         const dd = Math.hypot(s.vx, s.vy) || 1;
         line(s.x - s.vx / dd * 14, s.y - s.vy / dd * 14,
@@ -2195,6 +2276,33 @@
       lunaWarn ? 'alert' : action, luna?.phase ?? 0, lunaMoving, luna?.mode ?? 'follow');
     drawCompanion(SET.morita, moritaX, moritaY, T, -1 - stride * 0.7, morita ? morita.face < 0 : P.face > 0, moritaShoulder,
       moritaWarn ? 'alert' : action, morita?.phase ?? 2.4, moritaMoving, morita?.mode ?? 'follow');
+    // V58.2: animaciones de ayuda. Salto de Luna (estela y arañazo) y carrera de Morita por los cristales.
+    for (const [a, c] of [[luna, SET.luna], [morita, SET.morita]]) {
+      if (!a) continue;
+      if (a.mode === 'pounce' && a.pounce && a.pounce.t < 1) {
+        for (let i = 1; i <= 4; i++) circle(a.x - a.face * i * 9, a.y - 14 + i * 2, 5 - i, c.tint, 0.32 - i * 0.06);
+        line(a.x - a.face * 18, a.y - 22, a.x - a.face * 46, a.y - 10, '#fff3c4', 0.5, 2);
+      }
+      if (a.mode === 'fetch' && a.fetch) {
+        for (let i = 0; i < 3; i++) { const k = (T * 3 + i * 0.33) % 1; circle(a.x - a.face * (10 + k * 26), a.y - 18 - k * 10, 2.4 * (1 - k), '#d9ff65', 0.8 * (1 - k)); }
+      }
+    }
+    for (const fx of G.catFx || []) {
+      const k = fx.t / 0.42;
+      for (let i = -1; i <= 1; i++) {
+        const ox = fx.x + i * 8, oy = fx.y + i * 3;
+        line(ox - 14 * fx.dir, oy - 14 + k * 4, ox + 12 * fx.dir, oy + 12 + k * 4, '#ffffff', 0.9 * (1 - k), 3);
+        line(ox - 14 * fx.dir, oy - 14 + k * 4, ox + 12 * fx.dir, oy + 12 + k * 4, '#ff7ab8', 0.7 * (1 - k), 1.4);
+      }
+      if (k < 0.5) text('¡MIAU!', fx.x, fx.y - 34 - k * 14, 9, '#fff3c4', 'center', 900);
+    }
+    if (state.hissT > 0 && !P.dead) {
+      for (const [a, sh] of [[luna, lunaShoulder], [morita, moritaShoulder]]) {
+        if (!a) continue;
+        const cy = a.y - (sh ? 86 : 52);
+        text('¡FSSS!', a.x, cy - Math.sin(T * 20) * 1.5, 7, '#ff9ab8', 'center', 900);
+      }
+    }
     if (lunaWarn || moritaWarn) {
       const a = lunaWarn ? luna : morita, shoulder = lunaWarn ? lunaShoulder : moritaShoulder;
       const cx = a ? a.x : lunaWarn ? lunaX : moritaX, cy = (a ? a.y : foot) - (shoulder ? 86 : 58);
@@ -2212,8 +2320,8 @@
   const waterGrad = new WeakMap();
   /* V58.1 · Brecha en el puente pintado del fondo del mar (desagüe): se "rompe" el tramo de puente con un hueco de
      agua honda, bordes de piedra quebrada y escombros que caen. */
-  function drawBreach(d, z, T) {
-    const x1 = d.x1, x2 = d.x2, w = x2 - x1, top = z.y2 - 58, bot = z.y2 + 26;
+  function drawBreach(d, T) {
+    const x1 = d.x1, x2 = d.x2, w = x2 - x1, top = d.y1 - 22, bot = d.y2 + 20;
     const yk = (k) => top + (k / 6) * (bot - top), wob = (k) => (k % 2 ? 6 : 0) + Math.sin(k * 2.3) * 3;
     ctx.save();
     ctx.beginPath();
@@ -2235,7 +2343,7 @@
     }
     for (let i = 0; i < 3; i++) {
       const k = ((T * 0.8 + i * 0.37) % 1), px = x1 + w * (0.25 + i * 0.25) + Math.sin(T * 3 + i) * 3;
-      fillRR(px - 3, z.y2 + k * 70, 6, 5, 1.5, '#7d8c84', 0.8 * (1 - k));
+      fillRR(px - 3, d.y2 + k * 70, 6, 5, 1.5, '#7d8c84', 0.8 * (1 - k));
     }
   }
 
@@ -2250,7 +2358,8 @@
         let g = waterGrad.get(z);
         if (!g) { g = ctx.createLinearGradient(0, z.y, 0, z.y2); g.addColorStop(0, 'rgba(120,225,240,0.05)'); g.addColorStop(1, 'rgba(6,42,74,0.16)'); waterGrad.set(z, g); }
         ctx.fillStyle = g; ctx.fillRect(z.x1, z.y, w, h);
-        for (const d of z.drains || []) drawBreach(d, z, T);
+        for (const d of z.drains || []) drawBreach({ x1: d.x1, x2: d.x2, y1: z.y2 - 30, y2: z.y2 }, T);
+        for (const b of G.world.breaches || []) if (b.x2 > V.x1 && b.x1 < V.x2 && b.y2 > V.y1 - 40 && b.y1 < V.y2 + 40) drawBreach(b, T);
         continue;
       }
       if (!front) {
@@ -2371,20 +2480,23 @@
     idle: [0, 6, 210, 226], run: [12, 6, 82, 226], fastRun: [12, 6, 82, 226],
     climb: [6, 6, 115, 226], jump: [22, 5, 95, 226], fall: [27, 4, 115, 130],
     land: [31, 4, 88, 226], dash: [67, 5, 100, 130],
-    kick: [94, 4, 130, 226], hurt: [77, 4, 90, 130],
-    dead: [85, 5, 145, 130], cheer: [98, 5, 155, 226]
+    kick: [94, 4, 130, 226], swimKick: [94, 4, 110, 226], hurt: [77, 4, 90, 130],
+    dead: [85, 5, 145, 130], cheer: [98, 5, 155, 226], zip: [98, 1, 155, 226], swing: [98, 1, 155, 226]
   };
   function drawDiver(G, alpha) {
     const P = G.P, im = image(DIVE_SHEET);
     if (!ready(im)) return false;
     const [first, count, ms, pivot] = DIVE_STATES[P.state] || DIVE_STATES.idle;
-    const oneShot = ['jump', 'land', 'dash', 'kick', 'hurt', 'dead', 'cheer'].includes(P.state);
+    const oneShot = ['jump', 'land', 'dash', 'kick', 'swimKick', 'hurt', 'dead', 'cheer'].includes(P.state);
     const timer = Math.max(0, oneShot ? P.stateT : P.animT) * 1000;
     const idx = Math.floor(timer / ms);
     const frame = first + (oneShot ? Math.min(count - 1, idx) : idx % count);
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.translate(P.x, pivot === 130 ? P.y : P.y + P.h / 2);
+    if (P.state === 'swing' && P.rope) {
+      const hang = NS.CONFIG.rope.hang;
+      ctx.translate(P.x, P.y - P.h / 2 - hang); ctx.rotate(-P.ropeA); ctx.translate(0, P.h + hang);
+    } else ctx.translate(P.x, pivot === 130 ? P.y : P.y + P.h / 2);
     ctx.scale((P.face < 0 ? -1 : 1) * 0.4, 0.4);
     ctx.drawImage(im, (frame % 8) * 256, Math.floor(frame / 8) * 256, 256, 256, -128, -pivot, 256, 256);
     ctx.restore();
@@ -2447,7 +2559,12 @@
     const meta = astro ? ASTRO_META : (NS.ART && NS.ART.SOFIA[name]) || [1, 96, 218];
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.translate(P.x, foot + yOff);
+    const swingA = state === 'swing' && P.rope ? P.ropeA : null;
+    if (swingA !== null) {
+      // V58.2: gira alrededor de la mano (en la cuerda): los pies siguen el ángulo del columpio.
+      const hang = NS.CONFIG.rope.hang, hy = P.y - P.h / 2 - hang;
+      ctx.translate(P.x, hy); ctx.rotate(-swingA); ctx.translate(0, P.h + hang);
+    } else ctx.translate(P.x, foot + yOff);
     let rot;
     if (P.dead) rot = (P.face || 1) * Math.min(1.35, G.timers.dying * 1.9);
     else if (state === 'dash') rot = 0;
@@ -2456,6 +2573,7 @@
     else if (state === 'fall') rot = (P.face || 1) * Math.min(0.12, Math.max(0, P.vy) / 4000);
     else if (state === 'kick') rot = (P.face || 1) * -0.03;
     else if (state === 'zip') rot = Math.sin(T * 3.2) * 0.06 + (P.face || 1) * 0.08;
+    else if (state === 'swing') rot = 0;
     else rot = Math.max(-1, Math.min(1, P.vx / NS.CONFIG.phys.move)) * 0.05;
     ctx.rotate(rot);
     if (ready(im)) {
@@ -2533,6 +2651,7 @@
     drawCascades(G, V, T);
     drawSolids(G, V);
     drawZips(G, V, T);
+    drawRopes(G, V, T);
     drawPlatforms(G, V);
     drawDoors(G, V, T);
     drawCheckpoints(G, V, T);

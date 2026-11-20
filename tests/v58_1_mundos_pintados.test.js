@@ -30,25 +30,36 @@ test('en el mundo armado, lo trazado sobre el dibujo no se dibuja encima; lo agr
   assert.ok(floors.length >= 45 && floors.every((p) => p.hidden && !p.draw), 'repisas pintadas');
   assert.ok(main.filter((p) => p.kind === 'stair').every((p) => p.hidden), 'escalones pintados');
   assert.ok(main.filter((p) => p.plank).every((p) => p.hidden), 'puente de cuerda pintado');
-  // Barca, manta y pez no están en el dibujo: se dibujan. Los hongos gigantes sí están: solo brillan al rebotar.
+  // V58.2: bajo la isla todo es mar (se nada): ya no hay trampolines ni vehículos sumergidos. Solo la barca de la
+  // superficie, que el dibujo no trae y por eso se dibuja.
   const looks = main.filter((p) => p.look).map((p) => p.look).sort();
-  assert.deepEqual(looks, ['bote', 'hongo', 'hongo', 'manta', 'pez']);
-  assert.ok(main.filter((p) => p.look === 'hongo').every((p) => p.artPainted && p.kind === 'bounce'));
+  assert.deepEqual(looks, ['bote']);
   // Relieve del mar: sólido y sin dibujar (roca grande, meseta de la casa-piña y sus puentes).
   const rocks = W.solids.filter((s) => s.kind === 'roca');
   assert.ok(rocks.length >= 10 && rocks.every((s) => s.draw === false), 'relieve sólido sin dibujar');
-  assert.ok(W.zips.some((z) => z.look === 'cadena' && z.painted), 'la cadena pintada es tirolesa');
-  assert.ok(W.zips.some((z) => z.look === 'cuerda' && !z.painted), 'cuerda del mirador');
+  // Tirolesas de cuerda en la isla (bajo el agua se nada: la cadena del barco ya no es tirolesa).
+  assert.ok(W.zips.length >= 2 && W.zips.every((z) => z.look === 'cuerda' && !z.painted), 'tirolesas de cuerda en la isla');
+  const sea = W.waters.find((z) => z.sea);
+  assert.ok(W.zips.every((z) => Math.max(z.ay, z.by) < sea.y), 'las tirolesas quedan sobre el agua');
 });
 
-test('mar abierto alineado con el dibujo: superficie en la espuma de la roca, fondo en el camino de la meseta', () => {
+test('mar completo alineado con el dibujo: superficie en la espuma de la roca y todo lo de abajo es agua', () => {
   const W = NS.World.buildWorld({ levels: [LV.SUBMARINO_LEVEL] });
   const k = C.world.sceneScale * LV.MARINE_ART.px, sea = W.waters.find((z) => z.sea);
-  assert.ok(Math.abs(sea.y / k - 1155) < 1 && Math.abs(sea.y2 / k - 1690) < 1, 'superficie 1155 px, fondo 1690 px');
-  assert.ok(sea.breach && sea.drains.length === 2, 'dos brechas en los puentes del fondo');
+  assert.ok(Math.abs(sea.y / k - 1155) < 1, 'superficie en 1155 px');
+  // V58.2: «solo la isla se camina»: todo lo que está bajo la superficie es mar, hasta el lecho de la escotilla.
+  assert.ok(sea.toStreet && sea.y2 >= W.scenes[0].endY, 'el mar cubre la ciudad hundida y el abismo');
+  const dry = W.platforms.filter((p) => p.region === 'main' && !p.transition && !p.underwater);
+  assert.ok(dry.every((p) => p.y <= sea.y + 4), 'solo la isla (sobre el agua) tiene suelo seco');
+  // Las brechas de los puentes de la meseta son huecos reales: ninguna roca las tapa.
   const blocks = W.solids.filter((s) => s.kind === 'roca');
-  for (const d of sea.drains) assert.ok(blocks.every((b) => b.x2 <= d.x1 + 0.5 || b.x1 >= d.x2 - 0.5 || b.y2 < sea.y2 - 60), 'ninguna roca tapa una brecha');
-  assert.equal(W.foes.find((f) => f.isBoss).waterZone, sea, 'el tiburón patrulla el mar');
+  assert.equal(W.breaches.length, 2);
+  for (const b of W.breaches) assert.ok(blocks.every((r) => r.x2 <= b.x1 + 0.5 || r.x1 >= b.x2 - 0.5 || r.y2 < b.y1 || r.y1 > b.y2), 'ninguna roca tapa una brecha');
+  // Los que nadan patrullan carriles libres de roca.
+  for (const f of W.foes.filter((q) => q.swimLane !== undefined)) {
+    assert.ok(f.waterZone === sea && blocks.every((r) => !(f.y > r.y1 - 10 && f.y < r.y2 + 10 && f.lane.x2 > r.x1 && f.lane.x1 < r.x2)), 'carril libre de roca: ' + f.id);
+  }
+  assert.equal(W.foes.find((f) => f.isBoss).waterZone, sea, 'Poseidón está en el mar');
   assert.ok(W.foes.filter((f) => f.kind === 'piranha').length <= 6);
   // La parada intermedia es la roca grande, justo antes de entrar al mar.
   assert.ok(W.midpoints.length === 1 && W.midpoints[0].y < sea.y && W.midpoints[0].y > sea.y - 200);

@@ -6,7 +6,8 @@
 .toxi-stage::after{content:"";position:absolute;z-index:0;inset:-12%;background:radial-gradient(circle at 70% 45%,rgba(99,155,239,.15),transparent 45%);animation:toxiGlow 7s ease-in-out infinite alternate;pointer-events:none}
 .toxi-stage.toxi-pan{animation:toxiCamera 9s ease-in-out both}
 .toxi-actor{position:absolute;z-index:2;display:flex;flex-direction:column;align-items:center;gap:5px;transform:translateX(-50%);max-width:35%;filter:drop-shadow(0 12px 12px rgba(0,0,0,.55))}
-.toxi-actor img{max-width:100%;height:auto;max-height:48vh;object-fit:contain;image-rendering:auto;transform-origin:50% 100%;animation:toxiBreathe 2.3s ease-in-out infinite alternate}
+.toxi-actor .toxi-bob{display:flex;justify-content:center;max-width:100%;transform-origin:50% 100%;animation:toxiBreathe 2.3s ease-in-out infinite alternate}
+.toxi-actor img{max-width:100%;height:auto;max-height:48vh;object-fit:contain;image-rendering:auto}
 .toxi-actor span{font-size:clamp(10px,2vw,15px);font-weight:850;letter-spacing:.1em;padding:4px 10px;border-radius:100px;background:rgba(7,13,29,.78);border:1px solid rgba(255,255,255,.22);white-space:nowrap;text-shadow:0 1px 2px #000}
 .toxi-actor.enter-left{animation:toxiFromLeft .95s cubic-bezier(.14,.88,.23,1) both}
 .toxi-actor.enter-right{animation:toxiFromRight .95s cubic-bezier(.14,.88,.23,1) both}
@@ -72,3 +73,48 @@
  .toxi-actor span{font-size:9px;padding:3px 7px}
 }
 @media(orientation:portrait){.toxi-caption{bottom:3%}.toxi-text{max-height:22vh}}
+/* V58.2 · LLEGADA AL MAR: reparto animado por cuadros, diálogo arriba línea por línea, recuerdo y burbujas. */
+.toxi-actor.flip img{transform:scaleX(-1)}
+.toxi-actor.float .toxi-bob{animation:toxiFloat 2.7s ease-in-out infinite alternate}
+.toxi-actor.enter-fade{animation:toxiFade .8s ease-out both}
+@keyframes toxiFloat{from{transform:translateY(-5px) rotate(-1.5deg)}to{transform:translateY(6px) rotate(1.5deg)}}
+@keyframes toxiFade{from{opacity:0}to{opacity:1}}
+.toxi-who{display:none}
+.toxi-dialogo{background-position:50% 100%}
+.toxi-dialogo.toxi-pan{animation-name:toxiCameraLow;animation-timing-function:linear}
+@keyframes toxiCameraLow{from{background-position:44% 100%}to{background-position:56% 100%}}
+.toxi-dialogo::before{background:linear-gradient(180deg,rgba(5,7,18,.42),transparent 34%,transparent 78%,rgba(3,7,18,.35))}
+.toxi-dialogo .toxi-caption{top:3%;bottom:auto;left:3%;right:3%;width:auto;max-width:980px;margin:0 auto;padding:10px 18px 13px;border:2px solid rgba(120,215,255,.55);border-radius:14px;background:rgba(6,16,38,.88);box-shadow:0 10px 30px rgba(0,0,0,.35);backdrop-filter:none}
+.toxi-dialogo .toxi-eyebrow{font-size:clamp(9px,1.4vw,12px);color:#ffd27a}
+.toxi-dialogo .toxi-title{font-size:clamp(13px,2.2vw,20px);margin:.15em 0 .3em}
+.toxi-dialogo .toxi-who{display:block;font-size:clamp(11px,1.6vw,15px);font-weight:900;letter-spacing:.12em;margin-bottom:.15em}
+.toxi-who.tone-sofia{color:#ff9ad5}.toxi-who.tone-estoker{color:#ffc35a}.toxi-who.tone-narra{color:#9fe8ff}
+.toxi-who.tone-sofia::after,.toxi-who.tone-estoker::after{content:" ✦";font-size:.85em}
+.toxi-dialogo .toxi-text{margin:0;font-size:clamp(14px,2.3vw,22px);line-height:1.32;font-weight:750;max-height:none;overflow:visible;color:#fff}
+.toxi-line-in .toxi-text,.toxi-line-in .toxi-who{animation:toxiLineIn .35s ease-out both}
+@keyframes toxiLineIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.toxi-dialogo .toxi-cast{left:0}
+.toxi-dialogo .toxi-actor img{max-height:50vh}
+.toxi-dialogo .toxi-actor span{font-size:clamp(8px,1.2vw,11px);padding:2px 8px;letter-spacing:.08em;opacity:.9}
+/* Recuerdo: tono sepia sobre el fondo (capa de color), viñeta, sello y reparto entonado. */
+.toxi-tint{position:absolute;inset:0;z-index:1;pointer-events:none;display:none}
+.toxi-memoria .toxi-tint{display:block;background:#a27b4a;mix-blend-mode:color;opacity:.62}
+.toxi-fx.fx-recuerdo{background:radial-gradient(ellipse at 50% 55%,transparent 42%,rgba(46,26,8,.62) 100%)}
+.toxi-fx.fx-recuerdo::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 37px,rgba(255,240,210,.06) 37px 38px,transparent 38px 113px);animation:toxiFilm .9s steps(3) infinite}
+@keyframes toxiFilm{0%{background-position:0 0}33%{background-position:-41px 0}66%{background-position:23px 0}100%{background-position:0 0}}
+.toxi-caption.toxi-recuerdo::after{content:"RECUERDO";position:absolute;top:-9px;right:16px;font:900 clamp(9px,1.3vw,12px)/1 Georgia,'Times New Roman',serif;letter-spacing:.3em;color:#ffe9c2;padding:4px 8px 4px 11px;border:1.5px solid rgba(255,233,194,.8);border-radius:5px;background:#5a3a14;transform:rotate(-3deg);box-shadow:0 2px 6px rgba(0,0,0,.45)}
+.toxi-memoria .toxi-actor img{filter:sepia(.5) saturate(.82) brightness(1.03)}
+.toxi-memoria .toxi-actor span{background:rgba(52,32,12,.78);border-color:rgba(255,226,180,.35)}
+/* Burbujas que suben. */
+.toxi-bubble{position:absolute;bottom:-30px;border-radius:50%;border:1.5px solid rgba(220,250,255,.7);background:radial-gradient(circle at 32% 30%,rgba(255,255,255,.85),rgba(170,230,255,.16) 45%,rgba(120,200,255,.05) 70%);animation:toxiBubble 7s linear infinite;will-change:transform}
+@keyframes toxiBubble{0%{transform:translate(0,0)}50%{transform:translate(10px,-50vh)}100%{transform:translate(-6px,-105vh)}}
+@media(orientation:landscape) and (max-height:560px){
+ .toxi-dialogo .toxi-caption{top:3%;bottom:auto;left:3%;right:3%;width:auto;padding:6px 12px 8px}
+ .toxi-dialogo .toxi-title{font-size:clamp(12px,2.1vw,16px);margin:.1em 0 .2em}
+ .toxi-dialogo .toxi-text{font-size:clamp(12px,2.1vw,17px);max-height:none}
+ .toxi-dialogo .toxi-cast{left:0}
+ .toxi-dialogo .toxi-actor{max-width:40%}
+ .toxi-dialogo .toxi-actor img{max-height:47vh}
+}
+@media(orientation:portrait){.toxi-dialogo .toxi-caption{top:2%}.toxi-dialogo .toxi-actor img{max-height:34vh}}
+@media(prefers-reduced-motion:reduce){.toxi-bubble{display:none}}

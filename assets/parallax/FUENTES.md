@@ -109,3 +109,31 @@ fuente generadas.
 - Se retiraron el fondo anterior de la escuela (`escuela_fondo.png`, `generated/escuela_patio_tarde.png`,
   `generated/escuela_pasillo_lluvia.png`) y las capas `escuela/` del paquete truncado. Las escenas de cinemática que
   los usaban ahora usan las láminas nuevas.
+
+## V58.2 · Enemigos marinos (`assets/enemies/marinos/`)
+
+- Del paquete `SOFIA_ENEMIGOS_MARINOS_ATLASES_R1`: atlas del tiburón, la piraña, el pulpo y Poseidón, y los efectos
+  del tiburón, la piraña y Poseidón. Convertidos a WebP (7,75 MB → 1,84 MB) sin cambiar el dibujo. Los rectángulos de
+  cada cuadro y su posición en la celda (`origin`) se copiaron a `render.js` (`MARINE_ART`); `sourceCrop` es la
+  posición en la hoja fuente del generador y no se usa.
+- Sus cajas de colisión y valores de daño son guías del propio paquete: el juego usa las suyas.
+
+## V58.2 · Cinemática «Llegada al mar» (`assets/cinematica/marino/`)
+
+| Archivos | Origen | Qué se hizo |
+|---|---|---|
+| `fondo_playa`, `fondo_costa`, `fondo_descenso`, `fondo_santuario` | `CINEMATICA_SOFIA_ESTOKER_DIALOGOS_Y_ANIMACIONES` · `fondos/*/capa_1.png` | Solo la franja ilustrada; el cielo (o el agua) se extendió hacia arriba con un degradado de sus propios colores. Sus capas 0 y 2 (cielo y palmeras vectoriales) no se usan. 1600 × 667 WebP |
+| `fondo_isla_cima`, `fondo_isla_orilla` | Lámina 01 del mar «Marino PRO V4» (ya en el juego) | Dos recortes: la cima (donde empieza el nivel) y la orilla con el puente y la cueva |
+| `paseo_mano_00…11` | mismo paquete · `sprites/estoker_sofia_mano_*` | Halo invisible quitado (alfa < 8), mismo recorte para los 12 |
+| `estoker_platica_00…11`, `estoker_explica_00…06` | `ESTOKER_CAMINANDO_Y_CONTANDO_A_SOFIA_32_FRAMES` · `conversacion_con_sofia`, `explicar_estoker` | Se quitaron pedazos de cuadros vecinos que traían los recortes (cabezas y manos sueltas en los bordes) |
+| `sofia_{original,uniforme,rosa}_asombro_00…05` | `SOFIA_3_VERSIONES_CAMINANDO_ASOMBRADA_FRAMES` (reno rojo, escolar roja, rosa morada = los tres vestuarios del juego) | Halo rojo invisible quitado, mismo recorte por vestuario; solo los cuadros a la derecha (los de la izquierda eran espejos) |
+| `tiburon_nado`, `pirana_nado`, `pulpo_flota`, `pulpo_tinta`, `poseidon_tridente` | Atlas marinos de arriba | Cuadros compuestos en su celda (mismo pivote), al 80 % |
+
+No se usaron: el reproductor HTML, el video, los GIF y los subtítulos del paquete de la cinemática (su guion era otro:
+Sofía y Estoker van juntos a una misión; el autor pidió que Sofía llegue sola y lo recuerde); «caminar_estoker» y
+«caminar_con_sofia» (no forman una caminata continua).
+
+## V58.2 · Paquete de invierno (`Assets_V56_Invierno`): no integrado
+
+Sus fondos, enemigos árticos y la Sofía de invierno están pensados para «escenas celestes» y niveles de baja gravedad
+que este juego no tiene. Queda fuera hasta que exista un mundo de invierno.

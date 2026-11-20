@@ -9,6 +9,8 @@
   const GATE_W = 14;
   const ALCOVE_H = 84;    // Sofía mide 62: cabe de pie
 
+  const AQUA_KINDS = new Set(['piranha', 'shark', 'pulpo']);   // V58.2: nadan en carriles del mar abierto
+
   function buildWorld(opts = {}) {
     const U = NS.util, C = NS.CONFIG, LV = NS.LEVELS, ST = NS.STORY, EN = NS.Enemies, OB = NS.Obstacles, PHY = NS.Physics;
     const S = C.world.sceneScale;
@@ -20,7 +22,7 @@
     const W = {
       version: C.version, difficulty: diffKey, seed,
       scenes: [], platforms: [], solids: [], hazards: [], foes: [], pickups: [], doors: [], rooms: [],
-      checkpoints: [], midpoints: [], signs: [], gates: [], shots: [], waters: [], zips: [], cracks: [], bounds: null, bus: null, goal: null, t: 0
+      checkpoints: [], midpoints: [], signs: [], gates: [], shots: [], waters: [], zips: [], ropes: [], cracks: [], breaches: [], bounds: null, bus: null, goal: null, t: 0
     };
     const counters = Object.create(null);
     const nid = (scope, kind) => {
@@ -169,7 +171,9 @@
       sc.waters = (m.water || []).map((q) => {
         const z = { id: nid(scope, 'agua'), x1: X(q.x1), x2: X(q.x2), y: Y(q.y), y2: Y(q.y + q.depth), scene: sc.index,
           theme: sc.theme, kind: q.kind || 'lago', banks: q.banks || [], sea: !!q.sea, boss: !!q.boss, breach: !!q.breach,
-          drains: (q.drains || []).map((d) => ({ x1: X(d.x1), x2: X(d.x2) })) };
+          toStreet: !!q.toStreet, drains: (q.drains || []).map((d) => ({ x1: X(d.x1), x2: X(d.x2) })) };
+        // V58.2: un mar «hasta la calle» llega al lecho marino, donde está la meta (la escotilla de rescate).
+        if (z.toStreet) { z.y2 = streetY; z.x1 = Math.min(z.x1, -B); z.x2 = Math.max(z.x2, B); }
         z.deep = z.y2 - z.y >= C.water.shallowDepth;
         (W.waters = W.waters || []).push(z);
         for (const side of z.banks) {
@@ -178,7 +182,7 @@
         }
         // El fondo del agua profunda es sólido: desde abajo no se entra al agua (es techo para lo que está debajo).
         // V58: los desagües son huecos en ese fondo (por ahí cae el agua en cascada y se sale buceando).
-        if (z.deep) {
+        if (z.deep && !z.toStreet) {
           let x = z.x1 - 12;
           for (const d of z.drains.slice().sort((a, b) => a.x1 - b.x1)) {
             if (d.x1 - x > 1) addSolid({ scope, kind: 'bank', x1: x, x2: d.x1, y1: z.y2, y2: z.y2 + 10, scene: sc.index, theme: sc.theme, draw: false, water: z.id, bottom: true });
@@ -194,6 +198,18 @@
         W.zips.push(z);
         return z;
       });
+      // V58.2: cuerdas para columpiarse (ancla y largo) y brechas dibujadas en la roca del mar.
+      for (const q of m.ropes || []) W.ropes.push(PHY.makeRope(X(q.x), Y(q.y), q.len * S, { id: nid(scope, 'cuerda'), scene: sc.index, theme: sc.theme, look: q.look || 'cuerda', arc: !!q.arc, base: q.base !== undefined ? Y(q.base) : null }));
+      for (const b of m.breaches || []) W.breaches.push({ x1: X(b.x1), x2: X(b.x2), y1: Y(b.y1), y2: Y(b.y2), scene: sc.index });
+      sc.swimLanes = (m.swimLanes || []).map((l) => ({ y: Y(l.y), x1: X(l.x1), x2: X(l.x2) }));
+      // Repisas dentro de un mar abierto: ahí viven cangrejos y niños buzos; Sofía nada (no se apoya ni usa puertas).
+      const seaZones = sc.waters.filter((z) => z.sea && z.deep);
+      if (seaZones.length) {
+        for (const p of W.platforms) {
+          if (p.scene !== sc.index || p.region !== 'main') continue;
+          if (seaZones.some((z) => p.y > z.y + 4 && p.y < z.y2 && p.x2 > z.x1 && p.x1 < z.x2)) p.underwater = true;
+        }
+      }
       // V58.1: grietas en la roca pintada (solo dibujo; por ahí se cae a la caverna de abajo).
       for (const c of m.cracks || []) W.cracks.push({ x1: X(c.x1), x2: X(c.x2), y1: Y(c.y1), y2: Y(c.y2), scene: sc.index });
       // V58.1: `draw: false` = relieve que ya pinta el arte (roca y meseta del mar trazadas sobre el dibujo).
@@ -343,7 +359,7 @@
       const rng = U.makeRng(U.hashSeed(seed, 'room', i));
       // V58: sin sectores laterales (mar, órbita) la trampilla y su salida van en cornisas del propio nivel.
       const pool = hasSides(i) ? sc.side[side]
-        : sc.surfaces.filter((p) => !p.start && !p.exit && !p.mid && p.kind === 'floor' && p.w >= 130);
+        : sc.surfaces.filter((p) => !p.start && !p.exit && !p.mid && !p.underwater && p.kind === 'floor' && p.w >= 130);
       const segs = pool.filter((p) => !p.bridge && !p.rowAlcove && p.w >= 100 &&
         p.y > sc.startY + sc.drawH * 0.22 && p.y < sc.startY + sc.drawH * 0.72);
       const doorPl = segs.length ? segs[Math.floor(rng() * segs.length)] : pool.find((p) => p.w >= 90);
@@ -429,20 +445,25 @@
       else if (bossDef.kind === 'pigeon' || bossDef.kind === 'drone') flyY = arena.y - 84;
       // Jefe marino: está dentro del último estanque profundo, no levitando
       // en la superficie de salida. Conserva el orden del recorrido.
-      const bossWater = bossDef.kind === 'shark'
+      const aquaticBoss = bossDef.kind === 'shark' || bossDef.kind === 'poseidon';
+      const bossWater = aquaticBoss
         ? (W.waters.find((z) => z.scene === sc.index && z.deep && z.boss) || W.waters.filter((z) => z.scene === sc.index && z.deep).slice(-1)[0]) : null;
-      if (bossWater) {
+      let bossLane = null;
+      if (bossWater && bossWater.toStreet) {
+        // V58.2: en el mar que baja hasta el lecho, el jefe custodia la salida (la arena), a media altura sobre ella.
+        const span = Math.max(260, arena.x2 - arena.x1);
+        const cx = (arena.x1 + arena.x2) / 2;
+        bossLane = { x1: Math.max(bossWater.x1 + 30, cx - span / 2 - 60), x2: Math.min(bossWater.x2 - 30, cx + span / 2 + 60) };
+        bossX = cx; flyY = Math.max(bossWater.y + 80, arena.y - 70);
+      } else if (bossWater) {
         bossX = (bossWater.x1 + bossWater.x2) / 2;
         flyY = bossWater.y + (bossWater.y2 - bossWater.y) * 0.52;
+        bossLane = { x1: bossWater.x1 + 25, x2: bossWater.x2 - 25 };
       }
       const boss = EN.create(bossDef.kind, {
         id: scope + ':jefe', x: bossX, y: flyY, plat: arena, scene: sc.index,
-        lane: { x1: arena.x1 + 26, x2: arena.x2 - 26 },
         region: 'main', diff, rng, isBoss: true, bossName: bossDef.name, hp: bossDef.hp,
-        waterZone: bossWater, lane: bossWater
-          ? { x1: bossWater.x1 + 25, x2: bossWater.x2 - 25 }
-          : { x1: Math.max(W.bounds.x1 + 30, arena.x1 + 22),
-              x2: Math.min(W.bounds.x2 - 30, arena.x2 - 22) }
+        waterZone: bossWater, lane: bossLane || { x1: Math.max(W.bounds.x1 + 30, arena.x1 + 22), x2: Math.min(W.bounds.x2 - 30, arena.x2 - 22) }
       });
       boss.arena = arena;
       addFoe(boss);
@@ -455,6 +476,7 @@
       // V50: la plataforma de salida es la arena del jefe; los enemigos comunes ya no la comparten.
       // V58: la fila de la parada intermedia también queda despejada (reaparecer junto a un enemigo no es justo).
       const panel = sc.surfaces.filter((s) => !s.start && !s.exit && !s.mid && s !== sc.bossArena && s.w >= 96);
+      const dryPanel = panel.filter((s) => !s.underwater);
       const sides = [...sc.side[-1], ...sc.side[1]].filter((p) => !p.rowAlcove && p.w >= 100 && p.kind !== 'bounce');
 
       // Letreros (tutorial en el tramo 1, historia en el resto).
@@ -501,7 +523,7 @@
       const obsBudget = Math.max(1, Math.round(def.obstacleBudget * (0.8 + 0.2 * diff.foeDensity)));
       for (let n = 0; n < obsBudget; n++) {
         const type = def.obstacles[n % def.obstacles.length];
-        placeObstacle(type, n % 2 === 0 ? panel : sides, rng, sc, scope, diff);
+        placeObstacle(type, n % 2 === 0 ? dryPanel : sides, rng, sc, scope, diff);
       }
       if (def.obstacles.includes('spikes') || def.obstacles.includes('spark')) {
         placeObstacle(def.obstacles.includes('spark') && i >= 2 ? 'spark' : 'spikes', sides, rng, sc, scope, diff);
@@ -525,7 +547,7 @@
         if (x !== null) addGem(x, pl.y - 30, i, 'main', rng);
       }
       // Un poder por tramo en el panel.
-      const powPl = panel.length ? panel[Math.floor(rng() * panel.length)] : null;
+      const powPl = dryPanel.length ? dryPanel[Math.floor(rng() * dryPanel.length)] : null;
       if (powPl) {
         const x = claim(powPl, 26, rng, 24);
         if (x !== null) addPickup({ scope, type: 'power', power: ['shield', 'magnet', 'heart'][i % 3], x, y: powPl.y - 32, scene: i, phase: rng() * 6 });
@@ -535,6 +557,20 @@
     function placeFoe(kind, cands, rng, walkersOn, sc, scope, diff) {
       const T = EN.TYPES[kind];
       if (!T) return null;
+      if (AQUA_KINDS.has(kind) && sc.swimLanes && sc.swimLanes.length) {
+        // V58.2 · Mar abierto: cada pez, tiburón o pulpo patrulla su propio carril de nado (trazado libre de roca).
+        const z = W.waters.find((q) => q.scene === sc.index && q.sea && q.deep);
+        const used = W.foes.filter((f) => f.scene === sc.index && f.swimLane !== undefined).map((f) => f.swimLane);
+        const cap = { piranha: 6, shark: 2, pulpo: 4 }[kind];
+        if (!z || W.foes.filter((f) => f.scene === sc.index && f.kind === kind).length >= cap) return null;
+        const order = sc.swimLanes.map((l, i) => i).filter((i) => !used.includes(i));
+        if (!order.length) return null;
+        const li = order[Math.floor(rng() * order.length)], L = sc.swimLanes[li];
+        const x = L.x1 + (L.x2 - L.x1) * (0.25 + 0.5 * rng());
+        const f = EN.create(kind, { x, y: L.y, waterZone: z, lane: { x1: L.x1, x2: L.x2 }, scene: sc.index, diff, rng });
+        f.swimLane = li;
+        return f;
+      }
       if (kind === 'piranha') {
         // Solo en pozas profundas; repartir amenazas sin amontonarlas.
         // V58: el mar abierto admite seis repartidas a lo ancho y a distintas profundidades.
