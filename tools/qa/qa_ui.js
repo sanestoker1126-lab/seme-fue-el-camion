@@ -16,7 +16,8 @@ const fs = require('fs');
   await page.waitForFunction(() => window.CAMION_QA && !document.getElementById('start').disabled, null, { timeout: 30000 });
   await page.waitForTimeout(800);
   await page.screenshot({ path: `${out}/menu.png`, fullPage: false });
-  const menuInfo = await page.evaluate(() => ({ tramos: document.querySelectorAll('#tramos .tramo').length, newBadges: document.querySelectorAll('#tramos .tramo.new').length, intro: document.querySelector('.missionIntro').textContent, newLevels: document.getElementById('newLevels').textContent }));
+  // V58.6: menú compacto (tarjetas de misión, paradas y JUGAR); sin párrafo de introducción ni texto de niveles nuevos.
+  const menuInfo = await page.evaluate(() => { const m = document.getElementById('menu'); return { tramos: document.querySelectorAll('#tramos .tramo').length, missions: [...document.querySelectorAll('#missions .mission')].map((b) => b.dataset.m + (b.disabled ? ':bloqueada' : '')), start: document.getElementById('start').textContent, scrolls: m.scrollHeight > m.clientHeight + 2 }; });
   console.log('menu', JSON.stringify(menuInfo));
   await page.click('#btnOptions');
   await page.waitForTimeout(200);

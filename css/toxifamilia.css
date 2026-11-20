@@ -118,3 +118,50 @@
 }
 @media(orientation:portrait){.toxi-dialogo .toxi-caption{top:2%}.toxi-dialogo .toxi-actor img{max-height:34vh}}
 @media(prefers-reduced-motion:reduce){.toxi-bubble{display:none}}
+/* V58.6 · APERTURA EN PENUMBRA (layout 'sombras'): fondo casi negro, dos siluetas a contraluz de los monitores,
+   niebla y una luz que parpadea; subtítulos abajo; quien habla se ilumina con su color. */
+.toxi-sombras{background-color:#010206;background-size:cover}
+.toxi-sombras::before{background:radial-gradient(ellipse 70% 60% at 50% 40%,rgba(1,3,10,.80),rgba(0,0,0,.97) 72%)}
+.toxi-sombras::after{display:none}
+.toxi-sombras.toxi-pan{animation:toxiCreep 30s ease-out both}
+@keyframes toxiCreep{from{background-position:50% 46%}to{background-position:50% 54%}}
+.toxi-sombras .toxi-fx.fx-monitores{background:none}
+.toxi-sombras .toxi-monitor{top:18%;height:24%;opacity:.0;animation:toxiScreenOn 2.4s ease-out forwards,toxiFlicker 3.1s 2.4s infinite;box-shadow:0 0 60px rgba(76,231,238,.55),inset 0 0 22px rgba(76,231,238,.45)}
+.toxi-sombras .toxi-monitor.m1{animation-delay:.5s,2.9s}.toxi-sombras .toxi-monitor.m2{animation-delay:1s,3.4s}
+@keyframes toxiScreenOn{0%{opacity:0}30%{opacity:.6}36%{opacity:.1}60%{opacity:.85}100%{opacity:.9}}
+.toxi-sombras .toxi-clock{top:5%;right:4%;font-size:clamp(14px,2.6vw,26px);opacity:.75}
+.toxi-place{position:absolute;top:5%;left:4%;max-width:60%;font:800 clamp(9px,1.5vw,13px)/1.3 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.22em;color:#9fb6cf;opacity:0;animation:toxiType 1.6s steps(24) .6s forwards}
+@keyframes toxiType{from{opacity:0;clip-path:inset(0 100% 0 0)}to{opacity:.9;clip-path:inset(0 0 0 0)}}
+.toxi-lamp{position:absolute;inset:0;background:radial-gradient(ellipse 34% 75% at 50% 0%,rgba(150,195,255,.16),transparent 72%);animation:toxiLamp 6s steps(1) infinite}
+@keyframes toxiLamp{0%,100%{opacity:1}41%{opacity:.35}43%{opacity:1}71%{opacity:.6}72%{opacity:1}}
+.toxi-fx.fx-niebla::before,.toxi-fx.fx-niebla::after{content:"";position:absolute;inset:-20% -45%;pointer-events:none;
+ background:radial-gradient(ellipse 28% 14% at 28% 78%,rgba(150,170,210,.18),transparent 70%),radial-gradient(ellipse 24% 12% at 70% 70%,rgba(150,170,210,.14),transparent 70%);
+ animation:toxiFog 22s ease-in-out infinite alternate}
+.toxi-fx.fx-niebla::after{animation-duration:31s;animation-direction:alternate-reverse;opacity:.8;transform:translateY(-6%)}
+@keyframes toxiFog{from{translate:-9% 0}to{translate:9% 0}}
+.toxi-sombras .toxi-cast{left:0}
+.toxi-sombras .toxi-actor{bottom:0;max-width:44%;filter:none;animation:toxiEmerge 2.8s ease-out both}
+.toxi-sombras .toxi-actor:nth-child(2){animation-delay:.9s}
+@keyframes toxiEmerge{from{opacity:0;translate:0 14px}to{opacity:1;translate:0 0}}
+.toxi-sombras .toxi-actor .toxi-bob{animation-duration:3.4s}
+.toxi-sombras .toxi-actor img{max-height:76vh;filter:brightness(.55) drop-shadow(0 0 10px var(--glow,#4ce7ee66));transition:filter .7s ease,transform .7s ease}
+.toxi-sombras .toxi-actor.listening img{filter:brightness(.32) drop-shadow(0 0 6px #00000000)}
+.toxi-sombras .toxi-actor.speaking img{filter:brightness(1.05) drop-shadow(0 0 12px var(--glow)) drop-shadow(0 0 34px var(--glow));transform:scale(1.03)}
+.toxi-actor[data-voice="ESTOKER"]{--glow:#4ce7eeaa}
+.toxi-actor[data-voice="DOÑA TÓXICA"]{--glow:#ff77bdaa}
+.toxi-sombras .toxi-caption{top:auto;bottom:4%;left:50%;right:auto;width:min(92%,780px);max-width:none;transform:translateX(-50%);padding:12px 18px 10px;border:0;border-radius:12px;
+ background:linear-gradient(180deg,rgba(0,0,0,.30),rgba(0,0,0,.74));box-shadow:none;backdrop-filter:none;text-align:center;animation:none;transition:opacity .5s}
+.toxi-sombras .toxi-eyebrow,.toxi-sombras .toxi-title{display:none}
+.toxi-sombras .toxi-who{display:block;font-size:clamp(10px,1.5vw,13px);font-weight:900;letter-spacing:.34em;margin-bottom:.35em}
+.toxi-sombras .toxi-who.tone-estoker{color:#4ce7ee}.toxi-who.tone-toxica{color:#ff77bd}
+.toxi-sombras .toxi-text{margin:0;max-height:none;overflow:visible;font-size:clamp(15px,2.4vw,22px);line-height:1.38;font-weight:650;font-style:italic;color:#f1f4fa;text-shadow:0 2px 8px #000}
+.toxi-caption.toxi-wait{opacity:0;pointer-events:none}
+@media(orientation:landscape) and (max-height:560px){
+ .toxi-sombras .toxi-caption{left:50%;right:auto;width:min(86%,720px);bottom:3%;padding:7px 14px 6px}
+ .toxi-sombras .toxi-cast{left:0}
+ .toxi-sombras .toxi-actor{max-width:40%}
+ .toxi-sombras .toxi-actor img{max-height:72vh}
+ .toxi-sombras .toxi-text{font-size:clamp(13px,2.1vw,18px)}
+}
+@media(orientation:portrait){.toxi-sombras .toxi-actor{max-width:48%}.toxi-sombras .toxi-actor img{max-height:52vh}.toxi-sombras .toxi-caption{bottom:3%}}
+@media(prefers-reduced-motion:reduce){.toxi-sombras .toxi-monitor{opacity:.9}.toxi-place{opacity:.9;clip-path:none}.toxi-lamp{animation:none}}

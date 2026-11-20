@@ -75,7 +75,11 @@
   const FRAME_MS = { idle: 180, run: 92, fastRun: 64, jump: 110, fall: 180, land: 75, climb: 125, dash: 50, kick: 58, hurt: 100, dead: 260, cheer: 170 };
   // Escala base: un cuadro con k = 1 mide ≈ 61 u de pie, igual que la caja de colisión (62 u).
   const SOFIA_BASE = 0.33;
-  const ninaSrc = (f) => (NINA_VARIANT_DIR[ropt.ninaLook] || NINA_DIR) + f + '.png';
+  const ninaSrc = (f, look) => (NINA_VARIANT_DIR[look] || NINA_DIR) + f + '.png';
+  /* V58.6 · Ropa por nivel: cada vestuario solo en su mundo. Escuela = uniforme; Luna = astronauta; mar = buzo solo
+     dentro del agua (drawDiveWater); Guadalajara y la isla del mar = ropa de calle (ORIGINAL o ROSA, opción). */
+  const casualLook = () => (ropt.ninaLook === 'rosa' ? 'rosa' : 'original');
+  function outfitFor(theme) { return theme === 'espacial' ? 'astronauta' : theme === 'escuela' ? 'uniforme' : casualLook(); }
 
   const hex = (n) => '#' + (n >>> 0).toString(16).padStart(6, '0').slice(-6);
   const images = new Map();
@@ -1608,6 +1612,8 @@
         circle((s.x1 + s.x2) / 2, s.y1 + h / 2, 4, '#d9ff65', 0.5 + 0.3 * Math.sin(G.world.t * 5 + s.x1));
       } else if (s.kind === 'coral') {
         drawCoral(s, V);
+      } else if (s.kind === 'barda') {
+        drawBarda(s, x1, y1, x2, y2);
       } else if (s.kind === 'gate') {
         const h = s.y2 - s.y1, lift = (s.openT || 0) * (h - 6);
         if (s.openT >= 1) continue;
@@ -1622,6 +1628,19 @@
         for (let bx = s.x1 + 28; bx < s.x2; bx += 28) line(bx, y1 + 4, bx, y2, '#101923', 0.3, 1);
       }
     }
+  }
+
+  /* V58.6 · Barda de azotea: muro de block aplanado y pintado, con remate de concreto (los vidrios van aparte, en
+     drawHazards, porque son el peligro). */
+  function drawBarda(s, x1, y1, x2, y2) {
+    const w = x2 - x1;
+    fillRect(x1, y1, w, y2 - y1, '#d9c7a6');
+    fillRect(x1, Math.max(y1, s.y2 - 46), w, s.y2 - Math.max(y1, s.y2 - 46), '#b9554a');   // guardapolvo rojo de la escuela
+    fillRect(x1, y1, 4, y2 - y1, '#f1e4cb', 0.75);
+    fillRect(x2 - 5, y1, 5, y2 - y1, '#9c8a6c', 0.8);
+    for (let by = s.y1 + 22; by < s.y2 - 46; by += 22) line(x1 + 2, by, x2 - 2, by, '#b9a582', 0.45, 1);   // juntas del block
+    if (s.y1 >= y1 - 1) { fillRect(s.x1 - 4, s.y1, s.x2 - s.x1 + 8, 7, '#8f8578'); fillRect(s.x1 - 4, s.y1, s.x2 - s.x1 + 8, 2, '#cfc6b8'); }
+    for (const [fx, fy, r] of [[0.3, 0.42, 9], [0.62, 0.6, 7], [0.45, 0.25, 6]]) circle(s.x1 + (s.x2 - s.x1) * fx, s.y1 + (s.y2 - s.y1) * fy, r, '#c4ae88', 0.35);   // manchas de humedad
   }
 
   /* ---------- Elementos del mundo ---------- */
@@ -1767,7 +1786,20 @@
       const x1 = h.type === 'pot' ? h.x - 14 : h.x1, x2 = h.type === 'pot' ? h.x + 14 : h.x2;
       const y1 = h.type === 'pot' ? h.hangY - 10 : h.y - 30, y2 = h.type === 'pot' ? h.floorY + 4 : h.y + 6;
       if (!inView(V, x1, y1, x2, y2)) continue;
-      if (h.type === 'spikes') {
+      if (h.type === 'spikes' && h.look === 'vidrios') {
+        // V58.6 · Vidrios de botella rotos sobre la barda: verdes, ámbar y claros, con brillo que parpadea.
+        const n = Math.max(3, Math.round((h.x2 - h.x1) / 5.5));
+        const COLORS = ['#58b07a', '#c98a3c', '#cfeffc', '#3f8f5f', '#e0a85a'];
+        for (let i = 0; i < n; i++) {
+          const k = (i * 37 + 11) % 17, hh = 13 + (k % 5) * 4, bx = h.x1 + 2 + (h.x2 - h.x1 - 4) * (i + 0.5) / n, lean = ((k % 3) - 1) * 4;
+          tri(bx - 4.6, h.y + 1, bx + lean, h.y - hh - 1.5, bx + 4.6, h.y + 1, '#0b1a14', 0.55);   // contorno: se lee sobre cielo y sobre muro
+          tri(bx - 3.6, h.y + 1, bx + lean, h.y - hh, bx + 3.6, h.y + 1, COLORS[k % COLORS.length], 0.95);
+          line(bx - 1.2, h.y - 1, bx + lean * 0.6, h.y - hh + 4, '#ffffff', 0.65, 1.2);
+        }
+        const tw = (Math.sin(T * 5 + h.x1) + 1) / 2;
+        circle(h.x1 + (h.x2 - h.x1) * 0.3, h.y - 10, 2.2 + tw, '#ffffff', 0.35 + 0.4 * tw);
+        circle(h.x1 + (h.x2 - h.x1) * 0.72, h.y - 7, 1.6 + (1 - tw), '#ffffff', 0.3 + 0.4 * (1 - tw));
+      } else if (h.type === 'spikes') {
         const n = Math.max(2, Math.round((h.x2 - h.x1) / 13));
         const sw = (h.x2 - h.x1) / n;
         ellipse((h.x1 + h.x2) / 2, h.y + 1, (h.x2 - h.x1) / 2 + 4, 4, '#06111b', 0.5);
@@ -2552,35 +2584,8 @@
   }
 
 
-  /* V54 · Usa los frames y pivotes del atlas submarino existente; mientras Sofía
-     no está dentro del agua, se mantiene su traje también al correr y saltar. */
+  /* Atlas submarino (traje de buzo turquesa y coral). V58.6: solo se usa dentro del agua del mar (drawDiveWater). */
   const DIVE_SHEET = 'assets/player/sofia/sofia_submarina_complementaria.png';
-  const DIVE_STATES = {
-    idle: [0, 6, 210, 226], run: [12, 6, 82, 226], fastRun: [12, 6, 82, 226],
-    climb: [6, 6, 115, 226], jump: [22, 5, 95, 226], fall: [27, 4, 115, 130],
-    land: [31, 4, 88, 226], dash: [67, 5, 100, 130],
-    kick: [94, 4, 130, 226], swimKick: [94, 4, 110, 226], hurt: [77, 4, 90, 130],
-    dead: [85, 5, 145, 130], cheer: [98, 5, 155, 226], zip: [98, 1, 155, 226], swing: [98, 1, 155, 226]
-  };
-  function drawDiver(G, alpha) {
-    const P = G.P, im = image(DIVE_SHEET);
-    if (!ready(im)) return false;
-    const [first, count, ms, pivot] = DIVE_STATES[P.state] || DIVE_STATES.idle;
-    const oneShot = ['jump', 'land', 'dash', 'kick', 'swimKick', 'hurt', 'dead', 'cheer'].includes(P.state);
-    const timer = Math.max(0, oneShot ? P.stateT : P.animT) * 1000;
-    const idx = Math.floor(timer / ms);
-    const frame = first + (oneShot ? Math.min(count - 1, idx) : idx % count);
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    if (P.state === 'swing' && P.rope) {
-      const hang = NS.CONFIG.rope.hang;
-      ctx.translate(P.x, P.y - P.h / 2 - hang); ctx.rotate(-P.ropeA); ctx.translate(0, P.h + hang);
-    } else ctx.translate(P.x, pivot === 130 ? P.y : P.y + P.h / 2);
-    ctx.scale((P.face < 0 ? -1 : 1) * 0.4, 0.4);
-    ctx.drawImage(im, (frame % 8) * 256, Math.floor(frame / 8) * 256, 256, 256, -128, -pivot, 256, 256);
-    ctx.restore();
-    return true;
-  }
   /* V58.3 · Mundo marino: Sofía usa sus cuadros normales en tierra (la isla, los saltos) y, en el instante en que
      entra al agua (nada o vadea), cambia a los cuadros de buceo de sofia_submarina_complementaria.png; al salir
      vuelve a los normales. Cada estado del agua tiene su animación del atlas (tabla sacada de su JSON: primer
@@ -2656,8 +2661,7 @@
     if (sea && inSeaWater(P) && drawDiveWater(G, alpha)) return;
     const swimA = sea ? null : swimAnimFor(P);
     if (swimA && drawSwimPlayer(G, T, swimA, alpha)) return;
-    const outfit = suitTheme === 'espacial' ? 'astronauta' : ropt.ninaLook;
-    if (outfit === 'buzo' && drawDiver(G, alpha)) return;
+    const outfit = outfitFor(suitTheme);
     let yOff = 0;
     if (P.dead) { const t = Math.min(1, G.timers.dying / 0.9); yOff = -Math.sin(t * Math.PI) * 42; }
     const astro = outfit === 'astronauta' && ready(image(ASTRO_DIR + 'idle.webp'));
@@ -2669,7 +2673,7 @@
     else if (state === 'dead') ix = 0;
     else ix = Math.floor(P.animT * 1000 / (FRAME_MS[state] || 100)) % list.length;
     const name = list[Math.max(0, Math.min(list.length - 1, ix))];
-    const im = image(astro ? ASTRO_DIR + name + '.webp' : ninaSrc(name));
+    const im = image(astro ? ASTRO_DIR + name + '.webp' : ninaSrc(name, outfit));
     const meta = astro ? ASTRO_META : (NS.ART && NS.ART.SOFIA[name]) || [1, 96, 218];
     ctx.save();
     ctx.globalAlpha = alpha;
@@ -2788,6 +2792,6 @@
     drawCinematic(G, T);
   }
 
-  NS.Render = { init, resize, draw, preload, setQuality, setOptions, image, ready, NINA, NINA_DIR, NINA_VARIANT_DIR, COMPANIONS, COMPANIONS_SUB, PAINTERS,
+  NS.Render = { init, resize, draw, preload, setQuality, setOptions, image, ready, outfitFor, NINA, NINA_DIR, NINA_VARIANT_DIR, COMPANIONS, COMPANIONS_SUB, PAINTERS,
     BACKDROPS, DEPTH_ART, backdropUrls, depthUrls, castUrls, enemyExt, COMPANIONS_SPACE, toggleDebug: () => (debug = !debug), get debug() { return debug; } };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

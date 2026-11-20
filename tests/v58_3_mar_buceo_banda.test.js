@@ -25,7 +25,7 @@ test('en el mar: dentro del agua, cuadros de buceo; fuera, los normales (sin atl
   const iDive = body.indexOf('if (sea && inSeaWater(P) && drawDiveWater(G, alpha)) return;');
   const iSwim = body.indexOf('const swimA = sea ? null : swimAnimFor(P);');
   assert.ok(iDive > 0 && iSwim > iDive, 'primero el buceo dentro del agua; el atlas de nado no se usa en el mar');
-  assert.match(body, /const outfit = suitTheme === 'espacial' \? 'astronauta' : ropt\.ninaLook;/, 'en tierra del mar, vestuario normal del menú');
+  assert.match(body, /const outfit = outfitFor\(suitTheme\);/, 'en tierra del mar, ropa de calle (V58.6: outfitFor)');
   assert.match(r, /const inSeaWater = \(P\) => !!\(P\.water \|\| P\.wade\);/, 'nadar o vadear = estar en el agua');
   assert.match(r, /waterLeap: \['air_01'\]/); assert.match(r, /diveIn: \['dive_01'\]/);
 });

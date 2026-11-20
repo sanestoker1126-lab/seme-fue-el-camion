@@ -146,12 +146,18 @@
           const open = free || missionUnlocked(save, M.id) >= 1;
           const isNewM = M.levels.some((d) => d.isNew);
           const b = document.createElement('button');
+          b.type = 'button';
           b.className = 'mission' + (mi === selMission ? ' sel' : '') + (open ? '' : ' locked') + (isNewM ? ' new' : '');
-          const short = M.label.replace(/^MISIÓN \d+ · /, '');
-          b.innerHTML = (open ? '' : '🔒 ') + 'M' + (mi + 1) + '<small>' + esc(short) + '</small>';
+          b.dataset.m = M.id;
+          const short = missionName(M);
+          // V58.6: tarjeta con el arte de su mundo, número, nombre y avance (paradas abiertas / total).
+          const got = Math.min(M.levels.length, free ? M.levels.length : missionUnlocked(save, M.id));
+          const meta = open ? (M.levels.length > 1 ? got + ' / ' + M.levels.length + ' PARADAS' : '1 NIVEL') : 'BLOQUEADA';
+          b.innerHTML = '<span class="mNum">' + (open ? 'M' + (mi + 1) : '🔒') + '</span><span class="mName">' + esc(short) + '</span><span class="mMeta">' + meta + '</span>';
           b.disabled = !open;
-          b.setAttribute('aria-label', open ? 'Misión ' + (mi + 1) + ': ' + short : 'Misión ' + (mi + 1) + ' bloqueada');
-          b.onclick = () => { selMission = mi; paintMenu(G, opt); };
+          b.setAttribute('aria-pressed', String(mi === selMission));
+          b.setAttribute('aria-label', open ? 'Misión ' + (mi + 1) + ': ' + short + ', ' + meta.toLowerCase() : 'Misión ' + (mi + 1) + ' bloqueada');
+          b.onclick = () => { selMission = mi; cb.click(); paintMenu(G, opt); };
           mbox.appendChild(b);
         });
       }
@@ -177,33 +183,30 @@
         box.appendChild(b);
       });
       const tl = $('tramosLabel');
-      if (tl) tl.textContent = M.label + ' · ELIGE UNA PARADA';
-      const looks = $('lookPicker');
-      if (looks) {
-        looks.replaceChildren();
-        for (const [key, label] of [['original', 'ORIGINAL'], ['uniforme', 'UNIFORME'], ['rosa', 'ROSA'], ['buzo', 'BUZO'], ['astronauta', 'ASTRONAUTA']]) {
-          const b = document.createElement('button');
-          b.type = 'button';
-          b.className = 'lookOption' + (opt.ninaLook === key ? ' selected' : '');
-          b.textContent = label;
-          b.setAttribute('aria-pressed', String(opt.ninaLook === key));
-          b.onclick = () => cb.look(key);
-          looks.appendChild(b);
-        }
-      }
+      if (tl) tl.textContent = 'PARADAS · ' + missionName(M) + (M.levels.length > 1 ? ' · ELIGE DÓNDE EMPEZAR' : '');
+      // V58.6: los seis objetos como puntos (el nombre aparece al pasar el dedo o el ratón).
       const col = $('collection');
-      col.innerHTML = ST.ITEMS.map((it) => '<span class="it' + (save.items[it.id] ? ' got' : '') + '" title="' + esc(it.name) + '">' + (save.items[it.id] ? esc(it.name) : '???') + '</span>').join('');
+      if (col) col.innerHTML = ST.ITEMS.map((it) => '<i class="pip' + (save.items[it.id] ? ' got' : '') + '" title="' + (save.items[it.id] ? esc(it.name) : 'Objeto sin encontrar') + '"></i>').join('');
       const found = ST.ITEMS.filter((it) => save.items[it.id]).length;
-      $('collectionCount').textContent = found + ' / ' + ST.ITEMS.length;
+      if ($('collectionCount')) $('collectionCount').textContent = found + ' / ' + ST.ITEMS.length;
       const rec = [];
       if (save.bestTime) rec.push('Mejor tiempo ' + fmtTime(save.bestTime));
       if (save.bestScore) rec.push('Récord ' + save.bestScore + ' pts');
       if (save.wins) rec.push(save.wins + (save.wins === 1 ? ' llegada' : ' llegadas'));
-      $('records').textContent = rec.join(' · ') || 'Sin récords todavía.';
+      if ($('records')) $('records').textContent = rec.join(' · ') || 'Sin récords todavía.';
+      paintStart();
       const nNew = MISSIONS.reduce((n, M) => n + M.levels.filter((d) => d.isNew).length, 0);
       if ($('levelsCount')) $('levelsCount').textContent = String(TOTAL_LEVELS);
       if ($('newLevels')) $('newLevels').textContent = nNew ? nNew + ' niveles nuevos marcados con ★' : '';
       paintOpts(opt);
+    }
+    /** Nombre corto de la misión («LA ESCUELA», «EL SUBMARINO»…). */
+    function missionName(M) { return M.label.replace(/^MISIÓN \d+ · /, ''); }
+    let playable = false;
+    /** V58.6: el botón principal dice qué misión empieza (solo cuando el juego ya cargó). */
+    function paintStart() {
+      const b = $('start');
+      if (b && playable) b.textContent = '▶ JUGAR · MISIÓN ' + (selMission + 1);
     }
     const OPT_LABEL = {
       musicVol: (v) => (v ? v + '%' : 'NO'), sfxVol: (v) => (v ? v + '%' : 'NO'),
@@ -212,7 +215,7 @@
       lefty: (v) => (v ? 'SÍ' : 'NO'), landingRing: (v) => (v ? 'SÍ' : 'NO'), catsHelp: (v) => (v ? 'SÍ' : 'NO'),
       relaxed: (v) => (v ? 'SÍ' : 'NO'), freeSelect: (v) => (v ? 'SÍ' : 'NO'), cinematics: (v) => (v ? 'VER' : 'SALTAR'), fps: (v) => (v ? 'SÍ' : 'NO'),
       difficulty: (v) => (C.difficulty[v] || C.difficulty.normal).label,
-      ninaLook: (v) => ({ original: 'ORIGINAL', uniforme: 'UNIFORME', rosa: 'ROSA', buzo: 'BUZO', astronauta: 'ASTRONAUTA' }[v] || 'ORIGINAL')
+      ninaLook: (v) => ({ original: 'ORIGINAL', rosa: 'ROSA' }[v] || 'ORIGINAL')
     };
     function paintOpts(opt) {
       for (const pre of ['', 'p']) {
@@ -222,8 +225,8 @@
         if (v) v.textContent = 'VIBRACIÓN: ' + OPT_LABEL.vib(opt.vib);
       }
       const d = C.difficulty[opt.difficulty] || C.difficulty.normal;
-      $('optDiff').textContent = 'DIFICULTAD: ' + d.label;
-      $('diffHelp').textContent = d.lives + ' vidas · enemigos ' + (d.foeDensity < 1 ? 'escasos y lentos' : d.foeDensity > 1 ? 'numerosos y rápidos' : 'normales') + ' · caída dañina desde ' + Math.round(d.fallDamage / 10) + ' m' + (opt.relaxed ? ' · MODO RELAJADO' : '');
+      if ($('optDiff')) { $('optDiff').textContent = 'DIFICULTAD: ' + d.label; $('optDiff').setAttribute('aria-label', 'Dificultad: ' + d.label + '. Toca para cambiarla.'); }
+      if ($('diffHelp')) $('diffHelp').textContent = d.lives + ' vidas · enemigos ' + (d.foeDensity < 1 ? 'escasos y lentos' : d.foeDensity > 1 ? 'numerosos y rápidos' : 'normales') + (opt.relaxed ? ' · modo relajado' : '');
       for (const b of document.querySelectorAll('#optionsPanel [data-opt]')) {
         const k = b.dataset.opt, f = OPT_LABEL[k];
         if (f) b.textContent = f(opt[k]);
@@ -346,6 +349,8 @@
 
     function setLoading(text, ready) {
       const b = $('start'); b.textContent = text; b.disabled = !ready;
+      playable = !!ready && text === 'JUGAR HISTORIA';
+      paintStart();
     }
 
     /* ---------- Cableado de botones ---------- */

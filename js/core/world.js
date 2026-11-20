@@ -214,6 +214,14 @@
       for (const c of m.cracks || []) W.cracks.push({ x1: X(c.x1), x2: X(c.x2), y1: Y(c.y1), y2: Y(c.y2), scene: sc.index });
       // V58.1: `draw: false` = relieve que ya pinta el arte (roca y meseta del mar trazadas sobre el dibujo).
       for (const q of m.blocks || []) addSolid({ scope, kind: q.kind || 'block', x1: X(q.x1), x2: X(q.x2), y1: Y(q.y1), y2: Y(q.y2), scene: sc.index, theme: sc.theme, draw: q.draw !== false });
+      // V58.6: barda de azotea rematada con vidrios rotos: muro sólido (se dibuja) y los vidrios de arriba lastiman.
+      for (const q of m.bardas || []) {
+        const b = addSolid({ scope, kind: 'barda', x1: X(q.x1), x2: X(q.x2), y1: Y(q.y1), y2: Y(q.y2), scene: sc.index, theme: sc.theme });
+        const glass = OB.addSpikes(W, { scope, x: (b.x1 + b.x2) / 2, y: b.y1, w: b.x2 - b.x1 + 6, scene: sc.index, plat: null });
+        glass.look = 'vidrios';
+      }
+      // V58.6: letreros propios del nivel (p. ej. cómo usar el columpio para cruzar la barda).
+      (m.signs || []).forEach((q, k) => W.signs.push({ id: scope + ':letrero:nivel' + k, x: X(q.x), y: Y(q.y), text: q.text, scene: sc.index, region: 'main', seenT: -99 }));
       m.gems.forEach((q) => addGem(X(q.x), Y(q.y), sc.index, 'main', rng));
       const start = sc.surfaces.find((s) => s.start);
       sc.startPlatform = start;

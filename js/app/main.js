@@ -40,7 +40,7 @@
     vib: [true, false], shake: ['normal', 'suave', 'no'], zoom: ['cerca', 'normal', 'lejos'],
     ctlSize: ['chico', 'normal', 'grande'], lefty: [false, true], landingRing: [true, false],
     catsHelp: [true, false], relaxed: [false, true], freeSelect: [false, true], cinematics: [true, false], fps: [false, true],
-    ninaLook: ['original', 'uniforme', 'rosa', 'buzo', 'astronauta']
+    ninaLook: ['original', 'rosa']   // V58.6: ropa de calle (Guadalajara y la isla); el uniforme, el buzo y el astronauta van por nivel
   };
   const readOpt = (k, def) => {
     const raw = store.get('camion-opt-' + k, null);
@@ -106,7 +106,6 @@
     menu: () => toMenu(),
     togglePause: () => togglePause(),
     option: (k) => setOption(k),
-    look: (value) => chooseLook(value),
     resetProgress: () => resetProgress(),
     story: () => playStory(),
     epilogue: () => playEpilogue(),
@@ -128,8 +127,19 @@
     resize();
   }
 
+  // V58.6: los botones rápidos MÚSICA y EFECTOS (pausa) apagan y vuelven a encender el sonido. Antes llamaban a
+  // 'music'/'sfx', que no existían en OPTION_SPEC (desde V50 son volúmenes), y tocarlos no hacía nada.
+  const lastVol = { musicVol: 100, sfxVol: 100 };
   function setOption(k) {
     audio.ensure();
+    if (k === 'music' || k === 'sfx') {
+      const key = k + 'Vol';
+      if (opt[key] > 0) { lastVol[key] = opt[key]; opt[key] = 0; } else opt[key] = lastVol[key] || 100;
+      store.set('camion-opt-' + key, String(opt[key]));
+      if (key === 'musicVol') { if (opt.music && (G.state === 'playing' || G.state === 'transition')) audio.start(); else if (!opt.music) audio.stop(); }
+      applyOptions(); ui.paintOpts(opt); audio.sfx('ui');
+      return;
+    }
     const list = OPTION_SPEC[k];
     if (!list) return;
     const cur = opt[k], i = list.indexOf(cur);
@@ -143,16 +153,6 @@
     if (k === 'freeSelect') ui.paintMenu(G, opt);
     audio.sfx('ui');
     if (k === 'vib' && opt.vib) audio.vibrate(30);
-  }
-
-  function chooseLook(value) {
-    if (!OPTION_SPEC.ninaLook.includes(value) || opt.ninaLook === value) return;
-    opt.ninaLook = value;
-    store.set('camion-opt-ninaLook', value);
-    applyOptions();
-    ui.paintMenu(G, opt);
-    audio.ensure();
-    audio.sfx('ui');
   }
 
   function resetProgress() {

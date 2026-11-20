@@ -21,15 +21,19 @@
   const MORITA = (o) => Object.assign({ name: 'MORITA', sprite: CAT + 'morita.png', x: 80, bottom: 60, scale: 0.6, entrance: 'enter-right' }, o || {});
 
   const SCENES = [
-    { id: 'e1_base', tag: 'ARCHIVO 01 · ESCENA 1 · 21:45 HRS', title: 'LA CUENTA REGRESIVA',
-      text: 'Guadalajara, bajo ley marcial no oficial. En la base de la Toxi Familia, tres monitores brillan en la oscuridad: uno muestra los túneles de Puente Grande. Estoker carga un dispositivo modificado; Doña Tóxica se ajusta los guantes de pelea mirando la tormenta.',
-      background: 'assets/scenes/generated/guadalajara_colonia_noche.png', durationMs: 9000, fx: 'monitores', cast: [ESTOKER, TOXICA] },
-    { id: 'e1_estoker', tag: 'ESTOKER · VOZ ÁSPERA, CONCENTRADO', title: 'EL BLOQUE C ESTÁ POR CAER',
-      text: '«El bloque C de Puente Grande está a punto de caer, pero si iniciamos el motín sin los códigos de anulación, será una masacre. Los custodios tienen orden de tirar a matar.»',
-      background: 'assets/scenes/generated/guadalajara_colonia_noche.png', durationMs: 9500, fx: 'monitores', cast: [ESTOKER, Object.assign({}, TOXICA, { entrance: 'enter-rise' })] },
-    { id: 'e1_toxica', tag: 'DOÑA TÓXICA · LO FULMINA CON LA MIRADA', title: 'SE LE FUE LA RUTA 6',
-      text: 'DOÑA TÓXICA: «La niña tóxica los trae. Pero se le fue la Ruta 6. La Calzada Olímpica es un hervidero de patrullas y cárteles locales.»\nESTOKER: «Si no llega antes de la medianoche, la leyenda termina antes de empezar.»',
-      background: 'assets/scenes/generated/guadalajara_colonia_noche.png', durationMs: 11000, fx: 'monitores', cast: [Object.assign({}, ESTOKER, { entrance: 'enter-rise' }), TOXICA] },
+    /* V58.6 · Apertura en penumbra: al principio solo se ven las dos siluetas, a contraluz de los monitores; luego
+       hablan (subtítulos abajo) y quien habla se ilumina. Las frases son las del guion, partidas por oraciones. */
+    { id: 'e1_sombras', tag: 'ARCHIVO 01 · GUADALAJARA · BASE DE LA TOXI FAMILIA', title: 'LA CUENTA REGRESIVA', layout: 'sombras', text: '',
+      background: 'assets/scenes/generated/guadalajara_colonia_noche.png', fx: ['monitores', 'niebla'], introMs: 3200,
+      cast: [Object.assign({}, ESTOKER, { x: 32, bottom: 0, scale: 1.9, entrance: 'enter-fade', label: false, voice: 'ESTOKER' }),
+        Object.assign({}, TOXICA, { x: 68, bottom: 0, scale: 1.9, entrance: 'enter-fade', label: false, voice: 'DOÑA TÓXICA' })],
+      lines: [
+        { who: 'ESTOKER', tone: 'estoker', text: 'El bloque C de Puente Grande está a punto de caer, pero si iniciamos el motín sin los códigos de anulación, será una masacre.' },
+        { who: 'ESTOKER', tone: 'estoker', text: 'Los custodios tienen orden de tirar a matar.' },
+        { who: 'DOÑA TÓXICA', tone: 'toxica', text: 'La niña tóxica los trae. Pero se le fue la Ruta 6.' },
+        { who: 'DOÑA TÓXICA', tone: 'toxica', text: 'La Calzada Olímpica es un hervidero de patrullas y cárteles locales.' },
+        { who: 'ESTOKER', tone: 'estoker', text: 'Si no llega antes de la medianoche, la leyenda termina antes de empezar.' }
+      ] },
     { id: 'e2_mercado', tag: 'ESCENA 2 · MERCADO SAN JUAN DE DIOS · CALLE ALDAMA', title: 'LA ODISEA URBANA',
       text: 'Lluvia intensa sobre el mercado. Sofía, empapada pero con mirada desafiante, ajusta las correas de su mochila. Siluetas de pandilleros bloquean los callejones. Sobre los tejados, Luna y Morita brillan con un aura sutil: listas para interceptar francotiradores o activar trampas del entorno.',
       background: [GDL + 'mercado_parque/02_arquitectura_anclada.webp', GDL + 'mercado_parque/01_nubes_reales.webp', GDL + 'mercado_parque/00_cielo_degradado.webp'],
@@ -45,7 +49,7 @@
     { id: 'e3_start', tag: 'ESCENA 3 · EL FRENTE CONJUNTO', title: 'OBJETIVO: CRUZA LA CIUDAD. RECUPERA LAS 6 LLAVES. SOBREVIVE.',
       text: 'Sofía truena los nudillos. El HUD de combate parpadea y se enciende línea por línea.\n[ INSERT COIN / PRESS START ]',
       background: 'assets/scenes/school_miguel_hidalgo/01_aulas_superiores.webp', durationMs: 9000, fx: 'hud',
-      cast: [SOFIA({ sprite: ST + 'kick_01.png', scale: 1.4, x: 50 }), LUNA({ bottom: 14, x: 22 }), MORITA({ bottom: 14, x: 77 })],
+      cast: [SOFIA({ sprite: 'assets/player/variants/uniforme/kick_01.png', scale: 1.4, x: 50 }), LUNA({ bottom: 14, x: 22 }), MORITA({ bottom: 14, x: 77 })],   // V58.6: en la escuela, uniforme
       nextMission: { mission: 0, tramo: 0 } }
   ];
 
@@ -169,9 +173,10 @@
     return typeof path === 'string' && assetPattern.test(path) &&
       !path.split('/').includes('..');
   }
-  const FX = new Set(['lluvia', 'monitores', 'hud', 'apagon', 'legend', 'recuerdo', 'burbujas']);
-  const LAYOUTS = new Set(['dialogo']);
-  const TONES = new Set(['sofia', 'estoker', 'narra']);
+  const FX = new Set(['lluvia', 'monitores', 'hud', 'apagon', 'legend', 'recuerdo', 'burbujas', 'niebla']);
+  // V58.6: 'sombras' = apertura en penumbra (siluetas a contraluz, subtítulos abajo, se ilumina quien habla).
+  const LAYOUTS = new Set(['dialogo', 'sombras']);
+  const TONES = new Set(['sofia', 'estoker', 'narra', 'toxica']);
   const LOOKS = ['original', 'uniforme', 'rosa'];
   const num = (v, min, max) => typeof v === 'number' && Number.isFinite(v) && v >= min && v <= max;
   /** Tiempo en pantalla de una línea de diálogo: base + lectura (≈18 letras por segundo). */
@@ -201,6 +206,8 @@
     }
     if (a.fps != null && !num(a.fps, 0.5, 24)) throw new Error('fps invalido: ' + a.name);
     for (const k of ['flip', 'float', 'loop', 'label']) if (a[k] != null && typeof a[k] !== 'boolean') throw new Error(k + ' invalido: ' + a.name);
+    // V58.6: `voice` = el nombre con el que habla en las líneas (se ilumina cuando habla).
+    if (a.voice != null && (typeof a.voice !== 'string' || !a.voice.trim() || a.voice.length > 32)) throw new Error('voz invalida: ' + a.name);
     if (a.anim != null) {
       if (!Array.isArray(a.anim) || !a.anim.length || a.anim.length > 12) throw new Error('animacion invalida: ' + a.name);
       out.anim = Object.freeze(a.anim.map((st) => {
@@ -226,9 +233,11 @@
       if (fxs.length > 3 || !fxs.every((f) => FX.has(f))) throw new Error('efecto invalido: ' + s.id);
       if (s.layout != null && !LAYOUTS.has(s.layout)) throw new Error('acomodo invalido: ' + s.id);
       let lines = null, text = s.text, durationMs;
+      // V58.6: `introMs` = silencio antes de la primera línea (solo se ven los personajes).
+      if (s.introMs != null && !num(s.introMs, 0, 8000)) throw new Error('intro invalida: ' + s.id);
       if (s.lines != null) {
         if (!Array.isArray(s.lines) || !s.lines.length || s.lines.length > 8) throw new Error('dialogo invalido: ' + s.id);
-        let at = 0;
+        let at = s.introMs || 0;
         lines = Object.freeze(s.lines.map((l) => {
           if (!l || typeof l.who !== 'string' || !l.who.trim() || l.who.length > 32 || !TONES.has(l.tone) ||
               typeof l.text !== 'string' || !l.text.trim() || l.text.length > 200 || (l.ms != null && !num(l.ms, 1500, 12000))) throw new Error('linea invalida: ' + s.id);
@@ -236,7 +245,7 @@
           at += ms;
           return line;
         }));
-        durationMs = at;
+        durationMs = at + (s.introMs ? 900 : 0);   // con apertura, la última línea se queda un momento
         if (!text) text = lines.map((l) => l.who + ': «' + l.text + '»').join('\n');
       } else durationMs = s.durationMs == null ? 6500 : Number(s.durationMs);
       if (!Number.isFinite(durationMs) || durationMs < 2000 || durationMs > 60000) throw new Error('duracion invalida: ' + s.id);

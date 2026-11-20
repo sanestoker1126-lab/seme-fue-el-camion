@@ -18,15 +18,18 @@ Es un sitio estático, sin dependencias. Para jugarlo:
 Controles en pantalla (táctil) y teclado. Se instala como app (PWA) y funciona sin conexión tras la primera carga.
 
 **Paquete para jugar**: `bash tools/empaquetar.sh` arma `Se_Me_Fue_El_Camion_V<versión>.zip`. Lleva solo lo que usa
-el juego (474 archivos, ~53 MB en la V58.5) y un `LEEME.txt` con instrucciones. En GitHub: Actions → «Empaquetar
+el juego (474 archivos, ~53 MB en la V58.6) y un `LEEME.txt` con instrucciones. En GitHub: Actions → «Empaquetar
 juego completo» → Run workflow.
 
-## Novedades V58.3 – V58.5
+## Novedades V58.3 – V58.6
 
 - **V58.3**: en el mar Sofía usa sus cuadros normales fuera del agua y los de buceo dentro. El mundo marino tiene
   banda sonora de fondo («Chinos de Seda», 1:30–3:00). `CHANGELOG_V58_3.md`.
 - **V58.4**: corrientes marinas fuertes en el mar y lluvia de asteroides en la Luna. `CHANGELOG_V58_4.md`.
 - **V58.5**: revisión completa con las herramientas de QA, correcciones y entrega empaquetada. `CHANGELOG_V58_5.md`.
+- **V58.6**: menú compacto (cabe sin desplazarse), apertura de la cinemática en penumbra, ropa por nivel (uniforme en
+  la escuela, buzo solo en el agua, astronauta en la Luna) y una barda con vidrios en la azotea de la escuela que solo
+  se cruza con el columpio. `CHANGELOG_V58_6.md`.
 
 ## Novedades V58.2 · La llegada al mar
 

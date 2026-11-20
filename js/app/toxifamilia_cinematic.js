@@ -104,6 +104,7 @@
     const wrapper = document.createElement('div');
     wrapper.className = 'toxi-actor ' + (ENTRANCES.includes(a.entrance) ? a.entrance : 'enter-rise') + (a.float ? ' float' : '');
     const x = clamp(a.x, 0, 100, 50), b = clamp(a.bottom, 0, 100, 18);
+    wrapper.dataset.voice = a.voice || a.name;   // V58.6: se ilumina cuando habla (ver paintLine)
     wrapper.style.left = x + '%';
     wrapper.style.bottom = b + '%';
     wrapper.style.width = (130 * clamp(a.scale, 0.35, 2.6, 1)) + 'px';
@@ -145,6 +146,12 @@
     } else if (has('legend')) {
       const t = document.createElement('strong'); t.textContent = 'LEGEND OF PRESOS'; fx.appendChild(t);
     }
+    // V58.6 · Penumbra: lugar y hora escritos arriba, y una luz que parpadea sobre los personajes.
+    if (s.layout === 'sombras') {
+      const place = document.createElement('div'); place.className = 'toxi-place'; place.textContent = s.tag || '';
+      const lamp = document.createElement('i'); lamp.className = 'toxi-lamp';
+      fx.append(lamp, place);
+    }
     if (has('burbujas')) {
       for (let i = 0; i < 16; i++) {
         const bub = document.createElement('i'), size = 6 + ((i * 7) % 15);
@@ -170,8 +177,15 @@
     who.className = 'toxi-who tone-' + l.tone;
     $('.toxi-text').textContent = l.text;
     const cap = $('.toxi-caption');
+    cap.classList.remove('toxi-wait');
     cap.classList.remove('toxi-line-in');
     if (!reduced) { void cap.offsetWidth; cap.classList.add('toxi-line-in'); }
+    // V58.6: quien habla se ilumina; los demás quedan en sombra.
+    for (const el of overlay.querySelectorAll('.toxi-actor[data-voice]')) {
+      const sp = el.dataset.voice === l.who;
+      el.classList.toggle('speaking', sp);
+      el.classList.toggle('listening', !sp);
+    }
     paintNextLabel();
   }
   function lastStep() {
@@ -192,6 +206,7 @@
       : 'linear-gradient(130deg,#102945,#070e22 60%,#202c46)';
     stage.classList.toggle('toxi-legend', s.fxList.includes('legend'));
     stage.classList.toggle('toxi-dialogo', s.layout === 'dialogo');
+    stage.classList.toggle('toxi-sombras', s.layout === 'sombras');
     stage.style.animationDuration = s.layout === 'dialogo' ? (s.durationMs + 600) + 'ms' : '';
     $('.toxi-eyebrow').textContent = s.tag || 'LA TOXI FAMILIA';
     $('.toxi-title').textContent = s.title;
@@ -203,7 +218,14 @@
     $('.toxi-count').textContent = 'ESCENA ' + (index + 1) + ' / ' + scenes.length;
     $('.toxi-progress i').style.width = '0%';
     lineIndex = -1;
-    if (s.lines) paintLine(0);
+    $('.toxi-caption').classList.remove('toxi-wait');
+    if (s.lines && s.lines[0].at > 0) {
+      // V58.6: apertura en silencio; la primera línea llega con el tiempo (o al tocar SIGUIENTE).
+      const who = $('.toxi-who'); who.textContent = ''; who.className = 'toxi-who';
+      $('.toxi-text').textContent = '';
+      $('.toxi-caption').classList.add('toxi-wait');
+      paintNextLabel();
+    } else if (s.lines) paintLine(0);
     else {
       const who = $('.toxi-who'); who.textContent = ''; who.className = 'toxi-who';
       $('.toxi-text').textContent = s.text;
@@ -289,7 +311,7 @@
     let b = document.getElementById(id);
     if (show) {
       if (!b) {
-        b = document.createElement('button'); b.id = id; b.className = 'opt';
+        b = document.createElement('button'); b.id = id; b.className = 'opt ghost'; b.type = 'button';
         b.textContent = label;
         b.addEventListener('click', onClick);
         parent.appendChild(b);
@@ -298,8 +320,9 @@
   }
   /** Botones del menú: el epílogo aparece solo cuando ya se desbloqueó; la llegada al mar, cuando ya se vio. */
   function refreshMenu(epilogueUnlocked, marineSeen) {
-    menuButton('btnEpilogo', 'LEGEND OF PRESOS · ESCENA FINAL', !!epilogueUnlocked && SETS.epilogo.length > 0, () => play({ set: 'epilogo' }));
-    menuButton('btnMarino', 'LLEGADA AL MAR · CINEMÁTICA', !!marineSeen && SETS.marino.length > 0, () => play({ set: 'marino' }));
+    // V58.6: etiquetas cortas (van en la franja de opciones del menú compacto).
+    menuButton('btnEpilogo', '▶ ESCENA FINAL', !!epilogueUnlocked && SETS.epilogo.length > 0, () => play({ set: 'epilogo' }));
+    menuButton('btnMarino', '▶ LLEGADA AL MAR', !!marineSeen && SETS.marino.length > 0, () => play({ set: 'marino' }));
   }
   /** El menú avisa el vestuario elegido (lo usa la llegada al mar al repetirse desde el menú). */
   function setLook(value) { if (typeof value === 'string') look = value; }

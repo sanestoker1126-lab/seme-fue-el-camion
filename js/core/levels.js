@@ -829,6 +829,9 @@
     o.stairs = stairs.map(surf);
     o.planks = (T.planks || []).map((q) => Object.assign(surf(q), { painted: true }));   // pasarelas pintadas
     o.blocks = (T.blocks || []).map((b) => ({ x1: X(b[0]), x2: X(b[1]), y1: Y(b[2]), y2: Y(b[3]), kind: 'roca', draw: false }));
+    // V58.6: bardas con vidrios (sólidas y dibujadas: no vienen en el arte) y letreros propios del nivel (px del arte).
+    o.bardas = (T.bardas || []).map((b) => ({ x1: X(b[0]), x2: X(b[1]), y1: Y(b[2]), y2: Y(b[3]) }));
+    o.signs = (T.signs || []).map((s) => ({ x: X(s[0]), y: Y(s[1]), text: s[2] }));
     if (T.sea) {
       // toStreet: el mar baja hasta el lecho (la calle de la meta); world.js fija su fondo ahí. Sin desagües.
       const y2 = T.sea.toStreet ? A.height : T.sea.y2;
@@ -852,6 +855,7 @@
     const gems = [];
     const inBlock = (x, y, m) => (T.blocks || []).some((b) => x > b[0] - m && x < b[1] + m && y > b[2] - m && y < b[3] + m);
     for (const q of T.surfaces) {
+      if (q[3] && q[3].noGems) continue;   // V58.6: repisa que no pide cristales (p. ej. el pedazo de azotea tras la barda)
       const w = q[1] - q[0], n = Math.max(1, Math.min(8, Math.floor(w / 45)));   // un rastro de cristales guía el recorrido
       for (let i = 0; i < n; i++) gems.push([q[0] + (w * (i + 0.5)) / n, q[2] - 22]);
     }
@@ -993,7 +997,8 @@
         [605, 745, 194, { start: true, startX: 660 }],   // azotea: techo del cuarto del tinaco
         [0, 450, 142],       // techo del letrero ESCUELA MIGUEL HIDALGO
         [0, 165, 712],       // descanso arriba de la escalera izquierda
-        [0, 1380, 334],      // azotea (se baja por la orilla derecha)
+        [0, 1286, 334],      // azotea (V58.6: la corta la barda con vidrios; se cruza con el columpio)
+        [1330, 1380, 334, { noGems: true }],   // azotea tras la barda (se baja por la orilla derecha; el columpio suele lanzar más allá)
         [150, 1501, 525],    // balcón del tercer piso
         [0, 1130, 1205, { mid: true, midX: 200 }],   // terraza frente a los salones
         [300, 1501, 712],    // balcón del segundo piso
@@ -1007,7 +1012,12 @@
         [120, 1501, 2250, { exit: true }]   // cancha de básquetbol: salida (arena del jefe)
       ],
       planks: [[470, 1501, 925]],   // cafetería
-      ropes: [{ x: 914.8, y: 83.6, len: 130.7, look: 'columpio', arc: true, base: 334.6 }],   // V58.2: columpio en la azotea
+      // V58.6: el columpio de la azotea sirve para cruzar la barda con vidrios (sin él no se pasa: ver la prueba
+      // v58_6_columpio.test.js). Más alto y largo que el de V58.2 para que, al soltarse, Sofía libre la barda.
+      ropes: [{ x: 1098.8, y: 52.2, len: 174.2, look: 'columpio', arc: true, base: 334.6 }],
+      // Barda de azotea rematada con vidrios rotos [x1, x2, arriba, abajo] (px): sólida y dibujada; los vidrios lastiman.
+      bardas: [[1286, 1330, 142.4, 334]],
+      signs: [[950, 334, 'BARDA CON VIDRIOS: SALTA A LA CUERDA DEL COLUMPIO, BALANCÉATE CON ← → Y SUÉLTALA CON SALTAR.']],
       stairRuns: [[165, 712, 470, 925], [1130, 1205, 1265, 1365], [1135, 1815, 1315, 2105]],
       zips: [{ x1: 918, y1: 1486, x2: 300, y2: 1860, look: 'tendedero' }],
       exitX: 800

@@ -38,17 +38,16 @@ test('V54→V58.1: el fondo de mar y Luna cubre el mundo entero, con paralaje en
     assert.ok(Math.abs(A.height * k - sc.drawH) < 2, lvl.id + ': y todo el alto');
   }
 });
-test('V54: traje submarino real, capa espacial y selección de apariencias al empezar', () => {
+// V58.6: el selector de cinco aspectos se retiró: cada vestuario va en su mundo (ver tests/v58_6_ropa.test.js).
+test('V54 → V58.6: traje submarino real y capa espacial; el vestuario lo decide el nivel, no el menú', () => {
   const r = fs.readFileSync(path.join(BASE, 'js/app/render.js'), 'utf8');
   const html = fs.readFileSync(path.join(BASE, 'Se_Me_Fue_El_Camion.html'), 'utf8');
   const ui = fs.readFileSync(path.join(BASE, 'js/app/ui.js'), 'utf8');
   const sw = fs.readFileSync(path.join(BASE, 'sw.js'), 'utf8');
-  assert.match(r, /function drawDiver\(/);
+  assert.match(r, /function drawDiveWater\(/);
   assert.match(r, /function drawAstronautGear\(/);
-  assert.match(ui, /cb\.look\(key\)/);
-  assert.match(ui, /\['buzo', 'BUZO'\]/);
-  assert.match(ui, /\['astronauta', 'ASTRONAUTA'\]/);
-  assert.match(html, /id="lookPicker"/);
+  assert.match(r, /function outfitFor\(theme\)/);
+  assert.ok(!/id="lookPicker"/.test(html) && !/cb\.look\(/.test(ui), 'sin selector de aspecto en el menú');
   assert.match(sw, /sofia_submarina_complementaria\.png/);
   assert.ok(fs.existsSync(path.join(BASE, 'assets/player/sofia/sofia_submarina_complementaria.png')));
 });
