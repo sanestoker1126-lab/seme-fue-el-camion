@@ -167,7 +167,11 @@
       // V58 · Tirolesa (enganche metálico y zumbido del cable) y orden a las gatitas.
       zip: () => { tone(1200, 0.05, 'square', 0.03, -300); noise(0.35, 0.035, 2600, 1800, 0.04); },
       zipOff: () => tone(520, 0.08, 'triangle', 0.04, -180),
-      cats: () => { tone(740, 0.08, 'triangle', 0.05, 220); tone(988, 0.12, 'triangle', 0.04, 0, 0.07); }
+      cats: () => { tone(740, 0.08, 'triangle', 0.05, 220); tone(988, 0.12, 'triangle', 0.04, 0, 0.07); },
+      // V58.3 · Corriente marina (rumor grave de agua) y asteroide (silbido de aviso; golpe y polvo al caer).
+      current: () => { noise(0.9, 0.07, 380, 160, 0, 0.8); noise(0.6, 0.035, 900, 300, 0.15); },
+      meteorWarn: () => { tone(1400, 0.5, 'sine', 0.025, -900); tone(700, 0.08, 'square', 0.02, 0, 0.02); },
+      meteorImpact: () => { noise(0.45, 0.12, 900, 120); tone(90, 0.3, 'sawtooth', 0.06, -40); }
     };
     const FILE_SFX = {
       luna: [AUDIO.luna, 0.56], morita: [AUDIO.morita, 0.56],

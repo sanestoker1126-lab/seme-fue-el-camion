@@ -871,6 +871,19 @@
         case 'potShake': emit('sfx', { name: 'potShake' }); companionAlert('falling-pot'); break;
         case 'potBreak': emit('sfx', { name: 'potBreak' }); burst(e.hazard.x, e.hazard.y, 0xc0704a, 12); break;
         case 'sparkOn': emit('sfx', { name: 'spark' }); companionAlert('electric'); break;
+        // V58.3 · Corrientes marinas y lluvia de asteroides.
+        case 'currentOn':
+          emit('sfx', { name: 'current' });
+          message('current', '¡CORRIENTE FUERTE! NADA HACIA ARRIBA O ABAJO PARA SALIR, O USA DASH', 90, 1);
+          break;
+        case 'asteroidWarn':
+          emit('sfx', { name: 'meteorWarn' }); companionAlert('falling-pot');
+          message('asteroid', '¡ASTEROIDE! QUÍTATE DE LA MIRA ROJA', 90, 1);
+          break;
+        case 'asteroidImpact':
+          emit('sfx', { name: 'meteorImpact' }); burst(e.x, e.y - 6, 0xffa25a, 14);
+          if (Math.abs(G.P.x - e.x) < 420 && Math.abs(G.P.y - e.y) < 300) G.shakeT = Math.max(G.shakeT || 0, 0.18);
+          break;
         default: break;
       }
     }

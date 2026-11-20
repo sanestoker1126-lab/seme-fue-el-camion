@@ -528,6 +528,30 @@
       if (def.obstacles.includes('spikes') || def.obstacles.includes('spark')) {
         placeObstacle(def.obstacles.includes('spark') && i >= 2 ? 'spark' : 'spikes', sides, rng, sc, scope, diff);
       }
+      // V58.3 · Peligros propios de cada mundo, repartidos parejo a lo alto del nivel (más en DIFÍCIL, menos en FÁCIL).
+      const many = (base) => Math.max(2, Math.round(base * (diffKey === 'facil' ? 0.67 : diffKey === 'dificil' ? 1.34 : 1)));
+      if (sc.theme === 'submarino') {
+        // Corrientes: franjas horizontales del mar abierto, con sentido alterno y fases distintas. Dejan libres la
+        // superficie (350 u) y el fondo junto a la escotilla (520 u).
+        for (const z of (sc.waters || []).filter((q) => q.deep && q.sea)) {
+          const top = z.y + 350, bot = z.y2 - 520, n = many(6), H = OB.CURRENT.h;
+          if (bot - top < H * 2) continue;
+          for (let k = 0; k < n; k++) {
+            const cy = top + (bot - top) * (k + 0.5) / n;
+            OB.addCurrent(W, { scope, x1: z.x1, x2: z.x2, y1: cy - H / 2, y2: cy + H / 2, dir: (k + i) % 2 ? -1 : 1, phase: k * 1.7, scene: i });
+          }
+        }
+      }
+      if (sc.theme === 'espacial') {
+        // Asteroides: sobre plataformas secas y anchas (no la de salida, la parada intermedia ni la del jefe), lejos del inicio.
+        const startY = sc.surfaces.find((s) => s.start)?.y ?? -Infinity;
+        const cands = dryPanel.filter((p) => p.kind === 'floor' && p.w >= 150 && p.y > startY + 250).sort((a, b) => a.y - b.y);
+        const n = Math.min(cands.length, many(9));
+        for (let k = 0; k < n; k++) {
+          const pl = cands[Math.floor((k + 0.5) * cands.length / n)];
+          OB.addAsteroid(W, { scope, plat: pl, dir: k % 2 ? -1 : 1, wait: 0.6 + (k % 3) * 0.5, seed: k + 1, scene: i });
+        }
+      }
       // Toldos rebotadores en los sectores (desde el tramo 2).
       if (i >= 1) {
         const cands = sides.filter((p) => !p.bridge && p.w <= 150 && p.occupied.length === 0);

@@ -228,7 +228,8 @@
     // Horizontal.
     if (P.dashT > 0) P.vx = P.face * Math.max(Math.abs(P.vx) * Math.pow(0.25, dt), WT.swimMove);
     else {
-      const target = dir * WT.swimMove * (stunned ? 0.4 : 1);
+      // V58.3: una corriente marina fuerte suma su arrastre (P.flowX, lo pone obstacles.js): sin nadar, se la lleva.
+      const target = dir * WT.swimMove * (stunned ? 0.4 : 1) + (P.flowX || 0);
       const dv = target - P.vx, stepv = WT.swimAccel * dt;
       P.vx += Math.abs(dv) <= stepv ? dv : Math.sign(dv) * stepv;
       if (dir && !stunned) P.face = dir;

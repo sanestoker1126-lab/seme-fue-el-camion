@@ -1686,8 +1686,84 @@
     }
   }
 
+  /* V58.3 · Corriente marina: en calma casi no se nota; en aviso parpadean flechas en el sentido del arrastre; fuerte,
+     estelas blancas veloces y burbujas arrastradas. */
+  function drawCurrent(h, V, T) {
+    const x1 = Math.max(h.x1, V.x1 - 20), x2 = Math.min(h.x2, V.x2 + 20);
+    if (x2 <= x1 || h.y2 < V.y1 || h.y1 > V.y2) return;
+    const d = h.dir, k = h.k, warn = h.state === 'warn', H = h.y2 - h.y1;
+    fillRect(x1, h.y1, x2 - x1, H, '#7fe3ff', 0.05 + 0.1 * k);
+    // Bordes de la franja: se ve dónde empieza y acaba el arrastre.
+    for (const y of [h.y1, h.y2]) for (let x = x1 - ((x1 % 40) + 40) % 40; x < x2; x += 40) line(x, y, x + 22, y, '#c8f6ff', 0.12 + 0.3 * k, 2);
+    const sp = 118, rows = 6;
+    ctx.lineCap = 'round';
+    for (let j = 0; j < rows; j++) {
+      const y = h.y1 + H * (j + 0.5) / rows + Math.sin(T * 2 + j * 1.3) * 4;
+      const v = 40 + h.speed * (0.25 + 0.95 * k), off = (((T * v * d + j * 47) % sp) + sp) % sp;
+      const len = 18 + 50 * k, a = 0.1 + 0.6 * k;
+      for (let x = h.x1 + Math.floor((x1 - h.x1) / sp) * sp + off - sp; x < x2 + sp; x += sp) {
+        if (x < x1 || x > x2) continue;
+        line(x, y, x - d * len, y, '#0b4f6e', a * 0.5, 5);
+        line(x, y, x - d * len, y, '#ffffff', a, 2.6);
+        if (k > 0.4 && (j + Math.floor(x / sp)) % 3 === 0) circle(x + d * 8, y - 5, 2.3, '#ffffff', 0.45 * k);
+      }
+    }
+    ctx.lineCap = 'butt';
+    if ((warn && Math.floor(T * 6) % 2 === 0) || k > 0.5) {
+      const cy = (h.y1 + h.y2) / 2, ca = warn ? 1 : 0.55 * k;
+      for (let x = h.x1 + 90; x < h.x2 - 60; x += 260) {
+        if (x < x1 - 30 || x > x2 + 30) continue;
+        for (let m = 0; m < 2; m++) { const ax = x + m * 22 * d + (warn ? 0 : ((T * 140 * d) % 260)); tri(ax - d * 10, cy - 13, ax + d * 9, cy, ax - d * 10, cy + 13, warn ? '#ffe14a' : '#e6fbff', ca); }
+      }
+    }
+  }
+  /* V58.3 · Asteroide: mira roja de aviso con su trayectoria, roca encendida que cae en diagonal y polvo al chocar. */
+  function drawAsteroid(h, V, T) {
+    const A = NS.Obstacles.ASTEROID;
+    if (h.state === 'idle') return;
+    if (!inView(V, h.tx - A.run - 40, h.y - A.rise - 60, h.tx + A.run + 40, h.y + 20)) return;
+    const sx = h.tx - h.dir * A.run, sy = h.y - 12 - A.rise;
+    if (h.state === 'warn') {
+      const p = h.t / A.warn, pulse = 0.5 + 0.5 * Math.sin(T * 16);
+      // Columna roja sobre la mira y «!»: se ve aunque Sofía esté parada encima.
+      fillRect(h.tx - 18, h.y - 140, 36, 140, '#ff3b3b', 0.16 + 0.16 * pulse);
+      line(h.tx - 18, h.y - 140, h.tx - 18, h.y, '#ff7a6a', 0.7, 2); line(h.tx + 18, h.y - 140, h.tx + 18, h.y, '#ff7a6a', 0.7, 2);
+      circle(h.tx, h.y - 112, 13, '#ff3b3b', 0.95); ring(h.tx, h.y - 112, 13, 13, '#ffffff', 0.9, 2); text('!', h.tx, h.y - 106, 17, '#ffffff');
+      ellipse(h.tx, h.y, 26 - 8 * p, 6.5 - 2 * p, '#ff3b3b', 0.18 + 0.2 * pulse);
+      ring(h.tx, h.y - 1, 26 - 8 * p, 6.5 - 2 * p, '#ff5a4a', 0.75 + 0.25 * pulse, 2);
+      line(h.tx - 34, h.y - 1, h.tx - 14, h.y - 1, '#ff5a4a', 0.8, 2); line(h.tx + 14, h.y - 1, h.tx + 34, h.y - 1, '#ff5a4a', 0.8, 2);
+      for (let s = 0; s < 9; s++) { const q = s / 9; if (q < p * 1.2) circle(sx + (h.tx - sx) * q, sy + (h.y - 12 - sy) * q, 1.8, '#ffb08a', 0.5); }
+      circle(sx, sy, 7 + 3 * pulse, '#ff9a4a', 0.35); circle(sx, sy, 4, '#ffe3b0', 0.9);
+      return;
+    }
+    if (h.state === 'fall') {
+      const p = Math.min(1, h.t / A.fall), r = A.r, ang = T * 5 * h.dir;
+      ellipse(h.tx, h.y, 10 + 14 * p, 3 + 2.5 * p, '#000000', 0.15 + 0.25 * p);
+      ring(h.tx, h.y - 1, 22, 5.5, '#ff5a4a', 0.6, 1.5);
+      // Estela encendida detrás de la roca.
+      for (let s = 1; s <= 6; s++) {
+        const b = s * 0.05;
+        circle(h.rx - h.dir * A.run * b, h.ry - A.rise * b, r * (1 - s * 0.12), s < 3 ? '#ffd27a' : '#ff7a3a', 0.42 - s * 0.06);
+      }
+      ctx.save(); ctx.translate(h.rx, h.ry); ctx.rotate(ang);
+      ctx.beginPath();
+      for (let s = 0; s < 9; s++) { const a = s / 9 * Math.PI * 2, rr = r * (0.82 + 0.18 * ((s * 37 + h.seed * 13) % 7) / 6); if (s) ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); else ctx.moveTo(rr, 0); }
+      ctx.closePath(); ctx.fillStyle = '#7a6a5c'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#3a2f28'; ctx.stroke();
+      circle(-5, -4, 4, '#5a4c42', 0.9); circle(6, 3, 3, '#5a4c42', 0.9); circle(-1, 7, 2.2, '#5a4c42', 0.9);
+      circle(-6, -8, 3, '#c9b49a', 0.6);
+      ctx.restore();
+      return;
+    }
+    // Impacto: onda y polvo que se apagan.
+    const q = Math.min(1, h.t / A.impact);
+    ring(h.tx, h.y - 2, 14 + 46 * q, 4 + 10 * q, '#ffb07a', 0.8 * (1 - q), 3);
+    for (let s = 0; s < 6; s++) circle(h.tx + (s - 2.5) * 12 * (0.6 + q), h.y - 6 - 18 * q * ((s % 3) + 1) / 3, 6 + 5 * q, '#b9a58e', 0.45 * (1 - q));
+  }
+
   function drawHazards(G, V, T) {
     for (const h of G.world.hazards) {
+      if (h.type === 'current') { drawCurrent(h, V, T); continue; }
+      if (h.type === 'asteroid') { drawAsteroid(h, V, T); continue; }
       const x1 = h.type === 'pot' ? h.x - 14 : h.x1, x2 = h.type === 'pot' ? h.x + 14 : h.x2;
       const y1 = h.type === 'pot' ? h.hangY - 10 : h.y - 30, y2 = h.type === 'pot' ? h.floorY + 4 : h.y + 6;
       if (!inView(V, x1, y1, x2, y2)) continue;
