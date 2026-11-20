@@ -17,7 +17,7 @@ const { chromium, devices } = require('playwright');
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
-  await page.addInitScript(() => { try { localStorage.setItem('camion-cinematic-seen', '1'); localStorage.setItem('camion-opt-cinematics', '0'); } catch (_) {} });
+  await page.addInitScript(() => { try { localStorage.setItem('camion-cinematic-seen', '1'); localStorage.setItem('camion-cinematic-marino-seen', '1'); localStorage.setItem('camion-opt-cinematics', '0'); } catch (_) {} });
   await page.goto(base + '/Se_Me_Fue_El_Camion.html?qa', { waitUntil: 'load' });
   await page.waitForFunction(() => window.CAMION_QA && !document.getElementById('start').disabled, null, { timeout: 30000 });
   await page.waitForTimeout(1500); // que terminen de cargar las imágenes

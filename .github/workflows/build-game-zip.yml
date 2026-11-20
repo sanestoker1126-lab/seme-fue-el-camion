@@ -1,9 +1,11 @@
-name: Empaquetar juego V57
+name: Empaquetar juego completo
+# Arma el ZIP jugable (Web/PC/Android) con solo los archivos que usa el juego: sin pruebas, herramientas,
+# documentación ni assets retirados. Se lanza a mano (Actions → Run workflow) o al publicar una etiqueta v*.
 on:
-  push:
-    branches:
-      - "feature/toxifamilia-v57-villains-qa"
   workflow_dispatch:
+  push:
+    tags:
+      - "v*"
 jobs:
   zip:
     runs-on: ubuntu-latest
@@ -12,22 +14,22 @@ jobs:
     steps:
       - name: Código y assets del juego
         uses: actions/checkout@v4
-      - name: Empaquetar juego completo para Web/PC/Android
+      - name: Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Versión del juego
+        id: ver
+        run: echo "v=$(node -e "require('./js/core/util.js');require('./js/core/config.js');console.log(globalThis.CAMION.CONFIG.version)")" >> "$GITHUB_OUTPUT"
+      - name: Empaquetar
         run: |
-          mkdir -p dist/Se_Me_Fue_El_Camion_V57
-          rsync -a --exclude '.git' --exclude '.github' --exclude 'dist' --exclude '__pycache__' ./ dist/Se_Me_Fue_El_Camion_V57/
-          cd dist
-          zip -q -r ../Se_Me_Fue_El_Camion_V57_COMPLETO.zip Se_Me_Fue_El_Camion_V57
-          cd ..
-          unzip -tq Se_Me_Fue_El_Camion_V57_COMPLETO.zip
-          test -f dist/Se_Me_Fue_El_Camion_V57/Se_Me_Fue_El_Camion.html
-          test -f dist/Se_Me_Fue_El_Camion_V57/js/app/main.js
-          test -f dist/Se_Me_Fue_El_Camion_V57/assets/scenes/generated/submarino_fondo.png
-          du -h Se_Me_Fue_El_Camion_V57_COMPLETO.zip
+          bash tools/empaquetar.sh "${{ steps.ver.outputs.v }}"
+          unzip -tq "Se_Me_Fue_El_Camion_V${{ steps.ver.outputs.v }}.zip"
+          du -h "Se_Me_Fue_El_Camion_V${{ steps.ver.outputs.v }}.zip"
       - name: Descargar juego
         uses: actions/upload-artifact@v4
         with:
-          name: Se_Me_Fue_El_Camion_V57_COMPLETO
-          path: Se_Me_Fue_El_Camion_V57_COMPLETO.zip
+          name: Se_Me_Fue_El_Camion_V${{ steps.ver.outputs.v }}
+          path: Se_Me_Fue_El_Camion_V${{ steps.ver.outputs.v }}.zip
           retention-days: 30
           compression-level: 0

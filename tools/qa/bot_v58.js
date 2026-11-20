@@ -3,7 +3,7 @@ const { chromium } = require('playwright');
   const b = await chromium.launch(); const page = await b.newPage({ viewport: { width: 844, height: 390 } });
   const errors = [];
   page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
-  await page.addInitScript(() => { try { localStorage.setItem('camion-cinematic-seen', '1'); localStorage.setItem('camion-opt-freeSelect', '1'); } catch (_) {} });
+  await page.addInitScript(() => { try { localStorage.setItem('camion-cinematic-seen', '1'); localStorage.setItem('camion-cinematic-marino-seen', '1'); localStorage.setItem('camion-opt-freeSelect', '1'); } catch (_) {} });
   await page.goto((process.env.BASE || 'http://localhost:8000') + '/Se_Me_Fue_El_Camion.html?qa&manual=1', { waitUntil: 'load' });
   await page.waitForFunction(() => window.CAMION_QA && !document.getElementById('start').disabled, null, { timeout: 60000 });
   await page.waitForTimeout(1500);

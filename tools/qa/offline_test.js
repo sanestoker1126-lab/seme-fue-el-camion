@@ -8,7 +8,7 @@ const { chromium, devices } = require('playwright');
   const errors = [], failed = [];
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('requestfailed', (r) => failed.push(r.url()));
-  await page.addInitScript(() => { try { localStorage.setItem('camion-cinematic-seen', '1'); } catch (_) {} });
+  await page.addInitScript(() => { try { localStorage.setItem('camion-cinematic-seen', '1'); localStorage.setItem('camion-cinematic-marino-seen', '1'); } catch (_) {} });
   await page.goto(base + '/Se_Me_Fue_El_Camion.html', { waitUntil: 'load' });
   await page.evaluate(() => navigator.serviceWorker.ready);
   const t0 = Date.now();

@@ -108,12 +108,13 @@
         { who: PAPITO, tone: 'estoker', text: 'Allá abajo hay tiburones. Cuando uno te embista, esquívalo y espera.' },
         { who: PAPITO, tone: 'estoker', text: 'Al terminar su carrera se queda mareado: ¡ese es el momento de pegarle!' },
         { who: SOFIA_NINA, tone: 'sofia', text: '¿¡Tiburones, papito!? ¡Qué miedo!' },
-        { who: PAPITO, tone: 'estoker', text: 'Mantén la calma, princesa. Te enseñaré a esquivarlos.' }
+        { who: PAPITO, tone: 'estoker', text: 'Mantén la calma, princesa. Te enseñaré a esquivarlos.' },
+        { who: PAPITO, tone: 'estoker', text: 'Y cuidado con las corrientes: si ves flechas en el agua, nada hacia arriba o abajo para salir… o usa tu DASH.' }
       ] },
     { id: 'm4_criaturas', tag: 'RECUERDO · LO QUE VIVE BAJO EL AGUA', title: 'PIRAÑAS, PULPOS Y CANGREJOS', layout: 'dialogo',
       background: MAR + 'fondo_descenso.webp', fx: ['recuerdo', 'burbujas'], text: '',
       cast: [
-        { name: 'TIBURÓN', frames: seq('tiburon_nado', 7), x: 100, bottom: 60, scale: 1.2, float: true, entrance: 'enter-fade', loop: true,
+        { name: 'TIBURÓN', frames: seq('tiburon_nado', 7), x: 100, bottom: 32, scale: 1.0, float: true, entrance: 'enter-fade', loop: true,
           anim: [{ f: [0, 1, 2, 3, 4, 5, 6], fps: 10, ms: 7500, to: -12, flip: true }, { f: [0, 1, 2, 3, 4, 5, 6], fps: 10, ms: 7500, to: 112 }] },
         { name: 'PIRAÑA', frames: seq('pirana_nado', 7), x: 34, bottom: 34, scale: 0.85, float: true, entrance: 'enter-fade', loop: true,
           anim: [{ f: [0, 1, 2, 3, 4, 5, 6], fps: 12, ms: 1500, to: 54 }, { f: [0, 1, 2, 3, 4, 5, 6], fps: 12, ms: 1700, to: 30, flip: true }] },
