@@ -156,7 +156,7 @@ test('cinemática de la llegada al mar: presente en la isla, recuerdo con Estoke
     assert.ok(fs.existsSync(path.join(ROOT, f)), 'falta ' + f);
     assert.ok(sw.files.has(f), 'sin precarga ' + f);
   }
-  assert.equal(sw.cache, 'camion-v58-2-llegada-al-mar');
+  assert.match(sw.cache, /^camion-v58-[2-9]/, 'caché de la V58.2 o posterior');
 });
 
 test('la llegada al mar se ve la primera vez que empieza la misión 3 y se repite desde el menú', () => {

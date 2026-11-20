@@ -28,7 +28,10 @@
     cheer: ['cheer_01', 'cheer_02', 'cheer_03'],
     zip: ['cheer_02'],                // V58: colgada de la tirolesa (puño en alto sobre el cable)
     swing: ['cheer_02'],              // V58.2: colgada de una cuerda
-    swimKick: ['kick_01', 'kick_02', 'kick_03', 'kick_04']
+    swimKick: ['kick_01', 'kick_02', 'kick_03', 'kick_04'],
+    // V58.3: en el mar, el salto al salir del agua y la caída hacia ella se ven con los cuadros normales.
+    waterLeap: ['air_01'],
+    diveIn: ['dive_01']
   };
   const COMPANIONS = {
     luna: { name: 'LUNA', src: 'assets/companions/luna.png',
@@ -2502,6 +2505,38 @@
     ctx.restore();
     return true;
   }
+  /* V58.3 · Mundo marino: Sofía usa sus cuadros normales en tierra (la isla, los saltos) y, en el instante en que
+     entra al agua (nada o vadea), cambia a los cuadros de buceo de sofia_submarina_complementaria.png; al salir
+     vuelve a los normales. Cada estado del agua tiene su animación del atlas (tabla sacada de su JSON: primer
+     cuadro, cuántos, ms por cuadro, pivote Y en la celda de 256 y si se repite). La patada nadando usa la de nado
+     rápido: el atlas no trae una patada submarina dibujada. */
+  const DIVE_WATER = {
+    swimFloat: [61, 6, 210, 130, true],  swim: [35, 8, 110, 130, true],   swimUnder: [35, 8, 110, 130, true],
+    swimDown: [55, 6, 108, 130, true],   swimUp: [49, 6, 108, 130, true], swimUpDiag: [49, 6, 108, 130, true],
+    swimDash: [43, 6, 65, 130, true],    swimKick: [43, 6, 65, 130, true], swimHurt: [77, 4, 90, 130, false],
+    wadeIdle: [0, 6, 210, 226, true],    wade: [6, 6, 115, 226, true],    wadeRun: [12, 6, 82, 226, true],
+    dead: [85, 5, 145, 130, false],      cheer: [98, 5, 155, 226, false]
+  };
+  const inSeaWater = (P) => !!(P.water || P.wade);
+  function drawDiveWater(G, alpha) {
+    const P = G.P, im = image(DIVE_SHEET);
+    if (!ready(im)) return false;
+    const [first, count, ms, pivot, loop] = DIVE_WATER[P.state] || DIVE_WATER.swimFloat;
+    const t = loop ? P.animT : P.state === 'dead' ? G.timers.dying : P.stateT;
+    const idx = Math.floor(Math.max(0, t) * 1000 / ms);
+    const frame = first + (loop ? idx % count : Math.min(count - 1, idx));
+    let rot = 0;
+    if (P.state === 'swim' || P.state === 'swimUnder') rot = Math.max(-0.35, Math.min(0.35, P.vy / 700)) * (P.face || 1);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate(P.x, pivot === 130 ? P.y + (P.state === 'dead' ? Math.min(70, G.timers.dying * 55) : 0) : P.y + P.h / 2);
+    if (rot) ctx.rotate(rot);
+    ctx.scale((P.face < 0 ? -1 : 1) * 0.4, 0.4);
+    ctx.drawImage(im, (frame % 8) * 256, Math.floor(frame / 8) * 256, 256, 256, -128, -pivot, 256, 256);
+    ctx.restore();
+    if (P.state === 'swimHurt' && P.hurtT > 0.25) ring(P.x, P.y, 26, 30, '#ff4040', 0.55, 2.5);
+    return true;
+  }
   /* Reserva visual para el traje astronauta, sin reemplazar los frames originales:
      cuando se incorpore el atlas espacial la capa se sustituye por frames reales. */
   function drawAstronautGear(P, alpha) {
@@ -2538,11 +2573,14 @@
     if (P.invuln > 0 && !P.cheer && Math.floor(T * 18) % 2 === 0) alpha = 0.45;
     if (G.state === 'victory' || G.state === 'won') alpha = Math.max(0, 1 - Math.max(0, G.timers.victory - 0.7) / 0.3);
     if (alpha <= 0) return;
-    const swimA = swimAnimFor(P);
-    if (swimA && drawSwimPlayer(G, T, swimA, alpha)) return;
     const currentScene = G.world && G.world.scenes[G.tramo];
     const suitTheme = currentScene && currentScene.theme;
-    const outfit = suitTheme === 'submarino' ? 'buzo' : suitTheme === 'espacial' ? 'astronauta' : ropt.ninaLook;
+    const sea = suitTheme === 'submarino';
+    // V58.3: en el mar, dentro del agua = cuadros de buceo; fuera del agua = cuadros normales (sin atlas de nado).
+    if (sea && inSeaWater(P) && drawDiveWater(G, alpha)) return;
+    const swimA = sea ? null : swimAnimFor(P);
+    if (swimA && drawSwimPlayer(G, T, swimA, alpha)) return;
+    const outfit = suitTheme === 'espacial' ? 'astronauta' : ropt.ninaLook;
     if (outfit === 'buzo' && drawDiver(G, alpha)) return;
     let yOff = 0;
     if (P.dead) { const t = Math.min(1, G.timers.dying / 0.9); yOff = -Math.sin(t * Math.PI) * 42; }

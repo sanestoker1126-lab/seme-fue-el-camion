@@ -15,6 +15,10 @@
     const AMB_VOL = 0.10;
     const AUDIO = {
       music: 'assets/audio/cancion_fondo_v40.mp3',
+      // V58.3 · Banda sonora del mundo marino: «Chinos de Seda» (aportada por el autor), solo del minuto 1:30 al 3:00,
+      // procesada antes para que quede de fondo: sin graves bajo 45 Hz ni agudos sobre 7 kHz, compresión suave,
+      // −23 LUFS (≈ 3 dB por debajo de cancion_fondo_v40) y entrada/salida suaves para el bucle.
+      mar: 'assets/audio/mar_chinos_de_seda_fondo_v58_3.mp3',
       school: 'assets/audio/ambiente_escuela_v24.mp3',
       city: 'assets/audio/ambiente_calles_guadalajara_v24.mp3',
       luna: 'assets/audio/luna_maullido_v24.mp3',
@@ -93,24 +97,29 @@
       fades.add(id);
     }
     // V50: el ambiente depende del tema del tramo (antes, del índice: al agregar niveles se desfasaba).
-    function chooseAmbience() { return theme === 'escuela' ? AUDIO.school : AUDIO.city; }
+    // V58.3: en el mar no suena el ambiente de calle (tráfico bajo el agua); solo su banda sonora de fondo.
+    function chooseAmbience() { return theme === 'submarino' ? null : theme === 'escuela' ? AUDIO.school : AUDIO.city; }
+    function chooseMusic() { return theme === 'submarino' ? AUDIO.mar : AUDIO.music; }
+    const leaving = new Set();   // pistas que se están desvaneciendo: se pausan también si el juego se detiene a la mitad
+    /** Cambia una pista en bucle por otra con un fundido corto; null la apaga. Devuelve la pista que queda. */
+    function swapTrack(cur, src, vol) {
+      if (cur && src && cur.src.endsWith(src)) return cur;
+      if (!cur && !src) return null;
+      const next = src ? localAudio(src, true, cur ? 0 : vol) : null;
+      if (cur) {
+        if (next) { const p = next.play(); if (p && p.catch) p.catch(() => {}); fadeElement(next, 0, vol, 420); }
+        leaving.add(cur);
+        fadeElement(cur, cur.volume, 0, 420, () => { cur.pause(); leaving.delete(cur); });
+      }
+      return next;
+    }
     function syncTracks() {
       if (!opt.music || !playing) return;
-      if (!musicEl) musicEl = localAudio(AUDIO.music, true, MUSIC_VOL * musicK);
-      if (!ambienceEl) ambienceEl = localAudio(chooseAmbience(), true, AMB_VOL * musicK);
-      if (ambienceEl && !ambienceEl.src.endsWith(chooseAmbience())) {
-        const old = ambienceEl, next = localAudio(chooseAmbience(), true, 0);
-        ambienceEl = next;
-        if (next) {
-          const p = next.play(); if (p && p.catch) p.catch(() => {});
-          fadeElement(next, 0, AMB_VOL * musicK, 420);
-        }
-        fadeElement(old, old.volume, 0, 420, () => old.pause());
-      }
+      musicEl = swapTrack(musicEl, chooseMusic(), MUSIC_VOL * musicK);
+      ambienceEl = swapTrack(ambienceEl, chooseAmbience(), AMB_VOL * musicK);
       for (const a of [musicEl, ambienceEl]) {
         if (!a) continue;
-        if (a === musicEl) a.volume = MUSIC_VOL * musicK;
-        else if (!fades.size) a.volume = AMB_VOL * musicK;
+        if (!fades.size) a.volume = (a === musicEl ? MUSIC_VOL : AMB_VOL) * musicK;
         const p = a.play(); if (p && p.catch) p.catch(() => {});
       }
     }
@@ -221,6 +230,8 @@
       for (const id of fades) clearInterval(id);
       fades.clear();
       for (const a of [musicEl, ambienceEl]) if (a) { try { a.pause(); if (rewind) a.currentTime = 0; } catch (_) {} }
+      for (const a of leaving) { try { a.pause(); } catch (_) {} }
+      leaving.clear();
     }
     const stop = () => halt(true);          // fin de partida / menú: la próxima vez empieza desde el inicio
     const pause = () => halt(false);        // pausa: se retoma donde iba
@@ -228,7 +239,7 @@
     function setTramo(i, room, th) { tramo = i; inRoom = !!room; if (th) theme = th; if (playing) syncTracks(); }
     function setVolumes(m, s) {
       musicK = Math.max(0, Math.min(1, m)); sfxK = Math.max(0, Math.min(1, s));
-      if (musicEl) musicEl.volume = MUSIC_VOL * musicK;
+      if (musicEl && !fades.size) musicEl.volume = MUSIC_VOL * musicK;
       if (ambienceEl && !fades.size) ambienceEl.volume = AMB_VOL * musicK;
     }
     function suspend() { pause(); try { if (AC && AC.state === 'running') AC.suspend(); } catch (_) {} }

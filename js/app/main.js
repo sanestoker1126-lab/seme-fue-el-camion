@@ -208,8 +208,9 @@
     seenFoeKinds.clear();
     ui.show(null);
     acc = 0;
-    if (opt.music) audio.start();
+    // V58.3: primero el tema (para que el mar arranque directo con su banda sonora) y luego la música.
     audio.setTramo(G.tramo, !!G.room, sceneTheme(G.tramo));
+    if (opt.music) audio.start();
     handleEvents(G.drainEvents());
   }
   function toMenu() {
