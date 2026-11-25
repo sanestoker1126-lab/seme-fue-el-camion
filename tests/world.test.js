@@ -33,7 +33,7 @@ test('estructura: 16 niveles (4 nuevos), una zona inferior, una reja con llave y
   assert.equal(NLV, 16);
   assert.equal(NS.LEVELS.LEVEL_SEQUENCE.filter((d) => d.isNew).length, 4);
   assert.equal(W.scenes.length, NLV);
-  assert.equal(W.rooms.length, NLV);
+  assert.equal(W.rooms.filter((r) => !r.secret).length, NLV);   // V58.8: más las aulas ocultas de la escuela (zona secreta)
   // V58.1: el nicho con reja vive en un sector lateral; los niveles trazados sobre su lámina (escuela) no tienen.
   const SIDED = W.scenes.filter((sc) => sc.sideWidth > 0).length;
   assert.equal(SIDED, NLV - 3);
@@ -43,8 +43,9 @@ test('estructura: 16 niveles (4 nuevos), una zona inferior, una reja con llave y
   assert.equal(W.checkpoints.length, NLV);
   assert.ok(W.bus && W.goal && W.street);
   for (const g of W.gates) assert.ok(W.pickups.some((p) => p.type === 'key' && p.keyFor === g.id), 'llave para ' + g.id);
-  const bosses = W.foes.filter((f) => f.isBoss);
+  const bosses = W.foes.filter((f) => f.isBoss && !f.secret);   // V58.8: el maestro de las aulas ocultas es aparte
   assert.equal(bosses.length, NLV);
+  assert.deepEqual(W.foes.filter((f) => f.isBoss && f.secret).map((f) => f.kind), ['maestro']);
   assert.deepEqual(bosses.slice(0, 2).map((f) => f.kind), ['dog', 'kid']);
   assert.equal(bosses[0].bossName, 'PERRO FURIOSO');
   assert.equal(bosses[1].bossName, 'DUEÑO DEL PERRO · 12 AÑOS');

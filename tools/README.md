@@ -28,13 +28,14 @@ transparente", cuadros sobre paneles de agua y números encima: por eso no se co
 Repetir 1 y 3 con los mismos atlas da exactamente el mismo `swim_atlas.png` (comprobado).
 
 ## arte/ (Python 3 + Pillow + NumPy)
-- `secretos_pack.py <enemigos_secretos/> <jefes/> <niveles_secretos/> <raíz> [revisión/]` — V58.7: empaca los
+- `secretos_pack.py <enemigos_secretos/> <jefes/> <niveles_secretos/> <raíz> [--revision <dir>] [--aulas <dir>]` — V58.7: empaca los
   paquetes «enemigos secretos», «Maestro y Pulpo del Abismo» y «niveles secretos». Elige solo los cuadros completos
   (la tabla `CHARS` dice cuáles se dejaron fuera y por qué: cortados por el borde, partidos a la mitad, letreros
   dentro de la celda o dibujados más chicos que sus vecinos), quita pedazos de cuadros vecinos y sombras pegadas, y
   escribe `assets/enemies/secretos/*.webp`, `assets/enemies/jefes/*.webp`, `assets/backgrounds/secretos/*.webp` y
   `js/app/art_secretos.js` (no lo edites a mano). Con `revisión/` deja una hoja por personaje con los cuadros
-  alineados a su ancla para revisarlos.
+  alineados a su ancla para revisarlos. V58.8: `--aulas` (carpeta con `aula_computo.png` y `aula_ciencias.png`) agrega
+  los dos salones de las aulas ocultas de la escuela.
 - `cut_skins.py <plataformas_referencia.png> <salida/> <preview.png>` — recorta las texturas de plataforma
   (quita el fondo oscuro por relleno desde el borde) y calcula la fila pisable de cada una (`skins.json`).
 - `plank_skin.py <wood_table.png> <plank.png>` — V51: deriva la textura del tablón (las tablas de la mesa).

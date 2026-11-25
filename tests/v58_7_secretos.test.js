@@ -51,8 +51,9 @@ test('atlas de los enemigos secretos y jefes nuevos: cuadros dentro del atlas y 
 
 test('la página carga los atlas antes del render y el service worker los guarda para jugar sin red', () => {
   const html = read('Se_Me_Fue_El_Camion.html'), sw = read('sw.js');
-  assert.ok(html.indexOf('js/app/art_secretos.js?v=58.7') > 0 && html.indexOf('js/app/art_secretos.js') < html.indexOf('js/app/render.js'));
-  assert.match(sw, /"js\/app\/art_secretos\.js\?v=58\.7"/);
+  const v = NS.CONFIG.version.split('.').slice(0, 2).join('.');
+  assert.ok(html.indexOf('js/app/art_secretos.js?v=' + v) > 0 && html.indexOf('js/app/art_secretos.js') < html.indexOf('js/app/render.js'));
+  assert.ok(sw.includes('"js/app/art_secretos.js?v=' + v + '"'));
   assert.match(sw, /\.\.\.V587/);
   const urls = [...Object.values(NS.ART.ATLAS_FOES).map((a) => a.src), ...Object.values(NS.ART.SECRET_BG).map((b) => b.src)];
   for (const u of urls) {
@@ -234,8 +235,9 @@ test('cada mundo nuevo tiene una zona secreta: grieta escondida en una cornisa s
     for (const o of W.rooms) if (o !== r) assert.ok(o.x2 + 100 < r.x1 || o.x1 > r.x2 + 100, 'zonas separadas');
     assert.ok(r.x1 > W.bounds.x2 + 500);
   }
-  // Las misiones 1 y 2 no tienen zonas secretas.
-  for (const mi of [0, 1]) assert.equal(NS.World.buildWorld({ levels: LV.MISSIONS[mi].levels }).rooms.filter((r) => r.secret).length, 0);
+  // V58.8: la escuela tiene sus aulas ocultas (tests/v58_8_aulas.test.js); Guadalajara no tiene zona secreta.
+  assert.deepEqual(NS.World.buildWorld({ levels: LV.MISSIONS[0].levels }).rooms.filter((r) => r.secret).map((r) => r.secret), ['aulas']);
+  assert.equal(NS.World.buildWorld({ levels: LV.MISSIONS[1].levels }).rooms.filter((r) => r.secret).length, 0);
 });
 
 test('santuario: mar cerrado de pared a pared, losas a flor de agua y techo con lugar para Sofía de pie', () => {

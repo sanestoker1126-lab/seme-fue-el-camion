@@ -21,6 +21,13 @@ Controles en pantalla (táctil) y teclado. Se instala como app (PWA) y funciona 
 el juego (483 archivos, ~54 MB en la V58.7) y un `LEEME.txt` con instrucciones. En GitHub: Actions → «Empaquetar
 juego completo» → Run workflow.
 
+## Novedades V58.8
+
+- **Todos los niveles desbloqueados** desde el principio: las 4 misiones y todas sus paradas.
+- **Las aulas ocultas** de la escuela: la sala de cómputo y el laboratorio de ciencias. Se entra por un remolino
+  violeta escondido en el nivel 1; en el laboratorio da clase **El Maestro Enojón**.
+- Detalle: `CHANGELOG_V58_8.md`.
+
 ## Novedades V58.7 · Zonas secretas
 
 - **Zonas secretas** en el mar y en la Luna, con los fondos del paquete «niveles secretos»: se entra por una grieta
@@ -111,7 +118,7 @@ Opciones incluye **Aspecto de Sofía** (original / uniforme / rosa).
 node --test tests/*.test.js
 ```
 
-Versión de desarrollo: **V58.7** (`js/core/config.js` → 58.7.0).
+Versión de desarrollo: **V58.8** (`js/core/config.js` → 58.8.0).
 
 ## V54 · Submarino y Espacio ampliados
 

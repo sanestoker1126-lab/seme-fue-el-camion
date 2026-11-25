@@ -140,7 +140,8 @@
 
     /* ---------- Menú principal ---------- */
     function paintMenu(G, opt) {
-      const save = G.save, free = !!(opt && opt.freeSelect);
+      // V58.8: todo desbloqueado: las cuatro misiones y todas sus paradas se pueden elegir desde el principio.
+      const save = G.save, free = true;
       // Barra de misiones.
       const mbox = $('missions');
       if (mbox) {
@@ -154,8 +155,7 @@
           b.dataset.m = M.id;
           const short = missionName(M);
           // V58.6: tarjeta con el arte de su mundo, número, nombre y avance (paradas abiertas / total).
-          const got = Math.min(M.levels.length, free ? M.levels.length : missionUnlocked(save, M.id));
-          const meta = open ? (M.levels.length > 1 ? got + ' / ' + M.levels.length + ' PARADAS' : '1 NIVEL') : 'BLOQUEADA';
+          const meta = open ? (M.levels.length > 1 ? M.levels.length + ' PARADAS' : '1 NIVEL') : 'BLOQUEADA';
           b.innerHTML = '<span class="mNum">' + (open ? 'M' + (mi + 1) : '🔒') + '</span><span class="mName">' + esc(short) + '</span><span class="mMeta">' + meta + '</span>';
           b.disabled = !open;
           b.setAttribute('aria-pressed', String(mi === selMission));

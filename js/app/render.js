@@ -1398,11 +1398,24 @@
      el color de su borde para que la cámara nunca muestre un hueco; en el santuario, la roca del techo de la cueva
      (sobre el borde de arriba del dibujo) y burbujas que suben; en la estación, estrellas que titilan. */
   function drawSecretRoom(r, V, T) {
-    const bg = NS.ART && NS.ART.SECRET_BG && NS.ART.SECRET_BG[r.art], im = bg && image(bg.src);
+    const BG = (NS.ART && NS.ART.SECRET_BG) || {}, bg = BG[r.art];
     const marine = r.art === 'marino_oculto', ay1 = r.artY1 ?? r.y1, ay2 = r.artY2 ?? r.y2, w = r.x2 - r.x1;
-    fillRect(r.x1 - 900, r.y1 - 900, w + 1800, ay2 - r.y1 + 1800, marine ? '#041b2c' : '#0b0a24');
-    if (ready(im)) ctx.drawImage(im, r.x1, ay1, w, ay2 - ay1);
-    else fillRect(r.x1, ay1, w, ay2 - ay1, marine ? '#0d4a6b' : '#1b1650');
+    // V58.8: varias ilustraciones seguidas (las aulas): cada una en su tramo. Alrededor, el color del borde del dibujo.
+    const panels = r.panels && r.panels.length ? r.panels : [{ art: r.art, x1: r.x1, x2: r.x2 }];
+    const aulas = panels.some((p) => p.art && p.art.startsWith('aula_'));
+    const base = marine ? '#041b2c' : aulas ? ((bg && bg.top) || '#5b4a68') : '#0b0a24';
+    fillRect(r.x1 - 900, r.y1 - 900, w + 1800, ay2 - r.y1 + 1800, base);
+    if (aulas) {
+      const L = BG[panels[0].art], R = BG[panels[panels.length - 1].art];
+      fillRect(r.x1 - 900, ay1, 900, ay2 - ay1, (L && L.left) || base);
+      fillRect(r.x2, ay1, 900, ay2 - ay1, (R && R.right) || base);
+    }
+    for (const p of panels) {
+      if (p.x2 < V.x1 - 10 || p.x1 > V.x2 + 10) continue;
+      const pb = BG[p.art], im = pb && image(pb.src);
+      if (ready(im)) ctx.drawImage(im, p.x1, ay1, p.x2 - p.x1 + 0.5, ay2 - ay1);
+      else fillRect(p.x1, ay1, p.x2 - p.x1, ay2 - ay1, marine ? '#0d4a6b' : aulas ? '#d9c7b4' : '#1b1650');
+    }
     if (marine) {
       // Techo de la cueva: roca oscura que baja hasta el borde del dibujo (donde ya empieza su propia roca).
       const g = ctx.createLinearGradient(0, ay1 - 220, 0, ay1 + 14);
@@ -1699,6 +1712,13 @@
       if (d.x < V.x1 - 40 || d.x > V.x2 + 40 || d.y < V.y1 - 60 || d.y > V.y2 + 30) continue;
       const pulse = 0.72 + 0.28 * Math.sin(T * 4 + d.phase);
       if (d.kind === 'secreto') { drawSecretDoor(d, G, T); continue; }
+      if (d.kind === 'portal') {   // V58.8: el portal ya está pintado en el arte de las aulas
+        ellipse(d.x, d.y - 40, 34, 46, '#c58bff', 0.08 + 0.06 * pulse);
+        fillRR(d.x - 26, d.y - 104, 52, 14, 4, '#1b1030', 0.85);
+        text('SALIDA', d.x, d.y - 97, 8, '#e5c8ff');
+        tri(d.x - 7, d.y - 84 - pulse * 3, d.x + 7, d.y - 84 - pulse * 3, d.x, d.y - 74 - pulse * 3, '#e5c8ff', 0.9 * pulse);
+        continue;
+      }
       if (d.kind === 'trampilla') {
         fillRR(d.x - 22, d.y - 5, 44, 7, 2, '#6b4a2e');
         line(d.x - 18, d.y - 2, d.x + 18, d.y - 2, '#3b2a1d', 0.8, 1);
@@ -1721,9 +1741,15 @@
   function drawSecretDoor(d, G, T) {
     const P = G.P, near = P ? Math.max(0, 1 - Math.hypot(P.x - d.x, P.y - d.y) / 200) : 0;
     const k = 0.22 + 0.78 * near, glow = 0.5 + 0.5 * Math.sin(T * 2.4 + d.phase);
-    const sea = d.look === 'submarino', col = sea ? '#7ff6ff' : '#c48bff';
+    const sea = d.look === 'submarino', school = d.look === 'escuela', col = sea ? '#7ff6ff' : '#c48bff';
     ellipse(d.x, d.y - 2, 26, 6, col, (0.08 + 0.1 * glow) * k);
-    if (sea) {
+    if (school) {
+      // V58.8: un remolino violeta, como el portal que se ve dentro de las aulas.
+      ctx.globalAlpha = (0.4 + 0.45 * glow) * k; ctx.strokeStyle = '#d6a8ff'; ctx.lineWidth = 1.8; ctx.beginPath();
+      for (let a = 0; a < Math.PI * 4; a += 0.25) { const rr = 2 + a * 1.6, px = d.x + Math.cos(a + T * 2) * rr, py = d.y - 16 + Math.sin(a + T * 2) * rr * 1.2; if (a === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py); }
+      ctx.stroke(); ctx.globalAlpha = 1;
+      for (let i = 0; i < 3; i++) { const q = (T * 0.7 + i / 3) % 1; circle(d.x - 10 + i * 10, d.y - 4 - q * 30, 1.5, '#f0dcff', (1 - q) * 0.9 * k); }
+    } else if (sea) {
       // Grieta en zigzag con luz de adentro.
       ctx.globalAlpha = (0.45 + 0.45 * glow) * k; ctx.strokeStyle = col; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(d.x - 16, d.y - 1); ctx.lineTo(d.x - 7, d.y - 4); ctx.lineTo(d.x, d.y); ctx.lineTo(d.x + 8, d.y - 4); ctx.lineTo(d.x + 17, d.y - 1); ctx.stroke();

@@ -1083,7 +1083,7 @@
       tint: 0xffffff, wash: 0x244a4b, shade: 0.035, theme: 'escuela', room: 'sotano',
       foes: ['rat'], obstacles: ['crate', 'spikes'], foeBudget: 3, obstacleBudget: 2, sideFoes: 1,
       boss: { kind: 'dog', name: 'PERRO FURIOSO', hp: 4 },
-      tutorial: true, music: 0
+      tutorial: true, music: 0, secret: 'aulas'   // V58.8: las aulas ocultas (sala de cómputo y laboratorio) con El Maestro Enojón
     },
     {
       // V58.1 · «Guadalajara Azoteas PRO V2»: fondo nuevo + capa de cornisas dibujadas EXACTAMENTE en las colisiones de este mapa.
@@ -1236,6 +1236,36 @@
      «enemigos secretos» y cada una tiene un jefe. `entry`: punto del mundo junto al que va la grieta (se busca la
      cornisa seca más cercana). */
   const SECRET_ROOMS = {
+    /* V58.8 · Las aulas ocultas de la escuela (nivel 1): la sala de cómputo y, pegado, el laboratorio de ciencias
+       (dos ilustraciones de la misma escuela, una junto a la otra: px 0–1672 y 1672–3344). Se llega por el portal de
+       la sala de cómputo; el portal del laboratorio (a la mitad) es la salida. Ahí da clase El Maestro Enojón. Se pisan
+       las mesas, el escritorio, los libreros, las repisas, la charola del pizarrón y las lámparas del techo. */
+    aulas: {
+      id: 'aulas', label: 'LAS AULAS OCULTAS', art: ['aula_computo', 'aula_ciencias'], artW: 3344, artH: 941, scale: 0.5,
+      entry: { x: -790, y: 818 },
+      floor: 740,
+      // Techo 90 u sobre el borde del dibujo: de pie sobre una lámpara (48 u bajo ese borde), Sofía (62 u) cabe.
+      ceil: 90,
+      ledges: [
+        // Sala de cómputo: repisa de la planta, librero, dos bancos de computadoras, escritorio del maestro y lámparas.
+        { x1: 0, x2: 95, y: 266 }, { x1: 218, x2: 372, y: 303, floor: true }, { x1: 378, x2: 780, y: 540 }, { x1: 833, x2: 1237, y: 540 },
+        { x1: 1303, x2: 1560, y: 537 }, { x1: 375, x2: 650, y: 97 }, { x1: 868, x2: 1140, y: 97 }, { x1: 1355, x2: 1632, y: 97 },
+        // Laboratorio: repisa, librero, tres mesas, tarja, charola del pizarrón, dos repisas de frascos y lámparas.
+        { x1: 1672, x2: 1767, y: 266 }, { x1: 1879, x2: 2038, y: 272, floor: true }, { x1: 2090, x2: 2358, y: 541 }, { x1: 2420, x2: 2667, y: 541 },
+        { x1: 2725, x2: 2982, y: 541 }, { x1: 2990, x2: 3234, y: 534 }, { x1: 2447, x2: 2797, y: 460 }, { x1: 3152, x2: 3340, y: 310 },
+        { x1: 3152, x2: 3340, y: 378 }, { x1: 2047, x2: 2322, y: 97 }, { x1: 2540, x2: 2812, y: 97 }, { x1: 3027, x2: 3304, y: 97 }
+      ],
+      arrive: [190, 740], exit: [1772, 740], exitKind: 'portal',
+      foes: [
+        { kind: 'kid', plat: 'floor', x1: 320, x2: 1250 }, { kind: 'rat', plat: 'floor', x1: 700, x2: 1620, extra: true },
+        { kind: 'chile', plat: [1400, 537], extra: true }
+      ],
+      // El maestro patrulla el frente del laboratorio (no llega al portal de salida).
+      boss: { kind: 'maestro', name: 'EL MAESTRO ENOJÓN', hp: 5, plat: 'floor', x1: 2000, x2: 3300 },
+      gems: [[450, 690], [1000, 690], [580, 490], [1030, 490], [295, 253], [512, 47], [1004, 47], [1494, 47],
+        [2224, 491], [2853, 491], [2622, 410], [3246, 260], [1958, 222], [2184, 47], [2676, 47]],
+      heart: [3165, 47]
+    },
     santuario: {
       id: 'santuario', label: 'SANTUARIO PERDIDO DE POSEIDÓN', art: 'marino_oculto', artW: 2172, artH: 724, scale: 0.72,
       entry: { x: -760, y: 861 },

@@ -690,7 +690,7 @@
     /* ---------- V58.7 · Zonas secretas (mar y Luna) ----------
        Se arman al final: así ningún reparto anterior (peces del mar abierto, jefe, corrientes, asteroides) toma su agua
        ni sus repisas. Ver LEVELS.SECRET_ROOMS: el recorrido está trazado en px del arte panorámico de cada zona. */
-    let secretN = 0;
+    let secretN = 0, secretX = 0;
     for (const sc of W.scenes) {
       const Z = sc.def.secret && LV.SECRET_ROOMS && LV.SECRET_ROOMS[sc.def.secret];
       if (!Z) continue;
@@ -710,15 +710,20 @@
       reserve(near, backX - 18, backX + 18);
 
       const s = Z.scale, AW = Z.artW * s, AH = Z.artH * s;
-      const rx = C.world.roomOriginX + W.scenes.length * C.world.roomSpacing + 300 + secretN * 2400, ry = Math.round(near.y - AH / 2);
+      const rx = C.world.roomOriginX + W.scenes.length * C.world.roomSpacing + 300 + secretX, ry = Math.round(near.y - AH / 2);
+      secretX += Math.ceil(AW) + 600;
       secretN++;
       const X = (px) => rx + px * s, Y = (py) => ry + py * s;
       const floorY = Y(Z.water ? Z.water.floor : Z.floor);
       // En el santuario la superficie del agua queda pegada al borde de arriba del arte: el techo de la cueva sube
       // `ceil` u sobre ese borde para que Sofía (62 u) quepa de pie en las losas (render.js pinta ahí roca de cueva).
-      const ceil = Z.water ? 46 : 0, top = ry - ceil;
+      // V58.8: en las aulas, igual sobre las lámparas del techo (`Z.ceil`).
+      const ceil = Z.ceil ?? (Z.water ? 46 : 0), top = ry - ceil;
       // `y1` deja a la cámara subir 60 u sobre el techo: así la losa de salida y su letrero quedan bajo el HUD de arriba.
-      const room = { id: scope + ':secreto', index: i, scene: i, theme: 'secreto', secret: Z.id, label: Z.label, art: Z.art,
+      // V58.8: varias ilustraciones seguidas (las aulas): `panels` dice dónde va cada una.
+      const arts = Array.isArray(Z.art) ? Z.art : [Z.art], panelW = AW / arts.length;
+      const room = { id: scope + ':secreto', index: i, scene: i, theme: 'secreto', secret: Z.id, label: Z.label, art: arts[0],
+        panels: arts.map((a, k) => ({ art: a, x1: rx + k * panelW, x2: rx + (k + 1) * panelW })),
         x1: rx, y1: top - (Z.water ? 60 : 0), x2: rx + AW, y2: floorY, ceilY: top, artY1: ry, artY2: ry + AH, scale: s, visited: false };
       W.rooms.push(room);
       const reg = room.id, th = sc.theme;
@@ -751,13 +756,13 @@
       }
       const entryDoor = { id: scope + ':grieta', kind: 'secreto', x: doorX, y: near.y, plat: near, scene: i, region: 'main', room: reg,
         to: { x: arrive.x, y: arrive.y, region: reg }, phase: rng() * 6, secret: Z.id, look: th };
-      const exitDoor = { id: scope + ':salida-secreta', kind: 'salida', x: exitSpot.x, y: exitSpot.y, plat: exitSpot.plat, scene: i, region: reg,
+      const exitDoor = { id: scope + ':salida-secreta', kind: Z.exitKind || 'salida', x: exitSpot.x, y: exitSpot.y, plat: exitSpot.plat, scene: i, region: reg,
         room: reg, to: { x: backX, y: near.y, region: 'main' }, phase: rng() * 6, look: th };
       W.doors.push(entryDoor, exitDoor);
       room.entry = entryDoor; room.exit = exitDoor;
       // Enemigos del paquete «enemigos secretos» (en FÁCIL, uno de cada tipo) y el jefe de la zona.
-      const floorPl = { x1: rx + 16, x2: rx + AW - 16, y: floorY, occupied: [] };
-      const platOf = (q) => (q.plat === 'floor' ? { x1: X(q.x1), x2: X(q.x2), y: floorY, occupied: [] } : ledgeAt(q.plat));
+      const floorPl = { x1: rx + 16, x2: rx + AW - 16, y: floorY, w: AW - 32, occupied: [] };
+      const platOf = (q) => (q.plat === 'floor' ? { x1: X(q.x1), x2: X(q.x2), y: floorY, w: X(q.x2) - X(q.x1), occupied: [] } : ledgeAt(q.plat));
       for (const q of Z.foes || []) {
         if (q.extra && diffKey === 'facil') continue;
         if (water) {

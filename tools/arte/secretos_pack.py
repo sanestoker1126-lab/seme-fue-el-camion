@@ -2,7 +2,9 @@
 # y «ENEMIGOS_MAESTRO_Y_PULPO_ATLAS_V58_2_1») y los dos fondos de «NIVELES_SECRETOS_MARINO_ESPACIAL_V1».
 #
 # Uso (Python 3 + Pillow + NumPy; sin SciPy):
-#   python3 -I secretos_pack.py <dir_enemigos_secretos> <dir_jefes> <dir_niveles_secretos> <raíz_del_juego> [dir_revision]
+#   python3 -I secretos_pack.py <dir_enemigos_secretos> <dir_jefes> <dir_niveles_secretos> <raíz_del_juego>
+#           [--revision <dir>] [--aulas <dir con aula_computo.png y aula_ciencias.png>]
+# V58.8: --aulas agrega los dos salones de las aulas ocultas de la escuela (sala de cómputo y laboratorio de ciencias).
 #
 # Qué hace con cada cuadro:
 #   1. Lo recorta de su celda y separa sus manchas (componentes conexos, 8 vecinos, alfa > 24).
@@ -22,7 +24,9 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 SEC, MAE, NIV, ROOT = sys.argv[1:5]
-REV = sys.argv[5] if len(sys.argv) > 5 else None
+_opts = sys.argv[5:]
+REV = _opts[_opts.index('--revision') + 1] if '--revision' in _opts else None
+AULAS = _opts[_opts.index('--aulas') + 1] if '--aulas' in _opts else None
 
 # Animaciones: (cuadros, ms por cuadro, bucle). Los nombres de cuadro son los del paquete.
 CHARS = {
@@ -364,15 +368,27 @@ def contact(name, data, sheet, out):
     img.save(os.path.join(out, 'revision_%s.png' % name))
 
 
+def edge_color(im, box):
+    """Color promedio de una franja del dibujo (para rellenar lo que la cámara ve fuera de él, sin costuras)."""
+    a = np.asarray(im.crop(box)).reshape(-1, 3).mean(axis=0)
+    return '#%02x%02x%02x' % tuple(int(v) for v in a)
+
+
 def backgrounds(report):
     out = {}
-    for key, title in [('marino_oculto', 'Santuario perdido de Poseidón'), ('espacial_oculto', 'Estación orbital abandonada')]:
-        im = Image.open(os.path.join(NIV, 'assets/backgrounds', key, key + '_bg.png')).convert('RGB')
+    items = [(os.path.join(NIV, 'assets/backgrounds', k, k + '_bg.png'), k, t)
+             for k, t in [('marino_oculto', 'Santuario perdido de Poseidón'), ('espacial_oculto', 'Estación orbital abandonada')]]
+    if AULAS:
+        items += [(os.path.join(AULAS, k + '.png'), k, t) for k, t in [('aula_computo', 'Sala de cómputo'), ('aula_ciencias', 'Laboratorio de ciencias')]]
+    for path, key, title in items:
+        im = Image.open(path).convert('RGB')
         rel = 'assets/backgrounds/secretos/%s.webp' % key
         os.makedirs(os.path.join(ROOT, os.path.dirname(rel)), exist_ok=True)
         im.save(os.path.join(ROOT, rel), 'WEBP', quality=84, method=6)
-        out[key] = {'src': rel, 'w': im.size[0], 'h': im.size[1], 'title': title}
-        report.append('%s: %dx%d, %d KB' % (rel, im.size[0], im.size[1], os.path.getsize(os.path.join(ROOT, rel)) // 1024))
+        W, H = im.size
+        out[key] = {'src': rel, 'w': W, 'h': H, 'title': title,
+                    'top': edge_color(im, (0, 0, W, 6)), 'left': edge_color(im, (0, 0, 6, H)), 'right': edge_color(im, (W - 6, 0, W, H))}
+        report.append('%s: %dx%d, %d KB' % (rel, W, H, os.path.getsize(os.path.join(ROOT, rel)) // 1024))
     return out
 
 

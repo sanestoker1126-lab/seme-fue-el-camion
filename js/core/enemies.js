@@ -51,7 +51,7 @@
                  stoneSpeed: 235, shot: 'roca' },
     // V58.7 · El Maestro Enojón (jefe de la escuela): levanta la regla y embiste; de lejos lanza libros (en arco) y
     // borradores (rectos); enojado (media vida) grita y manda dos ondas por el piso que se saltan.
-    maestro: { walker: true, w: 36, h: 52, hp: 6, speed: 44, chargeMul: 3.1, sight: 300, windup: 0.7, charge: 0.72, recover: 1.15, stomp: true,
+    maestro: { walker: true, w: 36, h: 52, hp: 4, speed: 44, chargeMul: 3.1, sight: 300, windup: 0.7, charge: 0.72, recover: 1.15, stomp: true,
                dash: 'dizzy', minPlatform: 160, hitKW: 1.45, hitKH: 1.1, throwNear: 160, throwRange: 440, throwWindup: 0.6, throwCD: 2.0,
                stoneSpeed: 250, shoutWindup: 0.75, shoutSpeed: 230, shoutCD: 6.5 },
     // V58.7 · El Pulpo del Abismo (jefe de la zona secreta del mar): embiste con los tentáculos de cerca y de lejos
