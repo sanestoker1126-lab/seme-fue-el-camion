@@ -1,0 +1,17 @@
+name: Entrega ZIP V58.7.2
+on:
+  push:
+    branches: ["entregas/v58.7.2-parche"]
+jobs:
+  entrega:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - run: unzip -tq entregas/SE_ME_FUE_EL_CAMION_V58_7_2_ARCHIVOS_NUEVOS.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SE_ME_FUE_EL_CAMION_V58_7_2_ARCHIVOS_NUEVOS
+          path: entregas/SE_ME_FUE_EL_CAMION_V58_7_2_ARCHIVOS_NUEVOS.zip
+          compression-level: 0
