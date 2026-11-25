@@ -9,7 +9,7 @@
 // V58.6: menú compacto, apertura en penumbra, ropa por nivel y la barda con vidrios que se cruza con el columpio
 // (camion-v58-6-menu-columpio).
 // V58.7: zonas secretas del mar y de la Luna, sus enemigos, el Pulpo del Abismo y El Maestro Enojón
-// (camion-v58-7-zonas-secretas).
+// (camion-v58-7-zonas-secretas; con el mapeo de nado y buceo: camion-v58-7-zonas-secretas-mapeo-agua).
 // V58.8: las aulas ocultas de la escuela (sala de cómputo y laboratorio) y todos los niveles desbloqueados.
 const CACHE='camion-v58-8-aulas-ocultas';
 const CODE=["css/game.css?v=58.8", "css/toxifamilia_style.css?v=58.8", "css/toxifamilia.css?v=58.8", "js/core/util.js?v=58.8", "js/core/config.js?v=58.8", "js/core/levels.js?v=58.8", "js/core/story.js?v=58.8", "js/core/toxifamilia_style.js?v=58.8", "js/core/toxifamilia.js?v=58.8", "js/core/physics.js?v=58.8", "js/core/enemies.js?v=58.8", "js/core/obstacles.js?v=58.8", "js/core/world.js?v=58.8", "js/core/game.js?v=58.8", "js/app/art_data.js?v=58.8", "js/app/art_secretos.js?v=58.8", "js/app/render.js?v=58.8", "js/app/input.js?v=58.8", "js/app/audio.js?v=58.8", "js/app/ui.js?v=58.8", "js/app/main.js?v=58.8", "js/app/toxifamilia_cinematic.js?v=58.8"];

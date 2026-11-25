@@ -2718,7 +2718,7 @@
      DELANTE, para que lo sumergido se vea bajo el agua. Sofía usa el atlas de nado (cuadros extraídos por contorno
      de los atlas originales): las animaciones de superficie alinean la línea del agua pintada con la del juego. */
   const SWIM_STATE = { swimFloat: 'float', swim: 'surf', swimUnder: 'under', swimDown: 'down', swimUp: 'up', swimUpDiag: 'upDiag',
-    swimDash: 'dash', swimHurt: 'hurt', waterLeap: 'leap', wade: 'wade', wadeRun: 'wadeRun', diveIn: 'diveIn' };
+    swimDash: 'dash', swimKick: 'dash', swimHurt: 'hurt', waterLeap: 'leap', wadeIdle: 'wade', wade: 'wade', wadeRun: 'wadeRun', diveIn: 'diveIn' };
   const waterGrad = new WeakMap();
   /* V58.1 · Brecha en el puente pintado del fondo del mar (desagüe): se "rompe" el tramo de puente con un hueco de
      agua honda, bordes de piedra quebrada y escombros que caen. */
@@ -2813,7 +2813,7 @@
   function swimAnimFor(P) {
     const S = NS.ART && NS.ART.SWIM;
     if (!S) return null;
-    if (P.dead) return P.water ? 'dead' : null;
+    if (P.dead) return (P.water || P.wade) ? 'dead' : null;
     const a = SWIM_STATE[P.state];
     return a && S.anims[a] ? a : null;
   }
@@ -2823,8 +2823,9 @@
     if (!ready(im)) return false;
     const P = G.P, n = A.frames.length;
     let ix;
-    if (A.loop) ix = Math.floor(P.animT * A.fps) % n;
-    else ix = Math.min(n - 1, Math.floor((name === 'dead' ? G.timers.dying : P.stateT) * A.fps));
+    if (P.state === 'wadeIdle') ix = 0;
+    else if (P.state === 'swimKick') ix = Math.min(n - 1, Math.floor(Math.max(0, 0.22 - P.kickT) / 0.22 * n));
+    else ix = waterFrameIndex(name === 'dead' ? G.timers.dying : P.stateT, 1000 / A.fps, n, A.loop);
     const [sx, sy, sw, sh, ax, ay] = A.frames[ix];
     const sc = SOFIA_BASE * A.scale;
     let x = P.x, y = P.y, rot = 0;
@@ -2890,14 +2891,25 @@
     wadeIdle: [0, 6, 210, 226, true],    wade: [6, 6, 115, 226, true],    wadeRun: [12, 6, 82, 226, true],
     dead: [85, 5, 145, 130, false],      cheer: [98, 5, 155, 226, false]
   };
+  // Coordenadas y pivotes individuales, compilados del JSON original (índice -> [x,y,w,h,ax,ay]).
+  // No se recortan ni se reescalan los PNG. El test de mapeo verifica la paridad con el JSON.
+  const DIVE_RECTS = [[0,0,256,256,128,226],[256,0,256,256,128,226],[512,0,256,256,128,226],[768,0,256,256,128,226],[1024,0,256,256,128,226],[1280,0,256,256,128,226],[1536,0,256,256,128,226],[1792,0,256,256,128,226],[0,256,256,256,128,226],[256,256,256,256,128,226],[512,256,256,256,128,226],[768,256,256,256,128,226],[1024,256,256,256,128,226],[1280,256,256,256,128,226],[1536,256,256,256,128,226],[1792,256,256,256,128,226],[0,512,256,256,128,226],[256,512,256,256,128,226],[512,512,256,256,128,226],[768,512,256,256,128,226],[1024,512,256,256,128,226],[1280,512,256,256,128,226],[1536,512,256,256,128,226],[1792,512,256,256,128,226],[0,768,256,256,128,226],[256,768,256,256,128,226],[512,768,256,256,128,226],[768,768,256,256,128,130],[1024,768,256,256,128,130],[1280,768,256,256,128,130],[1536,768,256,256,128,130],[1792,768,256,256,128,226],[0,1024,256,256,128,226],[256,1024,256,256,128,226],[512,1024,256,256,128,226],[768,1024,256,256,128,130],[1024,1024,256,256,128,130],[1280,1024,256,256,128,130],[1536,1024,256,256,128,130],[1792,1024,256,256,128,130],[0,1280,256,256,128,130],[256,1280,256,256,128,130],[512,1280,256,256,128,130],[768,1280,256,256,128,130],[1024,1280,256,256,128,130],[1280,1280,256,256,128,130],[1536,1280,256,256,128,130],[1792,1280,256,256,128,130],[0,1536,256,256,128,130],[256,1536,256,256,128,130],[512,1536,256,256,128,130],[768,1536,256,256,128,130],[1024,1536,256,256,128,130],[1280,1536,256,256,128,130],[1536,1536,256,256,128,130],[1792,1536,256,256,128,130],[0,1792,256,256,128,130],[256,1792,256,256,128,130],[512,1792,256,256,128,130],[768,1792,256,256,128,130],[1024,1792,256,256,128,130],[1280,1792,256,256,128,130],[1536,1792,256,256,128,130],[1792,1792,256,256,128,130],[0,2048,256,256,128,130],[256,2048,256,256,128,130],[512,2048,256,256,128,130],[768,2048,256,256,128,130],[1024,2048,256,256,128,130],[1280,2048,256,256,128,130],[1536,2048,256,256,128,130],[1792,2048,256,256,128,130],[0,2304,256,256,128,130],[256,2304,256,256,128,130],[512,2304,256,256,128,130],[768,2304,256,256,128,130],[1024,2304,256,256,128,130],[1280,2304,256,256,128,130],[1536,2304,256,256,128,130],[1792,2304,256,256,128,130],[0,2560,256,256,128,130],[256,2560,256,256,128,130],[512,2560,256,256,128,130],[768,2560,256,256,128,130],[1024,2560,256,256,128,130],[1280,2560,256,256,128,130],[1536,2560,256,256,128,130],[1792,2560,256,256,128,130],[0,2816,256,256,128,130],[256,2816,256,256,128,130],[512,2816,256,256,128,226],[768,2816,256,256,128,226],[1024,2816,256,256,128,226],[1280,2816,256,256,128,226],[1536,2816,256,256,128,226],[1792,2816,256,256,128,226],[0,3072,256,256,128,226],[256,3072,256,256,128,226],[512,3072,256,256,128,226],[768,3072,256,256,128,226],[1024,3072,256,256,128,226],[1280,3072,256,256,128,226],[1536,3072,256,256,128,226]];
+  function waterFrameIndex(t, ms, count, loop) {
+    const i = Math.floor(Math.max(0, Number.isFinite(t) ? t : 0) * 1000 / ms);
+    return loop ? i % count : Math.min(count - 1, i);
+  }
   const inSeaWater = (P) => !!(P.water || P.wade);
   function drawDiveWater(G, alpha) {
     const P = G.P, im = image(DIVE_SHEET);
     if (!ready(im)) return false;
-    const [first, count, ms, pivot, loop] = DIVE_WATER[P.state] || DIVE_WATER.swimFloat;
-    const t = loop ? P.animT : P.state === 'dead' ? G.timers.dying : P.stateT;
-    const idx = Math.floor(Math.max(0, t) * 1000 / ms);
-    const frame = first + (loop ? idx % count : Math.min(count - 1, idx));
+    const state = P.dead ? 'dead' : DIVE_WATER[P.state] ? P.state : P.wade ? 'wadeIdle' : 'swimFloat';
+    const [first, count, ms, pivot, loop] = DIVE_WATER[state];
+    const t = state === 'dead' ? G.timers.dying : P.stateT;
+    const ix = state === 'swimKick'
+      ? Math.min(count - 1, Math.floor(Math.max(0, 0.22 - P.kickT) / 0.22 * count))
+      : waterFrameIndex(t, ms, count, loop);
+    const [sx, sy, sw, sh, ax, ay] = DIVE_RECTS[first + ix];
+    if (sx + sw > im.naturalWidth || sy + sh > im.naturalHeight) return false;
     let rot = 0;
     if (P.state === 'swim' || P.state === 'swimUnder') rot = Math.max(-0.35, Math.min(0.35, P.vy / 700)) * (P.face || 1);
     ctx.save();
@@ -2905,7 +2917,7 @@
     ctx.translate(P.x, pivot === 130 ? P.y + (P.state === 'dead' ? Math.min(70, G.timers.dying * 55) : 0) : P.y + P.h / 2);
     if (rot) ctx.rotate(rot);
     ctx.scale((P.face < 0 ? -1 : 1) * 0.4, 0.4);
-    ctx.drawImage(im, (frame % 8) * 256, Math.floor(frame / 8) * 256, 256, 256, -128, -pivot, 256, 256);
+    ctx.drawImage(im, sx, sy, sw, sh, -ax, -ay, sw, sh);
     ctx.restore();
     if (P.state === 'swimHurt' && P.hurtT > 0.25) ring(P.x, P.y, 26, 30, '#ff4040', 0.55, 2.5);
     return true;
