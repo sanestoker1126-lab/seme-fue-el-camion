@@ -15,6 +15,10 @@
     const AMB_VOL = 0.10;
     const AUDIO = {
       music: 'assets/audio/cancion_fondo_v40.mp3',
+      // V58.3 · Banda sonora del mundo marino: «Chinos de Seda» (aportada por el autor), solo del minuto 1:30 al 3:00,
+      // procesada antes para que quede de fondo: sin graves bajo 45 Hz ni agudos sobre 7 kHz, compresión suave,
+      // −23 LUFS (≈ 3 dB por debajo de cancion_fondo_v40) y entrada/salida suaves para el bucle.
+      mar: 'assets/audio/mar_chinos_de_seda_fondo_v58_3.mp3',
       school: 'assets/audio/ambiente_escuela_v24.mp3',
       city: 'assets/audio/ambiente_calles_guadalajara_v24.mp3',
       luna: 'assets/audio/luna_maullido_v24.mp3',
@@ -93,24 +97,29 @@
       fades.add(id);
     }
     // V50: el ambiente depende del tema del tramo (antes, del índice: al agregar niveles se desfasaba).
-    function chooseAmbience() { return theme === 'escuela' ? AUDIO.school : AUDIO.city; }
+    // V58.3: en el mar no suena el ambiente de calle (tráfico bajo el agua); solo su banda sonora de fondo.
+    function chooseAmbience() { return theme === 'submarino' ? null : theme === 'escuela' ? AUDIO.school : AUDIO.city; }
+    function chooseMusic() { return theme === 'submarino' ? AUDIO.mar : AUDIO.music; }
+    const leaving = new Set();   // pistas que se están desvaneciendo: se pausan también si el juego se detiene a la mitad
+    /** Cambia una pista en bucle por otra con un fundido corto; null la apaga. Devuelve la pista que queda. */
+    function swapTrack(cur, src, vol) {
+      if (cur && src && cur.src.endsWith(src)) return cur;
+      if (!cur && !src) return null;
+      const next = src ? localAudio(src, true, cur ? 0 : vol) : null;
+      if (cur) {
+        if (next) { const p = next.play(); if (p && p.catch) p.catch(() => {}); fadeElement(next, 0, vol, 420); }
+        leaving.add(cur);
+        fadeElement(cur, cur.volume, 0, 420, () => { cur.pause(); leaving.delete(cur); });
+      }
+      return next;
+    }
     function syncTracks() {
       if (!opt.music || !playing) return;
-      if (!musicEl) musicEl = localAudio(AUDIO.music, true, MUSIC_VOL * musicK);
-      if (!ambienceEl) ambienceEl = localAudio(chooseAmbience(), true, AMB_VOL * musicK);
-      if (ambienceEl && !ambienceEl.src.endsWith(chooseAmbience())) {
-        const old = ambienceEl, next = localAudio(chooseAmbience(), true, 0);
-        ambienceEl = next;
-        if (next) {
-          const p = next.play(); if (p && p.catch) p.catch(() => {});
-          fadeElement(next, 0, AMB_VOL * musicK, 420);
-        }
-        fadeElement(old, old.volume, 0, 420, () => old.pause());
-      }
+      musicEl = swapTrack(musicEl, chooseMusic(), MUSIC_VOL * musicK);
+      ambienceEl = swapTrack(ambienceEl, chooseAmbience(), AMB_VOL * musicK);
       for (const a of [musicEl, ambienceEl]) {
         if (!a) continue;
-        if (a === musicEl) a.volume = MUSIC_VOL * musicK;
-        else if (!fades.size) a.volume = AMB_VOL * musicK;
+        if (!fades.size) a.volume = (a === musicEl ? MUSIC_VOL : AMB_VOL) * musicK;
         const p = a.play(); if (p && p.catch) p.catch(() => {});
       }
     }
@@ -154,7 +163,15 @@
       splashBig: () => { noise(0.5, 0.13, 1400, 220); noise(0.3, 0.06, 3000, 900, 0.06); tone(160, 0.18, 'sine', 0.05, -80); },
       swim: () => { noise(0.16, 0.05, 900, 500); tone(300, 0.06, 'sine', 0.02, 160, 0.02); },
       wade: () => noise(0.12, 0.045, 2400, 900),
-      drip: () => { tone(1300, 0.05, 'sine', 0.03, 400); tone(900, 0.06, 'sine', 0.025, 300, 0.07); }
+      drip: () => { tone(1300, 0.05, 'sine', 0.03, 400); tone(900, 0.06, 'sine', 0.025, 300, 0.07); },
+      // V58 · Tirolesa (enganche metálico y zumbido del cable) y orden a las gatitas.
+      zip: () => { tone(1200, 0.05, 'square', 0.03, -300); noise(0.35, 0.035, 2600, 1800, 0.04); },
+      zipOff: () => tone(520, 0.08, 'triangle', 0.04, -180),
+      cats: () => { tone(740, 0.08, 'triangle', 0.05, 220); tone(988, 0.12, 'triangle', 0.04, 0, 0.07); },
+      // V58.3 · Corriente marina (rumor grave de agua) y asteroide (silbido de aviso; golpe y polvo al caer).
+      current: () => { noise(0.9, 0.07, 380, 160, 0, 0.8); noise(0.6, 0.035, 900, 300, 0.15); },
+      meteorWarn: () => { tone(1400, 0.5, 'sine', 0.025, -900); tone(700, 0.08, 'square', 0.02, 0, 0.02); },
+      meteorImpact: () => { noise(0.45, 0.12, 900, 120); tone(90, 0.3, 'sawtooth', 0.06, -40); }
     };
     const FILE_SFX = {
       luna: [AUDIO.luna, 0.56], morita: [AUDIO.morita, 0.56],
@@ -191,7 +208,8 @@
       if (!AC) return;
       const profiles = {
         dog: [104, 'sawtooth'], bravo: [76, 'sawtooth'], kid: [245, 'triangle'],
-        chile: [430, 'sawtooth'], bat: [515, 'triangle'], pigeon: [640, 'triangle'], rat: [735, 'square']
+        chile: [430, 'sawtooth'], bat: [515, 'triangle'], pigeon: [640, 'triangle'], rat: [735, 'square'],
+        maestro: [92, 'sawtooth'], pulpo_abismo: [128, 'square'], marciano: [372, 'square']   // V58.7
       };
       const p = profiles[kind] || [220, 'triangle'];
       const semitone = ((Math.abs(Number(scene) || 0) % 5) - 2) / 12;
@@ -217,6 +235,8 @@
       for (const id of fades) clearInterval(id);
       fades.clear();
       for (const a of [musicEl, ambienceEl]) if (a) { try { a.pause(); if (rewind) a.currentTime = 0; } catch (_) {} }
+      for (const a of leaving) { try { a.pause(); } catch (_) {} }
+      leaving.clear();
     }
     const stop = () => halt(true);          // fin de partida / menú: la próxima vez empieza desde el inicio
     const pause = () => halt(false);        // pausa: se retoma donde iba
@@ -224,7 +244,7 @@
     function setTramo(i, room, th) { tramo = i; inRoom = !!room; if (th) theme = th; if (playing) syncTracks(); }
     function setVolumes(m, s) {
       musicK = Math.max(0, Math.min(1, m)); sfxK = Math.max(0, Math.min(1, s));
-      if (musicEl) musicEl.volume = MUSIC_VOL * musicK;
+      if (musicEl && !fades.size) musicEl.volume = MUSIC_VOL * musicK;
       if (ambienceEl && !fades.size) ambienceEl.volume = AMB_VOL * musicK;
     }
     function suspend() { pause(); try { if (AC && AC.state === 'running') AC.suspend(); } catch (_) {} }

@@ -69,8 +69,17 @@ test('agua del submarino: profunda, ninguna plataforma dentro y cada orilla con 
   for (const z of deep) {
     for (const p of W.platforms) {
       const inside = p.y > z.y + 4 && p.y < z.y2 - 4 && p.x2 > z.x1 + 2 && p.x1 < z.x2 - 2;
-      assert.ok(!inside, 'plataforma dentro del agua: ' + p.id);
+      // V58.2: el mar abierto ocupa todo lo que hay bajo la isla; sus repisas sumergidas existen (ahí caminan
+      // cangrejos y niños buzos) y quedan marcadas: Sofía las atraviesa nadando y no las usa para puertas ni obstáculos.
+      if (z.sea) assert.ok(!inside || p.underwater, 'repisa sumergida sin marcar: ' + p.id);
+      else assert.ok(!inside, 'plataforma dentro del agua: ' + p.id);
     }
+    // V58.2: el mar abierto va de pared a pared y baja hasta el lecho, donde está la escotilla (la meta). Que no sea
+    // una trampa lo comprueba el análisis de alcanzabilidad (se llega buceando).
+    // V58.7: el santuario secreto es un mar cerrado dentro de su zona (no baja al lecho). Que se salga de él (saltando a
+    // la losa de la derecha) lo comprueba el análisis de alcanzabilidad: la zona no puede quedar como trampa.
+    if (z.sea && z.room) { assert.ok(W.rooms.some((r) => r.id === z.room && r.secret), 'el mar cerrado pertenece a una zona secreta'); continue; }
+    if (z.sea) { assert.ok(z.toStreet && Math.abs(z.y2 - W.bounds.streetY) < 1, 'el mar llega al lecho de la escotilla'); continue; }
     for (const side of ['left', 'right']) {
       const edge = side === 'left' ? z.x1 : z.x2;
       const ground = W.platforms.some((p) => Math.abs(p.y - z.y) <= C.water.climbUp && (side === 'left' ? p.x2 >= edge - 6 && p.x1 < edge : p.x1 <= edge + 6 && p.x2 > edge));
@@ -123,7 +132,8 @@ test('aspecto de Sofía: variantes uniforme y rosa completas (15 frames), mismas
 
 test('precarga sin conexión: los fondos nuevos están en el service worker y existen', () => {
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
-  for (const f of ['assets/scenes/generated/submarino_fondo.png', 'assets/scenes/generated/espacial_fondo.png']) {
+  // V58.1: mar y Luna usan su arte pintado (V4 y V5); los fondos anteriores se retiraron del juego.
+  for (const f of ['assets/parallax/marino/depth_v4/backgrounds/01_marino_base_isla.webp', 'assets/parallax/espacial/depth_v5/background/page_01.webp']) {
     assert.ok(sw.includes(f), 'sin precargar: ' + f);
     assert.ok(fs.existsSync(path.join(ROOT, f)), 'no existe: ' + f);
   }

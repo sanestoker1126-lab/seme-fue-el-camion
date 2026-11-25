@@ -10,7 +10,7 @@ const fs = require('fs');
   page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
   page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
   page.on('requestfailed', (r) => errors.push('reqfail: ' + r.url()));
-  await page.addInitScript(() => { try { localStorage.setItem('camion-cinematic-seen', '1'); for (let i = 0; i < 40; i++) localStorage.setItem('camion-boss-cinematic-v38-scene-' + i, '1'); } catch (_) {} });
+  await page.addInitScript(() => { try { localStorage.setItem('camion-cinematic-seen', '1'); localStorage.setItem('camion-cinematic-marino-seen', '1'); for (let i = 0; i < 40; i++) localStorage.setItem('camion-boss-cinematic-v38-scene-' + i, '1'); } catch (_) {} });
   await page.goto(base + '/Se_Me_Fue_El_Camion.html?qa&manual=1', { waitUntil: 'load' });
   await page.waitForFunction(() => window.CAMION_QA && document.getElementById('start') && !document.getElementById('start').disabled, null, { timeout: 30000 });
   await page.waitForTimeout(1500);

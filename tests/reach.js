@@ -27,13 +27,19 @@ function standable(W) {
 const topY = (n) => (n.solid ? n.y1 : n.y);
 
 function subWorld(W, A) {
-  const y = topY(A), x1 = A.x1 - 900, x2 = A.x2 + 900;
+  // V58.2: desde un mar profundo la ventana llega hasta su fondo (se bucea miles de unidades).
+  const y = topY(A), x1 = A.x1 - 900, x2 = A.x2 + 900, below = A.kind === 'water' ? Math.max(1400, A.water.y2 - y + 60) : 1400;
   return {
     // Ventana amplia hacia arriba: un toldo rebotador lanza a Nina más de 300 u y los techos deben existir en la simulación.
-    platforms: W.platforms.filter((p) => p.y > y - 700 && p.y < y + 1400 && p.x2 > x1 && p.x1 < x2),
-    solids: W.solids.filter((s) => s.kind === 'wall' || (s.y2 > y - 720 && s.y1 < y + 1400 && s.x2 > x1 && s.x1 < x2)),
+    platforms: W.platforms.filter((p) => p.y > y - 700 && p.y < y + below && p.x2 > x1 && p.x1 < x2),
+    solids: W.solids.filter((s) => s.kind === 'wall' || (s.y2 > y - 720 && s.y1 < y + below && s.x2 > x1 && s.x1 < x2)),
     hazards: W.hazards.filter((h) => h.type === 'puddle'),
     waters: W.waters || [],
+    // V58: tirolesas cercanas y gravedad propia del mundo (órbita).
+    zips: (W.zips || []).filter((z) => Math.max(z.ay, z.by) > y - 700 && Math.min(z.ay, z.by) < y + 1400 && Math.max(z.ax, z.bx) > x1 && Math.min(z.ax, z.bx) < x2),
+    // V58.2: cuerdas cercanas.
+    ropes: (W.ropes || []).filter((r) => r.ay + r.len > y - 700 && r.ay < y + 1400 && r.ax > x1 && r.ax < x2),
+    gravityMul: W.gravityMul || 1,
     t: 0
   };
 }
@@ -82,34 +88,75 @@ function simulate(W, sub, A, x, vx, policy, probe) {
   const crumbles = sub.platforms.filter((p) => p.kind === 'crumble');
   const resetCrumbles = () => { for (const c of crumbles) { c.crState = 'solid'; c.crT = 0; c.gone = false; } };
   resetCrumbles();
-  let airborne = false, minFoot = topY(A), steps = 0, result = null, dashed = false, apexSeen = false, airSteps = 0;
-  for (; steps < 260; steps++) {
+  let airborne = false, steps = 0, result = null, dashed = false, apexSeen = false, airSteps = 0, landFall = 0;
+  // V58: el mar abierto es hondo; desde el agua se simula más tiempo (bucear hasta un desagüe o cruzarlo tarda).
+  // V58.2: el mar que llega al lecho mide miles de unidades: el tiempo crece con su alto y su ancho.
+  const maxSteps = isW && A.water.sea ? Math.max(720, Math.round(240 + ((A.water.y2 - A.water.y) + (A.water.x2 - A.water.x1)) / 3)) : (A.ropeNear ? 360 : 260);
+  for (; steps < maxSteps; steps++) {
     sub.t += 1 / 60;
     NS.Physics.updatePlatforms(sub, sub.t);
-    const inp = Object.assign({}, NONE, policy(steps, P, { airborne, airSteps, apexSeen, dashed }));
+    const inp = Object.assign({}, NONE, policy(steps, P, { airborne, airSteps, apexSeen, dashed }, W));
     if (inp.dashPressed) dashed = true;
     const prevGround = P.ground;
-    NS.Physics.stepPlayer(P, sub, inp, 1 / 60, []);
+    const ev = NS.Physics.stepPlayer(P, sub, inp, 1 / 60, []);
+    // La altura de caída es la que mide el propio juego al aterrizar (la tirolesa y el agua la reinician).
+    for (const e of ev) if (e.type === 'land') landFall = e.fall;
     if (probe) probe.visit(P, A);
     const foot = P.y + P.h / 2;
-    minFoot = Math.min(minFoot, foot);
     if (isW) {
       if (!P.water) leftWater = true;
       else if (leftWater && P.water === A.water) break;          // salió y volvió a caer en la misma agua
     }
     if (P.water && P.waterT > 0.25 && (!isW || P.water !== A.water)) { result = nodeOfWater(W, P.water); waterResult = true; break; }
+    // V58.2: en el mar que llega al lecho, la escotilla se alcanza buceando (misma regla que game.js).
+    if (P.water && P.water.toStreet && NS.util.overlap(NS.util.bodyRect(P), W.goal)) { result = W.street; waterResult = true; break; }
     if (!P.ground) { airborne = true; airSteps++; if (P.vy >= 0) apexSeen = true; }
     if (P.ground && P.ground !== A && P.ground !== prevGround) { result = P.ground; break; }
     if (P.ground === A && airborne) break;
-    if (foot > topY(A) + 1500) break;
+    if (foot > (isW ? A.water.y2 + 100 : topY(A) + 1500)) break;
   }
   for (const c of crates) c.broken = false;
   resetCrumbles();
   if (!result) return null;
-  return { to: result, fall: waterResult ? 0 : topY(result) - minFoot };
+  return { to: result, fall: waterResult ? 0 : landFall };
 }
 
-function policiesFor(A) {
+/** Puntos de la superficie del mar desde donde empezar a bucear: el borde izquierdo, el centro y el derecho, corridos
+    hacia dentro si ahí hay roca a flor de agua (Sofía no puede flotar encajada en ella). */
+function seaStarts(W, z) {
+  const PC = NS.CONFIG.player, fy = NS.Physics.floatYOf(z, { h: PC.h });
+  const free = (x) => !W.solids.some((s) => s.kind !== 'wall' && x + PC.w / 2 > s.x1 && x - PC.w / 2 < s.x2 && fy + PC.h / 2 > s.y1 && fy - PC.h / 2 < s.y2);
+  const out = [];
+  for (const [x0, step] of [[z.x1 + 18, 12], [(z.x1 + z.x2) / 2, 12], [z.x2 - 18, -12]]) {
+    let x = x0;
+    for (let k = 0; k < 120 && !free(x); k++) x += step;
+    if (free(x)) out.push(x);
+  }
+  return out;
+}
+
+/** Política de buceo: baja hasta yT rodeando la roca (sigue la pared en sentido `d`; si choca de lado, invierte), y
+    luego nada en sentido `s` frenando la inercia. `toGoal`: al llegar al fondo, va hacia la escotilla (W.goal). */
+function diveAround(yT, d, s, toGoal) {
+  let lastY = null, lastX = null, stuck = 0, side = d, wall = 0;
+  return (i, P, st, W) => {
+    const dy = lastY === null ? 99 : P.y - lastY, dx = lastX === null ? 99 : Math.abs(P.x - lastX);
+    lastY = P.y; lastX = P.x;
+    if (P.y < yT - 40) {
+      stuck = dy < 0.4 ? stuck + 1 : 0;
+      if (stuck > 4) {
+        wall = dx < 0.3 ? wall + 1 : 0;
+        if (wall > 6) { side = -side; wall = 0; }
+        return { downHeld: true, left: side < 0, right: side > 0 };
+      }
+      return { downHeld: true };
+    }
+    if (toGoal && W && W.goal) { const gx = (W.goal.x1 + W.goal.x2) / 2; return { downHeld: true, left: P.x > gx + 4, right: P.x < gx - 4 }; }
+    return { left: s < 0, right: s > 0, upHeld: P.vy > 25 };
+  };
+}
+
+function policiesFor(A, W) {
   const out = [];
   const w = A.x2 - A.x1;
   if (A.kind === 'water') {
@@ -126,6 +173,29 @@ function policiesFor(A) {
       out.push([st, (i) => ({ jumpPressed: i === 1, jumpHeld: true })]);
       out.push([st, (i) => ({ downHeld: i < 70 })]);
     }
+    // V58.1: en el mar abierto (flotación neutra) se bucea a cualquier profundidad: bajar hasta varias
+    // profundidades y nadar de lado a lado ahí (entradas reales; lo recorrido marca los cristales visitados).
+    // Líneas cada 48 u (el radio de recogida es 29), desde las dos paredes y el centro, hacia ambos lados. Al llegar
+    // a la profundidad se frena con ARRIBA (sin eso la inercia del buceo la hunde ~75 u más), como haría un jugador.
+    // V58.2: si la roca le corta el descenso, rodea (sigue la pared hacia un lado y, si choca, cambia de lado).
+    if (A.water.sea) {
+      const z = A.water, starts = seaStarts(W, z);
+      for (const sx of starts) {
+        for (let yT = z.y + 60; yT < z.y2 - 20; yT += 48) {
+          for (const d of [-1, 1]) out.push([{ x: sx, vx: 0 }, diveAround(yT, d, d)]);
+        }
+      }
+      // Escotilla del lecho: bajar rodeando y nadar hacia ella.
+      if (z.toStreet) for (const sx of starts) for (const d of [-1, 1]) out.push([{ x: sx, vx: 0 }, diveAround(z.y2 - 40, d, 0, true)]);
+    }
+    // V58: bucear hasta cada desagüe del fondo (en línea recta y avanzando hacia él desde los extremos).
+    for (const d of A.water.drains || []) {
+      const cx = (d.x1 + d.x2) / 2;
+      out.push([{ x: cx, vx: 0 }, () => ({ downHeld: true })]);
+      for (const sx of [A.x1 + 20, A.x2 - 20]) {
+        out.push([{ x: sx, vx: 0 }, (i, P) => ({ downHeld: true, left: P.x > cx + 6, right: P.x < cx - 6 })]);
+      }
+    }
     return out;
   }
   for (const d of [-1, 1]) {
@@ -138,6 +208,30 @@ function policiesFor(A) {
     out.push([run, (i, P, s) => ({ left: d < 0 && !s.apexSeen, right: d > 0 && !s.apexSeen, jumpPressed: i === 1, jumpHeld: true })]);
     out.push([run, (i, P, s) => ({ left: d < 0, right: d > 0, jumpPressed: i === 1, jumpHeld: true, dashPressed: s.apexSeen && !s.dashed })]);
     out.push([run, (i, P, s) => ({ left: d < 0, right: d > 0, dashPressed: s.airSteps === 10 && !s.dashed })]);
+  }
+  // V58.2: columpio de arco sobre este piso: correr hacia la cuerda, saltar, columpiarse y soltarse a distintos tiempos.
+  for (const r of (A.ropeNear && W && W.ropes) || []) {
+    if (!r.arc || r.ax < A.x1 + 20 || r.ax > A.x2 - 20 || Math.abs(r.base - topY(A)) > 2) continue;
+    for (const d of [-1, 1]) for (const k of [10, 20, 30, 40, 55]) {
+      let g = -1;
+      const sx = Math.max(A.x1 + 16, Math.min(A.x2 - 16, r.ax - d * 120));
+      out.push([{ x: sx, vx: 0 }, (i, P) => {
+        if (P.rope && g < 0) g = i;
+        return { left: d < 0, right: d > 0, jumpPressed: i === 8 || (g >= 0 && i === g + k), jumpHeld: (i >= 8 && i < 22) || (g >= 0 && i >= g + k && i < g + k + 14) };
+      }]);
+    }
+  }
+  if (A.ropeNear) {
+    for (const d of [-1, 1]) {
+      const edge = d < 0 ? A.x1 : A.x2, x = edge - d * Math.min(20, w / 2), run = { x, vx: d * NS.CONFIG.phys.move };
+      for (const k of [8, 16, 24, 32, 44, 56]) {
+        let g = -1;
+        out.push([run, (i, P) => {
+          if (P.rope && g < 0) g = i;
+          return { left: d < 0, right: d > 0, jumpPressed: i === 1 || (g >= 0 && i === g + k), jumpHeld: i < 14 || (g >= 0 && i >= g + k && i < g + k + 14) };
+        }]);
+      }
+    }
   }
   const n = Math.max(1, Math.min(6, Math.round(w / 55)));
   for (let k = 0; k < n; k++) {
@@ -163,8 +257,9 @@ function buildGraph(W, gatesOpen = new Set(), probe = null) {
   for (const A of nodes) {
     if (A.kind === 'wall') continue;
     const sub = subWorld(W, A);
+    A.ropeNear = A.kind !== 'water' && sub.ropes.some((r) => Math.abs(r.ax - (A.x1 + A.x2) / 2) < (A.x2 - A.x1) / 2 + 420 && Math.abs(r.ay + r.len - topY(A)) < 420);
     const seen = new Map();
-    for (const [st, pol] of policiesFor(A)) {
+    for (const [st, pol] of policiesFor(A, W)) {
       const r = simulate(W, sub, A, st.x, st.vx, pol, probe);
       if (!r || !edges.has(r.to)) continue;
       const prev = seen.get(r.to);
@@ -224,6 +319,9 @@ function analyze(W, { safeFall, gems } = {}) {
   if (!reach.has(street)) report.problems.push('La calle de la terminal no es alcanzable sin caídas dañinas desde el inicio');
   report.checks.checkpoints = W.checkpoints.map((cp) => bfs(graph, [cp.plat], safeFall).has(street));
   report.checks.checkpoints.forEach((ok, i) => { if (!ok) report.problems.push(`Desde la parada del tramo ${i + 1} no se llega a la meta sin daño`); });
+  // V58: paradas intermedias alcanzables desde el inicio y con camino seguro a la meta.
+  report.checks.midpoints = (W.midpoints || []).map((mp) => reach.has(mp.plat) && bfs(graph, [mp.plat], safeFall).has(street));
+  report.checks.midpoints.forEach((ok, i) => { if (!ok) report.problems.push(`Parada intermedia ${i + 1} inalcanzable o sin camino seguro a la meta`); });
   const pk = (type) => W.pickups.filter((p) => p.type === type);
   const unreachable = (list) => list.filter((p) => !reach.has(supportOf(graph.nodes, p.x, p.y)));
   const items = unreachable(pk('item')), keys = unreachable(pk('key'));

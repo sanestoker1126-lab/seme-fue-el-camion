@@ -1,3 +1,18 @@
+# La Toxifamilia — integración cinematográfica
+
+## Estado (V58)
+
+- **Adaptado:** «ARCHIVO 01: LA TOXI FAMILIA · El prólogo a la leyenda», guion v3.0 (Director's Cut), entregado por
+  el autor en el chat del proyecto. Está en `js/core/toxifamilia.js` (`SCENES` = prólogo, `EPILOGUE` = escena
+  post-créditos). Los diálogos entre comillas son los del guion.
+- **Sigue pendiente:** el PDF `La_Toxifamilia_Historia_Completa.pdf` (enlace WPS) no deja leer sus páginas. Nada del
+  juego se le atribuye; `SOURCE.pdf.status` sigue en `pending_pdf_text`.
+- El prólogo se ve antes de la primera partida y con **VER CINEMÁTICA**; su última escena (**PRESS START**) arranca la
+  misión 1. La escena post-créditos solo aparece al terminar la última misión con las seis llaves USB.
+- Estoker y Doña Tóxica usan siluetas originales (`assets/cinematica/*.svg`) porque no hay arte de esos personajes.
+
+---
+
 # La Toxifamilia — integración cinematográfica (rama de trabajo)
 
 ## Estado verificado

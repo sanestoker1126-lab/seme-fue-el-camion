@@ -33,15 +33,19 @@ test('estructura: 16 niveles (4 nuevos), una zona inferior, una reja con llave y
   assert.equal(NLV, 16);
   assert.equal(NS.LEVELS.LEVEL_SEQUENCE.filter((d) => d.isNew).length, 4);
   assert.equal(W.scenes.length, NLV);
-  assert.equal(W.rooms.length, NLV);
-  assert.equal(W.gates.length, NLV);
-  assert.equal(W.pickups.filter((p) => p.type === 'key').length, NLV);
+  assert.equal(W.rooms.filter((r) => !r.secret).length, NLV);   // V58.8: más las aulas ocultas de la escuela (zona secreta)
+  // V58.1: el nicho con reja vive en un sector lateral; los niveles trazados sobre su lámina (escuela) no tienen.
+  const SIDED = W.scenes.filter((sc) => sc.sideWidth > 0).length;
+  assert.equal(SIDED, NLV - 3);
+  assert.equal(W.gates.length, SIDED);
+  assert.equal(W.pickups.filter((p) => p.type === 'key').length, SIDED);
   assert.equal(W.pickups.filter((p) => p.type === 'item').length, 6);
   assert.equal(W.checkpoints.length, NLV);
   assert.ok(W.bus && W.goal && W.street);
   for (const g of W.gates) assert.ok(W.pickups.some((p) => p.type === 'key' && p.keyFor === g.id), 'llave para ' + g.id);
-  const bosses = W.foes.filter((f) => f.isBoss);
+  const bosses = W.foes.filter((f) => f.isBoss && !f.secret);   // V58.8: el maestro de las aulas ocultas es aparte
   assert.equal(bosses.length, NLV);
+  assert.deepEqual(W.foes.filter((f) => f.isBoss && f.secret).map((f) => f.kind), ['maestro']);
   assert.deepEqual(bosses.slice(0, 2).map((f) => f.kind), ['dog', 'kid']);
   assert.equal(bosses[0].bossName, 'PERRO FURIOSO');
   assert.equal(bosses[1].bossName, 'DUEÑO DEL PERRO · 12 AÑOS');
@@ -107,8 +111,9 @@ for (const d of ['facil', 'normal', 'dificil']) {
     assert.deepEqual(r.problems, []);
     assert.equal(r.checks.gems.any, r.checks.gems.total, 'cristales inalcanzables: ' + r.checks.gems.missing.join(', '));
     assert.equal(r.checks.items, 6);
-    assert.equal(r.checks.keys, NLV);
-    assert.equal(r.checks.alcoves, NLV);
+    const W2 = NS.World.buildWorld({ difficulty: d }), SIDED = W2.scenes.filter((sc) => sc.sideWidth > 0).length;
+    assert.equal(r.checks.keys, SIDED);
+    assert.equal(r.checks.alcoves, SIDED);
     assert.ok(r.checks.rooms.every(Boolean));
   });
 }

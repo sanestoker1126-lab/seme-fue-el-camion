@@ -12,7 +12,7 @@ const { chromium, devices } = require('playwright');
       for (let rep = 0; rep < 3; rep++) {
         const ctx = await browser.newContext({ ...devices['Pixel 7'], viewport: { width: 412, height: 839 } });
         const page = await ctx.newPage();
-        await page.addInitScript(() => { localStorage.setItem('camion-cinematic-seen', '1'); });
+        await page.addInitScript(() => { localStorage.setItem('camion-cinematic-seen', '1'); localStorage.setItem('camion-cinematic-marino-seen', '1'); });
         await page.goto(base + '/Se_Me_Fue_El_Camion.html?qa', { waitUntil: 'load' });
         await page.waitForFunction(() => window.CAMION_QA && !document.getElementById('start').disabled);
         await page.tap('#start'); await page.waitForFunction(() => window.CAMION_QA.G.state === 'playing'); await page.waitForTimeout(300);

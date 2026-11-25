@@ -25,9 +25,44 @@
               throwNear: 150, throwRange: 380, throwWindup: 0.5, throwCD: 2.0, stoneSpeed: 245 },
     // V57: enemigos propios de submarino/espacio; no reutilizar palomas bajo el agua.
     piranha:{ flyer: true, w: 30, h: 20, hp: 1, speed: 82, sight: 110, contactRequiresCharge: true, windup: 0.46, charge: 0.42, recover: 0.7, chargeMul: 2.15, stomp: true, dash: true, hitK: 1.22 },
-    shark:  { flyer: true, w: 82, h: 36, hp: 6, speed: 78, sight: 200, contactRequiresCharge: true, windup: 0.72, charge: 0.65, recover: 1.0, chargeMul: 2.2, stomp: true, dash: 'dizzy', hitK: 1.12 },
-    drone:  { flyer: true, w: 34, h: 28, hp: 1, speed: 73, sight: 350, windup: 0.64, recover: 0.7, shotSpeed: 205, cooldown: 2.4, stomp: true, dash: true, hitK: 1.9 }
+    // V58.2: el tiburón ya es enemigo común del mar (Poseidón es el jefe); 3 golpes, vulnerable al dash cuando se marea.
+    shark:  { flyer: true, w: 82, h: 36, hp: 3, speed: 78, sight: 220, contactRequiresCharge: true, windup: 0.72, charge: 0.65, recover: 1.0, chargeMul: 2.2, stomp: true, dash: 'dizzy', hitK: 1.12 },
+    // V58.2: pulpo (lanza tinta con aviso) y Poseidón, jefe del mar: embiste con el tridente de cerca y lanza olas de lejos.
+    pulpo:  { flyer: true, w: 40, h: 34, hp: 2, speed: 40, sight: 300, windup: 0.62, recover: 0.8, shotSpeed: 165, cooldown: 2.6, stomp: true, dash: true, hitK: 1.35 },
+    poseidon: { flyer: true, w: 56, h: 70, hp: 8, speed: 70, sight: 420, contactRequiresCharge: true, windup: 0.78, charge: 0.6, recover: 1.05, chargeMul: 2.6,
+              shotSpeed: 175, cooldown: 2.2, stomp: true, dash: 'dizzy', hitK: 1.2 },
+    drone:  { flyer: true, w: 34, h: 28, hp: 1, speed: 73, sight: 350, windup: 0.64, recover: 0.7, shotSpeed: 205, cooldown: 2.4, stomp: true, dash: true, hitK: 1.9 },
+    // V58: cangrejo de las ruinas (patrulla de lado y se apura al verte) y robot de la estación (embiste como el perro).
+    crab:   { walker: true, w: 34, h: 20, hp: 1, speed: 62, alertMul: 1.7, alertRange: 170, stomp: true, dash: true, minPlatform: 100, hitKW: 1.45, hitKH: 1.8 },
+    robot:  { walker: true, w: 36, h: 40, hp: 2, speed: 46, chargeMul: 3.4, sight: 250, windup: 0.6, charge: 0.75, recover: 0.95, stomp: true, dash: 'dizzy', minPlatform: 130, hitKW: 1.5, hitKH: 1.35 },
+    // V58.7 · Enemigos de las zonas secretas (paquete «enemigos secretos»). Todos avisan antes de atacar.
+    // Pulpito: de cerca se encoge y lanza un tentetazo corto (solo lastima durante ese golpe); de lejos, tinta.
+    pulpito: { flyer: true, w: 34, h: 30, hp: 2, speed: 46, sight: 290, near: 125, windup: 0.55, charge: 0.4, chargeMul: 2.7, recover: 0.85,
+               shotSpeed: 150, cooldown: 2.4, contactRequiresCharge: true, stomp: true, dash: true, hitK: 1.45 },
+    // Niño buzo: nada en su carril y arroja piedras que se hunden un poco (no embiste: tocarlo no lastima).
+    buzito:  { flyer: true, w: 30, h: 36, hp: 1, speed: 52, sight: 330, windup: 0.6, recover: 0.6, shotSpeed: 185, cooldown: 2.3,
+               contactRequiresCharge: true, stomp: true, dash: true, hitK: 1.45 },
+    // Marciano: camina y dispara un orbe de plasma hacia donde estabas cuando empezó a cargar (se puede esquivar).
+    marciano: { walker: true, w: 30, h: 46, hp: 2, speed: 40, range: 390, windup: 0.62, shotSpeed: 205, cooldown: 2.4, stomp: true, dash: true,
+                minPlatform: 110, hitKW: 1.6, hitKH: 1.12 },
+    // Niño astronauta: la conducta del niño de las piedras (piedra lunar en arco de lejos, embestida de cerca).
+    astronino: { walker: true, w: 34, h: 44, hp: 1, speed: 43, chargeMul: 3.0, sight: 240, windup: 0.62, charge: 0.7, recover: 1.0, stomp: true,
+                 dash: 'dizzy', minPlatform: 110, hitKW: 1.6, hitKH: 1.2, throwNear: 140, throwRange: 360, throwWindup: 0.55, throwCD: 2.2,
+                 stoneSpeed: 235, shot: 'roca' },
+    // V58.7 · El Maestro Enojón (jefe de la escuela): levanta la regla y embiste; de lejos lanza libros (en arco) y
+    // borradores (rectos); enojado (media vida) grita y manda dos ondas por el piso que se saltan.
+    maestro: { walker: true, w: 36, h: 52, hp: 4, speed: 44, chargeMul: 3.1, sight: 300, windup: 0.7, charge: 0.72, recover: 1.15, stomp: true,
+               dash: 'dizzy', minPlatform: 160, hitKW: 1.45, hitKH: 1.1, throwNear: 160, throwRange: 440, throwWindup: 0.6, throwCD: 2.0,
+               stoneSpeed: 250, shoutWindup: 0.75, shoutSpeed: 230, shoutCD: 6.5 },
+    // V58.7 · El Pulpo del Abismo (jefe de la zona secreta del mar): embiste con los tentáculos de cerca y de lejos
+    // alterna un abanico de tinta y un chorro de agua. Solo lastima al contacto durante la embestida.
+    pulpo_abismo: { flyer: true, w: 54, h: 46, hp: 8, speed: 64, sight: 460, near: 210, windup: 0.8, charge: 0.62, recover: 1.15, chargeMul: 2.5,
+                    shotSpeed: 155, jetSpeed: 265, cooldown: 2.1, contactRequiresCharge: true, stomp: true, dash: 'dizzy', hitK: 1.2 }
   };
+  // V58: los peces solo existen en su estanque; ahí Sofía sí los alcanza (y ellos a ella) aunque esté buceando.
+  const AQUATIC = new Set(['piranha', 'shark', 'pulpo', 'poseidon', 'pulpito', 'buzito', 'pulpo_abismo']);
+  // Voladores que patrullan un carril (los demás: el murciélago cuelga de su percha y la paloma tiene su ruta).
+  const LANE_FLYERS = new Set(['piranha', 'shark', 'drone', 'pulpo', 'poseidon', 'pulpito', 'buzito', 'pulpo_abismo']);
 
   function create(kind, o) {
     const T = Object.assign({}, TYPES[kind]);
@@ -58,7 +93,7 @@
     } else if (kind === 'pigeon') {
       f.lane = o.lane || { x1: o.x - 200, x2: o.x + 200 }; f.baseY = o.y; f.state = 'fly';
     }
-    else if (kind === 'piranha' || kind === 'shark' || kind === 'drone') {
+    else if (LANE_FLYERS.has(kind)) {
       f.lane = o.lane || { x1: o.x - 150, x2: o.x + 150 };
       f.baseY = o.y;
       f.waterZone = o.waterZone || null;
@@ -132,6 +167,7 @@
     }
 
       switch (f.kind) {
+      case 'crab':
       case 'rat': {
         if (f.state === 'recoil') { recoil(f, P, dt, ev, 'alert'); break; }
         if (f.state === 'dizzy') { if (f.stateT >= 0.5) setState(f, 'patrol'); break; }
@@ -146,12 +182,14 @@
       }
       case 'dog':
       case 'bravo':
+      case 'robot':
+      case 'astronino':
       case 'kid': {
         if (f.state === 'patrol') {
           if (walk(f, W, f.spd * 0.7, dt)) f.dir *= -1;
           const sameLv = samePlatform(f, P);
-          // El niño lanza PIEDRAS a media distancia; de cerca embiste como el perro.
-          const canThrow = f.kind === 'kid' && sameLv && visible && !P.dead && f.cool <= 0 &&
+          // El niño (y el niño astronauta, V58.7) lanza PIEDRAS a media distancia; de cerca embiste como el perro.
+          const canThrow = !!T.throwRange && sameLv && visible && !P.dead && f.cool <= 0 &&
             adx >= T.throwNear && adx < T.throwRange && clearLine(W, f.x, f.y - f.h * 0.9, P.x, P.y - 10);
           if (canThrow) {
             f.dir = Math.sign(dx) || f.dir; setState(f, 'aim'); ev.push({ type: 'foeAlert', foe: f });
@@ -160,12 +198,12 @@
             if (sees) { f.dir = Math.sign(dx) || f.dir; setState(f, 'windup'); ev.push({ type: 'foeAlert', foe: f }); }
           }
         } else if (f.state === 'aim') {
-          // Solo el niño entra aquí: amaga y arroja la piedra en arco.
+          // Solo los niños entran aquí: amagan y arrojan la piedra en arco.
           f.dir = Math.sign(dx) || f.dir;
           if (f.stateT >= (T.throwWindup || 0.5) * f.reaction) {
             const sp = (T.stoneSpeed || 240) * f.shotMul;
             const dyAim = P.y - f.y;
-            W.shots.push({ kind: 'stone', x: f.x + f.dir * 14, y: f.y - f.h * 0.95,
+            W.shots.push({ kind: T.shot || 'stone', x: f.x + f.dir * 14, y: f.y - f.h * 0.95,
               vx: f.dir * sp, vy: -150 + Math.max(-60, Math.min(60, dyAim * 0.18)),
               g: 580, r: 8, life: 3.4, from: f.id, spin: 0 });
             ev.push({ type: 'shoot', foe: f });
@@ -303,6 +341,66 @@
         }
         break;
       }
+      case 'pulpo': {
+        // Flota en su carril; si Sofía nada en su mar y la ve, avisa (se infla) y lanza tinta hacia donde estaba.
+        const z = f.waterZone, swimming = z && P.water === z && !P.dead;
+        if (f.state === 'fly') {
+          f.x += f.dir * f.spd * dt;
+          if (f.x < f.lane.x1) { f.x = f.lane.x1; f.dir = 1; }
+          if (f.x > f.lane.x2) { f.x = f.lane.x2; f.dir = -1; }
+          f.y = f.baseY + Math.sin(f.t * 1.7 + f.phase) * 10;
+          if (swimming && visible && f.cool <= 0 && adx < T.sight && Math.abs(P.y - f.y) < 220) {
+            f.targetX = P.x; f.targetY = P.y; f.dir = Math.sign(dx) || f.dir;
+            setState(f, 'aim'); ev.push({ type: 'foeAlert', foe: f });
+          }
+        } else if (f.state === 'aim') {
+          if (f.stateT >= T.windup * f.reaction) {
+            const vx = f.targetX - f.x, vy = f.targetY - f.y, dist = Math.hypot(vx, vy) || 1, sp = T.shotSpeed * f.shotMul;
+            W.shots.push({ kind: 'ink', x: f.x + f.dir * 12, y: f.y + 4, vx: vx / dist * sp, vy: vy / dist * sp, g: 0, r: 9, life: 2.6, from: f.id });
+            ev.push({ type: 'shoot', foe: f });
+            f.cool = T.cooldown * f.reaction; setState(f, 'fly');
+          }
+        } else if (f.state === 'dizzy') {
+          f.y = f.baseY + Math.sin(f.t * 9) * 2;
+          if (f.stateT >= T.recover * f.reaction) setState(f, 'fly');
+        }
+        break;
+      }
+      case 'poseidon': {
+        // Jefe del mar. Patrulla sobre la arena de salida; de cerca avisa y embiste con el tridente (después queda
+        // mareado: momento de contraatacar); de lejos levanta el tridente y lanza una ola. Siempre con aviso.
+        const z = f.waterZone, swimming = z && P.water === z && !P.dead;
+        const minY = z ? z.y + f.h / 2 + 8 : f.baseY - 60, maxY = z ? z.y2 - f.h / 2 - 8 : f.baseY + 60;
+        if (f.state === 'fly') {
+          f.x += f.dir * f.spd * 0.7 * dt;
+          if (f.x < f.lane.x1) { f.x = f.lane.x1; f.dir = 1; }
+          if (f.x > f.lane.x2) { f.x = f.lane.x2; f.dir = -1; }
+          f.y += (f.baseY + Math.sin(f.t * 1.4 + f.phase) * 14 - f.y) * Math.min(1, dt * 3);
+          if (swimming && visible && f.cool <= 0 && adx < T.sight && Math.abs(P.y - f.y) < 260) {
+            f.dir = Math.sign(dx) || f.dir;
+            f.targetX = P.x; f.targetY = P.y;
+            setState(f, adx < 190 && Math.abs(P.y - f.y) < 110 ? 'windup' : 'aim');
+            ev.push({ type: 'foeAlert', foe: f });
+          }
+        } else if (f.state === 'windup') {
+          if (f.stateT >= T.windup * f.reaction) { f.aimY = swimming ? P.y : f.baseY; setState(f, 'charge'); ev.push({ type: 'foeCharge', foe: f }); }
+        } else if (f.state === 'charge') {
+          f.x = Math.max(f.lane.x1, Math.min(f.lane.x2, f.x + f.dir * f.spd * T.chargeMul * dt));
+          f.y = Math.max(minY, Math.min(maxY, f.y + Math.max(-f.spd * dt, Math.min(f.spd * dt, (f.aimY || f.baseY) - f.y))));
+          if (f.stateT >= T.charge || f.x === f.lane.x1 || f.x === f.lane.x2) { f.cool = 1.6 * f.reaction; setState(f, 'dizzy'); }
+        } else if (f.state === 'aim') {
+          if (f.stateT >= T.windup * 1.1 * f.reaction) {
+            const vx = f.targetX - f.x, vy = f.targetY - f.y, dist = Math.hypot(vx, vy) || 1, sp = T.shotSpeed * f.shotMul;
+            W.shots.push({ kind: 'tide', x: f.x + f.dir * 24, y: f.y - 6, vx: vx / dist * sp, vy: vy / dist * sp, g: 0, r: 14, life: 2.8, from: f.id });
+            ev.push({ type: 'shoot', foe: f });
+            f.cool = T.cooldown * f.reaction; setState(f, 'fly');
+          }
+        } else if (f.state === 'dizzy') {
+          f.y += Math.sin(f.t * 9) * 0.4;
+          if (f.stateT >= T.recover * f.reaction) setState(f, 'fly');
+        }
+        break;
+      }
       case 'drone': {
         if (f.state === 'fly') {
           f.x += f.dir * f.spd * 0.7 * dt;
@@ -334,9 +432,183 @@
         }
         break;
       }
+      /* ---------- V58.7 · Zonas secretas y jefes nuevos ---------- */
+      case 'marciano': {
+        // Camina; si Sofía está a tiro y a su altura, se detiene a cargar (aviso) y dispara un orbe hacia donde ella
+        // estaba al empezar la carga. Jefe enojado: dos orbes en abanico.
+        f.shotT = Math.max(0, (f.shotT || 0) - dt);
+        if (f.state === 'recoil') { recoil(f, P, dt, ev, 'patrol'); break; }
+        if (f.state === 'dizzy') { if (f.stateT >= 0.7 * f.reaction) setState(f, 'patrol'); break; }
+        if (f.state === 'patrol') {
+          if (walk(f, W, f.spd * 0.6, dt)) f.dir *= -1;
+          const eyeY = f.y - f.h * 0.62;
+          const inRange = !P.dead && visible && adx < T.range && Math.abs(P.y - eyeY) < 170;
+          if (inRange && f.cool <= 0 && clearLine(W, f.x, eyeY, P.x, P.y)) {
+            f.dir = Math.sign(dx) || f.dir; f.targetX = P.x; f.targetY = P.y;
+            setState(f, 'aim'); ev.push({ type: 'foeAlert', foe: f });
+          }
+        } else if (f.state === 'aim') {
+          if (f.stateT >= T.windup * f.reaction) {
+            const sx = f.x + f.dir * f.w * 0.75, sy = f.y - f.h * 0.6;
+            const spread = f.isBoss && f.enraged ? [-0.17, 0.17] : [0];
+            for (const a of spread) aimedShot(W, f, 'orbe', sx, sy, f.targetX, f.targetY, T.shotSpeed * f.shotMul, 7, a);
+            ev.push({ type: 'shoot', foe: f });
+            f.shotT = 0.32;
+            f.cool = T.cooldown * f.reaction * (f.isBoss ? 0.8 : 1);
+            setState(f, 'patrol');
+          }
+        }
+        break;
+      }
+      case 'pulpito': {
+        const z = f.waterZone, swimming = z && P.water === z && !P.dead;
+        const minY = z ? z.y + f.h / 2 + 8 : f.baseY - 40, maxY = z ? z.y2 - f.h / 2 - 8 : f.baseY + 40;
+        if (f.state === 'fly') {
+          laneSwim(f, dt, 1);
+          f.y += (f.baseY + Math.sin(f.t * 1.7 + f.phase) * 10 - f.y) * Math.min(1, dt * 3);
+          if (swimming && visible && f.cool <= 0 && adx < T.sight && Math.abs(P.y - f.y) < 200) {
+            f.dir = Math.sign(dx) || f.dir;
+            if (adx < T.near && Math.abs(P.y - f.y) < 80) setState(f, 'windup');
+            else { f.targetX = P.x; f.targetY = P.y; setState(f, 'aim'); }
+            ev.push({ type: 'foeAlert', foe: f });
+          }
+        } else if (f.state === 'windup') {
+          if (f.stateT >= T.windup * f.reaction) { f.aimY = swimming ? P.y : f.y; setState(f, 'charge'); ev.push({ type: 'foeCharge', foe: f }); }
+        } else if (f.state === 'charge') {
+          f.x = Math.max(f.lane.x1, Math.min(f.lane.x2, f.x + f.dir * f.spd * T.chargeMul * dt));
+          f.y = Math.max(minY, Math.min(maxY, f.y + Math.max(-f.spd * dt, Math.min(f.spd * dt, f.aimY - f.y))));
+          if (f.stateT >= T.charge || f.x === f.lane.x1 || f.x === f.lane.x2) { f.cool = 1.5 * f.reaction; setState(f, 'dizzy'); }
+        } else if (f.state === 'aim') {
+          if (f.stateT >= T.windup * 1.1 * f.reaction) {
+            aimedShot(W, f, 'tinta', f.x + f.dir * 12, f.y + 2, f.targetX, f.targetY, T.shotSpeed * f.shotMul, 9, 0);
+            ev.push({ type: 'shoot', foe: f });
+            f.cool = T.cooldown * f.reaction; setState(f, 'fly');
+          }
+        } else if (f.state === 'dizzy') {
+          f.y += Math.sin(f.t * 9) * 0.4;
+          if (f.stateT >= T.recover * f.reaction) setState(f, 'fly');
+        }
+        break;
+      }
+      case 'buzito': {
+        const z = f.waterZone, swimming = z && P.water === z && !P.dead;
+        if (f.state === 'fly') {
+          laneSwim(f, dt, 1);
+          f.y += (f.baseY + Math.sin(f.t * 2.1 + f.phase) * 8 - f.y) * Math.min(1, dt * 3);
+          if (swimming && visible && f.cool <= 0 && adx < T.sight && Math.abs(P.y - f.y) < 220) {
+            f.dir = Math.sign(dx) || f.dir; f.targetX = P.x; f.targetY = P.y;
+            setState(f, 'aim'); ev.push({ type: 'foeAlert', foe: f });
+          }
+        } else if (f.state === 'aim') {
+          f.dir = Math.sign(f.targetX - f.x) || f.dir;
+          if (f.stateT >= T.windup * f.reaction) {
+            // Bajo el agua la piedra va casi recta y se hunde poco a poco.
+            aimedShot(W, f, 'piedra_mar', f.x + f.dir * 14, f.y - 6, f.targetX, f.targetY, T.shotSpeed * f.shotMul, 7, 0, { g: 70 });
+            ev.push({ type: 'shoot', foe: f });
+            f.cool = T.cooldown * f.reaction; setState(f, 'fly');
+          }
+        } else if (f.state === 'dizzy') {
+          f.y += Math.sin(f.t * 9) * 0.4;
+          if (f.stateT >= T.recover * f.reaction) setState(f, 'fly');
+        }
+        break;
+      }
+      case 'maestro': {
+        f.shoutCD = Math.max(0, (f.shoutCD || 0) - dt);
+        if (f.state === 'recoil') { recoil(f, P, dt, ev, 'windup'); break; }
+        if (f.state === 'patrol') {
+          if (walk(f, W, f.spd * (f.enraged ? 0.85 : 0.7), dt)) f.dir *= -1;
+          const sameLv = samePlatform(f, P), ready = sameLv && visible && !P.dead && f.cool <= 0;
+          if (ready && f.enraged && f.shoutCD <= 0 && adx < 380) {
+            // Enojado: grita (aviso largo) y manda dos ondas por el piso.
+            f.dir = Math.sign(dx) || f.dir; f.shoutCD = T.shoutCD; setState(f, 'shout'); ev.push({ type: 'foeAlert', foe: f });
+          } else if (ready && adx >= T.throwNear && adx < T.throwRange && clearLine(W, f.x, f.y - f.h * 0.9, P.x, P.y - 10)) {
+            f.dir = Math.sign(dx) || f.dir;
+            f.throwKind = f.throwKind === 'libro' ? 'borrador' : 'libro';   // alterna libro y borrador
+            setState(f, 'aim'); ev.push({ type: 'foeAlert', foe: f });
+          } else if (ready && adx < T.sight && (Math.sign(dx) === f.dir || adx < 90)) {
+            f.dir = Math.sign(dx) || f.dir; setState(f, 'windup'); ev.push({ type: 'foeAlert', foe: f });
+          }
+        } else if (f.state === 'aim') {
+          f.dir = Math.sign(dx) || f.dir;
+          if (f.stateT >= T.throwWindup * f.reaction) {
+            const sp = T.stoneSpeed * f.shotMul, hx = f.x + f.dir * 16, hy = f.y - f.h * 0.82;
+            if (f.throwKind === 'borrador') aimedShot(W, f, 'borrador', hx, hy, P.x, P.y - 8, sp * 1.18, 8, 0);
+            else W.shots.push({ kind: 'libro', x: hx, y: hy, vx: f.dir * sp, vy: -170 + Math.max(-60, Math.min(60, (P.y - f.y) * 0.18)),
+              g: 560, r: 9, life: 3.4, from: f.id });
+            ev.push({ type: 'shoot', foe: f });
+            f.cool = T.throwCD * f.reaction; setState(f, 'patrol');
+          }
+        } else if (f.state === 'shout') {
+          if (f.stateT >= T.shoutWindup * f.reaction) {
+            const pl = f.plat, y = f.y - 13, sp = T.shoutSpeed * f.shotMul;
+            for (const d of [-1, 1]) {
+              W.shots.push({ kind: 'grito', x: f.x + d * f.w * 0.6, y, vx: d * sp, vy: 0, g: 0, r: 12, life: 2.4, from: f.id,
+                minX: pl ? pl.x1 : -Infinity, maxX: pl ? pl.x2 : Infinity });
+            }
+            ev.push({ type: 'shoot', foe: f });
+            f.cool = 1.1 * f.reaction; setState(f, 'patrol');
+          }
+        } else if (f.state === 'windup') {
+          if (f.stateT >= T.windup * f.reaction) { setState(f, 'charge'); ev.push({ type: 'foeCharge', foe: f }); }
+        } else if (f.state === 'charge') {
+          const hitEdge = walk(f, W, f.spd * T.chargeMul, dt);
+          if (hitEdge || f.stateT >= T.charge) { setState(f, 'dizzy'); f.cool = 1.4 * f.reaction; }
+        } else if (f.state === 'dizzy') {
+          if (f.stateT >= T.recover) { setState(f, 'patrol'); f.dir *= -1; }
+        }
+        break;
+      }
+      case 'pulpo_abismo': {
+        const z = f.waterZone, swimming = z && P.water === z && !P.dead;
+        const minY = z ? z.y + f.h / 2 + 8 : f.baseY - 60, maxY = z ? z.y2 - f.h / 2 - 8 : f.baseY + 60;
+        if (f.state === 'fly') {
+          laneSwim(f, dt, f.enraged ? 0.95 : 0.75);
+          f.y += (f.baseY + Math.sin(f.t * 1.3 + f.phase) * 16 - f.y) * Math.min(1, dt * 2.5);
+          if (swimming && visible && f.cool <= 0 && adx < T.sight && Math.abs(P.y - f.y) < 300) {
+            f.dir = Math.sign(dx) || f.dir; f.targetX = P.x; f.targetY = P.y;
+            if (adx < T.near && Math.abs(P.y - f.y) < 120) setState(f, 'windup');
+            else { f.shotKind = f.shotKind === 'tinta' ? 'chorro' : 'tinta'; setState(f, 'aim'); }
+            ev.push({ type: 'foeAlert', foe: f });
+          }
+        } else if (f.state === 'windup') {
+          if (f.stateT >= T.windup * f.reaction) { f.aimY = swimming ? P.y : f.baseY; setState(f, 'charge'); ev.push({ type: 'foeCharge', foe: f }); }
+        } else if (f.state === 'charge') {
+          f.x = Math.max(f.lane.x1, Math.min(f.lane.x2, f.x + f.dir * f.spd * T.chargeMul * dt));
+          f.y = Math.max(minY, Math.min(maxY, f.y + Math.max(-f.spd * dt, Math.min(f.spd * dt, f.aimY - f.y))));
+          if (f.stateT >= T.charge || f.x === f.lane.x1 || f.x === f.lane.x2) { f.cool = 1.6 * f.reaction; setState(f, 'dizzy'); }
+        } else if (f.state === 'aim') {
+          if (f.stateT >= T.windup * 1.1 * f.reaction) {
+            const sx = f.x + f.dir * f.w * 0.5, sy = f.y;
+            if (f.shotKind === 'chorro') aimedShot(W, f, 'chorro', sx, sy, f.targetX, f.targetY, T.jetSpeed * f.shotMul, 11, 0);
+            else for (const a of f.enraged ? [-0.42, -0.21, 0, 0.21, 0.42] : [-0.24, 0, 0.24]) aimedShot(W, f, 'tinta', sx, sy, f.targetX, f.targetY, T.shotSpeed * f.shotMul, 10, a);
+            ev.push({ type: 'shoot', foe: f });
+            f.cool = T.cooldown * f.reaction; setState(f, 'fly');
+          }
+        } else if (f.state === 'dizzy') {
+          f.y += Math.sin(f.t * 9) * 0.4;
+          if (f.stateT >= T.recover * f.reaction) setState(f, 'fly');
+        }
+        break;
+      }
       default: break;
     }
   }
+
+  /** V58.7 · Disparo dirigido a (tx, ty) con un giro opcional (abanicos), velocidad `sp` y radio `r`. */
+  function aimedShot(W, f, kind, x, y, tx, ty, sp, r, turn = 0, extra = null) {
+    const a = Math.atan2((Number.isFinite(ty) ? ty : y) - y, (Number.isFinite(tx) ? tx : x + f.dir * 50) - x) + turn;
+    W.shots.push(Object.assign({ kind, x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: 0, r, life: 2.8, from: f.id }, extra || {}));
+  }
+
+  /** V58.7 · Nado de carril: avanza y da la vuelta en los extremos. */
+  function laneSwim(f, dt, mul) {
+    f.x += f.dir * f.spd * mul * dt;
+    if (f.x < f.lane.x1) { f.x = f.lane.x1; f.dir = 1; }
+    if (f.x > f.lane.x2) { f.x = f.lane.x2; f.dir = -1; }
+  }
+
+  const inZone = (z, x, y) => !!z && x >= z.x1 && x <= z.x2 && y > z.y && y < z.y2;
 
   /** Línea de tiro: los muros, rejas, cajas y bloques detienen la vista del chile. */
   function clearLine(W, x1, y1, x2, y2) {
@@ -434,12 +706,17 @@
   function update(W, P, dt, ctx, ev) {
     const U = NS.util, CB = NS.CONFIG.combat, PH = NS.CONFIG.phys;
     ev = ev || [];
-    const hb = ctx.hurtbox();
+    const hbAll = ctx.hurtbox();
+    const body = ctx.bodybox ? ctx.bodybox() : hbAll;
     for (const f of W.foes) {
       if (f.dead) { f.deadT += dt; continue; }
       if (!ctx.active(f.x, f.y)) continue;
       updateFoe(f, W, P, dt, ctx, ev);
       if (P.dead || ctx.busy) continue;
+      // Sumergida, Sofía queda fuera del alcance de lo que vive en tierra, pero no del pez de su propio estanque.
+      // V58.2: ni de quien vive DENTRO de su mismo mar abierto (cangrejos y niños buzos en repisas sumergidas).
+      // En pozas y lagos sigue la regla de V52: bucear esquiva a lo que vive en tierra.
+      const hb = P.water && ((AQUATIC.has(f.kind) && f.waterZone === P.water) || (P.water.sea && f.plat && f.plat.underwater && inZone(P.water, f.x, f.y - f.h / 2))) ? body : hbAll;
       const b = box(f);          // caja física (defensa)
       const hbx = hitBox(f);     // caja de combate (ofensa): cubre el cuerpo visible
       // Patada: alcance algo mayor y contra la caja de combate -> conecta donde se ve.
@@ -491,6 +768,8 @@
       s.x += s.vx * dt;
       s.y += s.vy * dt;
       s.life -= dt;
+      // V58.7: las ondas del grito del maestro corren por su piso y se acaban en la orilla.
+      if (s.minX !== undefined && (s.x < s.minX || s.x > s.maxX)) { s.life = 0; continue; }
       for (const so of W.solids) {
         if (so.broken || so.open) continue;
         if (s.x > so.x1 && s.x < so.x2 && s.y > so.y1 && s.y < so.y2) { s.life = 0; ev.push({ type: 'shotHit', shot: s }); break; }
@@ -501,6 +780,7 @@
         }
       }
       if (s.life > 0 && !P.dead && !ctx.busy) {
+        const hb = P.water && P.water.sea && inZone(P.water, s.x, s.y) ? body : hbAll;   // V58.2: proyectil dentro de su mismo mar abierto
         const near = s.x + s.r > hb.x1 && s.x - s.r < hb.x2 && s.y + s.r > hb.y1 && s.y - s.r < hb.y2;
         if (near) {
           s.life = 0;

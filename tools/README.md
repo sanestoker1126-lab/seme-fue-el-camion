@@ -28,6 +28,14 @@ transparente", cuadros sobre paneles de agua y números encima: por eso no se co
 Repetir 1 y 3 con los mismos atlas da exactamente el mismo `swim_atlas.png` (comprobado).
 
 ## arte/ (Python 3 + Pillow + NumPy)
+- `secretos_pack.py <enemigos_secretos/> <jefes/> <niveles_secretos/> <raíz> [--revision <dir>] [--aulas <dir>]` — V58.7: empaca los
+  paquetes «enemigos secretos», «Maestro y Pulpo del Abismo» y «niveles secretos». Elige solo los cuadros completos
+  (la tabla `CHARS` dice cuáles se dejaron fuera y por qué: cortados por el borde, partidos a la mitad, letreros
+  dentro de la celda o dibujados más chicos que sus vecinos), quita pedazos de cuadros vecinos y sombras pegadas, y
+  escribe `assets/enemies/secretos/*.webp`, `assets/enemies/jefes/*.webp`, `assets/backgrounds/secretos/*.webp` y
+  `js/app/art_secretos.js` (no lo edites a mano). Con `revisión/` deja una hoja por personaje con los cuadros
+  alineados a su ancla para revisarlos. V58.8: `--aulas` (carpeta con `aula_computo.png` y `aula_ciencias.png`) agrega
+  los dos salones de las aulas ocultas de la escuela.
 - `cut_skins.py <plataformas_referencia.png> <salida/> <preview.png>` — recorta las texturas de plataforma
   (quita el fondo oscuro por relleno desde el borde) y calcula la fila pisable de cada una (`skins.json`).
 - `plank_skin.py <wood_table.png> <plank.png>` — V51: deriva la textura del tablón (las tablas de la mesa).
@@ -58,6 +66,9 @@ Sirve el juego con cualquier servidor estático (p. ej. `python3 -m http.server 
 - `paint_bg.js <url> <salida/>` — exporta los fondos procedurales (azoteas, metro, Tlaquepaque) a PNG.
 - `quick_reach.js <raíz> [facil|normal|dificil]` — informe rápido de alcanzabilidad de los 16 niveles.
 - `boss_bot2.js <raíz> [índices]` — bot que pelea contra los jefes en las 3 dificultades.
+- `secretos_shots.js <url> <salida/>` — V58.7: entra a las zonas secretas por su grieta (BAJAR), fotografía cada
+  estado de los enemigos secretos, del Pulpo del Abismo, del Marciano Comandante y del Maestro Enojón, sale por la
+  puerta de la zona y comprueba que regresa junto a la grieta. Falla si la página registra errores.
 - `shots.js`, `qa_states.js`, `qa_ui.js`, `fuzz.js` — capturas por tramo, estados de Sofía y mecánicas,
   menú de opciones y partida aleatoria; uso: `node shots.js http://localhost:8000 salida 390 844`.
 

@@ -17,6 +17,87 @@ Es un sitio estático, sin dependencias. Para jugarlo:
 
 Controles en pantalla (táctil) y teclado. Se instala como app (PWA) y funciona sin conexión tras la primera carga.
 
+**Paquete para jugar**: `bash tools/empaquetar.sh` arma `Se_Me_Fue_El_Camion_V<versión>.zip`. Lleva solo lo que usa
+el juego (485 archivos, ~54 MB en la V58.9) y un `LEEME.txt` con instrucciones. En GitHub: Actions → «Empaquetar
+juego completo» → Run workflow.
+
+## Novedades V58.9 · Limpieza
+
+- Menos amontonado: cristales a no menos de 200 u entre sí (de 100–270 por nivel a 15–95), enemigos de la ciudad
+  sin los multiplicadores de V58 (de 13–27 a 8–17) y sin rótulos encimados.
+- Ya no se camina sobre el aire en Guadalajara (parada 1): el juego dibuja sus repisas.
+- En la Luna se retrazaron 3 repisas que no coincidían con la roca dibujada.
+- El fondo ya no se repite en espejo (el grafiti «GUADALAJARA» salía al revés).
+- Detalle: `CHANGELOG_V58_9.md`.
+
+## Novedades V58.8
+
+- **Todos los niveles desbloqueados** desde el principio: las 4 misiones y todas sus paradas.
+- **Las aulas ocultas** de la escuela: la sala de cómputo y el laboratorio de ciencias. Se entra por un remolino
+  violeta escondido en el nivel 1; en el laboratorio da clase **El Maestro Enojón**.
+- Detalle: `CHANGELOG_V58_8.md`.
+
+## Novedades V58.7 · Zonas secretas
+
+- **Zonas secretas** en el mar y en la Luna, con los fondos del paquete «niveles secretos»: se entra por una grieta
+  escondida (BAJAR) y se sale por la puerta del otro extremo, de regreso junto a la grieta.
+  - En el mar, el **Santuario perdido de Poseidón**, todo bajo el agua.
+  - En la Luna, la **Estación orbital abandonada**, que se trepa por asteroides.
+- **Enemigos secretos**: pulpito, niño buzo, marciano y niño astronauta.
+- **Jefes nuevos**: el **Pulpo del Abismo** (santuario) y el **Marciano Comandante** (estación).
+- **El Maestro Enojón** es el nuevo jefe de los pasillos de la escuela (misión 1, parada 3).
+- Se revisaron los 192 cuadros de los paquetes, uno por uno, y se usaron los 118 completos.
+- Detalle, qué se dejó fuera y por qué, y lo que se comprobó: `CHANGELOG_V58_7.md`.
+
+## Novedades V58.3 – V58.6
+
+- **V58.3**: en el mar Sofía usa sus cuadros normales fuera del agua y los de buceo dentro. El mundo marino tiene
+  banda sonora de fondo («Chinos de Seda», 1:30–3:00). `CHANGELOG_V58_3.md`.
+- **V58.4**: corrientes marinas fuertes en el mar y lluvia de asteroides en la Luna. `CHANGELOG_V58_4.md`.
+- **V58.5**: revisión completa con las herramientas de QA, correcciones y entrega empaquetada. `CHANGELOG_V58_5.md`.
+- **V58.6**: menú compacto (cabe sin desplazarse), apertura de la cinemática en penumbra, ropa por nivel (uniforme en
+  la escuela, buzo solo en el agua, astronauta en la Luna) y una barda con vidrios en la azotea de la escuela que solo
+  se cruza con el columpio. `CHANGELOG_V58_6.md`.
+
+## Novedades V58.2 · La llegada al mar
+
+El mar es **completamente submarino**: solo en la isla se camina; abajo todo se nada, hasta la escotilla del lecho
+marino (la meta). La primera vez que se empieza la misión 3 hay una **cinemática nueva**: Sofía llega a la isla
+sorprendida y confundida, recuerda cuando su **papito Estoker** la paseaba ahí de pequeña y él le platica los peligros
+del mar (se repite desde el menú). Nuevos en el mar: **pulpo** que lanza tinta y **Poseidón, rey del mar** como jefe.
+El **niño de las piedras** está en los cuatro mundos, hay **cuerdas para columpiarse** (escuela, mar y Luna) además
+de las tirolesas, maúlla **el otro gato** al descubrir enemigos y las gatas **ayudan con animación propia** (Luna
+salta y araña, Morita trae los cristales).
+
+Detalle, validación y límites: `CHANGELOG_V58_2.md`.
+
+## Novedades V58.1 · Mundos pintados
+
+La escuela, el mar y la Luna ahora son **una sola ilustración por nivel** con el recorrido **trazado sobre el
+dibujo**: se pisa lo que se ve (azoteas, balcones, escaleras, repisas de roca, el puente de cuerda, la cubierta del
+barco, los discos de la ciudad lunar). Arte nuevo: **Escuela Miguel Hidalgo** (misión 1), **Marino PRO V4** (misión 3)
+y **Espacio Luna PRO V5** (misión 4); cada uno reemplaza por completo al fondo anterior de su misión. Guadalajara,
+Los Portales y el Centro Histórico estrenan los fondos **Azoteas PRO V2**, con cornisas pintadas justo sobre sus
+plataformas. En la Luna, Sofía, Luna y Morita llevan **traje de astronauta**, y el niño de las piedras aparece con
+traje de buzo en el mar y de astronauta en la Luna.
+
+Detalle, medidas y límites: `CHANGELOG_V58_1.md`.
+
+## Novedades V58
+
+Cada nivel mide **el doble** (más ancho y más hondo), con **tirolesas**, **vehículos** que cruzan huecos
+(camiones, carritos, trenes, balsas, mantas, naves), **peces trampolín**, una **parada intermedia** por nivel y
+fondos pintados **del tamaño de todo el nivel**. El submarino es un **mar abierto** de pared a pared (se bucea a
+cualquier profundidad y se baja por desagües) y en el espacio la gravedad es menor. Luna y Morita obedecen el botón
+**GATAS** (tecla **C** o **E**): Luna ataca al enemigo más cercano y, si no hay, Morita trae los cristales.
+
+La historia arranca con la cinemática **ARCHIVO 01 · La Toxi Familia** (prólogo) y, si terminas la última misión
+con las seis llaves USB (los seis objetos), se desbloquea la escena post-créditos **LEGEND OF PRESOS**.
+
+Detalle, medidas y validación: `CHANGELOG_V58.md`. Procedencia del arte nuevo: `assets/parallax/FUENTES.md`.
+
+**Controles en PC:** A/D o ←/→ mover · Espacio/W saltar · X/U patear · Shift/J dash · S/↓ bajar · C/E gatas · P pausa.
+
 ## Misiones (V53)
 
 El juego está separado en cuatro misiones; en el menú eliges misión y después la parada:
@@ -46,7 +127,7 @@ Opciones incluye **Aspecto de Sofía** (original / uniforme / rosa).
 node --test tests/*.test.js
 ```
 
-Versión de desarrollo: **V57** (`js/core/config.js` → 57.0.0). La rama principal publicada continúa siendo V56 hasta fusionar este PR.
+Versión de desarrollo: **V58.9** (`js/core/config.js` → 58.9.0).
 
 ## V54 · Submarino y Espacio ampliados
 
@@ -65,7 +146,9 @@ Las salidas de los mundos nuevos se representan como una escotilla y un módulo 
 de meta conserva el sistema del motor existente.
 
 
-## V55 · Parallax gráfico real en las misiones 3 y 4
+## V55 · Parallax gráfico real en las misiones 3 y 4 (retirado en V58.1)
+
+> V58.1 reemplazó estas capas SVG por el arte pintado de cada misión (ver Novedades V58.1).
 
 Se integraron cinco capas independientes por mundo en `assets/parallax/submarino/` y
 `assets/parallax/espacial/`: fondo lejano, profundidad, estructuras, elementos y

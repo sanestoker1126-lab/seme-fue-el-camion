@@ -7,7 +7,7 @@ const { chromium, devices } = require('playwright');
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
-  await page.addInitScript(() => { localStorage.setItem('camion-cinematic-seen', '1'); localStorage.setItem('camion-opt-cinematics', '0'); });
+  await page.addInitScript(() => { localStorage.setItem('camion-cinematic-seen', '1'); localStorage.setItem('camion-cinematic-marino-seen', '1'); localStorage.setItem('camion-opt-cinematics', '0'); });
   await page.goto(base + '/Se_Me_Fue_El_Camion.html?qa', { waitUntil: 'load' });
   await page.waitForFunction(() => window.CAMION_QA && !document.getElementById('start').disabled);
   await page.tap('#start'); await page.waitForFunction(() => window.CAMION_QA.G.state === 'playing');

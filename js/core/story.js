@@ -47,17 +47,18 @@
     { title: 'PLAZA DE LAS JACARANDAS', line: 'El último guardián espera en la plaza. Después, solo queda llegar a la terminal.', driver: '¡Corre, el camión está por arrancar!' },
     // V53 · Misiones nuevas (16 submarino, 17 espacial).
     { title: 'RUINAS SUMERGIDAS', line: 'El atajo se hundió: cruza las ruinas y bucea por los cristales del fondo.', driver: 'Burbujas y un claxon lejano bajo el agua…' },
-    { title: 'ESTACIÓN EN ÓRBITA', line: 'Ni el espacio la detiene: salta entre asteroides hasta el módulo de salida.', driver: 'La estación avisa: último acople de la ruta 6.' }
+    { title: 'LUNA HUECA', line: 'Ni el espacio la detiene: baja de la estación lunar por las cavernas de cristal hasta la ciudad bajo la Luna.', driver: 'La estación avisa: último acople de la ruta 6.' }
   ];
 
   /* Objetos perdidos: uno por tramo, en su zona inferior. */
   const ITEMS = [
-    { id: 'credencial', name: 'CREDENCIAL ESCOLAR', text: 'Sin ella no la dejan entrar el lunes.' },
-    { id: 'tarjeta', name: 'TARJETA DEL CAMIÓN', text: 'Con saldo para toda la semana. ¡Uf!' },
-    { id: 'cuaderno', name: 'CUADERNO DE DIBUJO', text: 'Tiene todos los bocetos del mural de la posada.' },
-    { id: 'audifonos', name: 'AUDÍFONOS', text: 'Todavía suena la playlist del camino a casa.' },
-    { id: 'sueter', name: 'SUÉTER DE LA POSADA', text: 'Con renos bordados. Lo tejió su abuela.' },
-    { id: 'llavero', name: 'LLAVERO DE LA CASA', text: 'Sin esto, llegar a casa tampoco serviría de mucho.' }
+    // V58 · ARCHIVO 01: cada objeto esconde una de las seis memorias USB encriptadas que necesita Estoker.
+    { id: 'credencial', name: 'CREDENCIAL ESCOLAR', text: 'Sin ella no la dejan entrar el lunes. En la funda: LLAVE USB 1 DE 6.' },
+    { id: 'tarjeta', name: 'TARJETA DEL CAMIÓN', text: 'Con saldo para toda la semana. Pegada atrás: LLAVE USB 2 DE 6.' },
+    { id: 'cuaderno', name: 'CUADERNO DE DIBUJO', text: 'Los bocetos del mural de la posada… y en el lomo, la LLAVE USB 3 DE 6.' },
+    { id: 'audifonos', name: 'AUDÍFONOS', text: 'Todavía suena la playlist. En el estuche: LLAVE USB 4 DE 6.' },
+    { id: 'sueter', name: 'SUÉTER DE LA POSADA', text: 'Con renos bordados por su abuela. Cosida al forro: LLAVE USB 5 DE 6.' },
+    { id: 'llavero', name: 'LLAVERO DE LA CASA', text: 'Las llaves de casa y, colgando, la LLAVE USB 6 DE 6.' }
   ];
 
   /* Letreros del mundo. Los del tramo 1 enseñan los controles sin detener la partida. */
@@ -88,6 +89,15 @@
       'PLAZA FINAL: VENCE AL GUARDIÁN Y SIGUE AL CAMIÓN.',
       'FONDO MARINO: USA ↓ PARA BUCEAR. LAS PIRAÑAS ATACAN SOLO EN AGUA Y AVISAN ANTES.',
       'ESTACIÓN ORBITAL: LOS DRONES MARCAN SU DISPARO; ESQUIVA O ROMPE EL PLASMA CON DASH.'
+    ],
+    // V58 · Letreros de la parada intermedia (inicio de la mitad nueva de cada nivel).
+    mid: [
+      'PARADA INTERMEDIA. SI TE CAES, VUELVES AQUÍ. ¡SIGUE BAJANDO!',
+      'TIROLESAS: SALTA BAJO EL CABLE O SAL POR LA ORILLA Y TE CUELGAS SOLA.',
+      'LOS VEHÍCULOS VAN Y VIENEN: SÚBETE O SALTA EL HUECO CON CARRERA.',
+      'BOTÓN GATAS (C): LUNA ATACA AL ENEMIGO MÁS CERCANO; SIN ENEMIGOS, MORITA TRAE CRISTALES.',
+      'LAS FILAS LARGAS SON PARA CORRER: PATEA, PISA Y USA DASH CONTRA LOS ENEMIGOS.',
+      'SOMBRILLAS Y PECES TRAMPOLÍN: CAE SOBRE ELLOS Y SALES DISPARADA.'
     ]
   };
 
@@ -98,12 +108,20 @@
     checkpoint: 'PARADA ALCANZADA · AQUÍ REAPARECES',
     roomEnter: { sotano: 'SÓTANO DE LA ESCUELA', alcantarilla: 'ALCANTARILLA DEL CENTRO' },
     roomExit: 'SALIDA AL CALLEJÓN',
+    secretHint: '¿UN BRILLO EN LA ROCA? PÁRATE AHÍ Y PULSA BAJAR',   // V58.7: junto a la grieta de una zona secreta
     dropDenied: 'LA PIEDRA NO SE ATRAVIESA · BUSCA UN BORDE O UN PELDAÑO',
     hardLanding: '¡CAÍDA DURA!',
     fallHurt: '¡AUCH! CAÍDA DEMASIADO ALTA',
     shieldBroken: '¡ESCUDO ROTO!',
     busWaiting: '¡AHÍ ESTÁ EL CAMIÓN! ¡CORRE A LA PUERTA!',
-    bossDefeated: '¡JEFE DERROTADO!'
+    bossDefeated: '¡JEFE DERROTADO!',
+    // V58
+    midCheckpoint: 'PARADA INTERMEDIA · AQUÍ REAPARECES',
+    zipHint: '¡TIROLESA! BAJA SOLA · SALTAR SUELTA CON IMPULSO · BAJAR TE DEJA CAER',
+    catsAttack: '¡LUNA AL ATAQUE!',
+    catsFetch: 'MORITA TRAE {n} CRISTALES',
+    catsNothing: 'MORITA NO ENCUENTRA NADA CERCA',
+    catsTired: 'LAS GATITAS RECUPERAN EL ALIENTO…'
   };
 
   /** Final según objetos recuperados (0–6) y vidas restantes. */

@@ -6,9 +6,9 @@
   const NS = root.CAMION = root.CAMION || {};
 
   function createInput(opts = {}) {
-    const held = { left: false, right: false, up: false, down: false, jump: false, dash: false, kick: false };
+    const held = { left: false, right: false, up: false, down: false, jump: false, dash: false, kick: false, cats: false };
     const stick = { left: false, right: false, up: false, down: false, upSoft: false, downSoft: false };
-    const edge = { jump: false, dash: false, kick: false, down: false, pause: false };
+    const edge = { jump: false, dash: false, kick: false, down: false, cats: false, pause: false };
     const listeners = [];
     const on = (el, type, fn, o) => { el.addEventListener(type, fn, o); listeners.push([el, type, fn, o]); };
     const $ = (id) => document.getElementById(id);
@@ -16,7 +16,7 @@
     const KEYMAP = {
       ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right',
       ArrowUp: 'jump', KeyW: 'jump', Space: 'jump', KeyK: 'jump',
-      ArrowDown: 'down', KeyS: 'down', ShiftLeft: 'dash', ShiftRight: 'dash', KeyJ: 'dash', KeyL: 'dash', KeyX: 'kick', KeyU: 'kick'
+      ArrowDown: 'down', KeyS: 'down', ShiftLeft: 'dash', ShiftRight: 'dash', KeyJ: 'dash', KeyL: 'dash', KeyX: 'kick', KeyU: 'kick', KeyC: 'cats', KeyE: 'cats'
     };
     on(window, 'keydown', (e) => {
       if (e.code === 'F2') { e.preventDefault(); if (opts.onDebug) opts.onDebug(); return; }
@@ -24,7 +24,7 @@
       const k = KEYMAP[e.code];
       if (!k) return;
       e.preventDefault();
-      if (!held[k] && !e.repeat) { if (k === 'jump') edge.jump = true; if (k === 'dash') edge.dash = true; if (k === 'kick') edge.kick = true; if (k === 'down') edge.down = true; }
+      if (!held[k] && !e.repeat) { if (k === 'jump') edge.jump = true; if (k === 'dash') edge.dash = true; if (k === 'kick') edge.kick = true; if (k === 'down') edge.down = true; if (k === 'cats') edge.cats = true; }
       held[k] = true;
       if (opts.onActivity) opts.onActivity();
     });
@@ -37,7 +37,7 @@
       const press = (e) => {
         e.preventDefault();
         try { b.setPointerCapture(e.pointerId); } catch (_) { /* sin captura en algunos visores */ }
-        if (!held[k]) { if (k === 'jump') edge.jump = true; if (k === 'dash') edge.dash = true; if (k === 'kick') edge.kick = true; if (k === 'down') edge.down = true; }
+        if (!held[k]) { if (k === 'jump') edge.jump = true; if (k === 'dash') edge.dash = true; if (k === 'kick') edge.kick = true; if (k === 'down') edge.down = true; if (k === 'cats') edge.cats = true; }
         held[k] = true;
         b.classList.add('pressed'); b.setAttribute('aria-pressed', 'true');
         if (opts.onActivity) opts.onActivity();
@@ -92,11 +92,11 @@
     function snapshot() {
       const s = {
         left: held.left || stick.left, right: held.right || stick.right,
-        jumpPressed: edge.jump, jumpHeld: held.jump || stick.up, dashPressed: edge.dash, kickPressed: edge.kick, downPressed: edge.down,
+        jumpPressed: edge.jump, jumpHeld: held.jump || stick.up, dashPressed: edge.dash, kickPressed: edge.kick, downPressed: edge.down, catsPressed: edge.cats,
         upHeld: held.up || stick.upSoft, downHeld: held.down || stick.downSoft   // V52: nadar
       };
       if (s.left && s.right) { s.left = false; s.right = false; }
-      edge.jump = edge.dash = edge.kick = edge.down = false;
+      edge.jump = edge.dash = edge.kick = edge.down = edge.cats = false;
       return s;
     }
     function consumePause() { const p = edge.pause; edge.pause = false; return p; }

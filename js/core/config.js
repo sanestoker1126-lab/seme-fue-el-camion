@@ -6,8 +6,8 @@
   const NS = root.CAMION = root.CAMION || {};
 
   NS.CONFIG = {
-    version: '57.0.0',
-    build: 'v57-thematic-villains',
+    version: '58.9.0',
+    build: 'v58-1-mundos-pintados',
 
     sim: {
       fixedDt: 1 / 60,      // paso fijo de simulación (60 Hz), independiente de la tasa de refresco
@@ -88,7 +88,7 @@
     },
 
     scoring: {
-      gem: 10, foe: 50, boss: 400, perfect: 25, item: 200, key: 50, crate: 15, shotBreak: 10,
+      gem: 10, foe: 50, boss: 400, perfect: 25, item: 200, key: 50, crate: 15, shotBreak: 10, secret: 300,
       comboTime: 3.4, comboStep: 3, comboMaxMult: 5
     },
 
@@ -112,7 +112,27 @@
       entryDamp: 0.3,       // al caer al agua la velocidad vertical se amortigua (no hay daño por caída)
       climbUp: 30,          // altura de orilla que se sube sola nadando hacia ella
       wadeMul: 0.68,        // agua baja: velocidad de carrera
-      wadeJump: 0.92
+      wadeJump: 0.92,
+      // V58 · Mar abierto (zonas con `sea`): flotación neutra por debajo de `seaBand` u de la superficie.
+      seaBand: 40,
+      seaDrag: 3.2          // freno vertical sin entrada (se queda a la profundidad donde está)
+    },
+
+    // V58 · Tirolesas. Velocidades en u/s. La mano queda `hang` u sobre la caja de Sofía.
+    zip: {
+      min: 170,             // nunca se queda parada: siempre avanza hacia el ancla baja
+      max: 560,
+      accel: 900,           // × seno de la pendiente
+      push: 70,             // empuje fijo (cables casi horizontales)
+      hang: 6,
+      grab: 13,             // tolerancia vertical para colgarse
+      edge: 6,              // no se cuelga en los últimos 6 u de cada extremo
+      endPad: 10,           // se suelta 10 u antes del ancla baja
+      jumpMul: 0.86,        // SALTAR colgada: salto algo menor que el completo, conserva el impulso
+      cooldown: 0.42,       // tras soltarse no vuelve a colgarse de inmediato
+      dropVy: 120,
+      endKeep: 0.72,        // fracción de velocidad que conserva al llegar al final
+      landKeep: 0.55
     },
 
     difficulty: {
@@ -120,6 +140,26 @@
       normal:  { label: 'NORMAL',  lives: 3, foeSpeed: 1.0,  foeDensity: 1.0,  shotSpeed: 1.0,  reaction: 1.0,  fallDamage: 640, invulnMul: 1.0 },
       dificil: { label: 'DIFÍCIL', lives: 2, foeSpeed: 1.25, foeDensity: 1.35, shotSpeed: 1.2,  reaction: 0.8,  fallDamage: 560, invulnMul: 0.85 }
     },
+
+    // V58 · Orden a las gatitas (botón GATAS): Luna ataca al enemigo más cercano o Morita trae los cristales.
+    // V58.2 · Cuerdas para columpiarse (péndulo). Ángulos en radianes, velocidades angulares en rad/s.
+    rope: {
+      grab: 16,             // distancia horizontal de la mano a la cuerda para agarrarla
+      hang: 6,              // la mano queda `hang` u sobre la caja de Sofía (igual que en la tirolesa)
+      minLen: 40,           // no se agarra más cerca del ancla que esto
+      slideTo: 0.62,        // si se agarra más arriba, se desliza hasta este punto de la cuerda (fracción del largo)
+      slide: 380,           // velocidad de ese deslizamiento (u/s)
+      pump: 520,            // empuje tangencial de IZQ/DER (u/s²)
+      damp: 0.08,           // roce del columpio (por segundo)
+      maxA: 1.3,            // ángulo máximo (≈ 75°)
+      maxW: 6,
+      climb: 90,            // ARRIBA trepa (u/s)
+      jumpBoost: 0.5,       // SALTAR suelta con la velocidad del arco + medio salto hacia arriba
+      releaseKeep: 1.0,
+      cooldown: 0.4
+    },
+
+    cats: { cooldown: 7, range: 330, gemRange: 360, fetchSpeed: 560 },
 
     camera: { easeX: 4.6, easeY: 3.35, lookAheadVx: 0.24, focusY: 0.42, leadVy: 0.105 }
   };

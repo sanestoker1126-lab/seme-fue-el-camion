@@ -25,7 +25,13 @@
     kick: ['kick_01', 'kick_02', 'kick_03', 'kick_04'],
     hurt: ['land_01'],
     dead: ['dive_01'],
-    cheer: ['cheer_01', 'cheer_02', 'cheer_03']
+    cheer: ['cheer_01', 'cheer_02', 'cheer_03'],
+    zip: ['cheer_02'],                // V58: colgada de la tirolesa (puño en alto sobre el cable)
+    swing: ['cheer_02'],              // V58.2: colgada de una cuerda
+    swimKick: ['kick_01', 'kick_02', 'kick_03', 'kick_04'],
+    // V58.3: en el mar, el salto al salir del agua y la caída hacia ella se ven con los cuadros normales.
+    waterLeap: ['air_01'],
+    diveIn: ['dive_01']
   };
   const COMPANIONS = {
     luna: { name: 'LUNA', src: 'assets/companions/luna.png',
@@ -48,11 +54,32 @@
       idle: subFrames('morita', 'idle_sub', 6), walk: subFrames('morita', 'walk_sub', 4),
       shoulder: 'assets/companions/sub/morita_shoulder_sub.png', scale: 0.066, tint: '#d2e2ec' }
   };
+  // V58.1 · Gatitas astronautas (atlas aportado: Luna blanca, Morita gris). Mismo lienzo de 224 px que las de tierra.
+  // El paquete trae reposo, dos pasos y salto: el reposo se repite en las poses de alerta/olfateo (no hay otras).
+  const spaceCat = (cat, name, scale, tint) => {
+    const f = (n) => `assets/companions/space/${cat}_${n}.webp`;
+    return { name, src: f('idle'), idle: Array(6).fill(f('idle')), walk: [f('walk_a'), f('walk_b')], shoulder: f('idle'), scale, tint };
+  };
+  const COMPANIONS_SPACE = { luna: spaceCat('luna', 'LUNA', 0.068, '#fffdf4'), morita: spaceCat('morita', 'MORITA', 0.066, '#d7d9df') };
+  /* V58.1 · Sofía astronauta (Luna V5): atlas aportados (falda roja). Lienzo 256 × 240 con los pies en (128, 232), todas
+     las poses a la misma escala (igualadas por el ancho del casco). No hay patada propia: se usan las poses de salto con
+     la pierna al frente; trepar usa los pasos. */
+  const ASTRO_DIR = 'assets/player/astronauta/';
+  const ASTRO = {
+    idle: ['idle'], run: ['walk_a', 'walk_b'], fastRun: ['walk_a', 'walk_b'], jump: ['rise'], fall: ['fall'], land: ['land'],
+    climb: ['walk_a', 'walk_b'], dash: ['dash'], kick: ['kick_1', 'kick_2', 'kick_2', 'kick_1'], hurt: ['hurt'], dead: ['down'],
+    cheer: ['victory_1', 'victory_2', 'victory_3'], zip: ['victory_2'], swing: ['victory_2']
+  };
+  const ASTRO_META = [1, 128, 232];
   const BUS_FRAMES = [1, 2, 3, 4].map((n) => 'assets/vehicles/camion_frame_0' + n + '.png');
   const FRAME_MS = { idle: 180, run: 92, fastRun: 64, jump: 110, fall: 180, land: 75, climb: 125, dash: 50, kick: 58, hurt: 100, dead: 260, cheer: 170 };
   // Escala base: un cuadro con k = 1 mide ≈ 61 u de pie, igual que la caja de colisión (62 u).
   const SOFIA_BASE = 0.33;
-  const ninaSrc = (f) => (NINA_VARIANT_DIR[ropt.ninaLook] || NINA_DIR) + f + '.png';
+  const ninaSrc = (f, look) => (NINA_VARIANT_DIR[look] || NINA_DIR) + f + '.png';
+  /* V58.6 · Ropa por nivel: cada vestuario solo en su mundo. Escuela = uniforme; Luna = astronauta; mar = buzo solo
+     dentro del agua (drawDiveWater); Guadalajara y la isla del mar = ropa de calle (ORIGINAL o ROSA, opción). */
+  const casualLook = () => (ropt.ninaLook === 'rosa' ? 'rosa' : 'original');
+  function outfitFor(theme) { return theme === 'espacial' ? 'astronauta' : theme === 'escuela' ? 'uniforme' : casualLook(); }
 
   const hex = (n) => '#' + (n >>> 0).toString(16).padStart(6, '0').slice(-6);
   const images = new Map();
@@ -93,24 +120,33 @@
 
   /* Fondo teñido cacheado (una vez por par archivo+tinte). */
   const tinted = new Map();
-  function tintedImage(src, tint) {
+  /* `maxW`: ancho máximo del lienzo cacheado. V58.1: los fondos PRO de Guadalajara miden 1536 × 2504; reducirlos UNA vez
+     al tamaño que el nivel realmente muestra evita reescalarlos cada cuadro (con la CPU frenada ×4 Portales bajó a
+     12 fps por eso). */
+  function tintedImage(src, tint, maxW = 0) {
     const im = image(src);
     if (!ready(im)) return null;
-    if (tint === 0xffffff) return im;
-    const key = src + '|' + tint;
+    const k = maxW && im.naturalWidth > maxW ? maxW / im.naturalWidth : 1;
+    if (tint === 0xffffff && k === 1) return im;
+    const key = src + '|' + tint + '|' + k.toFixed(4);
     if (tinted.has(key)) return tinted.get(key);
     const c = document.createElement('canvas');
-    c.width = im.naturalWidth; c.height = im.naturalHeight;
+    c.width = Math.round(im.naturalWidth * k); c.height = Math.round(im.naturalHeight * k);
     const x = c.getContext('2d');
-    x.drawImage(im, 0, 0);
-    x.globalCompositeOperation = 'multiply';
-    x.fillStyle = hex(tint);
-    x.fillRect(0, 0, c.width, c.height);
-    x.globalCompositeOperation = 'destination-in';
-    x.drawImage(im, 0, 0);
+    x.imageSmoothingQuality = 'high';
+    x.drawImage(im, 0, 0, c.width, c.height);
+    if (tint !== 0xffffff) {
+      x.globalCompositeOperation = 'multiply';
+      x.fillStyle = hex(tint);
+      x.fillRect(0, 0, c.width, c.height);
+      x.globalCompositeOperation = 'destination-in';
+      x.drawImage(im, 0, 0, c.width, c.height);
+    }
     tinted.set(key, c);
     return c;
   }
+  // Ancho al que se cachea el fondo de un tramo: el de su panel en el mundo × 1,6 (nitidez con zoom y pantallas densas).
+  const sceneArtW = (sc) => Math.round(Math.max(640, sc.map.width * sc.scale * 1.6 / ((sc.map.art && sc.map.art.length > 1) ? 2 : 1)));
 
   let canvas, ctx, dpr = 1, cw = 1, ch = 1, debug = false, qScale = 1;
   // V50: opciones visuales (menú OPCIONES).
@@ -241,175 +277,529 @@
   /* Los fondos V53 son imágenes compuestas; V54 las utiliza como capa profunda
      continua, con partículas intermedia y cercana a distinta velocidad. */
 
-  /* V55 · Capas de parallax REALES e independientes.
-     Cada SVG tiene un escenario completo y solo la capa 0 es opaca. No se
-     escalan imágenes V54 a la altura de la misión ni se usa mosaico espejo.
-     La velocidad relativa de cada capa es configurable (0.1 .. 1.0).
-     Se recorta la imagen al viewport para reducir rasterización en móviles. */
-  const PARALLAX_LAYERS = Object.freeze({
-    submarino: [
-      'assets/parallax/submarino/00_fondo_lejano.svg',
-      'assets/parallax/submarino/01_profundidad.svg',
-      'assets/parallax/submarino/02_estructuras.svg',
-      'assets/parallax/submarino/03_elementos.svg',
-      'assets/parallax/submarino/04_primer_plano.svg'
-    ],
-    espacial: [
-      'assets/parallax/espacial/00_fondo_lejano.svg',
-      'assets/parallax/espacial/01_profundidad.svg',
-      'assets/parallax/espacial/02_estructuras.svg',
-      'assets/parallax/espacial/03_elementos.svg',
-      'assets/parallax/espacial/04_primer_plano.svg'
-    ]
-  });
-  const PARALLAX_SPEED = Object.freeze([0.10, 0.22, 0.40, 0.68, 1.00]);
-
-  /* Rasterización diferida: cada vector se pinta UNA vez en un canvas local de
-     960×1300 y se reutiliza durante el juego. Se descartan los de la misión
-     anterior cuando cambia el mundo para reducir uso de RAM en Android. */
-  const parallaxRaster = new Map();
-  let parallaxRasterTheme = null;
-  function preparedParallax(theme, src) {
-    const original = image(src);
-    if (!ready(original)) return null;
-    if (theme !== parallaxRasterTheme) {
-      parallaxRaster.clear();
-      parallaxRasterTheme = theme;
-    }
-    if (parallaxRaster.has(src)) return parallaxRaster.get(src);
-    const canvas = document.createElement('canvas');
-    canvas.width = original.naturalWidth;
-    canvas.height = original.naturalHeight;
-    const pctx = canvas.getContext('2d', { alpha: true });
-    if (!pctx) return original;
-    try { pctx.drawImage(original, 0, 0, canvas.width, canvas.height); }
-    catch (_) { return original; }
-    parallaxRaster.set(src, canvas);
-    return canvas;
+  /* ---------- V58 · Fondos del tamaño de todo el nivel ----------
+     Cada tramo pinta su fondo de pared a pared del mundo (incluidos los sectores laterales) y en toda su altura.
+     Las capas 16:9 aportadas (escuela y Guadalajara) se escalan a la altura de la franja y, si la franja es más ancha,
+     se repiten en mosaico espejo (las uniones coinciden). Cada capa se desplaza a su propia velocidad.
+     `top` es la mitad alta (trazado original), `bottom` la mitad nueva; null = el fondo propio del nivel. */
+  const PXD = 'assets/parallax/';
+  // Dos planos por franja (rendimiento en Android): uno lejano y la arquitectura, cada uno a su velocidad. Si un plano
+  // lista varias capas, se funden UNA vez en un lienzo (cielo + nubes) y se dibujan como una sola imagen.
+  const GDL = (sec) => [[[PXD + 'guadalajara/' + sec + '/00_cielo_degradado.webp', PXD + 'guadalajara/' + sec + '/01_nubes_reales.webp'], 0.1], [[PXD + 'guadalajara/' + sec + '/02_arquitectura_anclada.webp'], 0.55]];
+  const BACKDROPS = {
+    guadalajara: { bottom: GDL('barrios_inferiores') },
+    gdl_noche: { bottom: GDL('barrios_inferiores') },
+    azoteas: { top: GDL('azoteas'), bottom: GDL('azoteas') },
+    centro_historico: { bottom: GDL('mercado_parque') },
+    portales: { bottom: GDL('mercado_parque') },
+    zapopan: { bottom: GDL('barrios_inferiores') },
+    mercado_tapatio: { top: GDL('mercado_parque') },
+    parque_metropolitano: { bottom: GDL('mercado_parque') },
+    anden_tren_ligero: { bottom: GDL('barrios_inferiores') },
+    plaza_jacarandas: { bottom: GDL('azoteas') }
+  };
+  /* ---------- V58.1 · Mundos pintados de una pieza ----------
+     El mar es UNA ilustración vertical (páginas apiladas) fija al mundo: el nivel está trazado sobre ella, así que
+     no hay paralaje en la arquitectura (las repisas dibujadas son las plataformas). Encima, las capas de ambiente
+     del paquete (luz, niebla, ruinas, corales, plancton, burbujas, arrecife) con paralaje real, fundidas UNA vez a
+     media resolución en dos planos (lejano y cercano): 2 dibujos por cuadro en vez de 7. Medido con la CPU frenada,
+     cada capa a pantalla completa cuesta 1,5–2 ms por software; en modo ligero (equipo lento) no se dibujan.
+     La geometría (ancho, alto, px por unidad de mapa) viene del mapa (worldArt). */
+  const DEPTH_ART = {
+    submarino: {
+      dir: PXD + 'marino/depth_v4/',
+      fx: [
+        { f: 0.22, layers: [['layers/01_caudales_superficie.png', 0.48], ['layers/02_neblina_distante.png', 0.36], ['layers/03_ruinas_lejanas.png', 0.34],
+          ['layers/04_corales_medios.png', 0.4], ['layers/05_plancton_flotante.png', 0.48]] },
+        { f: 0.62, near: true, layers: [['layers/06_burbujas_ligeras.png', 0.43], ['layers/07_arrecife_cercano.png', 0.3]] }
+      ],
+      above: '#438efa', below: '#093d7c'
+    },
+    // Luna V5: páginas de 1680 px (solo la franja central es nítida y es la que queda dentro del mundo; ver
+    // LUNAR_ART.x0). Sus capas miden 1024 × 768 y están hechas para repetirse: van en mosaico y solo en su zona
+    // (cielo arriba; polvo y luz de cristales en las cavernas). Planetas y naves no van como capa: el cielo pintado ya
+    // los trae; el OVNI de la capa de naves se usa como plataforma (aspecto 'nave').
+    espacial: {
+      dir: PXD + 'espacial/depth_v5/',
+      fx: [
+        { f: 0.12, zone: [0, 0.125], tile: 760, layers: [['layers/01_estrellas_lejanas.png', 0.61], ['layers/05_basura_meteoritos.png', 0.42]] },
+        { f: 0.4, zone: [0.3, 1], tile: 820, layers: [['layers/06_polvo_caverna.png', 0.45]] },
+        { f: 0.62, near: true, zone: [0.33, 1], tile: 1500, layers: [['layers/07_luz_cristales.png', 0.3]] }
+      ],
+      above: '#1c2141', below: '#32455c'
+    },
+    // Escuela Miguel Hidalgo (misión 1): tres láminas apiladas, sin capas de ambiente (sus capas de árboles
+    // translúcidos se encimaban sobre la fachada y no aportaban).
+    escuela: { dir: '', fx: [], above: '#4b8fd8', below: '#575b66' }
+  };
+  // Sprites recortados de las capas V5 (px de la capa): OVNI de 04_naves_satelites.
+  const UFO = { src: PXD + 'espacial/depth_v5/layers/04_naves_satelites.png', box: [590, 72, 289, 106], rim: 0.42 };
+  const hexA = (h, a) => `rgba(${parseInt(h.slice(1, 3), 16)},${parseInt(h.slice(3, 5), 16)},${parseInt(h.slice(5, 7), 16)},${a})`;
+  const depthCfg = (sc) => (sc && sc.map && sc.map.worldArt && DEPTH_ART[sc.theme]) || null;
+  // Páginas de todos los mundos pintados (de los mapas) y capas de ambiente (de DEPTH_ART).
+  function depthUrls() {
+    const out = new Set(), L = NS.LEVELS || {};
+    const maps = [L.SUBMARINO_MAP, L.ESPACIAL_MAP, ...(L.LEVEL_SEQUENCE || []).map((d) => d.map)];
+    for (const m of maps) if (m && m.worldArt) for (const p of m.worldArt.pages) out.add(m.worldArt.dir + p);
+    for (const c of Object.values(DEPTH_ART)) for (const g of c.fx) for (const [src] of g.layers) out.add(c.dir + src);
+    return [...out];
   }
-
-  function drawRealParallax(G, V, sc, begin, end) {
-    const list = PARALLAX_LAYERS[sc.theme];
-    if (!list) return false;
-    const B = G.world.bounds, v = G.view;
-    const xx1 = Math.max(V.x1, B.x1), xx2 = Math.min(V.x2, B.x2);
-    const yy1 = Math.max(V.y1, sc.startY), yy2 = Math.min(V.y2, sc.endY);
-    if (xx2 <= xx1 || yy2 <= yy1) return true;
-    const width = B.x2 - B.x1, height = sc.drawH;
-    const vw = Math.min(width, v.w), vh = Math.min(height, v.h);
-    const xTravel = Math.max(0, width - vw), yTravel = Math.max(0, height - vh);
-    const xProgress = Math.max(0, Math.min(xTravel, G.cam.x - B.x1));
-    const yProgress = Math.max(0, Math.min(yTravel, G.cam.y - sc.startY));
-    ctx.save();
-    ctx.beginPath(); ctx.rect(xx1, yy1, xx2 - xx1, yy2 - yy1); ctx.clip();
-    if (begin === 0) fillRect(xx1, yy1, xx2 - xx1, yy2 - yy1, sc.theme === 'submarino' ? '#052940' : '#080b25');
-    for (let i = begin; i < end; i++) {
-      const im = preparedParallax(sc.theme, list[i]);
-      if (!im) continue;
-      const speed = PARALLAX_SPEED[i], padX = 110, padY = 90;
-      const dw = xTravel * speed + vw + padX * 2;
-      const dh = yTravel * speed + vh + padY * 2;
-      const dx = B.x1 + xProgress * (1 - speed) - padX;
-      const dy = sc.startY + yProgress * (1 - speed) - padY;
-      const x1 = Math.max(xx1, dx), y1 = Math.max(yy1, dy);
-      const x2 = Math.min(xx2, dx + dw), y2 = Math.min(yy2, dy + dh);
-      if (x2 <= x1 || y2 <= y1) continue;
-      const iw = im.naturalWidth || im.width, ih = im.naturalHeight || im.height;
-      const sx = (x1 - dx) * iw / dw, sy = (y1 - dy) * ih / dh;
-      const sw = (x2 - x1) * iw / dw, sh = (y2 - y1) * ih / dh;
-      ctx.globalAlpha = i === 4 ? 0.88 : 1;
-      ctx.drawImage(im, sx, sy, sw, sh, x1, y1, x2 - x1, y2 - y1);
-    }
-    ctx.globalAlpha = 1;
-    ctx.restore();
-    return true;
+  // Planos de ambiente fundidos (por tema). Las capas originales se sueltan al terminar (memoria en Android).
+  const depthFxCache = new Map();
+  function depthFx(theme, cfg) {
+    let st = depthFxCache.get(theme);
+    if (st) return st.groups;
+    st = { groups: null };
+    depthFxCache.set(theme, st);
+    if (typeof Image !== 'function' || typeof document === 'undefined') return null;
+    const load = (src) => new Promise((res) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = cfg.dir + src; });
+    Promise.all(cfg.fx.map((g) => Promise.all(g.layers.map(([src]) => load(src))))).then((sets) => {
+      st.groups = sets.map((ims, gi) => {
+        const g = cfg.fx[gi], first = ims.find(Boolean);
+        if (!first) return null;
+        const c = document.createElement('canvas');
+        c.width = Math.max(1, Math.round(first.naturalWidth / 2)); c.height = Math.max(1, Math.round(first.naturalHeight / 2));
+        const x = c.getContext('2d');
+        ims.forEach((im, i) => { if (im) { x.globalAlpha = g.layers[i][1]; x.drawImage(im, 0, 0, c.width, c.height); } });
+        return { canvas: c, f: g.f, near: !!g.near, zone: g.zone || null, tile: g.tile || 0 };
+      }).filter(Boolean);
+    });
+    return null;
   }
-
-  function drawMissionParallax(G, V, sc) {
-    const B = G.world.bounds;
-    const x1 = Math.max(V.x1, B.x1), x2 = Math.min(V.x2, B.x2);
-    const y1 = Math.max(V.y1, sc.startY), y2 = Math.min(V.y2, sc.endY);
-    if (x2 <= x1 || y2 <= y1) return;
-    const marine = sc.theme === 'submarino', span = B.x2 - B.x1;
-    ctx.save();
-    ctx.beginPath(); ctx.rect(x1, y1, x2 - x1, y2 - y1); ctx.clip();
-    fillRect(x1, y1, x2 - x1, y2 - y1, marine ? '#062d40' : '#070c29');
-    const im = tintedImage(sc.file, sc.tint);
-    sc.missingArt = !im;
-    if (im) {
-      const iw = im.naturalWidth || im.width, ih = im.naturalHeight || im.height;
-      const scale = Math.max(span * 1.3 / iw, sc.drawH / (ih * 1.5));
-      const tw = iw * scale, th = ih * scale;
-      const left = (B.x1 + B.x2 - tw) / 2 - (G.cam.x - (B.x1 + B.x2) / 2) * 0.06;
-      const top = sc.startY - th * 0.35 - (G.cam.y - sc.startY) * 0.13;
-      const first = Math.floor((y1 - top) / th) - 1;
-      const last = Math.ceil((y2 - top) / th);
-      ctx.globalAlpha = 0.94;
-      for (let row = first; row <= last; row++) {
-        const y = top + row * th;
-        if (y > y2 || y + th < y1) continue;
-        if (Math.abs(row % 2) === 1) {
-          ctx.save(); ctx.translate(left, y + th); ctx.scale(1, -1);
-          ctx.drawImage(im, 0, 0, iw, ih, 0, 0, tw, th); ctx.restore();
-        } else ctx.drawImage(im, left, y, tw, th);
-      }
-      ctx.globalAlpha = 1;
-    }
-    const height = sc.drawH;
-    // Elementos lejanos: brillo y partículas.
-    for (let i = 0; i < 86; i++) {
-      const x = B.x1 + ((hash(i, 41) / 997 * span - G.cam.x * 0.075) % span + span) % span;
-      const y = sc.startY + ((hash(i, 61) / 997 * height - (G.cam.y - sc.startY) * 0.16) % height + height) % height;
-      if (x < x1 - 6 || x > x2 + 6 || y < y1 - 6 || y > y2 + 6) continue;
-      circle(x, y, 0.7 + i % 4 * 0.5, marine ? '#c4f6ed' : '#e9efff', marine ? 0.3 : 0.7);
-    }
-    // Elementos próximos: burbujas y escombros, con otro factor de paralaje.
-    for (let i = 0; i < 38; i++) {
-      const x = B.x1 + ((hash(i + 120, 13) / 997 * span - G.cam.x * 0.27) % span + span) % span;
-      const y = sc.startY + ((hash(i + 120, 57) / 997 * height - (G.cam.y - sc.startY) * 0.34) % height + height) % height;
-      if (x < x1 - 20 || x > x2 + 20 || y < y1 - 20 || y > y2 + 20) continue;
-      const r = 2 + i % 5 * 1.4;
-      if (marine) ring(x, y, r, r, '#d5fbff', 0.34, 0.9);
-      else { circle(x, y, r, '#9ca5bd', 0.35); circle(x - 1, y - 1, r * 0.22, '#f0f6ff', 0.42); }
-    }
-    if (sc.shade) fillRect(x1, y1, x2 - x1, y2 - y1, hex(sc.wash), sc.shade * 0.4);
+  /* Plano de ambiente en mosaico, solo dentro de su zona (fracciones del alto del tramo), con paralaje propio. */
+  function drawDepthTiles(g, G, sc, B, xx1, xx2, yy1, yy2) {
+    const zy1 = sc.startY + sc.drawH * g.zone[0], zy2 = sc.startY + sc.drawH * g.zone[1];
+    const y1 = Math.max(yy1, zy1), y2 = Math.min(yy2, zy2);
+    if (y2 <= y1 || xx2 <= xx1) return;
+    const tw = g.tile, th = tw * g.canvas.height / g.canvas.width;
+    const ox = B.x1 + (G.cam.x - B.x1) * (1 - g.f), oy = zy1 + (G.cam.y - zy1) * (1 - g.f);
+    const sx = xx1 - ((((xx1 - ox) % tw) + tw) % tw), sy = y1 - ((((y1 - oy) % th) + th) % th);
+    ctx.save(); ctx.beginPath(); ctx.rect(xx1, y1, xx2 - xx1, y2 - y1); ctx.clip();
+    for (let y = sy; y < y2; y += th) for (let x = sx; x < xx2; x += tw) ctx.drawImage(g.canvas, x, y, tw + 0.5, th + 0.5);
     ctx.restore();
   }
-
-  function drawBackdrop(G, V) {
-    const W = G.world, B = W.bounds;
-    // Cielo del atardecer sobre la azotea de la escuela (inicio de la historia).
-    if (V.y1 < 0) {
-      const g = ctx.createLinearGradient(0, -600, 0, 0);
-      g.addColorStop(0, '#0b1830'); g.addColorStop(0.6, '#3a3f66'); g.addColorStop(1, '#c46a4c');
-      ctx.fillStyle = g; ctx.fillRect(V.x1, Math.max(V.y1, -900), V.x2 - V.x1, Math.min(0, V.y2) - Math.max(V.y1, -900));
-      for (let i = 0; i < 40; i++) {
-        const sx = B.x1 + (hash(i, 7) / 997) * (B.x2 - B.x1), sy = -600 + (hash(i, 3) / 997) * 420;
-        if (sx > V.x1 && sx < V.x2 && sy > V.y1 && sy < V.y2) circle(sx, sy, 1.2, '#ffffff', 0.5);
+  /* Grietas en la roca pintada (luna): pozo oscuro con bordes quebrados, brillo de cristal y polvo que cae. */
+  function drawCracks(G, V, T) {
+    for (const c of G.world.cracks || []) {
+      if (c.x2 < V.x1 || c.x1 > V.x2 || c.y2 < V.y1 || c.y1 > V.y2) continue;
+      const w = c.x2 - c.x1, h = c.y2 - c.y1, n = 7;
+      const edge = (k, side) => (side < 0 ? c.x1 : c.x2) - side * (((k * 7919) % 5) + (k % 2 ? 3 : 0));
+      ctx.save(); ctx.beginPath();
+      for (let k = 0; k <= n; k++) { const y = c.y1 + (h * k) / n; if (k) ctx.lineTo(edge(k, -1), y); else ctx.moveTo(edge(k, -1), y); }
+      for (let k = n; k >= 0; k--) ctx.lineTo(edge(k + 2, 1), c.y1 + (h * k) / n);
+      ctx.closePath();
+      const g = ctx.createLinearGradient(c.x1, 0, c.x2, 0);
+      g.addColorStop(0, 'rgba(10,6,24,0.97)'); g.addColorStop(0.5, 'rgba(26,14,52,0.93)'); g.addColorStop(1, 'rgba(10,6,24,0.97)');
+      ctx.fillStyle = g; ctx.fill();
+      ctx.strokeStyle = 'rgba(176,132,255,0.55)'; ctx.lineWidth = 1.6; ctx.stroke();
+      ctx.restore();
+      // Bordes de roca quebrada a cada lado (no un puente encima) y luz de la ciudad que asoma abajo.
+      for (const [ex, dir] of [[c.x1, 1], [c.x2, -1]]) tri(ex - dir * 7, c.y1 - 2, ex + dir * 6, c.y1 - 1, ex - dir * 4, c.y1 + 9, '#a9aec4', 0.9);
+      const gl = ctx.createLinearGradient(0, c.y2 - 40, 0, c.y2);
+      gl.addColorStop(0, 'rgba(150,110,255,0)'); gl.addColorStop(1, 'rgba(150,110,255,0.45)');
+      ctx.fillStyle = gl; ctx.fillRect(c.x1 + 3, c.y2 - 40, w - 6, 40);
+      for (let i = 0; i < 4; i++) {
+        const k = ((T * 0.6 + i * 0.29) % 1), px = c.x1 + w * (0.2 + i * 0.2);
+        circle(px, c.y1 + k * h, 1.6, '#d7c8ff', 0.7 * (1 - k));
       }
     }
-    // Barrios laterales: fachadas con ventanas, según el tramo.
-    for (const sc of W.scenes) {
-      if (sc.endY < V.y1 || sc.startY > V.y2) continue;
-      if (PARALLAX_LAYERS[sc.theme]) {
-        // Si falla la descarga de los gráficos nuevos, se conserva el fondo V54.
-        if (ready(image(PARALLAX_LAYERS[sc.theme][0]))) drawRealParallax(G, V, sc, 0, 4);
-        else drawMissionParallax(G, V, sc);
+  }
+  /* Dibuja los tramos pintados de una pieza (mar, Luna, escuela). Devuelve true si TODOS los tramos lo son (entonces
+     no hace falta el fondo por franjas); los tramos sin lámina los sigue dibujando drawSceneBands. */
+  function drawDepthArt(G, V) {
+    const W = G.world, list = W.scenes.filter((sc) => depthCfg(sc));
+    if (!list.length) return false;
+    const first = W.scenes[0], last = W.scenes[W.scenes.length - 1], B = W.bounds;
+    const c0 = depthCfg(first), c1 = depthCfg(last);
+    // Arriba y abajo de las láminas: su propio color de borde (la cámara puede asomarse por encima del inicio).
+    if (c0 && V.y1 < first.startY) fillRect(V.x1, V.y1, V.x2 - V.x1, first.startY - V.y1 + 1, c0.above);
+    if (c1 && V.y2 > last.endY) fillRect(V.x1, last.endY - 1, V.x2 - V.x1, V.y2 - last.endY + 1, c1.below);
+    for (const sc of list) {
+      if (sc.endY < V.y1 - 2 || sc.startY > V.y2 + 2) continue;
+      const cfg = depthCfg(sc), A = sc.map.worldArt, k = sc.scale * A.px;
+      const pages = A.pages.map((p) => image(A.dir + p));
+      sc.missingArt = !pages.every(ready);   // sin arte, las repisas trazadas se dibujan (respaldo)
+      if (sc.missingArt) {
+        const y1 = Math.max(V.y1, sc.startY), y2 = Math.min(V.y2, sc.endY);
+        if (y2 > y1) { const g = ctx.createLinearGradient(0, sc.startY, 0, sc.endY); g.addColorStop(0, cfg.above); g.addColorStop(1, cfg.below); ctx.fillStyle = g; ctx.fillRect(V.x1, y1, V.x2 - V.x1, y2 - y1); }
         continue;
       }
-      const school = sc.theme === 'escuela', night = sc.shade;
-      const base = school ? '#1f3442' : '#3a2f35', alt = school ? '#253f4f' : '#45373a';
-      for (const side of [-1, 1]) {
-        const x1 = side < 0 ? B.x1 : sc.x0 + sc.drawW, x2 = side < 0 ? sc.x0 : B.x2;
-        if (x2 < V.x1 || x1 > V.x2) continue;
-        const y1 = Math.max(sc.startY, V.y1), y2 = Math.min(sc.endY, V.y2);
-        fillRect(Math.max(x1, V.x1), y1, Math.min(x2, V.x2) - Math.max(x1, V.x1), y2 - y1, base);
-        drawBuildingFacade(sc, side, x1, x2, y1, y2, W.t);
-        // Sombra hacia el muro exterior y velo nocturno del tramo.
-        if (night > 0) fillRect(Math.max(x1, V.x1), y1, Math.min(x2, V.x2) - Math.max(x1, V.x1), y2 - y1, hex(sc.wash), night * 1.3);
+      if (ropt.depthPages !== false) pages.forEach((im, i) => {
+        const dy = sc.startY + i * A.pageH * k, dh = A.pageH * k, dx = sc.x0 - (A.x0 || 0) * k, dw = A.width * k;
+        const x1 = Math.max(V.x1, dx), x2 = Math.min(V.x2, dx + dw), y1 = Math.max(V.y1, dy), y2 = Math.min(V.y2, dy + dh);
+        if (x2 <= x1 || y2 <= y1) return;
+        // Medio px de solape con la página siguiente (sin costura por redondeo), sin salirse de la imagen.
+        const sy = (y1 - dy) / k, sh = Math.min(A.pageH - sy, (y2 - y1) / k + 0.5);
+        if (sh > 0) ctx.drawImage(im, (x1 - dx) / k, sy, (x2 - x1) / k, sh, x1, y1, x2 - x1, sh * k);
+      });
+      // Fundido del pie de la última lámina hacia su color de borde (sin corte recto sobre la salida).
+      if (sc === last && V.y2 > sc.endY - 90) {
+        const g = ctx.createLinearGradient(0, sc.endY - 90, 0, sc.endY);
+        g.addColorStop(0, hexA(cfg.below, 0)); g.addColorStop(1, hexA(cfg.below, 1));
+        ctx.fillStyle = g; ctx.fillRect(V.x1, sc.endY - 90, V.x2 - V.x1, 90);
+      }
+      const groups = ropt.depthFx === false || !cfg.fx.length ? null : depthFx(sc.theme, cfg);
+      if (groups && groups.length && qScale >= 0.7) {   // modo ligero: el arte solo (las capas de ambiente cuestan dibujo)
+        const v = G.view, xx1 = Math.max(V.x1, B.x1), xx2 = Math.min(V.x2, B.x2), yy1 = Math.max(V.y1, sc.startY), yy2 = Math.min(V.y2, sc.endY);
+        const width = B.x2 - B.x1, vw = Math.min(width, v.w), vh = Math.min(sc.drawH, v.h);
+        const xTravel = Math.max(0, width - vw), yTravel = Math.max(0, sc.drawH - vh);
+        const xP = Math.max(0, Math.min(xTravel, G.cam.x - B.x1)), yP = Math.max(0, Math.min(yTravel, G.cam.y - sc.startY));
+        for (const g of groups) {
+          if (g.tile) { drawDepthTiles(g, G, sc, B, xx1, xx2, yy1, yy2); continue; }
+          const dw = xTravel * g.f + vw + 220, dh = yTravel * g.f + vh + 180;
+          const dx = B.x1 + xP * (1 - g.f) - 110, dy = sc.startY + yP * (1 - g.f) - 90;
+          const x1 = Math.max(xx1, dx), y1 = Math.max(yy1, dy), x2 = Math.min(xx2, dx + dw), y2 = Math.min(yy2, dy + dh);
+          if (x2 <= x1 || y2 <= y1) continue;
+          const iw = g.canvas.width, ih = g.canvas.height;
+          ctx.drawImage(g.canvas, (x1 - dx) * iw / dw, (y1 - dy) * ih / dh, (x2 - x1) * iw / dw, (y2 - y1) * ih / dh, x1, y1, x2 - x1, y2 - y1);
+        }
+      }
+    }
+    // Unión entre dos láminas apiladas (misión 1): bruma corta del color del cielo de la siguiente, sin corte seco.
+    for (let i = 0; i + 1 < W.scenes.length; i++) {
+      const a = W.scenes[i], b = W.scenes[i + 1], cb = depthCfg(b);
+      if (!depthCfg(a) || !cb || Math.abs(a.endY - b.startY) > 1 || a.endY < V.y1 - 90 || a.endY > V.y2 + 60) continue;
+      const g = ctx.createLinearGradient(0, a.endY - 90, 0, a.endY + 50);
+      g.addColorStop(0, hexA(cb.above, 0)); g.addColorStop(0.64, hexA(cb.above, 0.62)); g.addColorStop(1, hexA(cb.above, 0));
+      ctx.fillStyle = g; ctx.fillRect(V.x1, a.endY - 90, V.x2 - V.x1, 140);
+    }
+    return list.length === W.scenes.length;
+  }
+  function backdropUrls() {
+    const out = new Set();
+    for (const b of Object.values(BACKDROPS)) for (const part of [b.top, b.bottom]) for (const [srcs] of part || []) for (const src of srcs) out.add(src);
+    for (const src of depthUrls()) if (!/\/layers\//.test(src)) out.add(src);   // V58.1: páginas de los mundos pintados
+    out.add(UFO.src);
+    return [...out];
+  }
+
+  /* Planos fundidos (cielo + nubes, arquitectura + vegetación): se componen una vez y se guardan (máx. 6). */
+  const fused = new Map();
+  function planeImage(srcs) {
+    if (srcs.length === 1) { const im = image(srcs[0]); return ready(im) ? im : null; }
+    const key = srcs.join('|');
+    if (fused.has(key)) { const c = fused.get(key); fused.delete(key); fused.set(key, c); return c; }
+    const ims = srcs.map(image);
+    if (!ims.every(ready)) return ready(ims[0]) ? ims[0] : null;
+    const c = document.createElement('canvas');
+    c.width = ims[0].naturalWidth; c.height = ims[0].naturalHeight;
+    const x = c.getContext('2d');
+    for (const im of ims) x.drawImage(im, 0, 0, c.width, c.height);
+    fused.set(key, c);
+    if (fused.size > 8) fused.delete(fused.keys().next().value);
+    return c;
+  }
+
+  /** Dibuja la parte visible (clip) de una imagen colocada en (dx, dy, dw, dh); `flip` la refleja en horizontal. */
+  function blitCrop(im, dx, dy, dw, dh, flip, clip, sx0 = 0, sy0 = 0, sw0 = 0, sh0 = 0) {
+    const x1 = Math.max(dx, clip.x1), y1 = Math.max(dy, clip.y1), x2 = Math.min(dx + dw, clip.x2), y2 = Math.min(dy + dh, clip.y2);
+    if (x2 <= x1 || y2 <= y1) return;
+    const iw = sw0 || im.naturalWidth || im.width, ih = sh0 || im.naturalHeight || im.height, kx = iw / dw, ky = ih / dh;
+    const sy = sy0 + Math.max(0, (y1 - dy) * ky), sh = Math.min(ih - (sy - sy0), (y2 - y1) * ky);
+    const sx = flip ? (dx + dw - x2) * kx : (x1 - dx) * kx, sw = Math.min(iw - sx, (x2 - x1) * kx);
+    if (sw <= 0 || sh <= 0) return;
+    if (!flip) { ctx.drawImage(im, sx0 + Math.max(0, sx), sy, sw, sh, x1, y1, x2 - x1, y2 - y1); return; }
+    ctx.save(); ctx.translate(x1 + x2, 0); ctx.scale(-1, 1);
+    ctx.drawImage(im, sx0 + Math.max(0, sx), sy, sw, sh, x1, y1, x2 - x1, y2 - y1);
+    ctx.restore();
+  }
+
+  /** Capa escalada a la altura de la franja (+8 % de margen) con paralaje; mosaico espejo si no cubre el ancho. */
+  function drawBandLayer(im, band, speed, camCx, camCy, clip) {
+    const bw = band.x2 - band.x1, bh = band.y2 - band.y1;
+    const iw = im.naturalWidth || im.width, ih = im.naturalHeight || im.height;
+    if (!iw || !ih) return;
+    // V58.9: una sola copia que cubre el ancho de la banda. Antes, si el dibujo era más angosto, se repetía y cada
+    // segunda copia salía en espejo (el grafiti «GUADALAJARA» se leía al revés).
+    const s = Math.max((bh / ih) * 1.08, (bw / iw) * 1.02), tw = iw * s, th = ih * s, k = 1 - speed;
+    const oy = Math.max(-0.035 * th, Math.min(0.035 * th, -(camCy - (band.y1 + band.y2) / 2) * k * 0.08));
+    const top = band.y1 + (bh - th) / 2 + oy;
+    const ox = -(camCx - (band.x1 + band.x2) / 2) * k * 0.3;
+    const slack = (tw - bw) / 2;   // tw ≥ bw: una sola copia, con un poco de paralaje dentro de lo que sobra
+    blitCrop(im, (band.x1 + band.x2) / 2 - tw / 2 + Math.max(-slack, Math.min(slack, ox)), top, tw, th, false, clip);
+  }
+
+  function drawSceneBands(G, V) {
+    const W = G.world, B = W.bounds, v = G.view, camCx = G.cam.x + v.w / 2, camCy = G.cam.y + v.h / 2;
+    const n = W.scenes.length;
+    for (let i = 0; i < n; i++) {
+      const sc = W.scenes[i];
+      if (depthCfg(sc)) continue;   // mundo pintado: lo dibuja drawDepthArt
+      const y1 = i === 0 ? Math.min(sc.startY, B.y1) - 80 : sc.startY, y2 = i === n - 1 ? B.y2 + 240 : sc.endY;
+      if (y2 < V.y1 || y1 > V.y2) continue;
+      const split = sc.map.art && sc.map.art.length ? sc.startY + sc.map.art[0].h * sc.scale : sc.endY;
+      const bd = BACKDROPS[sc.id] || {};
+      const own = sceneSource(sc);
+      sc.missingArt = !own;
+      for (const [a, b, layers] of [[y1, split, bd.top], [split, y2, bd.bottom]]) {
+        if (b <= a || b < V.y1 || a > V.y2) continue;
+        const band = { x1: B.x1 - 80, x2: B.x2 + 80, y1: a, y2: b };
+        const clip = { x1: Math.max(V.x1, band.x1), y1: Math.max(V.y1, a), x2: Math.min(V.x2, band.x2), y2: Math.min(V.y2, b) };
+        if (clip.x2 <= clip.x1 || clip.y2 <= clip.y1) continue;
+        // En la mitad pintada el dibujo del nivel tapa el centro: el fondo solo se pinta a los lados (menos sobredibujo).
+        const painted = sc.artPainted && own && a < split && sc.map.art;
+        const clips = painted
+          ? [{ x1: clip.x1, y1: clip.y1, x2: Math.min(clip.x2, sc.x0), y2: clip.y2 }, { x1: Math.max(clip.x1, sc.x0 + sc.drawW), y1: clip.y1, x2: clip.x2, y2: clip.y2 }].filter((c) => c.x2 > c.x1)
+          : [clip];
+        let drawn = false;
+        if (layers) {
+          // Modo ligero: si el bucle ya bajó la resolución (equipo lento), todo el fondo es un solo plano fundido.
+          const lite = qScale < 0.7 && layers.length > 1;
+          const planes = lite ? [[planeImage(layers.flatMap(([srcs]) => srcs)), layers[layers.length - 1][1]]] : layers.map(([srcs, sp]) => [planeImage(srcs), sp]);
+          if (planes[0][0]) { for (const [im, sp] of planes) if (im) for (const c of clips) drawBandLayer(im, band, sp, camCx, camCy, c); drawn = true; }
+        }
+        if (!drawn && own) { for (const c of clips) drawBandLayer(own, band, 0.12, camCx, camCy, c); drawn = true; }
+        if (!drawn) for (const c of clips) fillRect(c.x1, c.y1, c.x2 - c.x1, c.y2 - c.y1, sc.theme === 'escuela' ? '#233b4a' : '#342f36');
+        // Velo del tramo: separa la acción del fondo sin apagar el arte.
+        for (const c of clips) fillRect(c.x1, c.y1, c.x2 - c.x1, c.y2 - c.y1, hex(sc.wash), Math.min(0.42, sc.shade * 0.9 + 0.1));
+        // Unión suave con la franja de arriba (cambio de arte entre tramos o entre mitades).
+        if (a > y1 || i > 0) {
+          const fade = Math.min(110, (b - a) * 0.2);
+          if (a + fade > V.y1 && a < V.y2) {
+            const g = ctx.createLinearGradient(0, a, 0, a + fade);
+            g.addColorStop(0, 'rgba(6,10,18,0.6)'); g.addColorStop(1, 'rgba(6,10,18,0)');
+            ctx.fillStyle = g; ctx.fillRect(clip.x1, a, clip.x2 - clip.x1, fade);
+          }
+        }
+      }
+      // Niveles con arte pintado: la mitad alta muestra el dibujo exacto (y su espejo), porque la colisión se trazó encima.
+      if (sc.artPainted && own && sc.map.art) {
+        for (const r of sc.map.art) {
+          const dx = sc.x0 + r.x * sc.scale, dy = sc.startY + r.y * sc.scale, dw = r.w * sc.scale, dh = r.h * sc.scale;
+          if (!inView(V, dx, dy, dx + dw, dy + dh)) continue;
+          blitCrop(own, dx, dy, dw, dh, r.flip, V);
+          // V58.1 · Capa de cornisas del arte PRO (Guadalajara): pintada en las colisiones reales de este mapa, con el
+          // mismo tinte del fondo. Donde el doble de V58 abrió un corte al centro, la cornisa no se pinta (sería piso falso).
+          const ov = sc.def.overlay ? tintedImage(sc.def.overlay, sc.tint, sceneArtW(sc)) : null;
+          if (ov) {
+            const gaps = (sc.map.seamGaps || []).map((g) => ({ x1: sc.x0 + g.x1 * sc.scale, x2: sc.x0 + g.x2 * sc.scale, y: sc.startY + g.y * sc.scale }))
+              .filter((g) => g.x2 > dx && g.x1 < dx + dw && g.y > dy && g.y < dy + dh);
+            if (gaps.length) {
+              ctx.save(); ctx.beginPath(); ctx.rect(dx, dy, dw, dh);
+              for (const g of gaps) ctx.rect(g.x2, g.y - 40, g.x1 - g.x2, 80);   // sentido contrario: agujero (regla nonzero)
+              ctx.clip();
+            }
+            blitCrop(ov, dx, dy, dw, dh, r.flip, V);
+            if (gaps.length) ctx.restore();
+          }
+          // Rótulos: en la copia espejo se vuelven a pintar al derecho (si no, se leerían al revés).
+          if (r.flip && r.text) {
+            // Los rectángulos están en px del arte original (1 px por unidad de mapa); el lienzo puede estar reducido.
+            const iw = own.naturalWidth || own.width, k = dw / iw, q = iw / r.w;
+            for (const [tx0, ty0, tw0, th0] of r.text) {
+              const tx = tx0 * q, ty = ty0 * q, tw = tw0 * q, th = th0 * q;
+              blitCrop(own, dx + (iw - tx - tw) * k, dy + ty * k, tw * k, th * k, false, V, tx, ty, tw, th);
+            }
+          }
+          if (sc.shade > 0) fillRect(Math.max(dx, V.x1), Math.max(dy, V.y1), Math.min(dx + dw, V.x2) - Math.max(dx, V.x1), Math.min(dy + dh, V.y2) - Math.max(dy, V.y1), hex(sc.wash), sc.shade);
+        }
       }
     }
   }
+
+  /* ---------- V58 · Tirolesas ---------- */
+  function poleBase(W, x, y) {
+    let best = Infinity;
+    for (const p of W.platforms) if (p.region === 'main' && x >= p.x1 - 2 && x <= p.x2 + 2 && p.y > y + 4 && p.y < y + 230 && p.y < best) best = p.y;
+    return best === Infinity ? y + 38 : best;
+  }
+  const ZIP_COLORS = { cable: ['#1d1a17', '#c9d2d8'], tendedero: ['#efe6d2', '#ffffff'], alga: ['#2f8f63', '#8ff0b8'], anclaje: ['#355a7a', '#9ee7ff'],
+    cuerda: ['#7a5432', '#d8b98a'] };
+  function drawZips(G, V, T) {
+    for (const z of G.world.zips || []) {
+      const x1 = Math.min(z.ax, z.bx), x2 = Math.max(z.ax, z.bx);
+      if (x2 < V.x1 - 30 || x1 > V.x2 + 30 || z.by < V.y1 - 30 || z.ay > V.y2 + 240) continue;
+      // V58.1: la cadena del barco ya está pintada (y la cuerda se ata al mirador y a una palmera): sin postes de metal;
+      // en la pintada solo se ven las señales de sentido, tenues.
+      const painted = !!z.painted, rope = z.look === 'cuerda';
+      if (!painted) {
+        if (z.poleA === undefined) { z.poleA = poleBase(G.world, z.ax, z.ay); z.poleB = poleBase(G.world, z.bx, z.by); }
+        const [c1, c2] = ZIP_COLORS[z.look] || ZIP_COLORS.cable;
+        if (rope) for (const [x, y] of [[z.ax, z.ay], [z.bx, z.by]]) { circle(x, y, 4.5, '#5a3b22'); circle(x, y, 2.2, '#c79a5e'); }
+        else for (const [x, y, yb] of [[z.ax, z.ay, z.poleA], [z.bx, z.by, z.poleB]]) {
+          fillRect(x - 3, y - 8, 6, yb - y + 8, '#2c3138'); fillRect(x - 1, y - 8, 2, yb - y + 8, '#8a929c', 0.55);
+          fillRect(x - 9, y - 10, 18, 4, '#2c3138'); circle(x, y, 4.2, '#c9d2d8'); circle(x, y, 1.8, '#2c3138');
+        }
+        line(z.ax, z.ay, z.bx, z.by, c1, 1, rope ? 3.2 : 2.6);
+        line(z.ax, z.ay - 1, z.bx, z.by - 1, c2, 0.55, 1);
+        if (rope) for (let s = 8; s < z.len - 6; s += 9) { const px = z.ax + z.ux * s, py = z.ay + z.uy * s; line(px - 2, py - 1.5, px + 2, py + 1.5, '#4a2f1b', 0.6, 1); }
+      }
+      // Señales de sentido que avanzan por el cable.
+      for (let s = ((T * 70) % 80) + 20; s < z.len - 20; s += 80) {
+        const px = z.ax + z.ux * s, py = z.ay + z.uy * s;
+        tri(px + z.ux * 5, py + z.uy * 5 - 3, px - z.ux * 4, py - z.uy * 4 - 7, px - z.ux * 4, py - z.uy * 4 + 1, '#d9ff65', painted ? 0.32 : 0.55);
+      }
+      if (z.look === 'tendedero') for (let s = 30, k = 0; s < z.len - 24; s += 34, k++) {
+        const px = z.ax + z.ux * s, py = z.ay + z.uy * s;
+        fillRect(px - 6, py + 1, 12, 13 + (k % 3) * 3, ['#ff5d8f', '#ffd166', '#06d6a0', '#4cc9f0'][k % 4], 0.85);
+      }
+      if (z.look === 'alga') for (let s = 26, k = 0; s < z.len - 20; s += 30, k++) {
+        const px = z.ax + z.ux * s, py = z.ay + z.uy * s, sw = Math.sin(T * 2 + k) * 3;
+        line(px, py, px + sw, py + 12, '#3fae7a', 0.8, 2.2);
+      }
+    }
+  }
+
+  /* ---------- V58.2 · Cuerdas para columpiarse ----------
+     columpio: estructura de patio (dos postes en A y travesaño) con llanta; liana: rama y bejuco con hojas;
+     cable: viga metálica y cable de acero. Si Sofía cuelga, la cuerda sigue su ángulo; suelta, oscila y se calma. */
+  function drawRopes(G, V, T) {
+    const P = G.P, R = NS.CONFIG.rope;
+    for (const r of G.world.ropes || []) {
+      if (r.ax < V.x1 - 220 || r.ax > V.x2 + 220 || r.ay > V.y2 + 20 || r.ay + r.len < V.y1 - 200) continue;
+      const held = P.rope === r;
+      let a = held ? P.ropeA : Math.sin(T * 1.3 + r.ax * 0.01) * 0.045;
+      if (!held && r.relT !== undefined) { const dtR = G.world.t - r.relT; if (dtR < 4) a += r.relA * Math.exp(-1.2 * dtR) * Math.cos(dtR * 3.4); }
+      const tipX = r.ax + Math.sin(a) * r.len, tipY = r.ay + Math.cos(a) * r.len;
+      if (r.look === 'columpio') {
+        const base = r.base || r.ay + 290, half = 150;
+        for (const sx of [-1, 1]) { line(r.ax + sx * half, r.ay, r.ax + sx * (half + 26), base, '#2f6fae', 1, 5); line(r.ax + sx * half, r.ay, r.ax + sx * (half - 26), base, '#2f6fae', 1, 5); }
+        fillRR(r.ax - half - 8, r.ay - 6, half * 2 + 16, 9, 3, '#e8453c');
+        line(r.ax - 8, r.ay, tipX - 8, tipY, '#6b6f78', 1, 1.8); line(r.ax + 8, r.ay, tipX + 8, tipY, '#6b6f78', 1, 1.8);
+        ctx.save(); ctx.translate(tipX, tipY + 6); ctx.rotate(-a); fillRR(-15, -3, 30, 9, 4, '#262a30'); fillRR(-11, -1, 22, 4, 2, '#4a5059'); ctx.restore();
+      } else if (r.look === 'liana') {
+        fillRR(r.ax - 34, r.ay - 9, 68, 12, 6, '#5a3b22'); circle(r.ax - 30, r.ay - 10, 9, '#2f8f3e', 0.9); circle(r.ax + 28, r.ay - 12, 11, '#3fae4f', 0.9); circle(r.ax + 2, r.ay - 15, 10, '#2f8f3e', 0.9);
+        line(r.ax, r.ay, tipX, tipY, '#3d7a2a', 1, 4); line(r.ax, r.ay, tipX, tipY, '#7fc95a', 0.7, 1.4);
+        for (let k = 0.15; k < 1; k += 0.17) { const lx = r.ax + Math.sin(a) * r.len * k, ly = r.ay + Math.cos(a) * r.len * k; ellipse(lx + 5, ly, 5, 2.6, '#4fb85a', 0.9); }
+      } else {
+        fillRR(r.ax - 30, r.ay - 8, 60, 10, 3, '#8a96a8'); fillRect(r.ax - 30, r.ay - 8, 60, 2, '#d7e3f2');
+        line(r.ax, r.ay, tipX, tipY, '#c9d2d8', 1, 2.4); line(r.ax, r.ay, tipX, tipY, '#4a5664', 0.6, 0.8);
+        ring(tipX, tipY + 3, 5, 5, '#9ee7ff', 0.9, 2);
+      }
+      if (!held && G.state === 'playing' && Math.hypot(P.x - r.ax, P.y - (r.ay + r.len)) < 260) {
+        tri(tipX - 6, tipY + 18, tipX + 6, tipY + 18, tipX, tipY + 10, '#d9ff65', 0.45 + 0.35 * Math.sin(T * 6));   // aviso: se puede agarrar
+      }
+    }
+  }
+
+  /* ---------- V58 · Vehículos y trampolines con aspecto ---------- */
+  function drawLookPlatform(p, T, G) {
+    const x = p.x1, y = p.y, w = p.x2 - p.x1, look = p.look, mv = p.dx || 0;
+    if (look === 'camion') {
+      const bus = image(BUS_FRAMES[0]);
+      if (ready(bus)) {
+        const k = w / 490, dw = 512 * k, dh = 341 * k;
+        ctx.save();
+        if (mv < 0) { ctx.translate(x + w / 2, 0); ctx.scale(-1, 1); ctx.translate(-(x + w / 2), 0); }
+        ctx.drawImage(bus, x - 14 * k, y - 70 * k + Math.sin(T * 30) * 0.4, dw, dh);
+        ctx.restore();
+        fillRect(x + 6, y - 1, w - 12, 3, '#d9ff65', 0.55);
+        return;
+      }
+    }
+    if (look === 'nave') {
+      // V58.1: el OVNI de la capa de naves de la Luna V5; Sofía pisa el borde del platillo (la cúpula queda detrás).
+      const sheet = image(UFO.src);
+      if (ready(sheet)) {
+        const r = UFO.box, dw = w * 1.18, dh = dw * r[3] / r[2], bob = Math.sin(T * 2.2 + x * 0.01) * 0.8;
+        ellipse(x + w / 2, y + dh * 0.62, dw * 0.32, 5, '#b98cff', 0.25 + 0.12 * Math.sin(T * 5 + x));   // haz bajo el platillo
+        ctx.drawImage(sheet, r[0], r[1], r[2], r[3], x + w / 2 - dw / 2, y - dh * UFO.rim + bob, dw, dh);
+        fillRect(x + 8, y - 1, w - 16, 2, '#c9b5ff', 0.5);
+        return;
+      }
+    }
+    if (look === 'pez') {
+      // V58.1: pez tropical dibujado (naranja con franjas, como los del arrecife del arte V4); el lomo es la plataforma.
+      const bh = Math.max(14, w * 0.34), wag = Math.sin(T * 7 + x * 0.05) * 0.35;
+      ctx.save(); ctx.translate(x + w / 2, y + bh * 0.52);
+      if (mv < 0) ctx.scale(-1, 1);
+      ctx.rotate(Math.sin(T * 3 + x) * 0.04);
+      ctx.save(); ctx.translate(-w * 0.46, 0); ctx.rotate(wag);
+      ctx.fillStyle = '#e8641f'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-w * 0.24, -bh * 0.55); ctx.quadraticCurveTo(-w * 0.17, 0, -w * 0.24, bh * 0.55); ctx.closePath(); ctx.fill();
+      ctx.restore();
+      ctx.fillStyle = '#f08a2a'; ctx.beginPath(); ctx.moveTo(-w * 0.12, -bh * 0.46); ctx.quadraticCurveTo(w * 0.06, -bh * 0.95, w * 0.2, -bh * 0.44); ctx.closePath(); ctx.fill();
+      ellipse(0, 0, w * 0.5, bh * 0.5, '#f58a24');
+      ellipse(w * 0.05, -bh * 0.12, w * 0.4, bh * 0.28, '#ffb04a', 0.85);
+      for (const sx of [-0.16, 0.18]) { ctx.fillStyle = '#fff6ea'; ctx.beginPath(); ctx.ellipse(w * sx, 0, w * 0.05, bh * 0.47, 0, 0, Math.PI * 2); ctx.fill(); }
+      circle(w * 0.36, -bh * 0.1, Math.max(2, bh * 0.12), '#fffdf5'); circle(w * 0.37, -bh * 0.1, Math.max(1.2, bh * 0.07), '#1a1410');
+      ctx.restore();
+      tri(x + w / 2 - 6, y - 12, x + w / 2 + 6, y - 12, x + w / 2, y - 20, '#ffe27a', 0.45 + 0.3 * Math.sin(T * 6 + x));
+      return;
+    }
+    if (look === 'bote') {
+      // V58.1: barca de madera (misma madera que el puente de cuerda del arte) flotando en la superficie.
+      const bob = Math.sin(T * 1.6 + x * 0.01) * 1.2;
+      ctx.save(); ctx.translate(0, bob);
+      ctx.fillStyle = '#6b4226'; ctx.beginPath(); ctx.moveTo(x - 10, y - 2); ctx.lineTo(x + w + 10, y - 2);
+      ctx.quadraticCurveTo(x + w + 2, y + 17, x + w - 14, y + 19); ctx.lineTo(x + 14, y + 19); ctx.quadraticCurveTo(x - 2, y + 17, x - 10, y - 2); ctx.fill();
+      for (let i = 1; i <= 2; i++) line(x - 6 + i * 2, y + i * 6, x + w + 6 - i * 2, y + i * 6, '#4a2c18', 0.8, 1.2);
+      fillRR(x - 10, y - 4, w + 20, 5, 2, '#c79a5e');
+      fillRect(x + w * 0.3, y - 2, 4, 6, '#8a5a35'); fillRect(x + w * 0.66, y - 2, 4, 6, '#8a5a35');
+      line(x + w * 0.62, y - 10, x + w + 22, y + 20, '#a07448', 0.95, 2.4);   // remo
+      ctx.restore();
+      return;
+    }
+    if (look === 'manta') {
+      const flap = Math.sin(T * 3 + x * 0.01) * 6;
+      ctx.save(); ctx.translate(x + w / 2, y + 7); if (mv < 0) ctx.scale(-1, 1);
+      ctx.fillStyle = '#28546f'; ctx.beginPath(); ctx.moveTo(-w / 2, flap); ctx.quadraticCurveTo(-w * 0.2, -6, w * 0.32, -3); ctx.lineTo(w / 2, 2);
+      ctx.quadraticCurveTo(w * 0.1, 10, -w / 2, flap); ctx.fill();
+      ctx.fillStyle = '#3f7c99'; ctx.beginPath(); ctx.ellipse(w * 0.05, -1, w * 0.3, 5, 0, 0, Math.PI * 2); ctx.fill();
+      line(-w / 2, flap, -w / 2 - 26, flap + 8, '#1c3d52', 1, 2);
+      circle(w * 0.3, -2, 1.6, '#e8fbff'); ctx.restore();
+      fillRect(x + 8, y - 1, w - 16, 2, '#9ff3ff', 0.5);
+      return;
+    }
+    if (look === 'balsa') {
+      for (let i = 0; i < 4; i++) { fillRR(x, y + i * 3.2 - 1, w, 6, 3, i % 2 ? '#8a5a35' : '#9b6a40'); }
+      line(x + 10, y - 1, x + 10, y + 12, '#e8d7a8', 0.9, 1.5); line(x + w - 10, y - 1, x + w - 10, y + 12, '#e8d7a8', 0.9, 1.5);
+      return;
+    }
+    if (look === 'tren') {
+      fillRR(x - 4, y, w + 8, 32, 7, '#c9cfd3'); fillRect(x - 4, y + 22, w + 8, 6, '#7a1f3d');
+      for (let wx = x + 8; wx < x + w - 18; wx += 26) { fillRR(wx, y + 6, 18, 12, 2, '#16303d'); fillRect(wx + 2, y + 8, 14, 8, '#ffe6a0', 0.35); }
+      circle(x + 14, y + 33, 5, '#101418'); circle(x + w - 14, y + 33, 5, '#101418');
+      fillRect(x, y - 1, w, 2.5, '#d9ff65', 0.6);
+      return;
+    }
+    if (look === 'carrito') {
+      const c = p.theme === 'escuela' ? '#2f9a6a' : '#d6453b';
+      fillRR(x + 2, y, w - 4, 20, 4, c); fillRect(x + 2, y, w - 4, 3, '#f4efe4');
+      for (let sx = x + 10; sx < x + w - 10; sx += 18) fillRect(sx, y + 6, 8, 9, '#f6c344', 0.75);
+      circle(x + 14, y + 23, 5, '#101418'); circle(x + w - 14, y + 23, 5, '#101418'); circle(x + 14, y + 23, 2, '#8b969c'); circle(x + w - 14, y + 23, 2, '#8b969c');
+      return;
+    }
+    // Sin aspecto propio o sin imagen: la tarima de siempre.
+    if (!drawSkinned('hazard', x, x + w, y, SKIN_H.moving)) fillRR(x, y, w, 10, 3, '#8d5639');
+  }
+
+  function drawCoral(s, V) {
+    const x1 = s.x1, w = s.x2 - s.x1, top = Math.max(s.y1, V.y1 - 10), bot = Math.min(s.y2, V.y2 + 10);
+    if (bot <= top) return;
+    const g = ctx.createLinearGradient(x1, 0, x1 + w, 0);
+    g.addColorStop(0, '#9c3f7a'); g.addColorStop(0.5, '#ff7aa2'); g.addColorStop(1, '#b8487e');
+    ctx.fillStyle = g; rr(x1, top, w, bot - top, 10); ctx.fill();
+    for (let yy = Math.ceil(top / 26) * 26; yy < bot; yy += 26) {
+      circle(x1 + 4, yy + 6, 6, '#ff9ab8', 0.8); circle(x1 + w - 4, yy + 18, 5, '#ffb07a', 0.75); circle(x1 + w / 2, yy + 12, 2.5, '#fff1f4', 0.6);
+    }
+    if (s.y1 >= V.y1 - 20) for (let i = 0; i < 4; i++) line(x1 + 6 + i * (w - 12) / 3, s.y1, x1 + 2 + i * (w - 8) / 3, s.y1 - 14 - (i % 2) * 6, '#ff9ab8', 0.9, 3);
+  }
+
+  function drawCascades(G, V, T) {
+    for (const z of G.world.waters || []) {
+      for (const d of z.drains || []) {
+        if (d.x2 < V.x1 || d.x1 > V.x2 || z.y2 > V.y2) continue;
+        // V58.1: bajo una brecha del mar pintado la cascada se deshace en el agua si no hay repisa cerca (sin salpicar el aire).
+        if (d.fallTo === undefined) {
+          const cx = (d.x1 + d.x2) / 2, pb = poleBase(G.world, cx, z.y2 + 12);
+          const near = G.world.platforms.some((p) => p.region === 'main' && p.kind !== 'moving' && cx >= p.x1 - 2 && cx <= p.x2 + 2 && p.y > z.y2 + 16 && p.y < z.y2 + 200);
+          d.splash = !z.breach || near; d.fallTo = d.splash ? pb : z.y2 + 240;
+        }
+        const y1 = z.y2, y2 = Math.min(d.fallTo, V.y2 + 20), w = d.x2 - d.x1;
+        if (y2 <= V.y1) continue;
+        const g = ctx.createLinearGradient(0, y1, 0, d.splash ? y2 : d.fallTo);
+        g.addColorStop(0, 'rgba(120,220,255,0.55)'); g.addColorStop(1, d.splash ? 'rgba(120,220,255,0.12)' : 'rgba(120,220,255,0)');
+        ctx.fillStyle = g; ctx.fillRect(d.x1 + 4, y1, w - 8, y2 - y1);
+        for (let i = 0; i < 5; i++) {
+          const sx = d.x1 + 8 + i * (w - 16) / 4, off = (T * 260 + i * 37) % 60;
+          for (let yy = y1 + off; yy < y2; yy += 60) line(sx, yy, sx, Math.min(y2, yy + 22), '#e9fbff', 0.5, 1.6);
+        }
+        if (d.splash) ellipse((d.x1 + d.x2) / 2, d.fallTo, w * 0.6, 6, '#e9fbff', 0.35 + 0.15 * Math.sin(T * 8));
+      }
+    }
+  }
+
+  function drawBackdrop(G, V) { drawSceneBands(G, V); }
 
   /* V56 · Capa de atmósfera urbana. Decoración determinista sin colisiones y
      recortada al área visible; mantiene intactos fondos, parallax y plataformas. */
@@ -425,12 +815,14 @@
       const iw = x2 - x1, ih = y2 - y1;
       ctx.save();
       ctx.beginPath(); ctx.rect(x1, y1, iw, ih); ctx.clip();
-      // Velo muy tenue, sin oscurecer siluetas ni perder contraste del nivel.
-      fillRect(x1, y1, iw, ih, p.haze, p.intensity * 0.105);
+      // Velo muy tenue, sin oscurecer siluetas ni perder contraste del nivel. V58.1: en los mundos pintados de una pieza
+      // (mar V4) no hay velo ni motivos: el arte trae su propio ambiente; solo queda el letrero del tramo.
+      const paintedWorld = !!depthCfg(sc);
+      if (!paintedWorld) fillRect(x1, y1, iw, ih, p.haze, p.intensity * 0.105);
       const left = sc.x0 + 17, right = sc.x0 + sc.drawW - 17;
       const first = Math.max(0, Math.floor((y1 - sc.startY) / 136));
       const last = Math.min(Math.ceil((sc.endY - sc.startY) / 136), Math.ceil((y2 - sc.startY) / 136));
-      for (let n = first; n <= last; n++) {
+      for (let n = first; n <= (paintedWorld ? first - 1 : last); n++) {
         const yy = sc.startY + 52 + n * 136;
         const h = hash(n + 37, (sc.index + 1) * 53) / 997;
         const drift = Math.sin(T * (p.motif === 'bubbles' ? 1.1 : 0.45) + n * 2.4) * (p.motif === 'bubbles' ? 9 : 3);
@@ -524,7 +916,7 @@
   const bgCache = new Map();
   const vignetteCache = new WeakMap(); // tramo → degradado de la viñeta (se rehace si cambia el mundo)
   function sceneSource(sc) {
-    if (sc.file) return tintedImage(sc.file, sc.tint);
+    if (sc.file) return tintedImage(sc.file, sc.tint, sceneArtW(sc));
     if (!sc.bg) return null;
     if (bgCache.has(sc.bg)) return bgCache.get(sc.bg);
     const painter = PAINTERS[sc.bg];
@@ -996,8 +1388,55 @@
     for (const wx of [x1 + 70, x2 - 70]) { circle(wx, y2 + 2, 17, '#101418'); circle(wx, y2 + 2, 7, '#8b969c'); }
   }
 
-  function drawRoomBackground(r, V) {
+  /* V58.7 · Zonas secretas: la ilustración panorámica del paquete, fija a la zona (se pisa lo que se ve). Alrededor,
+     el color de su borde para que la cámara nunca muestre un hueco; en el santuario, la roca del techo de la cueva
+     (sobre el borde de arriba del dibujo) y burbujas que suben; en la estación, estrellas que titilan. */
+  function drawSecretRoom(r, V, T) {
+    const BG = (NS.ART && NS.ART.SECRET_BG) || {}, bg = BG[r.art];
+    const marine = r.art === 'marino_oculto', ay1 = r.artY1 ?? r.y1, ay2 = r.artY2 ?? r.y2, w = r.x2 - r.x1;
+    // V58.8: varias ilustraciones seguidas (las aulas): cada una en su tramo. Alrededor, el color del borde del dibujo.
+    const panels = r.panels && r.panels.length ? r.panels : [{ art: r.art, x1: r.x1, x2: r.x2 }];
+    const aulas = panels.some((p) => p.art && p.art.startsWith('aula_'));
+    const base = marine ? '#041b2c' : aulas ? ((bg && bg.top) || '#5b4a68') : '#0b0a24';
+    fillRect(r.x1 - 900, r.y1 - 900, w + 1800, ay2 - r.y1 + 1800, base);
+    if (aulas) {
+      const L = BG[panels[0].art], R = BG[panels[panels.length - 1].art];
+      fillRect(r.x1 - 900, ay1, 900, ay2 - ay1, (L && L.left) || base);
+      fillRect(r.x2, ay1, 900, ay2 - ay1, (R && R.right) || base);
+    }
+    for (const p of panels) {
+      if (p.x2 < V.x1 - 10 || p.x1 > V.x2 + 10) continue;
+      const pb = BG[p.art], im = pb && image(pb.src);
+      if (ready(im)) ctx.drawImage(im, p.x1, ay1, p.x2 - p.x1 + 0.5, ay2 - ay1);
+      else fillRect(p.x1, ay1, p.x2 - p.x1, ay2 - ay1, marine ? '#0d4a6b' : aulas ? '#d9c7b4' : '#1b1650');
+    }
+    if (marine) {
+      // Techo de la cueva: roca oscura que baja hasta el borde del dibujo (donde ya empieza su propia roca).
+      const g = ctx.createLinearGradient(0, ay1 - 220, 0, ay1 + 14);
+      g.addColorStop(0, '#010a12'); g.addColorStop(0.8, '#062436'); g.addColorStop(1, 'rgba(6,36,54,0)');
+      ctx.fillStyle = g; ctx.fillRect(r.x1 - 60, ay1 - 220, w + 120, 234);
+      for (let x = r.x1 + 30; x < r.x2; x += 74) {
+        const hgt = 10 + (hash(x | 0, 7) % 22);
+        tri(x - 12, ay1 - 2, x + 12, ay1 - 2, x + ((hash(x | 0, 3) % 9) - 4), ay1 + hgt, '#06283b', 0.9);
+      }
+      for (let k = 0; k < 18; k++) {   // burbujas que suben por el santuario
+        const bx = r.x1 + ((k * 211) % 1000) / 1000 * w, span = r.y2 - ay1 - 40;
+        const by = r.y2 - ((T * (22 + (k % 5) * 6) + k * 97) % span);
+        if (by < V.y1 - 10 || by > V.y2 + 10) continue;
+        ring(bx + Math.sin(T * 2 + k) * 4, by, 2.2 + (k % 3), 2.2 + (k % 3), '#c9f6ff', 0.45, 1);
+      }
+    } else {
+      for (let k = 0; k < 26; k++) {
+        const sx = r.x1 + (hash(k, 11) / 997) * w, sy = ay1 + (hash(k, 29) / 997) * (r.y2 - ay1) * 0.8;
+        const tw = 0.5 + 0.5 * Math.sin(T * (1.5 + (k % 4) * 0.6) + k);
+        circle(sx, sy, 1 + (k % 2) * 0.6, '#ffffff', 0.25 + 0.55 * tw);
+      }
+    }
+  }
+
+  function drawRoomBackground(r, V, T) {
     if (!inView(V, r.x1 - 60, r.y1 - 60, r.x2 + 60, r.y2 + 60)) return;
+    if (r.secret) { drawSecretRoom(r, V, T); return; }
     const sewer = r.theme === 'alcantarilla';
     fillRect(r.x1, r.y1, r.x2 - r.x1, r.y2 - r.y1, sewer ? '#1d2b28' : '#2a2a35');
     for (let by = r.y1 + 6; by < r.y2; by += 22) {
@@ -1057,6 +1496,11 @@
     }
     const shaking = p.crState === 'shake';
     const jit = shaking ? Math.sin(t * 70 + p.x1) * 1.6 : 0;
+    if (p.look === 'coral') {
+      fillRR(p.x1 + jit, p.y, w, 12, 5, '#d1527f'); fillRect(p.x1 + jit + 3, p.y, w - 6, 3, '#ffb3c8');
+      if (shaking) for (let i = 0; i < 3; i++) circle(p.x1 + w * (0.2 + i * 0.3), p.y + 14 + ((t * 60 + i * 7) % 10), 1.6, '#ffd3e0', 0.8);
+      return;
+    }
     if (!drawSkinned('tiles_b', p.x1 + jit, p.x2 + jit, p.y, SKIN_H.crumble, 1, shaking ? Math.abs(jit) * 0.5 : 0)) {
       fillRR(p.x1 + jit, p.y, w, 9, 2, '#b8613e'); fillRect(p.x1 + jit, p.y, w, 2, '#f0a77a');
     }
@@ -1105,18 +1549,34 @@
     tri(cx - 6, p.y - r - 12, cx + 6, p.y - r - 12, cx, p.y - r - 20, '#ffe27a', 0.45 + 0.35 * Math.sin(t * 6 + p.x1));
   }
 
+  /* V58.1 · Hongo gigante pintado en el arte: no se redibuja; solo brilla suave (se ve que rebota) y, al rebotar,
+     lanza un destello y esporas. */
+  function drawPaintedBounce(p, G) {
+    const t = G.world.t, cx = (p.x1 + p.x2) / 2, w = p.x2 - p.x1, since = t - (p.bounceT ?? -9);
+    ellipse(cx, p.y + 3, w * 0.5, 7, '#9ff8ff', 0.1 + 0.06 * Math.sin(t * 3 + p.x1));
+    if (since < 0.45) {
+      const k = since / 0.45;
+      ring(cx, p.y + 2, w * (0.45 + k * 0.35), 7 + k * 10, '#d8fbff', 0.55 * (1 - k), 2.5);
+      for (let i = 0; i < 6; i++) circle(cx + (i - 2.5) * w * 0.14, p.y - k * (26 + (i % 3) * 14), 2.2, '#e8d7ff', 0.7 * (1 - k));
+    }
+  }
+
   function drawPlatforms(G, V) {
     const T = G.world.t;
     for (const p of G.world.platforms) {
       if (p.y < V.y1 - 30 || p.y > V.y2 + 30 || p.x2 < V.x1 || p.x1 > V.x2) continue;
       const sc = p.scene >= 0 ? G.world.scenes[p.scene] : null;
       if (debug && (p.painted || p.hidden)) { line(p.x1, p.y, p.x2, p.y, p.drop ? '#ff44ed' : '#45ff9a', 0.95, 2); if (p.hidden) continue; }
-      if (p.hidden && !(sc && sc.missingArt)) continue; // cornisa pintada en el propio fondo
+      // Cornisa pintada en el propio fondo. V58.9: salvo en los niveles marcados `ledgeSkin` (Guadalajara PRO V2): ahí
+      // la capa de cornisas trae vigas de 2–7 u de grueso que sobre el cielo de la panorámica no se ven, y Sofía
+      // parecía caminar sobre el aire.
+      if (p.hidden && !(sc && (sc.missingArt || sc.def.ledgeSkin))) continue;
       const x = p.x1, y = p.y, w = p.x2 - p.x1, h = p.h || 12;
-      if (p.kind === 'bounce') { if (p.umbrella) drawUmbrella(p, T, G); else drawAwning(p, T); continue; }
-      if (p.kind === 'pigeon') { drawPigeon(p, T); continue; }
+      if (p.kind === 'bounce') { if (p.artPainted) drawPaintedBounce(p, G); else if (p.umbrella) drawUmbrella(p, T, G); else drawAwning(p, T); continue; }
+      if (p.kind === 'pigeon') { if (p.look) drawLookPlatform(p, T, G); else drawPigeon(p, T); continue; }
       if (p.kind === 'crumble') { drawCrumble(p, T); continue; }
       if (p.kind === 'belt') { drawBelt(p, T); continue; }
+      if (p.look === 'losa') { drawLosa(p, T); continue; }   // V58.7: losas a flor de agua del santuario secreto
       if (p.kind === 'thin') {
         // V51: tablón con la misma textura de madera que el resto del arte (tablas de wood_table) + ménsulas.
         line(x + 8, y + 6, x + 18, y + 22, '#3b2a1d', 0.9, 3);
@@ -1130,6 +1590,7 @@
       const room = p.region !== 'main';
       const skin = room ? (p.theme === 'alcantarilla' ? 'stone_moss' : 'concrete') : (p.skin || (sc && sc.skin) || (p.theme === 'escuela' ? 'concrete' : 'stone_rocks'));
       if (p.kind === 'stair') { drawStep(p, skin); continue; }
+      if (p.kind === 'moving' && p.look) { drawLookPlatform(p, T, G); continue; }
       if (p.kind === 'moving') {
         if (drawSkinned('hazard', x, x + w, y, SKIN_H.moving)) { line(x + 7, y + SKIN_H.moving + 1, x + w - 7, y + SKIN_H.moving + 1, '#9fffe8', 0.45, 1); continue; }
       } else if (drawSkinned(skin, x, x + w, y, room ? SKIN_H.room : p.sector ? SKIN_H.side : SKIN_H.floor)) continue;
@@ -1142,6 +1603,21 @@
       fillRR(x, y, w, h, Math.min(5, h * 0.25), base);
       fillRR(x, y, w, Math.max(3, h * 0.24), 3, topc);
     }
+  }
+
+  /* V58.7 · Losa de piedra con musgo a flor de agua (orillas del santuario secreto) y su pilar hundido. */
+  function drawLosa(p, t) {
+    const x = p.x1, y = p.y, w = p.x2 - p.x1;
+    fillRect(x + w * 0.3, y + 10, w * 0.4, 60, '#123a4a', 0.55);
+    fillRR(x - 2, y + 2, w + 4, 15, 4, '#02121c', 0.45);
+    fillRR(x, y, w, 13, 4, '#5f7d86');
+    fillRR(x, y, w, 4, 2, '#a8c7c4');
+    for (let k = 0; k < Math.floor(w / 18); k++) {
+      const mx = x + 6 + k * 18 + (hash(k, x | 0) % 7);
+      fillRR(mx, y - 2, 9, 4, 2, '#5fae5a', 0.9);
+      line(mx + 4, y + 2, mx + 4 + Math.sin(t * 2 + k) * 2, y + 9, '#3f8f45', 0.7, 1.4);
+    }
+    for (let k = 1; k < 4; k++) line(x + w * k / 4, y + 4, x + w * k / 4 + 3, y + 12, '#33505a', 0.7, 1);
   }
 
   function drawAwning(p, t) {
@@ -1179,7 +1655,8 @@
     for (const s of G.world.solids) {
       if (!inView(V, s.x1, s.y1, s.x2, s.y2)) continue;
       const x1 = Math.max(s.x1, V.x1 - 10), x2 = Math.min(s.x2, V.x2 + 10), y1 = Math.max(s.y1, V.y1 - 10), y2 = Math.min(s.y2, V.y2 + 10);
-      if (s.kind === 'street' || (s.kind === 'wall' && false)) continue;
+      // `draw: false`: sólido que ya pinta otra capa (orillas de las pozas, roca y meseta del mar pintado).
+      if (s.kind === 'street' || s.draw === false) continue;
       if (s.kind === 'wall') {
         fillRect(x1, y1, x2 - x1, y2 - y1, '#0c151d');
         fillRect(s.side < 0 ? s.x2 - 8 : s.x1, y1, 8, y2 - y1, '#22323e');
@@ -1193,6 +1670,10 @@
         ctx.strokeStyle = '#5a3a20'; ctx.lineWidth = 3; ctx.beginPath(); ctx.rect(s.x1 + 2, s.y1 + 2, w - 4, h - 4);
         ctx.moveTo(s.x1 + 3, s.y1 + 3); ctx.lineTo(s.x2 - 3, s.y2 - 3); ctx.moveTo(s.x2 - 3, s.y1 + 3); ctx.lineTo(s.x1 + 3, s.y2 - 3); ctx.stroke();
         circle((s.x1 + s.x2) / 2, s.y1 + h / 2, 4, '#d9ff65', 0.5 + 0.3 * Math.sin(G.world.t * 5 + s.x1));
+      } else if (s.kind === 'coral') {
+        drawCoral(s, V);
+      } else if (s.kind === 'barda') {
+        drawBarda(s, x1, y1, x2, y2);
       } else if (s.kind === 'gate') {
         const h = s.y2 - s.y1, lift = (s.openT || 0) * (h - 6);
         if (s.openT >= 1) continue;
@@ -1209,11 +1690,32 @@
     }
   }
 
+  /* V58.6 · Barda de azotea: muro de block aplanado y pintado, con remate de concreto (los vidrios van aparte, en
+     drawHazards, porque son el peligro). */
+  function drawBarda(s, x1, y1, x2, y2) {
+    const w = x2 - x1;
+    fillRect(x1, y1, w, y2 - y1, '#d9c7a6');
+    fillRect(x1, Math.max(y1, s.y2 - 46), w, s.y2 - Math.max(y1, s.y2 - 46), '#b9554a');   // guardapolvo rojo de la escuela
+    fillRect(x1, y1, 4, y2 - y1, '#f1e4cb', 0.75);
+    fillRect(x2 - 5, y1, 5, y2 - y1, '#9c8a6c', 0.8);
+    for (let by = s.y1 + 22; by < s.y2 - 46; by += 22) line(x1 + 2, by, x2 - 2, by, '#b9a582', 0.45, 1);   // juntas del block
+    if (s.y1 >= y1 - 1) { fillRect(s.x1 - 4, s.y1, s.x2 - s.x1 + 8, 7, '#8f8578'); fillRect(s.x1 - 4, s.y1, s.x2 - s.x1 + 8, 2, '#cfc6b8'); }
+    for (const [fx, fy, r] of [[0.3, 0.42, 9], [0.62, 0.6, 7], [0.45, 0.25, 6]]) circle(s.x1 + (s.x2 - s.x1) * fx, s.y1 + (s.y2 - s.y1) * fy, r, '#c4ae88', 0.35);   // manchas de humedad
+  }
+
   /* ---------- Elementos del mundo ---------- */
   function drawDoors(G, V, T) {
     for (const d of G.world.doors) {
       if (d.x < V.x1 - 40 || d.x > V.x2 + 40 || d.y < V.y1 - 60 || d.y > V.y2 + 30) continue;
       const pulse = 0.72 + 0.28 * Math.sin(T * 4 + d.phase);
+      if (d.kind === 'secreto') { drawSecretDoor(d, G, T); continue; }
+      if (d.kind === 'portal') {   // V58.8: el portal ya está pintado en el arte de las aulas
+        ellipse(d.x, d.y - 40, 34, 46, '#c58bff', 0.08 + 0.06 * pulse);
+        fillRR(d.x - 26, d.y - 104, 52, 14, 4, '#1b1030', 0.85);
+        text('SALIDA', d.x, d.y - 97, 8, '#e5c8ff');
+        tri(d.x - 7, d.y - 84 - pulse * 3, d.x + 7, d.y - 84 - pulse * 3, d.x, d.y - 74 - pulse * 3, '#e5c8ff', 0.9 * pulse);
+        continue;
+      }
       if (d.kind === 'trampilla') {
         fillRR(d.x - 22, d.y - 5, 44, 7, 2, '#6b4a2e');
         line(d.x - 18, d.y - 2, d.x + 18, d.y - 2, '#3b2a1d', 0.8, 1);
@@ -1231,6 +1733,40 @@
     }
   }
 
+  /* V58.7 · Grieta escondida hacia una zona secreta: apenas un brillo tenue en la roca que se aviva cuando Sofía se
+     acerca (en el mar, una grieta con burbujas; en la Luna, una escotilla con un símbolo extraño). */
+  function drawSecretDoor(d, G, T) {
+    const P = G.P, near = P ? Math.max(0, 1 - Math.hypot(P.x - d.x, P.y - d.y) / 200) : 0;
+    const k = 0.22 + 0.78 * near, glow = 0.5 + 0.5 * Math.sin(T * 2.4 + d.phase);
+    const sea = d.look === 'submarino', school = d.look === 'escuela', col = sea ? '#7ff6ff' : '#c48bff';
+    ellipse(d.x, d.y - 2, 26, 6, col, (0.08 + 0.1 * glow) * k);
+    if (school) {
+      // V58.8: un remolino violeta, como el portal que se ve dentro de las aulas.
+      ctx.globalAlpha = (0.4 + 0.45 * glow) * k; ctx.strokeStyle = '#d6a8ff'; ctx.lineWidth = 1.8; ctx.beginPath();
+      for (let a = 0; a < Math.PI * 4; a += 0.25) { const rr = 2 + a * 1.6, px = d.x + Math.cos(a + T * 2) * rr, py = d.y - 16 + Math.sin(a + T * 2) * rr * 1.2; if (a === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py); }
+      ctx.stroke(); ctx.globalAlpha = 1;
+      for (let i = 0; i < 3; i++) { const q = (T * 0.7 + i / 3) % 1; circle(d.x - 10 + i * 10, d.y - 4 - q * 30, 1.5, '#f0dcff', (1 - q) * 0.9 * k); }
+    } else if (sea) {
+      // Grieta en zigzag con luz de adentro.
+      ctx.globalAlpha = (0.45 + 0.45 * glow) * k; ctx.strokeStyle = col; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(d.x - 16, d.y - 1); ctx.lineTo(d.x - 7, d.y - 4); ctx.lineTo(d.x, d.y); ctx.lineTo(d.x + 8, d.y - 4); ctx.lineTo(d.x + 17, d.y - 1); ctx.stroke();
+      ctx.globalAlpha = 1;
+      for (let i = 0; i < 3; i++) {
+        const q = (T * 0.6 + i / 3) % 1;
+        ring(d.x - 8 + i * 8 + Math.sin(T * 3 + i) * 2, d.y - 6 - q * 34, 1.6 + i * 0.5, 1.6 + i * 0.5, '#dffcff', (1 - q) * 0.8 * k, 1);
+      }
+    } else {
+      ring(d.x, d.y - 2, 18, 4.5, col, (0.5 + 0.4 * glow) * k, 1.6);
+      ctx.globalAlpha = (0.55 + 0.4 * glow) * k; ctx.strokeStyle = '#f0dcff'; ctx.lineWidth = 1.4;
+      ctx.beginPath(); ctx.moveTo(d.x - 5, d.y - 2); ctx.lineTo(d.x, d.y - 5); ctx.lineTo(d.x + 5, d.y - 2); ctx.moveTo(d.x, d.y - 5); ctx.lineTo(d.x, d.y + 1); ctx.stroke();
+      ctx.globalAlpha = 1;
+      for (let i = 0; i < 2; i++) { const q = (T * 0.9 + i * 0.5) % 1; circle(d.x + (i ? 9 : -9), d.y - 4 - q * 24, 1.6, '#e7c9ff', (1 - q) * k); }
+    }
+    if (near > 0.55) {   // ya muy cerca: la flecha de BAJAR, como en las demás puertas
+      tri(d.x - 6, d.y - 30 - glow * 3, d.x + 6, d.y - 30 - glow * 3, d.x, d.y - 21 - glow * 3, col, 0.85 * (near - 0.55) / 0.45);
+    }
+  }
+
   function drawCheckpoints(G, V, T) {
     for (const cp of G.world.checkpoints) {
       const x = cp.x + 30, y = cp.y;
@@ -1241,6 +1777,18 @@
       fillRR(x - 13, y - 72, 26, 22, 5, c);
       fillRR(x - 8, y - 68, 16, 10, 2, '#0d2230');
       circle(x - 5, y - 55, 2, '#0d2230'); circle(x + 5, y - 55, 2, '#0d2230');
+    }
+  }
+
+  function drawMidpoints(G, V, T) {
+    for (const cp of G.world.midpoints || []) {
+      const x = cp.x, y = cp.y;
+      if (x < V.x1 - 30 || x > V.x2 + 30 || y < V.y1 - 90 || y > V.y2 + 10) continue;
+      line(x, y, x, y - 62, '#cfd8dc', 1, 3);
+      const wave = Math.sin(T * 4 + x) * 3, c = cp.active ? '#69d7d2' : '#5d7f8c';
+      ctx.fillStyle = c; ctx.beginPath(); ctx.moveTo(x + 1, y - 62); ctx.lineTo(x + 30, y - 55 + wave); ctx.lineTo(x + 1, y - 46); ctx.closePath(); ctx.fill();
+      if (cp.active) circle(x, y - 64, 12, '#69d7d2', 0.15 + 0.1 * Math.sin(T * 4));
+      text('½', x + 13, y - 54 + wave * 0.5, 8, '#062028');
     }
   }
 
@@ -1259,12 +1807,101 @@
     }
   }
 
+  /* V58.3 · Corriente marina: en calma casi no se nota; en aviso parpadean flechas en el sentido del arrastre; fuerte,
+     estelas blancas veloces y burbujas arrastradas. */
+  function drawCurrent(h, V, T) {
+    const x1 = Math.max(h.x1, V.x1 - 20), x2 = Math.min(h.x2, V.x2 + 20);
+    if (x2 <= x1 || h.y2 < V.y1 || h.y1 > V.y2) return;
+    const d = h.dir, k = h.k, warn = h.state === 'warn', H = h.y2 - h.y1;
+    fillRect(x1, h.y1, x2 - x1, H, '#7fe3ff', 0.05 + 0.1 * k);
+    // Bordes de la franja: se ve dónde empieza y acaba el arrastre.
+    for (const y of [h.y1, h.y2]) for (let x = x1 - ((x1 % 40) + 40) % 40; x < x2; x += 40) line(x, y, x + 22, y, '#c8f6ff', 0.12 + 0.3 * k, 2);
+    const sp = 118, rows = 6;
+    ctx.lineCap = 'round';
+    for (let j = 0; j < rows; j++) {
+      const y = h.y1 + H * (j + 0.5) / rows + Math.sin(T * 2 + j * 1.3) * 4;
+      const v = 40 + h.speed * (0.25 + 0.95 * k), off = (((T * v * d + j * 47) % sp) + sp) % sp;
+      const len = 18 + 50 * k, a = 0.1 + 0.6 * k;
+      for (let x = h.x1 + Math.floor((x1 - h.x1) / sp) * sp + off - sp; x < x2 + sp; x += sp) {
+        if (x < x1 || x > x2) continue;
+        line(x, y, x - d * len, y, '#0b4f6e', a * 0.5, 5);
+        line(x, y, x - d * len, y, '#ffffff', a, 2.6);
+        if (k > 0.4 && (j + Math.floor(x / sp)) % 3 === 0) circle(x + d * 8, y - 5, 2.3, '#ffffff', 0.45 * k);
+      }
+    }
+    ctx.lineCap = 'butt';
+    if ((warn && Math.floor(T * 6) % 2 === 0) || k > 0.5) {
+      const cy = (h.y1 + h.y2) / 2, ca = warn ? 1 : 0.55 * k;
+      for (let x = h.x1 + 90; x < h.x2 - 60; x += 260) {
+        if (x < x1 - 30 || x > x2 + 30) continue;
+        for (let m = 0; m < 2; m++) { const ax = x + m * 22 * d + (warn ? 0 : ((T * 140 * d) % 260)); tri(ax - d * 10, cy - 13, ax + d * 9, cy, ax - d * 10, cy + 13, warn ? '#ffe14a' : '#e6fbff', ca); }
+      }
+    }
+  }
+  /* V58.3 · Asteroide: mira roja de aviso con su trayectoria, roca encendida que cae en diagonal y polvo al chocar. */
+  function drawAsteroid(h, V, T) {
+    const A = NS.Obstacles.ASTEROID;
+    if (h.state === 'idle') return;
+    if (!inView(V, h.tx - A.run - 40, h.y - A.rise - 60, h.tx + A.run + 40, h.y + 20)) return;
+    const sx = h.tx - h.dir * A.run, sy = h.y - 12 - A.rise;
+    if (h.state === 'warn') {
+      const p = h.t / A.warn, pulse = 0.5 + 0.5 * Math.sin(T * 16);
+      // Columna roja sobre la mira y «!»: se ve aunque Sofía esté parada encima.
+      fillRect(h.tx - 18, h.y - 140, 36, 140, '#ff3b3b', 0.16 + 0.16 * pulse);
+      line(h.tx - 18, h.y - 140, h.tx - 18, h.y, '#ff7a6a', 0.7, 2); line(h.tx + 18, h.y - 140, h.tx + 18, h.y, '#ff7a6a', 0.7, 2);
+      circle(h.tx, h.y - 112, 13, '#ff3b3b', 0.95); ring(h.tx, h.y - 112, 13, 13, '#ffffff', 0.9, 2); text('!', h.tx, h.y - 106, 17, '#ffffff');
+      ellipse(h.tx, h.y, 26 - 8 * p, 6.5 - 2 * p, '#ff3b3b', 0.18 + 0.2 * pulse);
+      ring(h.tx, h.y - 1, 26 - 8 * p, 6.5 - 2 * p, '#ff5a4a', 0.75 + 0.25 * pulse, 2);
+      line(h.tx - 34, h.y - 1, h.tx - 14, h.y - 1, '#ff5a4a', 0.8, 2); line(h.tx + 14, h.y - 1, h.tx + 34, h.y - 1, '#ff5a4a', 0.8, 2);
+      for (let s = 0; s < 9; s++) { const q = s / 9; if (q < p * 1.2) circle(sx + (h.tx - sx) * q, sy + (h.y - 12 - sy) * q, 1.8, '#ffb08a', 0.5); }
+      circle(sx, sy, 7 + 3 * pulse, '#ff9a4a', 0.35); circle(sx, sy, 4, '#ffe3b0', 0.9);
+      return;
+    }
+    if (h.state === 'fall') {
+      const p = Math.min(1, h.t / A.fall), r = A.r, ang = T * 5 * h.dir;
+      ellipse(h.tx, h.y, 10 + 14 * p, 3 + 2.5 * p, '#000000', 0.15 + 0.25 * p);
+      ring(h.tx, h.y - 1, 22, 5.5, '#ff5a4a', 0.6, 1.5);
+      // Estela encendida detrás de la roca.
+      for (let s = 1; s <= 6; s++) {
+        const b = s * 0.05;
+        circle(h.rx - h.dir * A.run * b, h.ry - A.rise * b, r * (1 - s * 0.12), s < 3 ? '#ffd27a' : '#ff7a3a', 0.42 - s * 0.06);
+      }
+      ctx.save(); ctx.translate(h.rx, h.ry); ctx.rotate(ang);
+      ctx.beginPath();
+      for (let s = 0; s < 9; s++) { const a = s / 9 * Math.PI * 2, rr = r * (0.82 + 0.18 * ((s * 37 + h.seed * 13) % 7) / 6); if (s) ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); else ctx.moveTo(rr, 0); }
+      ctx.closePath(); ctx.fillStyle = '#7a6a5c'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#3a2f28'; ctx.stroke();
+      circle(-5, -4, 4, '#5a4c42', 0.9); circle(6, 3, 3, '#5a4c42', 0.9); circle(-1, 7, 2.2, '#5a4c42', 0.9);
+      circle(-6, -8, 3, '#c9b49a', 0.6);
+      ctx.restore();
+      return;
+    }
+    // Impacto: onda y polvo que se apagan.
+    const q = Math.min(1, h.t / A.impact);
+    ring(h.tx, h.y - 2, 14 + 46 * q, 4 + 10 * q, '#ffb07a', 0.8 * (1 - q), 3);
+    for (let s = 0; s < 6; s++) circle(h.tx + (s - 2.5) * 12 * (0.6 + q), h.y - 6 - 18 * q * ((s % 3) + 1) / 3, 6 + 5 * q, '#b9a58e', 0.45 * (1 - q));
+  }
+
   function drawHazards(G, V, T) {
     for (const h of G.world.hazards) {
+      if (h.type === 'current') { drawCurrent(h, V, T); continue; }
+      if (h.type === 'asteroid') { drawAsteroid(h, V, T); continue; }
       const x1 = h.type === 'pot' ? h.x - 14 : h.x1, x2 = h.type === 'pot' ? h.x + 14 : h.x2;
       const y1 = h.type === 'pot' ? h.hangY - 10 : h.y - 30, y2 = h.type === 'pot' ? h.floorY + 4 : h.y + 6;
       if (!inView(V, x1, y1, x2, y2)) continue;
-      if (h.type === 'spikes') {
+      if (h.type === 'spikes' && h.look === 'vidrios') {
+        // V58.6 · Vidrios de botella rotos sobre la barda: verdes, ámbar y claros, con brillo que parpadea.
+        const n = Math.max(3, Math.round((h.x2 - h.x1) / 5.5));
+        const COLORS = ['#58b07a', '#c98a3c', '#cfeffc', '#3f8f5f', '#e0a85a'];
+        for (let i = 0; i < n; i++) {
+          const k = (i * 37 + 11) % 17, hh = 13 + (k % 5) * 4, bx = h.x1 + 2 + (h.x2 - h.x1 - 4) * (i + 0.5) / n, lean = ((k % 3) - 1) * 4;
+          tri(bx - 4.6, h.y + 1, bx + lean, h.y - hh - 1.5, bx + 4.6, h.y + 1, '#0b1a14', 0.55);   // contorno: se lee sobre cielo y sobre muro
+          tri(bx - 3.6, h.y + 1, bx + lean, h.y - hh, bx + 3.6, h.y + 1, COLORS[k % COLORS.length], 0.95);
+          line(bx - 1.2, h.y - 1, bx + lean * 0.6, h.y - hh + 4, '#ffffff', 0.65, 1.2);
+        }
+        const tw = (Math.sin(T * 5 + h.x1) + 1) / 2;
+        circle(h.x1 + (h.x2 - h.x1) * 0.3, h.y - 10, 2.2 + tw, '#ffffff', 0.35 + 0.4 * tw);
+        circle(h.x1 + (h.x2 - h.x1) * 0.72, h.y - 7, 1.6 + (1 - tw), '#ffffff', 0.3 + 0.4 * (1 - tw));
+      } else if (h.type === 'spikes') {
         const n = Math.max(2, Math.round((h.x2 - h.x1) / 13));
         const sw = (h.x2 - h.x1) / n;
         ellipse((h.x1 + h.x2) / 2, h.y + 1, (h.x2 - h.x1) / 2 + 4, 4, '#06111b', 0.5);
@@ -1352,7 +1989,8 @@
     fillRect(x - 3, y - 1, 6, 4, '#ffe14a');
   }
 
-  const BOSS_GLOW = { dog: '#ff984f', kid: '#ff6868', chile: '#ff593f', bat: '#b48cff', pigeon: '#63d9ed', bravo: '#ff625b', rat: '#d9ff65', piranha: '#76ffca', shark: '#6cefff', drone: '#b69bff' };
+  const BOSS_GLOW = { dog: '#ff984f', kid: '#ff6868', chile: '#ff593f', bat: '#b48cff', pigeon: '#63d9ed', bravo: '#ff625b', rat: '#d9ff65', piranha: '#76ffca', shark: '#6cefff', drone: '#b69bff', pulpo: '#d58bff', poseidon: '#7ff0ff',
+    maestro: '#ffd34a', pulpo_abismo: '#ff7ad9', marciano: '#b6ff5a' };   // V58.7
   function drawBossFX(f, T) {
     if (!f.isBoss) return;
     const color = BOSS_GLOW[f.kind] || '#ffd35a', cx = f.x;
@@ -1409,6 +2047,8 @@
   const EDIR = 'assets/enemies/v50/';
   const ESPR = {
     kid: { sc: 0.46, scBoss: 0.62 },
+    kid_astronauta: { sc: 0.46, scBoss: 0.62, ext: '.webp' },   // V58.1 · atlas aportados del niño gordito
+    kid_buzo: { sc: 0.46, scBoss: 0.62, ext: '.webp' },
     rat: { sc: 0.5, scBoss: 0.6 },
     dog: { sc: 0.52, scBoss: 0.66 }
   };
@@ -1416,10 +2056,30 @@
     const E = NS.ART && NS.ART.ENEMY[kind];
     return E && E.states[state] ? E.states[state] : null;
   };
+  const espr = (kind) => EDIR + kind + '/';
   function enemyReady(kind) {
     const w = enemyFrames(kind, 'walk');
-    return !!(w && ready(image(EDIR + kind + '/' + w[0] + '.png')));
+    return !!(w && ready(image(espr(kind) + w[0] + ((ESPR[kind] && ESPR[kind].ext) || '.png'))));
   }
+  // V58.1 · Cuadros del niño con traje (lienzo 280 × 250, pies en 140, 242). Lanza piedra con su propia animación.
+  const KID_SUIT = {
+    states: { idle: ['idle_01', 'idle_02', 'idle_03', 'idle_04'], walk: ['walk_01', 'walk_02', 'walk_03', 'walk_04', 'walk_05'],
+      alert: ['guard', 'throw_prepare'], aim: ['throw_prepare', 'throw_windup', 'throw_release', 'throw_projectile'],
+      hurt: ['hurt'], dizzy: ['hurt'], dead: ['hurt', 'jump_air'] },
+    frames: {}
+  };
+  for (const l of Object.values(KID_SUIT.states)) for (const n of l) KID_SUIT.frames[n] = [140, 242];
+  if (NS.ART && NS.ART.ENEMY) { NS.ART.ENEMY.kid_astronauta = KID_SUIT; NS.ART.ENEMY.kid_buzo = KID_SUIT; }
+  const KID_ROCK = EDIR + 'kid_piedra.webp';
+  /** Archivos de los personajes con traje (V58.1), para precarga y caché sin conexión. */
+  function castUrls() {
+    const out = new Set([KID_ROCK]);
+    for (const l of Object.values(ASTRO)) for (const n of l) out.add(ASTRO_DIR + n + '.webp');
+    for (const c of Object.values(COMPANIONS_SPACE)) for (const f of [...c.idle, ...c.walk, c.shoulder]) out.add(f);
+    for (const k of ['kid_astronauta', 'kid_buzo']) for (const n of Object.keys(KID_SUIT.frames)) out.add(EDIR + k + '/' + n + '.webp');
+    return [...out];
+  }
+  const enemyExt = (kind) => (ESPR[kind] && ESPR[kind].ext) || '.png';
   function drawEnemySprite(f, T, kind) {
     const E = NS.ART.ENEMY[kind], def = ESPR[kind];
     const pick = (...names) => { for (const n of names) { const l = enemyFrames(kind, n); if (l && l.length) return l; } return E.states.walk; };
@@ -1442,7 +2102,7 @@
       idx = Math.floor(T * fps + f.x * 0.05) % list.length;
     }
     const name = list[Math.max(0, idx)];
-    const img = image(EDIR + kind + '/' + name + '.png');
+    const img = image(espr(kind) + name + (def.ext || '.png'));
     if (!ready(img)) return;
     const anc = E.frames[name] || [img.naturalWidth / 2, img.naturalHeight];
     const bravo = f.kind === 'bravo';
@@ -1477,14 +2137,198 @@
     if ((f.state === 'windup' || f.state === 'aim') && !f.dead) bang(f.x, f.y - dh * 0.86, T);
   }
 
+  /* ---------- V58.2 · Enemigos marinos con atlas (paquete «Sofía · enemigos marinos R1») ----------
+     Cuadros recortados: [x, y, w, h, cx, cy] (cx, cy = posición del recorte dentro de su celda, para que no tiemble).
+     El arte mira a la derecha. `hurt` es la caja del cuerpo dentro de la celda (guía del paquete) para escalar. */
+  const MARINE_DIR = 'assets/enemies/marinos/';
+  const MARINE_ART = {"shark":{"src":"tiburon","cell":[321,216],"frames":[[34,28,253,160,34,28],[372,36,218,143,51,36],[694,45,217,125,52,45],[1011,41,224,134,48,41],[1342,38,205,140,58,38],[1656,44,218,128,51,44],[58,261,204,126,58,45],[360,248,242,152,39,32],[691,246,222,156,49,30],[1018,246,211,156,55,30],[1335,242,219,163,51,26],[1659,233,212,182,54,17],[54,441,213,198,54,9],[377,468,209,144,56,36],[674,473,257,134,32,41],[979,474,289,132,16,42],[1296,475,296,130,12,43],[1614,472,303,135,9,40],[20,690,280,131,20,42],[362,686,239,140,41,38],[690,684,224,144,48,36],[1009,681,228,150,46,33],[1336,681,216,150,52,33],[1665,680,201,152,60,32],[63,906,195,132,63,42],[388,899,187,145,67,35],[690,891,224,161,48,27],[1017,890,212,163,54,26],[1336,890,216,164,52,26],[1659,895,213,153,54,31],[49,1112,222,151,49,32],[377,1115,208,146,56,35],[699,1121,206,133,57,41]],"anims":{"swim":[[0,1,2,3,4,5,6],100,1],"bite":[[7,8,9,10,11,12,13],91,0],"dash_bite":[[14,15,16,17,18],77,0],"hurt":[[19,20,21,22,23,24,25],111,0],"death":[[26,27,28,29,30,31,32],143,0]},"fx":[[9,9,137,107]]},"piranha":{"src":"pirana","cell":[289,180],"frames":[[35,11,218,157,35,11],[328,15,210,150,39,15],[619,20,206,140,41,20],[907,17,208,146,40,17],[1196,17,208,145,40,17],[1487,15,205,150,42,15],[42,200,205,140,42,20],[334,204,198,131,45,24],[618,207,209,126,40,27],[904,198,214,144,37,18],[1185,198,231,144,29,18],[1471,200,237,139,26,20],[9,372,271,156,9,12],[327,386,213,127,38,26],[626,380,193,140,48,20],[913,374,197,151,46,14],[1192,377,217,145,36,17],[1478,369,223,162,33,9],[31,551,227,157,31,11],[328,555,211,149,39,15],[622,555,200,150,44,15],[923,563,177,134,56,23],[1217,557,167,145,61,17],[1496,557,186,146,51,17],[59,730,171,160,59,10],[344,731,178,158,55,11],[630,732,184,156,52,12],[923,736,176,147,56,16],[1204,732,192,156,48,12],[1493,734,193,152,48,14],[44,920,201,139,44,20],[344,921,178,138,55,21],[626,923,193,133,48,23],[919,924,184,132,52,24],[1179,923,242,133,23,23]],"anims":{"swim":[[0,1,2,3,4,5,6],83,1],"bite":[[7,8,9,10,11,12,13],77,0],"hurt":[[14,15,16,17,18,19,20],111,0],"stun":[[21,22,23,24,25,26,27],167,1],"death":[[28,29,30,31,32,33,34],143,0]},"fx":[[25,9,199,142],[296,20,154,120],[535,20,175,119],[789,13,164,134],[1037,18,167,123],[61,186,126,108],[258,179,231,121],[521,194,202,92],[787,191,168,97],[1033,189,174,102]]},"pulpo":{"src":"pulpo","cell":[322,196],"frames":[[40,9,242,178,40,9],[368,9,229,177,46,9],[692,12,226,171,48,12],[1007,12,240,172,41,12],[1326,12,245,172,38,12],[1648,12,245,172,38,12],[55,231,212,125,55,35],[370,232,225,123,48,36],[691,233,228,122,47,37],[1006,229,242,129,40,33],[1328,229,242,129,40,33],[1646,231,250,125,36,35],[49,414,224,151,49,22],[366,411,233,157,44,19],[681,409,247,161,37,17],[1003,409,248,162,37,17],[1311,410,275,159,23,18],[1648,418,245,144,38,26],[53,620,215,131,53,32],[374,608,218,155,52,20],[676,608,257,155,32,20],[992,616,269,139,26,28],[1311,624,275,124,23,36],[1636,625,270,122,26,37],[62,807,197,150,62,23],[367,808,231,147,45,24],[690,808,229,147,46,24],[1005,807,244,150,39,23],[1323,807,251,150,35,23],[1619,815,304,134,9,31],[52,999,218,158,52,19],[375,998,215,159,53,18],[698,1001,213,154,54,21],[1020,1007,213,141,54,27],[1339,1010,220,135,51,30],[1663,1022,215,111,53,42],[48,1223,226,102,48,47]],"anims":{"idle":[[0,1,2,3,4,5],143,1],"swim":[[6,7,8,9,10,11],111,1],"bite":[[12,13,14,15,16,17],91,0],"tentacle_slam":[[18,19,20,21,22,23],111,0],"ink_attack":[[24,25,26,27,28,29],125,0],"hurt":[[30,31,32,33],111,0],"death":[[34,35,36],200,0]},"fx":null},"poseidon":{"src":"poseidon","cell":[323,267],"frames":[[34,9,254,249,34,9],[359,18,251,230,36,18],[676,32,263,202,30,32],[998,43,265,180,29,43],[1319,52,269,163,27,52],[1645,65,262,137,30,65],[67,279,188,242,67,12],[388,281,192,238,65,14],[683,286,248,228,37,19],[981,299,298,202,12,32],[1301,310,305,180,9,43],[1631,293,291,215,16,26],[58,547,206,241,58,13],[371,553,226,229,48,19],[682,553,251,229,36,19],[995,561,270,213,26,27],[1304,560,299,214,12,26],[1633,563,286,208,18,29],[56,818,211,232,56,17],[376,826,217,217,53,25],[699,821,216,226,53,20],[1009,845,243,179,40,44],[1330,866,246,137,38,65],[1633,867,287,135,18,66]],"anims":{"idle_swim":[[0,1,2,3,4,5],111,1],"trident_attack":[[6,7,8,9,10,11],100,0],"tidal_attack":[[12,13,14,15,16,17],125,0],"hurt":[[18,19,20],125,0],"death":[[21,22,23],167,0]},"fx":[[35,37,108,97],[187,19,160,133],[377,9,136,153]]}};
+  const MARINE_BODY = { shark: 193, piranha: 173, pulpo: 193, poseidon: 194 };
+  const marineReady = (kind) => !!MARINE_ART[kind] && ready(image(MARINE_DIR + MARINE_ART[kind].src + '.webp'));
+  function marineAnim(f) {
+    const k = f.kind, st = f.state;
+    if (f.dead) return ['death', f.deadT];
+    if (f.flash > 0) return ['hurt', 0.2 - f.flash];
+    if (k === 'poseidon') return st === 'windup' || st === 'charge' ? ['trident_attack', f.stateT] : st === 'aim' ? ['tidal_attack', f.stateT] : st === 'dizzy' ? ['hurt', f.stateT % 0.4] : ['idle_swim', null];
+    if (k === 'pulpo') return st === 'aim' ? ['ink_attack', f.stateT] : st === 'dizzy' ? ['hurt', f.stateT % 0.45] : [Math.abs(f.dir) ? 'swim' : 'idle', null];
+    if (k === 'shark') return st === 'windup' ? ['bite', f.stateT] : st === 'charge' ? ['dash_bite', f.stateT] : st === 'dizzy' ? ['hurt', f.stateT % 0.8] : ['swim', null];
+    return st === 'windup' || st === 'charge' ? ['bite', f.stateT] : st === 'dizzy' ? ['stun', null] : ['swim', null];   // piraña
+  }
+  function drawMarineFoe(f, T) {
+    const A = MARINE_ART[f.kind], im = image(MARINE_DIR + A.src + '.webp');
+    const [name, t] = marineAnim(f), an = A.anims[name] || A.anims.swim || A.anims.idle_swim;
+    const [list, ms, loop] = an;
+    const i = t === null || loop ? Math.floor((T * 1000 + f.phase * 400) / ms) % list.length : Math.min(list.length - 1, Math.floor(Math.max(0, t) * 1000 / ms));
+    const fr = A.frames[list[i]], s = (f.w * 1.25) / MARINE_BODY[f.kind];
+    const [cw, ch] = A.cell;
+    ctx.save();
+    ctx.translate(f.x, f.y + (f.dead ? 0 : Math.sin(T * 2.2 + f.phase) * 1.5));
+    if (f.dir < 0) ctx.scale(-1, 1);
+    ctx.drawImage(im, fr[0], fr[1], fr[2], fr[3], (-cw / 2 + fr[4]) * s, (-ch / 2 + fr[5]) * s, fr[2] * s, fr[3] * s);
+    ctx.restore();
+    if ((f.state === 'windup' || f.state === 'aim') && !f.dead) bang(f.x, f.y - ch * s * 0.42, T);
+  }
+
+  /* ---------- V58.7 · Enemigos secretos y jefes nuevos (NS.ART.ATLAS_FOES, js/app/art_secretos.js) ----------
+     Cuadros [x, y, w, h, ox, oy] respecto a un ancla fija por personaje (los pies si camina, el centro si nada): así no
+     tiemblan. Se escala por el alto: el cuerpo en reposo (`ref` px) mide f.h × ATLAS_VIS u. Solo se usaron los cuadros
+     completos del paquete (ver tools/arte/secretos_pack.py); lo que el arte no trae (el golpe del Pulpo del Abismo, su
+     tinta y su chorro, los mareos) se dibuja con efectos encima de esos cuadros. */
+  const ATLAS_FOES = () => (NS.ART && NS.ART.ATLAS_FOES) || {};
+  const ATLAS_VIS = { pulpito: 1.55, buzito: 1.35, marciano: 1.12, astronino: 1.14, maestro: 1.13, pulpo_abismo: 1.45 };
+  const ATLAS_LIFE = { maestro: 1.5, pulpo_abismo: 1.2, marciano: 0.75, astronino: 0.7, pulpito: 0.7, buzito: 0.6 };
+  const atlasReady = (kind) => { const A = ATLAS_FOES()[kind]; return !!A && ready(image(A.src)); };
+  const atlasLife = (f) => ATLAS_LIFE[f.kind] || 0.45;
+  /** Animación del enemigo según su estado: [nombre, tiempo (null = bucle), efectos]. */
+  function atlasPick(f) {
+    const k = f.kind, st = f.state, T = NS.Enemies.TYPES[k] || {};
+    const fx = {};
+    if (f.dead) {
+      if (k === 'maestro') return f.deadT < 0.42 ? ['fall', f.deadT, fx] : ['ko', f.deadT - 0.42, fx];
+      if (k === 'pulpo_abismo') { fx.dy = f.deadT * 30; return ['ko', f.deadT, fx]; }
+      if (k === 'buzito' || k === 'pulpito') fx.dy = f.deadT * 26;   // se hunde
+      return ['death', f.deadT, fx];
+    }
+    if (st === 'windup' || st === 'aim' || st === 'shout') fx.bang = true;
+    if (st === 'dizzy') fx.stars = true;
+    switch (k) {
+      case 'pulpito':
+        if (st === 'charge') return ['tentacle', f.stateT, fx];
+        if (st === 'windup') { fx.shake = 1.4; return ['idle', null, fx]; }
+        if (st === 'aim') { fx.scale = 1 + 0.12 * Math.min(1, f.stateT / ((T.windup || 0.5) * 1.1)); return ['idle', null, fx]; }
+        return [st === 'dizzy' ? 'idle' : 'swim', null, fx];
+      case 'buzito':
+        if (st === 'aim') return ['throw', f.stateT, fx];
+        if (f.flash > 0 || st === 'dizzy') return ['hurt', f.flash > 0 ? 0.2 - f.flash : f.stateT % 0.4, fx];
+        return ['swim', null, fx];
+      case 'marciano':
+        if (f.flash > 0 || st === 'recoil') return ['hurt', f.flash > 0 ? 0.2 - f.flash : f.stateT, fx];
+        if (st === 'aim') { fx.charge = Math.min(1, f.stateT / (T.windup || 0.6)); return ['shoot', Math.min(f.stateT, 0.279), fx]; }
+        if (f.shotT > 0) return ['shoot', 0.29, fx];
+        if (st === 'dizzy') return ['hurt', f.stateT % 0.4, fx];
+        return ['walk', null, fx];
+      case 'astronino':
+        if (f.flash > 0 || st === 'recoil') return ['hurt', f.flash > 0 ? 0.2 - f.flash : f.stateT, fx];
+        if (st === 'aim') return ['throw', f.stateT, fx];
+        if (st === 'windup') { fx.shake = 1.2; return ['idle', null, fx]; }
+        if (st === 'charge') { fx.fast = 2; fx.lines = true; return ['walk', null, fx]; }
+        if (st === 'dizzy') return ['hurt', f.stateT % 0.4, fx];
+        return ['walk', null, fx];
+      case 'maestro':
+        if (f.flash > 0 || st === 'recoil') return ['hurt', f.flash > 0 ? 0.2 - f.flash : f.stateT, fx];
+        if (st === 'windup') return ['ruler', f.stateT, fx];
+        if (st === 'charge') { fx.swoosh = true; fx.lines = true; return ['run', null, fx]; }
+        if (st === 'aim') return [f.throwKind === 'borrador' ? 'eraser' : 'book', f.stateT, fx];
+        if (st === 'shout') { fx.shout = Math.min(1, f.stateT / (T.shoutWindup || 0.75)); return ['shout', null, fx]; }
+        if (st === 'dizzy') {
+          const rec = T.recover || 1.1;
+          if (f.stateT > rec - 0.34) { fx.stars = false; return ['getup', f.stateT - (rec - 0.34), fx]; }
+          fx.stars = false;   // el cuadro de mareo ya trae sus estrellas
+          return ['dizzy', null, fx];
+        }
+        return ['walk', null, fx];
+      case 'pulpo_abismo':
+        if (st === 'windup') { fx.shake = 1.6; fx.glow = '#ffd36a'; fx.glowK = Math.min(1, f.stateT / (T.windup || 0.8)); return ['windup', 0, fx]; }
+        if (st === 'charge') { fx.lines = true; fx.fast = 2.4; return ['swim', null, fx]; }
+        if (st === 'aim') {
+          fx.glow = f.shotKind === 'chorro' ? '#8ff3ff' : '#9b4dd6'; fx.glowK = Math.min(1, f.stateT / ((T.windup || 0.8) * 1.1));
+          fx.scale = 1 + 0.08 * fx.glowK; return ['idle', null, fx];
+        }
+        return [st === 'dizzy' ? 'idle' : 'swim', null, fx];
+      default: return ['idle', null, fx];
+    }
+  }
+  function drawAtlasFoe(f, T) {
+    const A = ATLAS_FOES()[f.kind], im = image(A.src);
+    const [name, t, fx] = atlasPick(f);
+    const an = A.anims[name] || A.anims.idle || A.anims.swim || A.anims.walk;
+    const [list, ms, loop] = an;
+    const speed = fx.fast || 1;
+    const i = t === null || loop ? Math.floor((T * 1000 * speed + f.phase * 400) / ms) % list.length : Math.min(list.length - 1, Math.floor(Math.max(0, t) * 1000 / ms));
+    const fr = A.frames[list[i]];
+    const s = f.h * (ATLAS_VIS[f.kind] || 1.2) / A.ref * (fx.scale || 1);
+    const flyer = !!NS.Enemies.TYPES[f.kind].flyer;
+    const bob = flyer && !f.dead ? Math.sin(T * 2.2 + f.phase) * 1.5 : 0;
+    const jit = fx.shake ? Math.sin(T * 55 + f.phase) * fx.shake : 0;
+    const bodyH = A.ref * s, d = f.dir || 1;
+    const cy = flyer ? f.y : f.y - bodyH * 0.5;
+    if (!flyer && !f.dead) ellipse(f.x, f.y + 1, Math.min(f.w * 0.8, 42), 4, '#06111b', 0.4);
+    if (fx.glow) {   // carga de tinta / chorro / tentáculo: un resplandor que crece frente a la boca
+      const gx = f.x + d * f.w * 0.42, k = fx.glowK || 0;
+      circle(gx, f.y + 2, 6 + k * 16, fx.glow, 0.12 + 0.2 * k);
+      ring(gx, f.y + 2, 5 + k * 13, 5 + k * 13, fx.glow, 0.35 + 0.4 * k, 2);
+    }
+    if (fx.lines) for (let k = 1; k <= 3; k++) line(f.x - d * (f.w * 0.5 + k * 9), cy - 8 + k * 6, f.x - d * (f.w * 0.5 + 16 + k * 12), cy - 8 + k * 6, '#ffffff', 0.42 - k * 0.1, 1.6);
+    ctx.save();
+    ctx.translate(f.x + jit, f.y + bob + (fx.dy || 0));
+    if (d < 0) ctx.scale(-1, 1);
+    ctx.drawImage(im, fr[0], fr[1], fr[2], fr[3], fr[4] * s, fr[5] * s, fr[2] * s, fr[3] * s);
+    if (f.flash > 0 && !f.dead) {
+      const sil = silhouette(im, '#ffffff');
+      if (sil) { ctx.globalAlpha = Math.min(1, f.flash / 0.2) * 0.75; ctx.drawImage(sil, fr[0], fr[1], fr[2], fr[3], fr[4] * s, fr[5] * s, fr[2] * s, fr[3] * s); ctx.globalAlpha = 1; }
+    }
+    if (fx.charge) {   // marciano: el orbe crece en su puño
+      const k = fx.charge;
+      circle(f.w * 0.75, -f.h * 0.6, 3 + k * 6, '#e9a6ff', 0.35 + 0.4 * k); circle(f.w * 0.75, -f.h * 0.6, 1.5 + k * 3, '#ffffff', 0.8);
+    }
+    if (fx.swoosh) {   // maestro: la regla barre el aire frente a él
+      const a0 = -1.2 + ((T * 9) % 1) * 1.6;
+      ctx.globalAlpha = 0.75; ctx.strokeStyle = '#ffd34a'; ctx.lineWidth = 4; ctx.beginPath();
+      ctx.arc(f.w * 0.35, -f.h * 0.62, f.h * 0.55, a0, a0 + 0.9); ctx.stroke();
+      ctx.globalAlpha = 0.35; ctx.lineWidth = 9; ctx.beginPath(); ctx.arc(f.w * 0.35, -f.h * 0.62, f.h * 0.55, a0 - 0.25, a0 + 0.6); ctx.stroke(); ctx.globalAlpha = 1;
+    }
+    if (fx.shout) {   // maestro: ondas del grito saliendo de la boca
+      for (let k = 0; k < 3; k++) {
+        const r = 8 + ((T * 2.2 + k / 3) % 1) * 26 * (0.4 + fx.shout);
+        ctx.globalAlpha = 0.55 * (1 - ((T * 2.2 + k / 3) % 1)); ctx.strokeStyle = '#fff2a0'; ctx.lineWidth = 2.4;
+        ctx.beginPath(); ctx.arc(f.w * 0.3, -f.h * 0.86, r, -0.7, 0.7); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+    ctx.restore();
+    if (fx.stars && !f.dead) {
+      // Los que nadan: girando abiertas alrededor de la cabeza (arriba va su barra) y claras (el pulpo jefe tiene corona amarilla).
+      const hy = flyer ? f.y - bodyH * 0.3 : f.y - bodyH * 1.02, rx = bodyH * (flyer ? 0.42 : 0.22), col = flyer ? '#fffbe0' : '#ffe14a';
+      for (let k = 0; k < 3; k++) { const a = T * 6 + k * 2.1; circle(f.x + Math.cos(a) * rx, hy + Math.sin(a) * (flyer ? 7 : 4), flyer ? 3 : 2.4, col); }
+    }
+    if (fx.bang && !f.dead) bang(f.x, (flyer ? f.y - bodyH * 0.62 : f.y - bodyH * 1.08), T);
+  }
+  /* Proyectiles con el arte del paquete (orbe, tinta, piedras, borrador): `scale` = alto en u por unidad de radio. */
+  const ATLAS_SHOT = { orbe: ['marciano', 2.6, 'vel'], tinta: ['pulpito', 2.7, 'wobble'], piedra_mar: ['buzito', 2.3, 'vel'],
+    roca: ['astronino', 2.4, 'vel'], borrador: ['maestro', 2.4, 'spin'] };
+  function drawAtlasShot(s, T) {
+    const def = ATLAS_SHOT[s.kind], A = def && ATLAS_FOES()[def[0]];
+    if (!A || !A.anims.shot || !ready(image(A.src))) return false;
+    const [list, ms] = A.anims.shot, fr = A.frames[list[Math.floor((T * 1000 + s.x) / ms) % list.length]];
+    const k = (s.r * def[1]) / Math.max(4, fr[3]);
+    ctx.save(); ctx.translate(s.x, s.y);
+    if (def[2] === 'vel') ctx.rotate(Math.atan2(s.vy, s.vx));
+    else if (def[2] === 'spin') ctx.rotate((T * 10 + s.x * 0.05) % (Math.PI * 2));
+    else ctx.rotate(Math.sin(T * 6 + s.x * 0.03) * 0.15);
+    ctx.drawImage(image(A.src), fr[0], fr[1], fr[2], fr[3], fr[4] * k, fr[5] * k, fr[2] * k, fr[3] * k);
+    ctx.restore();
+    return true;
+  }
+
+  /** V58.7 · Atlas de los enemigos secretos y jefes nuevos y fondos de las zonas secretas (precarga y sin conexión). */
+  function secretUrls() {
+    const B = (NS.ART && NS.ART.SECRET_BG) || {};
+    return [...Object.values(ATLAS_FOES()).map((a) => a.src), ...Object.values(B).map((b) => b.src)];
+  }
+
   function drawFoes(G, V, T) {
     const t9 = T * 9;
     for (const f of G.world.foes) {
       if (f.x < V.x1 - 50 || f.x > V.x2 + 50 || f.y < V.y1 - 60 || f.y > V.y2 + 50) continue;
-      if (f.dead && f.deadT > 0.45) continue;
-      const a = f.dead ? 1 - f.deadT / 0.45 : 1;
-      const sk = f.kind === 'bravo' ? 'dog' : f.kind;
-      const useSprite = !!ESPR[sk] && enemyReady(sk);
+      // V58.7: los del atlas nuevo terminan su animación de derrota (el maestro cae y queda noqueado) antes de esfumarse.
+      const atlas = atlasReady(f.kind), life = atlas ? atlasLife(f) : 0.45;
+      if (f.dead && f.deadT > life) continue;
+      const a = f.dead ? (atlas ? Math.min(1, (life - f.deadT) / (life * 0.35)) : 1 - f.deadT / 0.45) : 1;
+      // V58.1: en el mar y en la Luna el niño lleva traje de buzo o de astronauta (si sus cuadros cargaron).
+      const fTheme = f.kind === 'kid' && f.scene >= 0 && G.world.scenes[f.scene] ? G.world.scenes[f.scene].theme : null;
+      const suit = fTheme === 'submarino' ? 'kid_buzo' : fTheme === 'espacial' ? 'kid_astronauta' : null;
+      const sk = f.kind === 'bravo' ? 'dog' : suit && enemyReady(suit) ? suit : f.kind;
+      const useSprite = !atlas && !!ESPR[sk] && enemyReady(sk);
+      const marine = !atlas && !useSprite && marineReady(f.kind);   // V58.2: piraña, tiburón, pulpo y Poseidón con su atlas
       drawToxiThreat(f, T);
       drawBossFX(f, T);
       ctx.save();
@@ -1492,10 +2336,12 @@
         const punch = Math.sin(Math.min(1, f.flash / 0.2) * Math.PI) * 0.12;
         ctx.translate(f.x, f.y); ctx.scale(1 + punch, 1 - punch); ctx.translate(-f.x, -f.y);
       }
-      if (f.dead && !useSprite) { ctx.globalAlpha = a; ctx.translate(f.x, f.y); ctx.scale(1, -1); ctx.translate(-f.x, -f.y + 18); }
+      if (f.dead && !useSprite && !marine && !atlas) { ctx.globalAlpha = a; ctx.translate(f.x, f.y); ctx.scale(1, -1); ctx.translate(-f.x, -f.y + 18); }
       else if (f.dead) ctx.globalAlpha = a;
       const b = Math.sin(t9 + f.x) * 1.5, d = f.dir, fl = f.flash > 0;
-      if (useSprite) { drawEnemySprite(f, T, sk); }
+      if (atlas) { drawAtlasFoe(f, T); }
+      else if (useSprite) { drawEnemySprite(f, T, sk); }
+      else if (marine) { drawMarineFoe(f, T); }
       else if (f.kind === 'piranha' || f.kind === 'shark') {
         // V57: siluetas acuáticas con hitbox próxima al cuerpo; giro horizontal,
         // cola y aletas animadas. No genera ni requiere sprites imaginarios.
@@ -1552,7 +2398,33 @@
         line(f.x, f.y - h * 0.4, f.x, f.y - h * 0.64, '#9acbd1', 0.9, 2);
         circle(f.x, f.y - h * 0.7, 2.5, '#ffc4f0');
       }
-      else if (f.kind === 'kid') {
+      else if (f.kind === 'crab') {
+        const walkA = Math.sin(T * 14 + f.x * 0.1), alert = f.state === 'alert', body = fl ? '#ffffff' : alert ? '#ff5a3c' : '#e0472f';
+        ellipse(f.x, f.y + 1, 18, 4, '#06111b', 0.45);
+        for (let i = -1; i <= 1; i++) for (const sd of [-1, 1]) line(f.x + sd * 9, f.y - 7 + i * 2, f.x + sd * (17 + walkA * 2 * sd), f.y, '#a8321f', 1, 2);
+        ellipse(f.x, f.y - 9, 15, 8, body); ellipse(f.x - 3, f.y - 12, 8, 3, '#ff8a6a', 0.6);
+        for (const sd of [-1, 1]) {
+          line(f.x + sd * 4, f.y - 15, f.x + sd * 5, f.y - 22, '#a8321f', 1, 2); circle(f.x + sd * 5, f.y - 23, 2.6, '#fffdf3'); circle(f.x + sd * 5, f.y - 23, 1.2, '#1a1a1a');
+          const cx = f.x + sd * 19, cy = f.y - 13 + (alert ? Math.sin(T * 20) * 2 : 0);
+          line(f.x + sd * 12, f.y - 9, cx, cy, '#a8321f', 1, 3); circle(cx, cy, 5, body); tri(cx + sd * 2, cy - 4, cx + sd * 8, cy - 1, cx + sd * 2, cy, '#ffd0c4');
+        }
+        if (f.state === 'dizzy') for (let i = 0; i < 3; i++) { const an = T * 6 + i * 2.1; circle(f.x + Math.cos(an) * 12, f.y - 30 + Math.sin(an) * 3, 2.2, '#ffe14a'); }
+      } else if (f.kind === 'robot') {
+        const s = f.isBoss ? 1.25 : 1, wind = f.state === 'windup', chg = f.state === 'charge', dizzy = f.state === 'dizzy';
+        ellipse(f.x, f.y + 1, 20 * s, 4, '#06111b', 0.45);
+        fillRR(f.x - 17 * s, f.y - 9 * s, 34 * s, 9 * s, 4, '#2c3138');
+        for (let i = 0; i < 4; i++) circle(f.x - 12 * s + i * 8 * s, f.y - 4.5 * s, 3 * s, '#5d6873');
+        fillRR(f.x - 14 * s, f.y - 34 * s + b, 28 * s, 26 * s, 6, fl ? '#ffffff' : '#9aa6b8');
+        fillRect(f.x - 14 * s, f.y - 22 * s + b, 28 * s, 3 * s, '#5d6873');
+        fillRR(f.x - 10 * s + d * 2, f.y - 31 * s + b, 20 * s, 8 * s, 3, '#10202c');
+        fillRect(f.x - 8 * s + d * 3, f.y - 29 * s + b, 16 * s, 4 * s, wind || chg ? '#ff4a5a' : dizzy ? '#ffe14a' : '#7fe9ff', 0.95);
+        line(f.x, f.y - 34 * s + b, f.x, f.y - 42 * s + b, '#c9d2d8', 1, 2); circle(f.x, f.y - 43 * s + b, 2.6, wind ? '#ff4a5a' : '#d9ff65');
+        line(f.x - d * 14 * s, f.y - 22 * s + b, f.x - d * 22 * s, f.y - (chg ? 20 : 14) * s + b, '#7a8796', 1, 4);
+        line(f.x + d * 14 * s, f.y - 22 * s + b, f.x + d * (chg ? 26 : 21) * s, f.y - (chg ? 24 : 14) * s + b, '#7a8796', 1, 4);
+        if (wind) bang(f.x, f.y - 52 * s, T);
+        if (chg) for (let i = 1; i <= 3; i++) line(f.x - d * (18 * s + i * 7), f.y - 12 - i * 3, f.x - d * (28 * s + i * 7), f.y - 12 - i * 3, '#9ee7ff', 0.45, 1.5);
+        if (dizzy) for (let i = 0; i < 3; i++) { const an = T * 6 + i * 2.1; circle(f.x + Math.cos(an) * 13, f.y - 50 * s + Math.sin(an) * 4, 2.2, '#ffe14a'); }
+      } else if (f.kind === 'kid') {
         const s = f.isBoss ? 1.12 : 1, wind = f.state === 'windup', charge = f.state === 'charge', dizzy = f.state === 'dizzy';
         const torsoY = f.y - 30 * s + b;
         ellipse(f.x, f.y + 1, 18 * s, 4, '#06111b', 0.42);
@@ -1624,7 +2496,11 @@
         text('¿?', f.x, f.y - f.h - 20, 7, '#fff3a8');
       }
       if (f.isBoss) {
-        const bw = Math.max(58, Math.min(104, f.w + 18)), by = f.y - f.h - 7;
+        // V58.7: con el atlas nuevo el cuerpo se ve más alto que su caja: la barra va sobre la cabeza que se ve.
+        const vis = atlas ? f.h * (ATLAS_VIS[f.kind] || 1.2) : f.h, flyer = !!NS.Enemies.TYPES[f.kind].flyer;
+        ctx.font = '900 7px system-ui,-apple-system,Segoe UI,sans-serif';
+        const nameW = ctx.measureText(f.bossName).width + 12;   // V58.7: el nombre completo cabe en su caja
+        const bw = Math.max(58, Math.min(104, f.w + 18), nameW), by = (atlas ? (flyer ? f.y - vis * 0.5 : f.y - vis) : f.y - f.h) - 7;
         fillRR(f.x - bw / 2, by - 17, bw, 14, 5, '#132330', 0.88);
         text(f.bossName, f.x, by - 10, 7, '#fff0bd');
         fillRR(f.x - bw / 2, by, bw, 5, 2, '#251c24', 0.95);
@@ -1635,6 +2511,51 @@
     for (const s of G.world.shots) {
       if (s.x < V.x1 || s.x > V.x2 || s.y < V.y1 || s.y > V.y2) continue;
       if (s.kind === 'poop') { circle(s.x, s.y, 7, '#ffffff', 0.25); circle(s.x, s.y, 4.5, '#f2f2ea'); }
+      // V58.7: orbe del marciano, tinta del pulpito y del Pulpo del Abismo, piedras de los niños y borrador del maestro.
+      else if (ATLAS_SHOT[s.kind] && drawAtlasShot(s, T)) { /* dibujado con el arte del paquete */ }
+      else if (s.kind === 'libro') {
+        // Libro de texto rojo girando (el paquete no lo trae suelto: lo tiene en la mano).
+        ctx.save(); ctx.translate(s.x, s.y); ctx.rotate((T * 8 + s.x * 0.04) % (Math.PI * 2));
+        fillRR(-11, -8, 22, 16, 2, '#b3262e'); fillRect(-9, -6, 18, 3, '#f6ecd2'); fillRect(-11, -8, 4, 16, '#7a1418');
+        ctx.restore();
+      }
+      else if (s.kind === 'grito') {
+        // Onda del grito del maestro corriendo por el piso: arcos amarillos (se saltan).
+        const dd = Math.sign(s.vx) || 1;
+        for (let k = 0; k < 3; k++) {
+          ctx.globalAlpha = 0.8 - k * 0.22; ctx.strokeStyle = k ? '#ffe27a' : '#fff6c8'; ctx.lineWidth = 3 - k * 0.6;
+          const a0 = dd > 0 ? 0 : Math.PI;   // «)» hacia la derecha, «(» hacia la izquierda
+          ctx.beginPath(); ctx.arc(s.x - dd * k * 7, s.y + 4, s.r + k * 2, a0 - 1.1, a0 + 1.1); ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+      }
+      else if (s.kind === 'chorro') {
+        // Chorro de agua del Pulpo del Abismo: núcleo blanco y estela de burbujas.
+        const dd = Math.hypot(s.vx, s.vy) || 1, ux = s.vx / dd, uy = s.vy / dd;
+        ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(Math.atan2(uy, ux));
+        ellipse(-14, 0, 26, s.r * 0.9, '#58d6ff', 0.45); ellipse(-6, 0, 16, s.r * 0.6, '#bff6ff', 0.8); ellipse(0, 0, 7, s.r * 0.45, '#ffffff', 0.95);
+        ctx.restore();
+        for (let k = 1; k <= 4; k++) circle(s.x - ux * (16 + k * 9) + Math.sin(T * 9 + k) * 3, s.y - uy * (16 + k * 9), 2.6 - k * 0.4, '#dff9ff', 0.7 - k * 0.12);
+      }
+      else if (s.kind === 'tinta' || s.kind === 'orbe' || s.kind === 'piedra_mar' || s.kind === 'roca' || s.kind === 'borrador') {
+        // Respaldo si el atlas aún no carga.
+        const col = { tinta: '#2a0f35', orbe: '#d59bff', piedra_mar: '#5d6d78', roca: '#9a7a52', borrador: '#3f7fd6' }[s.kind];
+        circle(s.x, s.y, s.r, col); circle(s.x - s.r * 0.3, s.y - s.r * 0.3, s.r * 0.35, '#ffffff', 0.35);
+      }
+      else if (s.kind === 'ink') {
+        // V58.2: tinta del pulpo (mancha morada con gotas que se quedan atrás).
+        for (let k = 1; k <= 3; k++) circle(s.x - s.vx * 0.02 * k, s.y - s.vy * 0.02 * k, s.r * (0.7 - k * 0.15), '#3b1747', 0.5 - k * 0.12);
+        circle(s.x, s.y, s.r, '#2a0f35'); circle(s.x - s.r * 0.3, s.y - s.r * 0.35, s.r * 0.32, '#8d4fa8', 0.7);
+      }
+      else if (s.kind === 'tide') {
+        // V58.2: ola de Poseidón (remolino del paquete, girando; si no cargó, anillos de agua).
+        const fxIm = image(MARINE_DIR + 'poseidon_fx.webp'), fx = MARINE_ART.poseidon.fx;
+        if (fx && ready(fxIm)) {
+          const r = fx[2] || fx[0], d = s.r * 3.2;
+          ctx.save(); ctx.translate(s.x, s.y); ctx.rotate((G.world.t * 6) % (Math.PI * 2));
+          ctx.drawImage(fxIm, r[0], r[1], r[2], r[3], -d / 2, -d / 2 * r[3] / r[2], d, d * r[3] / r[2]); ctx.restore();
+        } else { ring(s.x, s.y, s.r, s.r, '#9ff3ff', 0.85, 3); ring(s.x, s.y, s.r * 0.6, s.r * 0.6, '#e9fbff', 0.7, 2); }
+      }
       else if (s.kind === 'plasma') {
         const dd = Math.hypot(s.vx, s.vy) || 1;
         line(s.x - s.vx / dd * 14, s.y - s.vy / dd * 14,
@@ -1642,6 +2563,12 @@
         circle(s.x, s.y, s.r + 5, '#9e79ff', 0.16);
         circle(s.x, s.y, s.r, '#d59bff', 0.92);
         circle(s.x, s.y, 2.4, '#ffffff');
+      }
+      else if (s.kind === 'stone' && ready(image(KID_ROCK))) {
+        // V58.1: la piedra del atlas del niño (gira mientras vuela).
+        const rk = image(KID_ROCK), d = s.r * 2.6;
+        ctx.save(); ctx.translate(s.x, s.y); ctx.rotate((G.world.t * 9 + s.x * 0.05) % (Math.PI * 2));
+        ctx.drawImage(rk, -d / 2, -d * rk.naturalHeight / rk.naturalWidth / 2, d, d * rk.naturalHeight / rk.naturalWidth); ctx.restore();
       }
       else if (s.kind === 'stone') {
         circle(s.x, s.y + 1, s.r + 2, '#0a0806', 0.3);          // sombra/contorno
@@ -1725,7 +2652,7 @@
     }
     ctx.restore();
     // Nombre justo encima de la gatita (antes flotaba 58 u arriba, a la altura de la cabeza de Sofía).
-    if (!shoulder && !moving) text(c.name, x, foot - 24 + bob, 6, c.name === 'LUNA' ? '#ffffff' : '#e6e9f0', 'center', 900);
+    // V58.9: sin el nombre escrito bajo cada gata (era texto encimado sobre el dibujo).
   }
 
   function drawCompanions(G, T) {
@@ -1743,16 +2670,42 @@
     const lunaY = luna?.y ?? foot, moritaY = morita?.y ?? foot;
     const lunaMoving = luna ? luna.moving : playerMoving, moritaMoving = morita ? morita.moving : playerMoving;
     const scNow = G.world && G.world.scenes[G.tramo];
-    const SET = scNow && scNow.theme === 'submarino' ? COMPANIONS_SUB : COMPANIONS;
+    const SET = scNow && scNow.theme === 'submarino' ? COMPANIONS_SUB : scNow && scNow.theme === 'espacial' && ready(image(COMPANIONS_SPACE.luna.src)) ? COMPANIONS_SPACE : COMPANIONS;
     drawCompanion(SET.luna, lunaX, lunaY, T, -2 + stride, luna ? luna.face < 0 : P.face < 0, lunaShoulder,
       lunaWarn ? 'alert' : action, luna?.phase ?? 0, lunaMoving, luna?.mode ?? 'follow');
     drawCompanion(SET.morita, moritaX, moritaY, T, -1 - stride * 0.7, morita ? morita.face < 0 : P.face > 0, moritaShoulder,
       moritaWarn ? 'alert' : action, morita?.phase ?? 2.4, moritaMoving, morita?.mode ?? 'follow');
+    // V58.2: animaciones de ayuda. Salto de Luna (estela y arañazo) y carrera de Morita por los cristales.
+    for (const [a, c] of [[luna, SET.luna], [morita, SET.morita]]) {
+      if (!a) continue;
+      if (a.mode === 'pounce' && a.pounce && a.pounce.t < 1) {
+        for (let i = 1; i <= 4; i++) circle(a.x - a.face * i * 9, a.y - 14 + i * 2, 5 - i, c.tint, 0.32 - i * 0.06);
+        line(a.x - a.face * 18, a.y - 22, a.x - a.face * 46, a.y - 10, '#fff3c4', 0.5, 2);
+      }
+      if (a.mode === 'fetch' && a.fetch) {
+        for (let i = 0; i < 3; i++) { const k = (T * 3 + i * 0.33) % 1; circle(a.x - a.face * (10 + k * 26), a.y - 18 - k * 10, 2.4 * (1 - k), '#d9ff65', 0.8 * (1 - k)); }
+      }
+    }
+    for (const fx of G.catFx || []) {
+      const k = fx.t / 0.42;
+      for (let i = -1; i <= 1; i++) {
+        const ox = fx.x + i * 8, oy = fx.y + i * 3;
+        line(ox - 14 * fx.dir, oy - 14 + k * 4, ox + 12 * fx.dir, oy + 12 + k * 4, '#ffffff', 0.9 * (1 - k), 3);
+        line(ox - 14 * fx.dir, oy - 14 + k * 4, ox + 12 * fx.dir, oy + 12 + k * 4, '#ff7ab8', 0.7 * (1 - k), 1.4);
+      }
+      if (k < 0.5) text('¡MIAU!', fx.x, fx.y - 34 - k * 14, 9, '#fff3c4', 'center', 900);
+    }
+    if (state.hissT > 0 && !P.dead) {
+      for (const [a, sh] of [[luna, lunaShoulder], [morita, moritaShoulder]]) {
+        if (!a) continue;
+        const cy = a.y - (sh ? 86 : 52);
+        text('¡FSSS!', a.x, cy - Math.sin(T * 20) * 1.5, 7, '#ff9ab8', 'center', 900);
+      }
+    }
     if (lunaWarn || moritaWarn) {
       const a = lunaWarn ? luna : morita, shoulder = lunaWarn ? lunaShoulder : moritaShoulder;
       const cx = a ? a.x : lunaWarn ? lunaX : moritaX, cy = (a ? a.y : foot) - (shoulder ? 86 : 58);
-      bang(cx, cy, T);
-      text('¡CUIDADO!', cx, cy - 13, 8, '#ffe27a', 'center', 900);
+      bang(cx, cy, T);   // V58.9: solo el signo de aviso, sin el rótulo «¡CUIDADO!» encima
     }
   }
 
@@ -1761,17 +2714,61 @@
      DELANTE, para que lo sumergido se vea bajo el agua. Sofía usa el atlas de nado (cuadros extraídos por contorno
      de los atlas originales): las animaciones de superficie alinean la línea del agua pintada con la del juego. */
   const SWIM_STATE = { swimFloat: 'float', swim: 'surf', swimUnder: 'under', swimDown: 'down', swimUp: 'up', swimUpDiag: 'upDiag',
-    swimDash: 'dash', swimHurt: 'hurt', waterLeap: 'leap', wade: 'wade', wadeRun: 'wadeRun', diveIn: 'diveIn' };
+    swimDash: 'dash', swimKick: 'dash', swimHurt: 'hurt', waterLeap: 'leap', wadeIdle: 'wade', wade: 'wade', wadeRun: 'wadeRun', diveIn: 'diveIn' };
   const waterGrad = new WeakMap();
+  /* V58.1 · Brecha en el puente pintado del fondo del mar (desagüe): se "rompe" el tramo de puente con un hueco de
+     agua honda, bordes de piedra quebrada y escombros que caen. */
+  function drawBreach(d, T) {
+    const x1 = d.x1, x2 = d.x2, w = x2 - x1, top = d.y1 - 22, bot = d.y2 + 20;
+    const yk = (k) => top + (k / 6) * (bot - top), wob = (k) => (k % 2 ? 6 : 0) + Math.sin(k * 2.3) * 3;
+    ctx.save();
+    ctx.beginPath();
+    for (let k = 0; k <= 6; k++) { if (k) ctx.lineTo(x1 + wob(k), yk(k)); else ctx.moveTo(x1 + wob(k), yk(k)); }
+    for (let k = 6; k >= 0; k--) ctx.lineTo(x2 - wob(k + 1), yk(k));
+    ctx.closePath();
+    const g = ctx.createLinearGradient(0, top, 0, bot);
+    g.addColorStop(0, 'rgba(22,110,150,0.82)'); g.addColorStop(1, 'rgba(8,44,92,0.9)');
+    ctx.fillStyle = g; ctx.fill();
+    ctx.strokeStyle = 'rgba(52,72,70,0.9)'; ctx.lineWidth = 2.5; ctx.stroke();
+    ctx.restore();
+    // Bordes quebrados: trozos de piedra con musgo encima, a cada lado de la brecha.
+    for (const [ex, dir] of [[x1, 1], [x2, -1]]) {
+      for (let i = 0; i < 3; i++) {
+        const yy = top + 8 + i * 17, ww = 8 + ((i * 5) % 7), hh = 9 + (i % 2) * 4;
+        ctx.fillStyle = '#7d8f87'; ctx.beginPath(); ctx.moveTo(ex - dir * 3, yy); ctx.lineTo(ex + dir * ww, yy + 2); ctx.lineTo(ex + dir * (ww - 3), yy + hh); ctx.lineTo(ex - dir * 3, yy + hh - 1); ctx.closePath(); ctx.fill();
+        fillRect(Math.min(ex - dir * 3, ex + dir * ww), yy - 1, ww + 3, 2.5, '#86b84c', 0.9);
+      }
+    }
+    for (let i = 0; i < 3; i++) {
+      const k = ((T * 0.8 + i * 0.37) % 1), px = x1 + w * (0.25 + i * 0.25) + Math.sin(T * 3 + i) * 3;
+      fillRR(px - 3, d.y2 + k * 70, 6, 5, 1.5, '#7d8c84', 0.8 * (1 - k));
+    }
+  }
+
   function drawWaters(G, V, front) {
     const W = G.world, T = W.t;
     for (const z of W.waters || []) {
       if (z.x2 + 14 < V.x1 || z.x1 - 14 > V.x2 || z.y2 + 16 < V.y1 || z.y - 10 > V.y2) continue;
       const w = z.x2 - z.x1, h = z.y2 - z.y, fountain = z.kind === 'fuente';
+      if (!front && (z.breach || z.painted)) {
+        // V58.1 · Mar pintado: el arte ya muestra el agua y el fondo (la meseta y sus puentes). Solo un velo tenue y
+        // las brechas de los puentes por donde se baja.
+        let g = waterGrad.get(z);
+        if (!g) { g = ctx.createLinearGradient(0, z.y, 0, z.y2); g.addColorStop(0, 'rgba(120,225,240,0.05)'); g.addColorStop(1, 'rgba(6,42,74,0.16)'); waterGrad.set(z, g); }
+        ctx.fillStyle = g; ctx.fillRect(z.x1, z.y, w, h);
+        if (z.painted) continue;   // V58.7: el santuario secreto ya pinta su agua
+        for (const d of z.drains || []) drawBreach({ x1: d.x1, x2: d.x2, y1: z.y2 - 30, y2: z.y2 }, T);
+        for (const b of G.world.breaches || []) if (b.x2 > V.x1 && b.x1 < V.x2 && b.y2 > V.y1 - 40 && b.y1 < V.y2 + 40) drawBreach(b, T);
+        continue;
+      }
       if (!front) {
         // Fondo y paredes de la poza (piedra), luego el cuerpo del agua con degradado.
-        const stone = fountain ? '#8f7f86' : '#3f4a3a', stoneTop = fountain ? '#d9cfd4' : '#6f7d5c';
-        if (z.deep) fillRect(z.x1 - 12, z.y2, w + 24, 10, stone);   // fondo sólido (mismo tamaño que en la física)
+        const stone = fountain ? '#8f7f86' : z.sea ? '#2b5560' : '#3f4a3a', stoneTop = fountain ? '#d9cfd4' : '#6f7d5c';
+        if (z.deep) {   // fondo sólido (mismo tamaño que en la física), con los huecos de los desagües
+          let fx = z.x1 - 12;
+          for (const d of (z.drains || []).slice().sort((a, b) => a.x1 - b.x1)) { if (d.x1 > fx) fillRect(fx, z.y2, d.x1 - fx, 10, stone); fx = d.x2; }
+          if (z.x2 + 12 > fx) fillRect(fx, z.y2, z.x2 + 12 - fx, 10, stone);
+        }
         for (const side of z.banks) {
           const bx = side === 'left' ? z.x1 - 12 : z.x2;
           fillRect(bx, z.y - 3, 12, h + 17, stone); fillRect(bx, z.y - 3, 12, 3, stoneTop);
@@ -1779,8 +2776,8 @@
         let g = waterGrad.get(z);
         if (!g) {
           g = ctx.createLinearGradient(0, z.y, 0, z.y2);
-          g.addColorStop(0, fountain ? 'rgba(96,190,214,0.55)' : 'rgba(58,150,178,0.62)');
-          g.addColorStop(1, fountain ? 'rgba(40,110,150,0.78)' : 'rgba(10,46,72,0.9)');
+          g.addColorStop(0, z.sea ? 'rgba(90,210,235,0.16)' : fountain ? 'rgba(96,190,214,0.55)' : 'rgba(58,150,178,0.62)');
+          g.addColorStop(1, z.sea ? 'rgba(6,42,74,0.42)' : fountain ? 'rgba(40,110,150,0.78)' : 'rgba(10,46,72,0.9)');
           waterGrad.set(z, g);
         }
         ctx.fillStyle = g; ctx.fillRect(z.x1, z.y, w, h);
@@ -1792,7 +2789,8 @@
         continue;
       }
       // Delante: tinte translúcido (lo sumergido se ve bajo el agua) y superficie con olas.
-      fillRect(z.x1, z.y + 3, w, h - 3, fountain ? '#4fb3d1' : '#1f6f93', fountain ? 0.22 : 0.3);
+      // V58.1: en el mar pintado no hay velo delantero (el arte ya se ve bajo el agua): solo la superficie.
+      if (!z.breach && !z.painted) fillRect(z.x1, z.y + 3, w, h - 3, fountain ? '#4fb3d1' : '#1f6f93', fountain ? 0.22 : z.sea ? 0.1 : 0.3);
       ctx.globalAlpha = 0.9; ctx.strokeStyle = '#d6f8ff'; ctx.lineWidth = 2; ctx.beginPath();
       for (let x = z.x1; x <= z.x2; x += 6) {
         const yy = z.y + Math.sin(x * 0.07 + T * 2.4) * 1.6 + Math.sin(x * 0.023 - T * 1.3) * 1.2;
@@ -1811,7 +2809,7 @@
   function swimAnimFor(P) {
     const S = NS.ART && NS.ART.SWIM;
     if (!S) return null;
-    if (P.dead) return P.water ? 'dead' : null;
+    if (P.dead) return (P.water || P.wade) ? 'dead' : null;
     const a = SWIM_STATE[P.state];
     return a && S.anims[a] ? a : null;
   }
@@ -1821,8 +2819,9 @@
     if (!ready(im)) return false;
     const P = G.P, n = A.frames.length;
     let ix;
-    if (A.loop) ix = Math.floor(P.animT * A.fps) % n;
-    else ix = Math.min(n - 1, Math.floor((name === 'dead' ? G.timers.dying : P.stateT) * A.fps));
+    if (P.state === 'wadeIdle') ix = 0;
+    else if (P.state === 'swimKick') ix = Math.min(n - 1, Math.floor(Math.max(0, 0.22 - P.kickT) / 0.22 * n));
+    else ix = waterFrameIndex(name === 'dead' ? G.timers.dying : P.stateT, 1000 / A.fps, n, A.loop);
     const [sx, sy, sw, sh, ax, ay] = A.frames[ix];
     const sc = SOFIA_BASE * A.scale;
     let x = P.x, y = P.y, rot = 0;
@@ -1874,30 +2873,49 @@
   }
 
 
-  /* V54 · Usa los frames y pivotes del atlas submarino existente; mientras Sofía
-     no está dentro del agua, se mantiene su traje también al correr y saltar. */
+  /* Atlas submarino (traje de buzo turquesa y coral). V58.6: solo se usa dentro del agua del mar (drawDiveWater). */
   const DIVE_SHEET = 'assets/player/sofia/sofia_submarina_complementaria.png';
-  const DIVE_STATES = {
-    idle: [0, 6, 210, 226], run: [12, 6, 82, 226], fastRun: [12, 6, 82, 226],
-    climb: [6, 6, 115, 226], jump: [22, 5, 95, 226], fall: [27, 4, 115, 130],
-    land: [31, 4, 88, 226], dash: [67, 5, 100, 130],
-    kick: [94, 4, 130, 226], hurt: [77, 4, 90, 130],
-    dead: [85, 5, 145, 130], cheer: [98, 5, 155, 226]
+  /* V58.3 · Mundo marino: Sofía usa sus cuadros normales en tierra (la isla, los saltos) y, en el instante en que
+     entra al agua (nada o vadea), cambia a los cuadros de buceo de sofia_submarina_complementaria.png; al salir
+     vuelve a los normales. Cada estado del agua tiene su animación del atlas (tabla sacada de su JSON: primer
+     cuadro, cuántos, ms por cuadro, pivote Y en la celda de 256 y si se repite). La patada nadando usa la de nado
+     rápido: el atlas no trae una patada submarina dibujada. */
+  const DIVE_WATER = {
+    swimFloat: [61, 6, 210, 130, true],  swim: [35, 8, 110, 130, true],   swimUnder: [35, 8, 110, 130, true],
+    swimDown: [55, 6, 108, 130, true],   swimUp: [49, 6, 108, 130, true], swimUpDiag: [49, 6, 108, 130, true],
+    swimDash: [43, 6, 65, 130, true],    swimKick: [43, 6, 65, 130, true], swimHurt: [77, 4, 90, 130, false],
+    wadeIdle: [0, 6, 210, 226, true],    wade: [6, 6, 115, 226, true],    wadeRun: [12, 6, 82, 226, true],
+    dead: [85, 5, 145, 130, false],      cheer: [98, 5, 155, 226, false]
   };
-  function drawDiver(G, alpha) {
+  // Coordenadas y pivotes individuales, compilados del JSON original (índice -> [x,y,w,h,ax,ay]).
+  // No se recortan ni se reescalan los PNG. El test de mapeo verifica la paridad con el JSON.
+  const DIVE_RECTS = [[0,0,256,256,128,226],[256,0,256,256,128,226],[512,0,256,256,128,226],[768,0,256,256,128,226],[1024,0,256,256,128,226],[1280,0,256,256,128,226],[1536,0,256,256,128,226],[1792,0,256,256,128,226],[0,256,256,256,128,226],[256,256,256,256,128,226],[512,256,256,256,128,226],[768,256,256,256,128,226],[1024,256,256,256,128,226],[1280,256,256,256,128,226],[1536,256,256,256,128,226],[1792,256,256,256,128,226],[0,512,256,256,128,226],[256,512,256,256,128,226],[512,512,256,256,128,226],[768,512,256,256,128,226],[1024,512,256,256,128,226],[1280,512,256,256,128,226],[1536,512,256,256,128,226],[1792,512,256,256,128,226],[0,768,256,256,128,226],[256,768,256,256,128,226],[512,768,256,256,128,226],[768,768,256,256,128,130],[1024,768,256,256,128,130],[1280,768,256,256,128,130],[1536,768,256,256,128,130],[1792,768,256,256,128,226],[0,1024,256,256,128,226],[256,1024,256,256,128,226],[512,1024,256,256,128,226],[768,1024,256,256,128,130],[1024,1024,256,256,128,130],[1280,1024,256,256,128,130],[1536,1024,256,256,128,130],[1792,1024,256,256,128,130],[0,1280,256,256,128,130],[256,1280,256,256,128,130],[512,1280,256,256,128,130],[768,1280,256,256,128,130],[1024,1280,256,256,128,130],[1280,1280,256,256,128,130],[1536,1280,256,256,128,130],[1792,1280,256,256,128,130],[0,1536,256,256,128,130],[256,1536,256,256,128,130],[512,1536,256,256,128,130],[768,1536,256,256,128,130],[1024,1536,256,256,128,130],[1280,1536,256,256,128,130],[1536,1536,256,256,128,130],[1792,1536,256,256,128,130],[0,1792,256,256,128,130],[256,1792,256,256,128,130],[512,1792,256,256,128,130],[768,1792,256,256,128,130],[1024,1792,256,256,128,130],[1280,1792,256,256,128,130],[1536,1792,256,256,128,130],[1792,1792,256,256,128,130],[0,2048,256,256,128,130],[256,2048,256,256,128,130],[512,2048,256,256,128,130],[768,2048,256,256,128,130],[1024,2048,256,256,128,130],[1280,2048,256,256,128,130],[1536,2048,256,256,128,130],[1792,2048,256,256,128,130],[0,2304,256,256,128,130],[256,2304,256,256,128,130],[512,2304,256,256,128,130],[768,2304,256,256,128,130],[1024,2304,256,256,128,130],[1280,2304,256,256,128,130],[1536,2304,256,256,128,130],[1792,2304,256,256,128,130],[0,2560,256,256,128,130],[256,2560,256,256,128,130],[512,2560,256,256,128,130],[768,2560,256,256,128,130],[1024,2560,256,256,128,130],[1280,2560,256,256,128,130],[1536,2560,256,256,128,130],[1792,2560,256,256,128,130],[0,2816,256,256,128,130],[256,2816,256,256,128,130],[512,2816,256,256,128,226],[768,2816,256,256,128,226],[1024,2816,256,256,128,226],[1280,2816,256,256,128,226],[1536,2816,256,256,128,226],[1792,2816,256,256,128,226],[0,3072,256,256,128,226],[256,3072,256,256,128,226],[512,3072,256,256,128,226],[768,3072,256,256,128,226],[1024,3072,256,256,128,226],[1280,3072,256,256,128,226],[1536,3072,256,256,128,226]];
+  function waterFrameIndex(t, ms, count, loop) {
+    const i = Math.floor(Math.max(0, Number.isFinite(t) ? t : 0) * 1000 / ms);
+    return loop ? i % count : Math.min(count - 1, i);
+  }
+  const inSeaWater = (P) => !!(P.water || P.wade);
+  function drawDiveWater(G, alpha) {
     const P = G.P, im = image(DIVE_SHEET);
     if (!ready(im)) return false;
-    const [first, count, ms, pivot] = DIVE_STATES[P.state] || DIVE_STATES.idle;
-    const oneShot = ['jump', 'land', 'dash', 'kick', 'hurt', 'dead', 'cheer'].includes(P.state);
-    const timer = Math.max(0, oneShot ? P.stateT : P.animT) * 1000;
-    const idx = Math.floor(timer / ms);
-    const frame = first + (oneShot ? Math.min(count - 1, idx) : idx % count);
+    const state = P.dead ? 'dead' : DIVE_WATER[P.state] ? P.state : P.wade ? 'wadeIdle' : 'swimFloat';
+    const [first, count, ms, pivot, loop] = DIVE_WATER[state];
+    const t = state === 'dead' ? G.timers.dying : P.stateT;
+    const ix = state === 'swimKick'
+      ? Math.min(count - 1, Math.floor(Math.max(0, 0.22 - P.kickT) / 0.22 * count))
+      : waterFrameIndex(t, ms, count, loop);
+    const [sx, sy, sw, sh, ax, ay] = DIVE_RECTS[first + ix];
+    if (sx + sw > im.naturalWidth || sy + sh > im.naturalHeight) return false;
+    let rot = 0;
+    if (P.state === 'swim' || P.state === 'swimUnder') rot = Math.max(-0.35, Math.min(0.35, P.vy / 700)) * (P.face || 1);
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.translate(P.x, pivot === 130 ? P.y : P.y + P.h / 2);
+    ctx.translate(P.x, pivot === 130 ? P.y + (P.state === 'dead' ? Math.min(70, G.timers.dying * 55) : 0) : P.y + P.h / 2);
+    if (rot) ctx.rotate(rot);
     ctx.scale((P.face < 0 ? -1 : 1) * 0.4, 0.4);
-    ctx.drawImage(im, (frame % 8) * 256, Math.floor(frame / 8) * 256, 256, 256, -128, -pivot, 256, 256);
+    ctx.drawImage(im, sx, sy, sw, sh, -ax, -ay, sw, sh);
     ctx.restore();
+    if (P.state === 'swimHurt' && P.hurtT > 0.25) ring(P.x, P.y, 26, 30, '#ff4040', 0.55, 2.5);
     return true;
   }
   /* Reserva visual para el traje astronauta, sin reemplazar los frames originales:
@@ -1936,27 +2954,35 @@
     if (P.invuln > 0 && !P.cheer && Math.floor(T * 18) % 2 === 0) alpha = 0.45;
     if (G.state === 'victory' || G.state === 'won') alpha = Math.max(0, 1 - Math.max(0, G.timers.victory - 0.7) / 0.3);
     if (alpha <= 0) return;
-    const swimA = swimAnimFor(P);
-    if (swimA && drawSwimPlayer(G, T, swimA, alpha)) return;
     const currentScene = G.world && G.world.scenes[G.tramo];
     const suitTheme = currentScene && currentScene.theme;
-    const outfit = suitTheme === 'submarino' ? 'buzo' : suitTheme === 'espacial' ? 'astronauta' : ropt.ninaLook;
-    if (outfit === 'buzo' && drawDiver(G, alpha)) return;
+    const sea = suitTheme === 'submarino';
+    // V58.3: en el mar, dentro del agua = cuadros de buceo; fuera del agua = cuadros normales (sin atlas de nado).
+    if (sea && inSeaWater(P) && drawDiveWater(G, alpha)) return;
+    const swimA = sea ? null : swimAnimFor(P);
+    if (swimA && drawSwimPlayer(G, T, swimA, alpha)) return;
+    const outfit = outfitFor(suitTheme);
     let yOff = 0;
     if (P.dead) { const t = Math.min(1, G.timers.dying / 0.9); yOff = -Math.sin(t * Math.PI) * 42; }
-    const state = P.state, list = NINA[state] || NINA.idle;
+    const astro = outfit === 'astronauta' && ready(image(ASTRO_DIR + 'idle.webp'));
+    const state = P.state, list = (astro ? ASTRO[state] || ASTRO.idle : NINA[state] || NINA.idle);
     let ix;
     // Estados de "una sola pasada" usan el tiempo dentro del estado; los ciclos, el reloj de animación.
     if (state === 'kick') ix = Math.min(list.length - 1, Math.floor((0.22 - P.kickT) / 0.22 * list.length));
-    else if (state === 'land' || state === 'hurt' || state === 'dash' || state === 'jump' || state === 'fall') ix = 0;
+    else if (state === 'land' || state === 'hurt' || state === 'dash' || state === 'jump' || state === 'fall' || state === 'zip') ix = 0;
     else if (state === 'dead') ix = 0;
     else ix = Math.floor(P.animT * 1000 / (FRAME_MS[state] || 100)) % list.length;
     const name = list[Math.max(0, Math.min(list.length - 1, ix))];
-    const im = image(ninaSrc(name));
-    const meta = (NS.ART && NS.ART.SOFIA[name]) || [1, 96, 218];
+    const im = image(astro ? ASTRO_DIR + name + '.webp' : ninaSrc(name, outfit));
+    const meta = astro ? ASTRO_META : (NS.ART && NS.ART.SOFIA[name]) || [1, 96, 218];
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.translate(P.x, foot + yOff);
+    const swingA = state === 'swing' && P.rope ? P.ropeA : null;
+    if (swingA !== null) {
+      // V58.2: gira alrededor de la mano (en la cuerda): los pies siguen el ángulo del columpio.
+      const hang = NS.CONFIG.rope.hang, hy = P.y - P.h / 2 - hang;
+      ctx.translate(P.x, hy); ctx.rotate(-swingA); ctx.translate(0, P.h + hang);
+    } else ctx.translate(P.x, foot + yOff);
     let rot;
     if (P.dead) rot = (P.face || 1) * Math.min(1.35, G.timers.dying * 1.9);
     else if (state === 'dash') rot = 0;
@@ -1964,6 +2990,8 @@
     else if (state === 'jump') rot = -(P.face || 1) * 0.06;
     else if (state === 'fall') rot = (P.face || 1) * Math.min(0.12, Math.max(0, P.vy) / 4000);
     else if (state === 'kick') rot = (P.face || 1) * -0.03;
+    else if (state === 'zip') rot = Math.sin(T * 3.2) * 0.06 + (P.face || 1) * 0.08;
+    else if (state === 'swing') rot = 0;
     else rot = Math.max(-1, Math.min(1, P.vx / NS.CONFIG.phys.move)) * 0.05;
     ctx.rotate(rot);
     if (ready(im)) {
@@ -1983,7 +3011,13 @@
       fillRR(-7, -17, 5, 16, 2, '#172432'); fillRR(2, -17, 5, 16, 2, '#172432'); fillRect(-7, -35, 14, 3, '#d9ff65');
     }
     ctx.restore();
-    if (outfit === 'astronauta') drawAstronautGear(P, alpha);
+    if (outfit === 'astronauta' && !astro) drawAstronautGear(P, alpha);
+    if (P.zip) {
+      const hy = P.y - P.h / 2 - NS.CONFIG.zip.hang;
+      fillRR(P.x - 8, hy - 10, 16, 8, 3, '#2c3138'); circle(P.x - 3, hy - 1, 2.6, '#c9d2d8'); circle(P.x + 4, hy - 1, 2.6, '#c9d2d8');
+      line(P.x, hy - 2, P.x, hy + 6, '#2c3138', 1, 2.2);
+      for (let i = 1; i <= 3; i++) line(P.x - P.zip.ux * (10 + i * 8), P.y - 8 + i * 6, P.x - P.zip.ux * (24 + i * 8), P.y - 8 + i * 6, '#cfe8ff', 0.35, 1.5);
+    }
     if (P.dashT > 0) for (let i = 1; i <= 3; i++) line(P.x - P.face * (14 + i * 9), P.y - 10 + i * 6, P.x - P.face * (30 + i * 9), P.y - 10 + i * 6, '#4ce7ee', 0.5, 2);
     if (P.kickT > 0) { const k = P.kickT / 0.22; line(P.x + P.face * 16, P.y - 9, P.x + P.face * 58, P.y - 9, '#ffd35a', 0.35 * k, 3); ring(P.x + P.face * 58, P.y - 9, 9, 9, '#ffe9a8', 0.5 * k, 2); }
   }
@@ -2027,13 +3061,19 @@
     ctx.setTransform(k, 0, 0, k, ox, oy);
     const V = { x1: G.cam.x - 40, x2: G.cam.x + v.w + 40, y1: G.cam.y - 60, y2: G.cam.y + v.h + 60 };
     const W = G.world;
-    if (!G.room) { drawBackdrop(G, V); drawScenes(G, V); drawNeighborhood(G, V, T); drawStreet(G, V, T); drawToxiAtmosphere(G, V, T); }
-    for (const r of W.rooms) drawRoomBackground(r, V);
+    // V58.1: mar, Luna y escuela son mundos pintados fijos al mundo (DEPTH_ART); el resto, fondos del ancho del mundo.
+    const depth = !G.room && drawDepthArt(G, V);
+    if (!G.room) { if (depth) drawCracks(G, V, T); else drawBackdrop(G, V); drawStreet(G, V, T); drawToxiAtmosphere(G, V, T); }
+    for (const r of W.rooms) drawRoomBackground(r, V, T);
     drawWaters(G, V, false);
+    drawCascades(G, V, T);
     drawSolids(G, V);
+    drawZips(G, V, T);
+    drawRopes(G, V, T);
     drawPlatforms(G, V);
     drawDoors(G, V, T);
     drawCheckpoints(G, V, T);
+    drawMidpoints(G, V, T);
     drawSigns(G, V);
     drawHazards(G, V, T);
     drawPickups(G, V, T);
@@ -2043,8 +3083,6 @@
     drawWaters(G, V, true);
     drawWaterFx(G, V);
     drawParticles(G, V);
-    // Solo el primer plano se dibuja delante de Sofía; los bordes dejan libre el corredor.
-    if (!G.room) for (const sc of W.scenes) if (PARALLAX_LAYERS[sc.theme] && ready(image(PARALLAX_LAYERS[sc.theme][0]))) drawRealParallax(G, V, sc, 4, 5);
     if (debug) drawDebug(G);
     if (G.transition) {
       const tr = G.transition, a = 1 - Math.abs(tr.t / tr.dur - 0.45) / 0.45;
@@ -2054,5 +3092,6 @@
     drawCinematic(G, T);
   }
 
-  NS.Render = { init, resize, draw, preload, setQuality, setOptions, image, ready, NINA, NINA_DIR, NINA_VARIANT_DIR, COMPANIONS, COMPANIONS_SUB, PAINTERS, PARALLAX_LAYERS, PARALLAX_SPEED, toggleDebug: () => (debug = !debug), get debug() { return debug; } };
+  NS.Render = { init, resize, draw, preload, setQuality, setOptions, image, ready, outfitFor, NINA, NINA_DIR, NINA_VARIANT_DIR, COMPANIONS, COMPANIONS_SUB, PAINTERS,
+    BACKDROPS, DEPTH_ART, backdropUrls, depthUrls, castUrls, secretUrls, enemyExt, COMPANIONS_SPACE, toggleDebug: () => (debug = !debug), get debug() { return debug; } };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

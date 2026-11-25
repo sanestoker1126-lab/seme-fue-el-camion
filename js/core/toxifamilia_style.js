@@ -35,7 +35,16 @@
     kid: { color:'#f5d071', warning:'RIVAL · ESQUIVA / CONTRAATACA', emblem:'!' },
     piranha: { color:'#7dffe0', warning:'PIRAÑA · EMBISTE SOLO EN EL AGUA', emblem:'!' },
     shark: { color:'#6ff2ff', warning:'TIBURÓN · ESPERA SU MAREO', emblem:'!' },
-    drone: { color:'#b497ff', warning:'DRON · EVITA EL DISPARO MARCADO', emblem:'✦' }
+    drone: { color:'#b497ff', warning:'DRON · EVITA EL DISPARO MARCADO', emblem:'✦' },
+    crab: { color:'#ff8a6a', warning:'CANGREJO · PÍSALO O USA DASH', emblem:'◆' },
+    robot: { color:'#7fe9ff', warning:'ROBOT · ESPERA SU MAREO', emblem:'!' },
+    // V58.7 · zonas secretas y jefes nuevos
+    pulpito: { color:'#ff7ab8', warning:'PULPITO · ESQUIVA EL TENTAZO', emblem:'!' },
+    buzito: { color:'#7fd6ff', warning:'NIÑO BUZO · PIEDRAS BAJO EL AGUA', emblem:'✦' },
+    marciano: { color:'#b6ff5a', warning:'MARCIANO · MUÉVETE CUANDO BRILLE', emblem:'✦' },
+    astronino: { color:'#f5d071', warning:'NIÑO ASTRONAUTA · ESQUIVA / CONTRAATACA', emblem:'!' },
+    maestro: { color:'#ffd34a', warning:'MAESTRO · SALTA LA REGLA Y LAS ONDAS', emblem:'!' },
+    pulpo_abismo: { color:'#ff7ad9', warning:'PULPO DEL ABISMO · ESPERA SU MAREO', emblem:'!' }
   };
   const FALLBACK = Object.freeze({ tag:'RUTA ALTERADA', accent:'#b7f560', edge:'#ff77bd', haze:'#1a2731', motif:'poster', intensity:0.5 });
   const PROFILES = Object.freeze(Object.fromEntries(Object.entries(P).map(([id, p])=>[id,Object.freeze(p)])));

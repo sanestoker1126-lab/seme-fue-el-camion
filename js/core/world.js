@@ -9,8 +9,10 @@
   const GATE_W = 14;
   const ALCOVE_H = 84;    // Sofía mide 62: cabe de pie
 
+  const AQUA_KINDS = new Set(['piranha', 'shark', 'pulpo']);   // V58.2: nadan en carriles del mar abierto
+
   function buildWorld(opts = {}) {
-    const U = NS.util, C = NS.CONFIG, LV = NS.LEVELS, ST = NS.STORY, EN = NS.Enemies, OB = NS.Obstacles;
+    const U = NS.util, C = NS.CONFIG, LV = NS.LEVELS, ST = NS.STORY, EN = NS.Enemies, OB = NS.Obstacles, PHY = NS.Physics;
     const S = C.world.sceneScale;
     const diffKey = C.difficulty[opts.difficulty] ? opts.difficulty : 'normal';
     const diff = C.difficulty[diffKey];
@@ -20,7 +22,7 @@
     const W = {
       version: C.version, difficulty: diffKey, seed,
       scenes: [], platforms: [], solids: [], hazards: [], foes: [], pickups: [], doors: [], rooms: [],
-      checkpoints: [], signs: [], gates: [], shots: [], waters: [], bounds: null, bus: null, goal: null, t: 0
+      checkpoints: [], midpoints: [], signs: [], gates: [], shots: [], waters: [], zips: [], ropes: [], cracks: [], breaches: [], bounds: null, bus: null, goal: null, t: 0
     };
     const counters = Object.create(null);
     const nid = (scope, kind) => {
@@ -83,19 +85,28 @@
     const reserve = (pl, x1, x2) => pl.occupied.push([x1, x2]);
 
     /* ---------- Paneles pintados ---------- */
-    let y = 0, maxHalf = 0;
+    /* V58 · Cada tramo declara su ancho lateral (`sideWidth`; 0 = mundo trazado entero a mano, sin sectores
+       procedurales: mar y órbita). Los mundos con sectores tienen un medio ancho mínimo (`minHalf`) para que el
+       arte 16:9 del tramo quepa casi completo en su altura. */
+    let y = 0, maxHalf = 0, anySides = false;
     seq.forEach((def, i) => {
       const m = def.map, drawW = m.width * S, drawH = m.height * S;
-      maxHalf = Math.max(maxHalf, drawW / 2);
+      const sideWidth = def.sideWidth ?? C.world.sideWidth;
+      if (sideWidth > 0) anySides = true;
+      maxHalf = Math.max(maxHalf, drawW / 2 + sideWidth);
       W.scenes.push({
         index: i, id: def.id, def, label: def.label, file: def.file, tint: def.tint, wash: def.wash, shade: def.shade,
         theme: def.theme, roomTheme: def.room, map: m, scale: S, x0: -drawW / 2, drawW, drawH, startY: y, endY: y + drawH,
         skin: def.skin || (def.theme === 'escuela' ? 'concrete' : 'stone_rocks'), artPainted: def.art === 'painted', bg: def.bg || null,
-        storyIndex: def.storyIndex ?? i, chapter: ST.CHAPTERS[def.storyIndex ?? i], surfaces: [], stairs: [], movers: [], crumbles: [], belts: [], bouncers: [], side: { '-1': [], '1': [] }
+        sideWidth, parallax: def.parallax || null, gravity: def.gravity || 1,
+        storyIndex: def.storyIndex ?? i, chapter: ST.CHAPTERS[def.storyIndex ?? i], surfaces: [], stairs: [], movers: [], crumbles: [], belts: [], bouncers: [],
+        zips: [], mids: [], side: { '-1': [], '1': [] }
       });
       y += drawH;
     });
-    const B = Math.ceil(maxHalf + C.world.sideWidth);
+    const B = Math.ceil(anySides ? Math.max(maxHalf, C.world.minHalf || 0) : maxHalf);
+    // Gravedad propia: solo en mundos de un tramo (la órbita). En una secuencia de varios tramos rige la normal.
+    W.gravityMul = W.scenes.length === 1 ? W.scenes[0].gravity : 1;
     const worldEnd = y, streetY = worldEnd + C.world.streetDrop;
     const T = C.world.wallThickness;
     W.bounds = { x1: -B, x2: B, y1: -240, y2: streetY + C.world.streetDepth, worldEnd, streetY };
@@ -108,30 +119,35 @@
     for (const sc of W.scenes) {
       const m = sc.map, X = (sx) => sc.x0 + sx * S, Y = (sy) => sc.startY + sy * S, scope = 't' + sc.index;
       const rng = U.makeRng(U.hashSeed(seed, 'panel', sc.index));
-      sc.surfaces = m.surfaces.map((q) => addPlatform({
-        scope, kind: 'floor', x1: X(q.x1), x2: X(q.x2), y: Y(q.y), h: 10 * S, drop: false, draw: !sc.artPainted, painted: true,
-        hidden: sc.artPainted, skin: sc.skin,
-        theme: sc.theme, scene: sc.index, start: !!q.start, exit: !!q.exit,
-        startX: q.startX !== undefined ? X(q.startX) : undefined,
-        touchesLeft: q.x1 <= 1, touchesRight: q.x2 >= m.width - 1
-      }));
+      // V58: en los niveles con arte pintado, solo lo trazado sobre el dibujo queda oculto; lo generado se dibuja.
+      sc.surfaces = m.surfaces.map((q) => {
+        const art = sc.artPainted && !q.gen;
+        return addPlatform({
+          scope, kind: 'floor', x1: X(q.x1), x2: X(q.x2), y: Y(q.y), h: 10 * S, drop: false, draw: !art, painted: true,
+          hidden: art, skin: sc.skin, gen: !!q.gen, joined: !!q.joined,
+          theme: sc.theme, scene: sc.index, start: !!q.start, exit: !!q.exit, mid: !!q.mid,
+          startX: q.startX !== undefined ? X(q.startX) : undefined, midX: q.midX !== undefined ? X(q.midX) : undefined,
+          touchesLeft: q.x1 <= 1, touchesRight: q.x2 >= m.width - 1
+        });
+      });
       sc.stairs = m.stairs.map((q) => addPlatform({
         scope, kind: 'stair', x1: X(q.x1), x2: X(q.x2), y: Y(q.y), h: 8 * S, drop: true, draw: !(sc.artPainted && sc.def.stairsPainted), painted: true,
         hidden: !!(sc.artPainted && sc.def.stairsPainted), skin: sc.skin, theme: sc.theme, scene: sc.index
       }));
+      // V58: `look` es solo el aspecto (camión, carrito, tren, balsa, manta, nave…); la física es la de siempre.
       sc.movers = m.movers.map((q) => addPlatform({
-        scope, kind: 'moving', x1: X(q.x1), x2: X(q.x2), y: Y(q.y), h: 11 * S, drop: true, draw: true,
+        scope, kind: 'moving', x1: X(q.x1), x2: X(q.x2), y: Y(q.y), h: 11 * S, drop: true, draw: true, look: q.look || null,
         theme: sc.theme, scene: sc.index, baseX1: X(q.x1), baseX2: X(q.x2), baseY: Y(q.y),
-        range: q.range * S, vrange: q.vertical * S, speed: 1.15, phase: rng() * 6
+        range: q.range * S, vrange: q.vertical * S, speed: q.speed || 1.15, phase: rng() * 6
       }));
       sc.pigeons = (m.pigeons || []).map((q) => addPlatform({
-        scope, kind: 'pigeon', x1: X(q.x1), x2: X(q.x2), y: Y(q.y), h: 10 * S, drop: false, draw: true,
+        scope, kind: 'pigeon', x1: X(q.x1), x2: X(q.x2), y: Y(q.y), h: 10 * S, drop: false, draw: true, look: q.look || null,
         theme: sc.theme, scene: sc.index, baseX1: X(q.x1), baseX2: X(q.x2), baseY: Y(q.y),
         range: (q.range || 80) * S, vrange: (q.vertical || 7) * S, speed: q.speed || 1.4, phase: rng() * 6
       }));
       // V50: tejas flojas, bandas eléctricas y sombrillas definidas en el mapa.
       sc.crumbles = (m.crumbles || []).map((q) => addPlatform({
-        scope, kind: 'crumble', x1: X(q.x1), x2: X(q.x2), y: Y(q.y), h: 10 * S, drop: true, draw: true, painted: true,
+        scope, kind: 'crumble', x1: X(q.x1), x2: X(q.x2), y: Y(q.y), h: 10 * S, drop: true, draw: true, painted: true, look: q.look || null,
         theme: sc.theme, scene: sc.index, crState: 'solid', crT: 0, gone: false
       }));
       sc.belts = (m.belts || []).map((q) => addPlatform({
@@ -140,12 +156,13 @@
       }));
       // Tablones de madera (se atraviesan con BAJAR): ramas, andamios, rejillas.
       sc.planks = (m.planks || []).map((q) => addPlatform({
-        scope, kind: 'thin', x1: X(q.x1), x2: X(q.x2), y: Y(q.y), h: 9, drop: true, draw: true, painted: true,
-        theme: sc.theme, scene: sc.index, plank: true
+        scope, kind: 'thin', x1: X(q.x1), x2: X(q.x2), y: Y(q.y), h: 9, drop: true, draw: !(sc.artPainted && q.painted), painted: true,
+        hidden: !!(sc.artPainted && q.painted), theme: sc.theme, scene: sc.index, plank: true
       }));
+      // V58.1: un trampolín `painted` (hongo gigante del arte marino) ya está dibujado: solo se anima el rebote.
       sc.bouncers = (m.bouncers || []).map((q) => addPlatform({
         scope, kind: 'bounce', x1: X(q.x1), x2: X(q.x2), y: Y(q.y), h: 10, drop: false, draw: true, painted: true,
-        theme: sc.theme, scene: sc.index, umbrella: true
+        theme: sc.theme, scene: sc.index, umbrella: true, look: q.look || null, artPainted: !!(sc.artPainted && q.painted)
       }));
       for (const b of sc.bouncers) reserve(b, b.x1, b.x2);
       // V52 · Agua (lagos, pilas): profunda si mide al menos CONFIG.water.shallowDepth (se nada); si no, se vadea.
@@ -153,7 +170,10 @@
       // Un lado con suelo a la altura del agua no lleva pared: ahí la orilla es ese suelo.
       sc.waters = (m.water || []).map((q) => {
         const z = { id: nid(scope, 'agua'), x1: X(q.x1), x2: X(q.x2), y: Y(q.y), y2: Y(q.y + q.depth), scene: sc.index,
-          theme: sc.theme, kind: q.kind || 'lago', banks: q.banks || [] };
+          theme: sc.theme, kind: q.kind || 'lago', banks: q.banks || [], sea: !!q.sea, boss: !!q.boss, breach: !!q.breach,
+          toStreet: !!q.toStreet, drains: (q.drains || []).map((d) => ({ x1: X(d.x1), x2: X(d.x2) })) };
+        // V58.2: un mar «hasta la calle» llega al lecho marino, donde está la meta (la escotilla de rescate).
+        if (z.toStreet) { z.y2 = streetY; z.x1 = Math.min(z.x1, -B); z.x2 = Math.max(z.x2, B); }
         z.deep = z.y2 - z.y >= C.water.shallowDepth;
         (W.waters = W.waters || []).push(z);
         for (const side of z.banks) {
@@ -161,9 +181,47 @@
           addSolid({ scope, kind: 'bank', x1: bx, x2: bx + 12, y1: z.y - 3, y2: z.y2 + 14, scene: sc.index, theme: sc.theme, draw: false, water: z.id });
         }
         // El fondo del agua profunda es sólido: desde abajo no se entra al agua (es techo para lo que está debajo).
-        if (z.deep) addSolid({ scope, kind: 'bank', x1: z.x1 - 12, x2: z.x2 + 12, y1: z.y2, y2: z.y2 + 10, scene: sc.index, theme: sc.theme, draw: false, water: z.id, bottom: true });
+        // V58: los desagües son huecos en ese fondo (por ahí cae el agua en cascada y se sale buceando).
+        if (z.deep && !z.toStreet) {
+          let x = z.x1 - 12;
+          for (const d of z.drains.slice().sort((a, b) => a.x1 - b.x1)) {
+            if (d.x1 - x > 1) addSolid({ scope, kind: 'bank', x1: x, x2: d.x1, y1: z.y2, y2: z.y2 + 10, scene: sc.index, theme: sc.theme, draw: false, water: z.id, bottom: true });
+            x = d.x2;
+          }
+          if (z.x2 + 12 - x > 1) addSolid({ scope, kind: 'bank', x1: x, x2: z.x2 + 12, y1: z.y2, y2: z.y2 + 10, scene: sc.index, theme: sc.theme, draw: false, water: z.id, bottom: true });
+        }
         return z;
       });
+      // V58 · Tirolesas (cables entre dos anclas) y bloques sólidos dibujados (pilares de coral).
+      sc.zips = (m.zips || []).map((q) => {
+        const z = PHY.makeZip(X(q.x1), Y(q.y1), X(q.x2), Y(q.y2), { id: nid(scope, 'tirolesa'), scene: sc.index, theme: sc.theme, look: q.look || 'cable', painted: !!(sc.artPainted && q.painted) });
+        W.zips.push(z);
+        return z;
+      });
+      // V58.2: cuerdas para columpiarse (ancla y largo) y brechas dibujadas en la roca del mar.
+      for (const q of m.ropes || []) W.ropes.push(PHY.makeRope(X(q.x), Y(q.y), q.len * S, { id: nid(scope, 'cuerda'), scene: sc.index, theme: sc.theme, look: q.look || 'cuerda', arc: !!q.arc, base: q.base !== undefined ? Y(q.base) : null }));
+      for (const b of m.breaches || []) W.breaches.push({ x1: X(b.x1), x2: X(b.x2), y1: Y(b.y1), y2: Y(b.y2), scene: sc.index });
+      sc.swimLanes = (m.swimLanes || []).map((l) => ({ y: Y(l.y), x1: X(l.x1), x2: X(l.x2) }));
+      // Repisas dentro de un mar abierto: ahí viven cangrejos y niños buzos; Sofía nada (no se apoya ni usa puertas).
+      const seaZones = sc.waters.filter((z) => z.sea && z.deep);
+      if (seaZones.length) {
+        for (const p of W.platforms) {
+          if (p.scene !== sc.index || p.region !== 'main') continue;
+          if (seaZones.some((z) => p.y > z.y + 4 && p.y < z.y2 && p.x2 > z.x1 && p.x1 < z.x2)) p.underwater = true;
+        }
+      }
+      // V58.1: grietas en la roca pintada (solo dibujo; por ahí se cae a la caverna de abajo).
+      for (const c of m.cracks || []) W.cracks.push({ x1: X(c.x1), x2: X(c.x2), y1: Y(c.y1), y2: Y(c.y2), scene: sc.index });
+      // V58.1: `draw: false` = relieve que ya pinta el arte (roca y meseta del mar trazadas sobre el dibujo).
+      for (const q of m.blocks || []) addSolid({ scope, kind: q.kind || 'block', x1: X(q.x1), x2: X(q.x2), y1: Y(q.y1), y2: Y(q.y2), scene: sc.index, theme: sc.theme, draw: q.draw !== false });
+      // V58.6: barda de azotea rematada con vidrios rotos: muro sólido (se dibuja) y los vidrios de arriba lastiman.
+      for (const q of m.bardas || []) {
+        const b = addSolid({ scope, kind: 'barda', x1: X(q.x1), x2: X(q.x2), y1: Y(q.y1), y2: Y(q.y2), scene: sc.index, theme: sc.theme });
+        const glass = OB.addSpikes(W, { scope, x: (b.x1 + b.x2) / 2, y: b.y1, w: b.x2 - b.x1 + 6, scene: sc.index, plat: null });
+        glass.look = 'vidrios';
+      }
+      // V58.6: letreros propios del nivel (p. ej. cómo usar el columpio para cruzar la barda).
+      (m.signs || []).forEach((q, k) => W.signs.push({ id: scope + ':letrero:nivel' + k, x: X(q.x), y: Y(q.y), text: q.text, scene: sc.index, region: 'main', seenT: -99 }));
       m.gems.forEach((q) => addGem(X(q.x), Y(q.y), sc.index, 'main', rng));
       const start = sc.surfaces.find((s) => s.start);
       sc.startPlatform = start;
@@ -174,14 +232,24 @@
       const exitX = X(m.exitX);
       reserve(exit, exitX - 44, exitX + 44);
       sc.exitX = exitX;
+      // V58 · Parada intermedia (inicio de la mitad nueva del nivel): reapareces ahí si caes después.
+      const midS = sc.surfaces.find((s) => s.mid);
+      if (midS) {
+        const mx = U.clamp(midS.midX ?? midS.x1 + 40, midS.x1 + 24, midS.x2 - 24);
+        reserve(midS, mx - 34, mx + 34);
+        sc.midPlatform = midS;
+        W.midpoints.push({ id: scope + ':parada-media', scene: sc.index, x: mx, y: midS.y, plat: midS, active: false, mid: true });
+      }
     }
 
     /* ---------- Escaleras de transición entre tramos ---------- */
     for (let i = 0; i < W.scenes.length - 1; i++) {
-      const from = W.scenes[i], to = W.scenes[i + 1], count = 11;
-      const xA = from.exitX, yA = from.exitPlatform.y;
-      const xB = to.startPlatform.startX, yB = to.startPlatform.y;
+      const from = W.scenes[i], to = W.scenes[i + 1], count = 11, ex = from.exitPlatform;
+      const xB = to.startPlatform.startX, yB = to.startPlatform.y, yA = ex.y;
       const stepW = 34 * S;
+      // V58: la salida de los niveles nuevos es muy ancha; la escalera arranca justo afuera de su extremo más
+      // cercano a la parada siguiente (bajo la plataforma no habría por dónde dejarse caer).
+      const xA = from.map.v58 ? (Math.abs(xB - ex.x1) <= Math.abs(xB - ex.x2) ? ex.x1 - stepW * 0.7 : ex.x2 + stepW * 0.7) : from.exitX;
       for (let k = 0; k < count; k++) {
         const t = (k + 1) / (count + 1), cx = xA + (xB - xA) * t, top = yA + (yB - yA) * t;
         addPlatform({ scope: 't' + i, kind: 'stair', x1: cx - stepW / 2, x2: cx + stepW / 2, y: top, h: 9 * S, drop: true, draw: true, theme: from.theme, scene: i, transition: true });
@@ -195,10 +263,12 @@
 
     /* ---------- Sectores laterales deterministas ---------- */
     const doorSideOf = (i) => (i % 2 === 0 ? -1 : 1);
+    const hasSides = (i) => W.scenes[i].sideWidth > 0;   // V58: mar y órbita no tienen sectores laterales
     for (const side of [-1, 1]) {
       const rng = U.makeRng(U.hashSeed(seed, 'side', side));
       const rows = [];
       for (const sc of W.scenes) {
+        if (!hasSides(sc.index)) continue;
         for (const pl of sc.surfaces) {
           if ((side < 0 && pl.touchesLeft) || (side > 0 && pl.touchesRight)) rows.push({ y: pl.y, scene: sc.index, bridge: pl });
         }
@@ -213,13 +283,13 @@
           const n = Math.ceil(gap / 150) - 1;
           for (let j = 1; j <= n; j++) {
             const yy = rows[k].y + (gap * j) / (n + 1);
-            filled.push({ y: yy, scene: sceneAt(yy), bridge: null });
+            if (hasSides(sceneAt(yy))) filled.push({ y: yy, scene: sceneAt(yy), bridge: null });
           }
         }
       }
       // Elegir una fila por tramo para el nicho con reja (lado contrario a la zona inferior).
       for (const sc of W.scenes) {
-        if (doorSideOf(sc.index) === side) continue;
+        if (doorSideOf(sc.index) === side || !hasSides(sc.index)) continue;
         // El nicho necesita hueco libre encima (techo + 16 u de margen) y no debe estar al inicio del tramo.
         const cands = filled.map((r, idx) => ({ r, gap: idx > 0 ? r.y - filled[idx - 1].y : 0 }))
           .filter(({ r, gap }) => r.scene === sc.index && gap >= ALCOVE_H + 28 && r.y > sc.startY + sc.drawH * 0.3 && r.y < sc.endY - 40)
@@ -295,14 +365,17 @@
     for (const sc of W.scenes) {
       const i = sc.index, scope = 't' + i, side = doorSideOf(i);
       const rng = U.makeRng(U.hashSeed(seed, 'room', i));
-      const segs = sc.side[side].filter((p) => !p.bridge && !p.rowAlcove && p.w >= 100 &&
+      // V58: sin sectores laterales (mar, órbita) la trampilla y su salida van en cornisas del propio nivel.
+      const pool = hasSides(i) ? sc.side[side]
+        : sc.surfaces.filter((p) => !p.start && !p.exit && !p.mid && !p.underwater && p.kind === 'floor' && p.w >= 130);
+      const segs = pool.filter((p) => !p.bridge && !p.rowAlcove && p.w >= 100 &&
         p.y > sc.startY + sc.drawH * 0.22 && p.y < sc.startY + sc.drawH * 0.72);
-      const doorPl = segs.length ? segs[Math.floor(rng() * segs.length)] : sc.side[side].find((p) => p.w >= 90);
+      const doorPl = segs.length ? segs[Math.floor(rng() * segs.length)] : pool.find((p) => p.w >= 90);
       if (!doorPl) continue;
       doorPl.kind = 'floor'; doorPl.drop = false; // la trampilla necesita suelo firme
       const doorX = (doorPl.x1 + doorPl.x2) / 2;
       reserve(doorPl, doorX - 30, doorX + 30);
-      const allSide = W.scenes.flatMap((s) => s.side[side]);
+      const allSide = hasSides(i) ? W.scenes.flatMap((s) => s.side[side]) : pool;
       let target = allSide.find((p) => p !== doorPl && !p.rowAlcove && p.w >= 90 && p.y > doorPl.y + 180 && p.y < doorPl.y + 560);
       const targetPoint = target
         ? { x: (target.x1 + target.x2) / 2, y: target.y, plat: target }
@@ -335,7 +408,8 @@
       // Contenido hostil de la zona: una amenaza que escala con el tramo.
       const floorPl = { x1: rx + 20, x2: rx + RW - 120, y: floorTop, occupied: [] }; // tramo de patrulla (no pisa la salida)
       if (i >= 1) OB.addSpikes(W, { scope, x: rx + 380, y: floorTop, w: 40, scene: i, region: reg });
-      const guardKind = i >= 3 ? 'bravo' : i >= 1 ? 'dog' : 'rat';
+      // V58: en el mar vigila un cangrejo y en la órbita un robot (no una rata de alcantarilla).
+      const guardKind = sc.theme === 'submarino' ? 'crab' : sc.theme === 'espacial' ? 'robot' : i >= 3 ? 'bravo' : i >= 1 ? 'dog' : 'rat';
       addFoe(EN.create(guardKind, { x: rx + 230, y: floorTop, plat: floorPl, scene: i, region: reg, diff, rng }));
       if (i >= 2) addFoe(EN.create('bat', { x: rx + 470, y: ry + 22, scene: i, region: reg, diff, rng }));
     }
@@ -379,20 +453,25 @@
       else if (bossDef.kind === 'pigeon' || bossDef.kind === 'drone') flyY = arena.y - 84;
       // Jefe marino: está dentro del último estanque profundo, no levitando
       // en la superficie de salida. Conserva el orden del recorrido.
-      const bossWater = bossDef.kind === 'shark'
-        ? W.waters.filter((z) => z.scene === sc.index && z.deep).slice(-1)[0] : null;
-      if (bossWater) {
+      const aquaticBoss = bossDef.kind === 'shark' || bossDef.kind === 'poseidon';
+      const bossWater = aquaticBoss
+        ? (W.waters.find((z) => z.scene === sc.index && z.deep && z.boss) || W.waters.filter((z) => z.scene === sc.index && z.deep).slice(-1)[0]) : null;
+      let bossLane = null;
+      if (bossWater && bossWater.toStreet) {
+        // V58.2: en el mar que baja hasta el lecho, el jefe custodia la salida (la arena), a media altura sobre ella.
+        const span = Math.max(260, arena.x2 - arena.x1);
+        const cx = (arena.x1 + arena.x2) / 2;
+        bossLane = { x1: Math.max(bossWater.x1 + 30, cx - span / 2 - 60), x2: Math.min(bossWater.x2 - 30, cx + span / 2 + 60) };
+        bossX = cx; flyY = Math.max(bossWater.y + 80, arena.y - 70);
+      } else if (bossWater) {
         bossX = (bossWater.x1 + bossWater.x2) / 2;
         flyY = bossWater.y + (bossWater.y2 - bossWater.y) * 0.52;
+        bossLane = { x1: bossWater.x1 + 25, x2: bossWater.x2 - 25 };
       }
       const boss = EN.create(bossDef.kind, {
         id: scope + ':jefe', x: bossX, y: flyY, plat: arena, scene: sc.index,
-        lane: { x1: arena.x1 + 26, x2: arena.x2 - 26 },
         region: 'main', diff, rng, isBoss: true, bossName: bossDef.name, hp: bossDef.hp,
-        waterZone: bossWater, lane: bossWater
-          ? { x1: bossWater.x1 + 25, x2: bossWater.x2 - 25 }
-          : { x1: Math.max(W.bounds.x1 + 30, arena.x1 + 22),
-              x2: Math.min(W.bounds.x2 - 30, arena.x2 - 22) }
+        waterZone: bossWater, lane: bossLane || { x1: Math.max(W.bounds.x1 + 30, arena.x1 + 22), x2: Math.min(W.bounds.x2 - 30, arena.x2 - 22) }
       });
       boss.arena = arena;
       addFoe(boss);
@@ -403,7 +482,9 @@
       const i = sc.index, def = sc.def, scope = 't' + i;
       const rng = U.makeRng(U.hashSeed(seed, 'encuentros', i, diffKey));
       // V50: la plataforma de salida es la arena del jefe; los enemigos comunes ya no la comparten.
-      const panel = sc.surfaces.filter((s) => !s.start && !s.exit && s !== sc.bossArena && s.w >= 96);
+      // V58: la fila de la parada intermedia también queda despejada (reaparecer junto a un enemigo no es justo).
+      const panel = sc.surfaces.filter((s) => !s.start && !s.exit && !s.mid && s !== sc.bossArena && s.w >= 96);
+      const dryPanel = panel.filter((s) => !s.underwater);
       const sides = [...sc.side[-1], ...sc.side[1]].filter((p) => !p.rowAlcove && p.w >= 100 && p.kind !== 'bounce');
 
       // Letreros (tutorial en el tramo 1, historia en el resto).
@@ -425,6 +506,12 @@
         const pl = sc.startPlatform, x = pl.x1 + 30;
         W.signs.push({ id: scope + ':letrero:historia', x, y: pl.y, text: ST.SIGNS.story[sc.storyIndex ?? i], scene: i, region: 'main', seenT: -99 });
       }
+      const mp = W.midpoints.find((q) => q.scene === i);
+      if (mp && ST.SIGNS.mid) {
+        const sx = U.clamp(mp.x + (mp.x < (mp.plat.x1 + mp.plat.x2) / 2 ? 46 : -46), mp.plat.x1 + 12, mp.plat.x2 - 12);
+        reserve(mp.plat, sx - 16, sx + 16);
+        W.signs.push({ id: scope + ':letrero:media', x: sx, y: mp.y, text: ST.SIGNS.mid[(sc.storyIndex ?? i) % ST.SIGNS.mid.length], scene: i, region: 'main', seenT: -99 });
+      }
 
       // Enemigos del panel pintado.
       const budget = Math.max(1, Math.round(def.foeBudget * diff.foeDensity));
@@ -444,10 +531,34 @@
       const obsBudget = Math.max(1, Math.round(def.obstacleBudget * (0.8 + 0.2 * diff.foeDensity)));
       for (let n = 0; n < obsBudget; n++) {
         const type = def.obstacles[n % def.obstacles.length];
-        placeObstacle(type, n % 2 === 0 ? panel : sides, rng, sc, scope, diff);
+        placeObstacle(type, n % 2 === 0 ? dryPanel : sides, rng, sc, scope, diff);
       }
       if (def.obstacles.includes('spikes') || def.obstacles.includes('spark')) {
         placeObstacle(def.obstacles.includes('spark') && i >= 2 ? 'spark' : 'spikes', sides, rng, sc, scope, diff);
+      }
+      // V58.3 · Peligros propios de cada mundo, repartidos parejo a lo alto del nivel (más en DIFÍCIL, menos en FÁCIL).
+      const many = (base) => Math.max(2, Math.round(base * (diffKey === 'facil' ? 0.67 : diffKey === 'dificil' ? 1.34 : 1)));
+      if (sc.theme === 'submarino') {
+        // Corrientes: franjas horizontales del mar abierto, con sentido alterno y fases distintas. Dejan libres la
+        // superficie (350 u) y el fondo junto a la escotilla (520 u).
+        for (const z of (sc.waters || []).filter((q) => q.deep && q.sea)) {
+          const top = z.y + 350, bot = z.y2 - 520, n = many(6), H = OB.CURRENT.h;
+          if (bot - top < H * 2) continue;
+          for (let k = 0; k < n; k++) {
+            const cy = top + (bot - top) * (k + 0.5) / n;
+            OB.addCurrent(W, { scope, x1: z.x1, x2: z.x2, y1: cy - H / 2, y2: cy + H / 2, dir: (k + i) % 2 ? -1 : 1, phase: k * 1.7, scene: i });
+          }
+        }
+      }
+      if (sc.theme === 'espacial') {
+        // Asteroides: sobre plataformas secas y anchas (no la de salida, la parada intermedia ni la del jefe), lejos del inicio.
+        const startY = sc.surfaces.find((s) => s.start)?.y ?? -Infinity;
+        const cands = dryPanel.filter((p) => p.kind === 'floor' && p.w >= 150 && p.y > startY + 250).sort((a, b) => a.y - b.y);
+        const n = Math.min(cands.length, many(9));
+        for (let k = 0; k < n; k++) {
+          const pl = cands[Math.floor((k + 0.5) * cands.length / n)];
+          OB.addAsteroid(W, { scope, plat: pl, dir: k % 2 ? -1 : 1, wait: 0.6 + (k % 3) * 0.5, seed: k + 1, scene: i });
+        }
       }
       // Toldos rebotadores en los sectores (desde el tramo 2).
       if (i >= 1) {
@@ -468,7 +579,7 @@
         if (x !== null) addGem(x, pl.y - 30, i, 'main', rng);
       }
       // Un poder por tramo en el panel.
-      const powPl = panel.length ? panel[Math.floor(rng() * panel.length)] : null;
+      const powPl = dryPanel.length ? dryPanel[Math.floor(rng() * dryPanel.length)] : null;
       if (powPl) {
         const x = claim(powPl, 26, rng, 24);
         if (x !== null) addPickup({ scope, type: 'power', power: ['shield', 'magnet', 'heart'][i % 3], x, y: powPl.y - 32, scene: i, phase: rng() * 6 });
@@ -478,16 +589,32 @@
     function placeFoe(kind, cands, rng, walkersOn, sc, scope, diff) {
       const T = EN.TYPES[kind];
       if (!T) return null;
+      if (AQUA_KINDS.has(kind) && sc.swimLanes && sc.swimLanes.length) {
+        // V58.2 · Mar abierto: cada pez, tiburón o pulpo patrulla su propio carril de nado (trazado libre de roca).
+        const z = W.waters.find((q) => q.scene === sc.index && q.sea && q.deep);
+        const used = W.foes.filter((f) => f.scene === sc.index && f.swimLane !== undefined).map((f) => f.swimLane);
+        const cap = { piranha: 6, shark: 2, pulpo: 4 }[kind];
+        if (!z || W.foes.filter((f) => f.scene === sc.index && f.kind === kind).length >= cap) return null;
+        const order = sc.swimLanes.map((l, i) => i).filter((i) => !used.includes(i));
+        if (!order.length) return null;
+        const li = order[Math.floor(rng() * order.length)], L = sc.swimLanes[li];
+        const x = L.x1 + (L.x2 - L.x1) * (0.25 + 0.5 * rng());
+        const f = EN.create(kind, { x, y: L.y, waterZone: z, lane: { x1: L.x1, x2: L.x2 }, scene: sc.index, diff, rng });
+        f.swimLane = li;
+        return f;
+      }
       if (kind === 'piranha') {
         // Solo en pozas profundas; repartir amenazas sin amontonarlas.
+        // V58: el mar abierto admite seis repartidas a lo ancho y a distintas profundidades.
         const waters = W.waters.filter(z => z.scene === sc.index && z.deep);
         const available = waters.map(z => ({ z, count: W.foes.filter(f => f.kind === 'piranha' && f.waterZone === z).length }))
-          .filter(q => q.count < 2).sort((a, b) => a.count - b.count);
+          .filter(q => q.count < (q.z.sea ? 6 : 2)).sort((a, b) => a.count - b.count);
         if (!available.length) return null;
         const slot = available[0];
         const z = slot.z;
-        const x = z.x1 + (z.x2 - z.x1) * (slot.count ? 0.68 : 0.32);
-        const y = z.y + Math.max(28, (z.y2 - z.y) * (slot.count ? 0.67 : 0.34));
+        const FX = [0.32, 0.68, 0.14, 0.86, 0.5, 0.25], FY = [0.34, 0.67, 0.5, 0.8, 0.25, 0.58];
+        const x = z.x1 + (z.x2 - z.x1) * FX[slot.count % FX.length];
+        const y = z.y + Math.max(28, (z.y2 - z.y) * FY[slot.count % FY.length]);
         return EN.create(kind, { x, y, waterZone: z,
           lane: { x1: z.x1 + 21, x2: z.x2 - 21 },
           scene: sc.index, diff, rng });
@@ -560,13 +687,135 @@
       }
     }
 
+    /* ---------- V58.7 · Zonas secretas (mar y Luna) ----------
+       Se arman al final: así ningún reparto anterior (peces del mar abierto, jefe, corrientes, asteroides) toma su agua
+       ni sus repisas. Ver LEVELS.SECRET_ROOMS: el recorrido está trazado en px del arte panorámico de cada zona. */
+    let secretN = 0, secretX = 0;
+    for (const sc of W.scenes) {
+      const Z = sc.def.secret && LV.SECRET_ROOMS && LV.SECRET_ROOMS[sc.def.secret];
+      if (!Z) continue;
+      const i = sc.index, scope = 't' + i, rng = U.makeRng(U.hashSeed(seed, 'secreto', i));
+      // La grieta va en la cornisa seca más cercana al punto marcado, en un hueco libre (sin obstáculo ni puerta).
+      const dist = (p) => Math.hypot(U.clamp(Z.entry.x, p.x1, p.x2) - Z.entry.x, p.y - Z.entry.y);
+      const near = W.platforms.filter((p) => p.region === 'main' && p.scene === i && p.kind === 'floor' && !p.underwater &&
+        !p.transition && !p.start && !p.exit && !p.mid && p.w >= 90).sort((a, b) => dist(a) - dist(b))[0];
+      if (!near) continue;
+      const free = (x) => x - 30 >= near.x1 + 8 && x + 30 <= near.x2 - 8 && near.occupied.every(([o1, o2]) => x + 30 <= o1 || x - 30 >= o2);
+      const spots = [];
+      for (let x = near.x1 + 38; x <= near.x2 - 38; x += 6) if (free(x)) spots.push(x);
+      const doorX = spots.length ? spots.sort((a, b) => Math.abs(a - Z.entry.x) - Math.abs(b - Z.entry.x))[0] : (near.x1 + near.x2) / 2;
+      reserve(near, doorX - 30, doorX + 30);
+      // Al salir se regresa a la misma cornisa, a un paso de la grieta (sin quedar encima de ella).
+      const backX = U.clamp(doorX + (doorX + 56 <= near.x2 - 14 ? 56 : -56), near.x1 + 14, near.x2 - 14);
+      reserve(near, backX - 18, backX + 18);
+
+      const s = Z.scale, AW = Z.artW * s, AH = Z.artH * s;
+      const rx = C.world.roomOriginX + W.scenes.length * C.world.roomSpacing + 300 + secretX, ry = Math.round(near.y - AH / 2);
+      secretX += Math.ceil(AW) + 600;
+      secretN++;
+      const X = (px) => rx + px * s, Y = (py) => ry + py * s;
+      const floorY = Y(Z.water ? Z.water.floor : Z.floor);
+      // En el santuario la superficie del agua queda pegada al borde de arriba del arte: el techo de la cueva sube
+      // `ceil` u sobre ese borde para que Sofía (62 u) quepa de pie en las losas (render.js pinta ahí roca de cueva).
+      // V58.8: en las aulas, igual sobre las lámparas del techo (`Z.ceil`).
+      const ceil = Z.ceil ?? (Z.water ? 46 : 0), top = ry - ceil;
+      // `y1` deja a la cámara subir 60 u sobre el techo: así la losa de salida y su letrero quedan bajo el HUD de arriba.
+      // V58.8: varias ilustraciones seguidas (las aulas): `panels` dice dónde va cada una.
+      const arts = Array.isArray(Z.art) ? Z.art : [Z.art], panelW = AW / arts.length;
+      const room = { id: scope + ':secreto', index: i, scene: i, theme: 'secreto', secret: Z.id, label: Z.label, art: arts[0],
+        panels: arts.map((a, k) => ({ art: a, x1: rx + k * panelW, x2: rx + (k + 1) * panelW })),
+        x1: rx, y1: top - (Z.water ? 60 : 0), x2: rx + AW, y2: floorY, ceilY: top, artY1: ry, artY2: ry + AH, scale: s, visited: false };
+      W.rooms.push(room);
+      const reg = room.id, th = sc.theme;
+      // Paredes, techo y piso de la zona: invisibles (los pinta el arte).
+      addSolid({ scope, kind: 'roomwall', x1: rx - 60, y1: floorY, x2: rx + AW + 60, y2: floorY + 60, region: reg, scene: i, theme: th, draw: false });
+      addSolid({ scope, kind: 'roomwall', x1: rx - 60, y1: top - 60, x2: rx + AW + 60, y2: top, region: reg, scene: i, theme: th, draw: false });
+      addSolid({ scope, kind: 'roomwall', x1: rx - 60, y1: top, x2: rx, y2: floorY, region: reg, scene: i, theme: th, draw: false });
+      addSolid({ scope, kind: 'roomwall', x1: rx + AW, y1: top, x2: rx + AW + 60, y2: floorY, region: reg, scene: i, theme: th, draw: false });
+      // Mar cerrado del santuario: de la superficie (pegada al techo de la cueva) hasta las losas del fondo.
+      let water = null;
+      if (Z.water) {
+        water = { id: scope + ':agua-secreta', x1: rx, x2: rx + AW, y: Y(Z.water.y), y2: floorY, scene: i, theme: th, kind: 'mar', banks: [],
+          sea: true, deep: true, boss: false, breach: false, toStreet: false, drains: [], painted: true, room: reg };
+        W.waters.push(water);
+      }
+      for (const b of Z.blocks || []) addSolid({ scope, kind: 'block', x1: X(b.x1), x2: X(b.x2), y1: Y(b.y), y2: floorY, region: reg, scene: i, theme: th, draw: false, secret: true });
+      // Repisas: en el mar, losas a flor de agua (las dibuja el juego); en la Luna, asteroides y la estación (pintados).
+      const ledges = (Z.ledges || []).map((q) => addPlatform({ scope, kind: water || q.floor ? 'floor' : 'thin', drop: !water && !q.floor,
+        x1: X(q.x1), x2: X(q.x2), y: water ? water.y - 2 : Y(q.y), h: water ? 14 : 9, theme: th, scene: i, region: reg, secret: true,
+        look: water ? 'losa' : null, draw: !!water, hidden: !water, painted: !water, arrive: q.arrive, exitAt: q.exit }));
+      const ledgeAt = ([px, py]) => ledges.find((p) => Math.abs(p.y - Y(py)) < 1 && X(px) >= p.x1 - 1 && X(px) <= p.x2 + 1);
+      let arrive, exitSpot;
+      if (water) {
+        const a = ledges.find((p) => p.arrive !== undefined), e = ledges.find((p) => p.exitAt !== undefined);
+        arrive = { x: X(a.arrive), y: a.y, plat: a };
+        exitSpot = { x: X(e.exitAt), y: e.y, plat: e };
+      } else {
+        arrive = { x: X(Z.arrive[0]), y: Y(Z.arrive[1]), plat: null };
+        exitSpot = { x: X(Z.exit[0]), y: Y(Z.exit[1]), plat: null };
+      }
+      const entryDoor = { id: scope + ':grieta', kind: 'secreto', x: doorX, y: near.y, plat: near, scene: i, region: 'main', room: reg,
+        to: { x: arrive.x, y: arrive.y, region: reg }, phase: rng() * 6, secret: Z.id, look: th };
+      const exitDoor = { id: scope + ':salida-secreta', kind: Z.exitKind || 'salida', x: exitSpot.x, y: exitSpot.y, plat: exitSpot.plat, scene: i, region: reg,
+        room: reg, to: { x: backX, y: near.y, region: 'main' }, phase: rng() * 6, look: th };
+      W.doors.push(entryDoor, exitDoor);
+      room.entry = entryDoor; room.exit = exitDoor;
+      // Enemigos del paquete «enemigos secretos» (en FÁCIL, uno de cada tipo) y el jefe de la zona.
+      const floorPl = { x1: rx + 16, x2: rx + AW - 16, y: floorY, w: AW - 32, occupied: [] };
+      const platOf = (q) => (q.plat === 'floor' ? { x1: X(q.x1), x2: X(q.x2), y: floorY, w: X(q.x2) - X(q.x1), occupied: [] } : ledgeAt(q.plat));
+      for (const q of Z.foes || []) {
+        if (q.extra && diffKey === 'facil') continue;
+        if (water) {
+          addFoe(EN.create(q.kind, { x: X((q.x1 + q.x2) / 2), y: Y(q.y), waterZone: water, lane: { x1: X(q.x1), x2: X(q.x2) }, scene: i, region: reg, diff, rng }));
+        } else {
+          const pl = platOf(q);
+          if (pl) addFoe(EN.create(q.kind, { x: (pl.x1 + pl.x2) / 2, y: pl.y, plat: pl, scene: i, region: reg, diff, rng }));
+        }
+      }
+      if (Z.boss) {
+        const B = Z.boss, pl = water ? null : platOf(B);
+        const boss = water
+          ? EN.create(B.kind, { x: X((B.x1 + B.x2) / 2), y: Y(B.y), waterZone: water, lane: { x1: X(B.x1), x2: X(B.x2) }, scene: i, region: reg,
+            diff, rng, isBoss: true, bossName: B.name, hp: B.hp })
+          : EN.create(B.kind, { x: (pl.x1 + pl.x2) / 2, y: pl.y, plat: pl, scene: i, region: reg, diff, rng, isBoss: true, bossName: B.name, hp: B.hp });
+        boss.secret = Z.id; boss.arena = pl || floorPl;
+        addFoe(boss);
+        room.boss = boss;
+      }
+      for (const [gx, gy] of Z.gems || []) addGem(X(gx), Y(gy), i, reg, rng);
+      if (Z.heart) addPickup({ scope, type: 'power', power: 'heart', x: X(Z.heart[0]), y: Y(Z.heart[1]), scene: i, region: reg, phase: rng() * 6, secret: true });
+    }
+
     /* ---------- Meta: la terminal y el camión ---------- */
     const busX1 = 150, busX2 = 500;
     W.bus = { x1: busX1, x2: busX2, y1: streetY - 150, y2: streetY, doorX1: busX1 + 22, doorX2: busX1 + 78, state: 'waiting', t: 0 };
     W.goal = { x1: W.bus.doorX1 - 6, x2: W.bus.doorX2 + 6, y1: streetY - 110, y2: streetY + 1 };
     W.signs.push({ id: 'mundo:letrero:terminal', x: busX1 - 60, y: streetY, text: ST.MESSAGES.busWaiting, scene: W.scenes.length - 1, region: 'main', seenT: -99, busStop: true });
 
+    /* V58.9 · Menos cristales en pantalla: en el recorrido principal había filas de cristales a cada paso (100–270 por
+       nivel) y tapaban el dibujo. Se conserva uno cada ~200 u (el primero de cada grupo, de arriba abajo); siguen
+       marcando el camino. Los de las zonas inferiores y secretas son premio y se quedan todos. */
+    {
+      const MIN = 200, grid = new Map(), drop = new Set(), key = (x, y) => Math.floor(x / MIN) + ',' + Math.floor(y / MIN);
+      const gems = W.pickups.filter((g) => g.type === 'gem' && g.region === 'main').sort((a, b) => a.y - b.y || a.x - b.x);
+      for (const g of gems) {
+        const cx = Math.floor(g.x / MIN), cy = Math.floor(g.y / MIN);
+        let near = false;
+        for (let i = -1; i <= 1 && !near; i++) for (let j = -1; j <= 1 && !near; j++) {
+          for (const k of grid.get((cx + i) + ',' + (cy + j)) || []) if (Math.hypot(k.x - g.x, k.y - g.y) < MIN) { near = true; break; }
+        }
+        if (near) { drop.add(g); continue; }
+        const kk = key(g.x, g.y);
+        if (!grid.has(kk)) grid.set(kk, []);
+        grid.get(kk).push(g);
+      }
+      W.pickups = W.pickups.filter((g) => !drop.has(g));
+    }
+
     W.platforms.sort((a, b) => a.y - b.y);
+    // V58: clave de orden fija (la y de origen) para buscar por franjas de altura en la física.
+    for (const p of W.platforms) p.sortY = p.y;
+    W.platformsSorted = true;
     W.spawn = { x: W.checkpoints[0].x, y: W.checkpoints[0].y };
     W.totalItems = W.pickups.filter((p) => p.type === 'item').length;
     W.totalGems = W.pickups.filter((p) => p.type === 'gem').length;

@@ -159,10 +159,18 @@ test('plataformas visibles: solo se ocultan las que el fondo trae pintadas; jefe
   const W = NS.World.buildWorld({});
   for (const sc of W.scenes) {
     const surf = W.platforms.filter((p) => p.scene === sc.index && p.painted && p.kind === 'floor');
-    if (sc.artPainted) assert.ok(surf.every((p) => p.hidden), sc.id + ': cornisas pintadas en el fondo');
-    else assert.ok(surf.every((p) => !p.hidden && p.draw), sc.id + ': cornisas dibujadas por el juego');
+    // V58: en los niveles pintados se ocultan las cornisas trazadas sobre el arte (original y espejo); las de la
+    // mitad nueva (generadas) las dibuja el juego.
+    if (sc.artPainted && sc.map.worldArt) {
+      assert.ok(surf.length && surf.every((p) => p.hidden), sc.id + ': todo su trazado está pintado en su lámina');
+    } else if (sc.artPainted) {
+      assert.ok(surf.filter((p) => !p.gen).every((p) => p.hidden), sc.id + ': cornisas pintadas en el fondo');
+      assert.ok(surf.filter((p) => p.gen).every((p) => !p.hidden && p.draw), sc.id + ': cornisas nuevas dibujadas por el juego');
+      assert.ok(surf.some((p) => p.gen), sc.id + ': tiene mitad nueva');
+    } else assert.ok(surf.every((p) => !p.hidden && p.draw), sc.id + ': cornisas dibujadas por el juego');
   }
-  assert.ok(W.scenes.filter((s) => s.artPainted).map((s) => s.id).join() === 'escuela,portales');
+  // V58.1: los tres niveles con fondo «Guadalajara Azoteas PRO V2» también son pintados (cornisas en sus colisiones).
+  assert.equal(W.scenes.filter((s) => s.artPainted).map((s) => s.id).join(), 'escuela,guadalajara,escuela_vecina,escuela_ruinas,centro_historico,portales');
   for (const f of W.foes.filter((q) => q.isBoss)) {
     const arena = f.arena;
     assert.ok(arena && arena.w >= 200, f.id + ': arena amplia (' + (arena && arena.w.toFixed(0)) + ' u)');

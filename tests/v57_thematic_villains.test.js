@@ -27,10 +27,13 @@ function player(x,y) {
 test('V57: dos misiones especiales usan enemigos propios, sin palomas submarinas', () => {
   const sub = NS.World.buildWorld({ levels: [LV.SUBMARINO_LEVEL] });
   const space = NS.World.buildWorld({ levels: [LV.ESPACIAL_LEVEL] });
-  const shark = sub.foes.find(f => f.kind === 'shark' && f.isBoss);
-  assert.ok(shark, 'tiburón guardián submarino');
+  // V58.2: el jefe del mar es Poseidón (custodia la escotilla); los tiburones pasan a ser enemigos comunes del mar.
+  const shark = sub.foes.find(f => f.kind === 'poseidon' && f.isBoss);
+  assert.ok(shark, 'Poseidón, jefe submarino');
   assert.ok(shark.waterZone && shark.waterZone.deep, 'jefe dentro de agua profunda');
   assert.ok(shark.y > shark.waterZone.y && shark.y < shark.waterZone.y2, 'jefe no flota fuera del agua');
+  assert.ok(sub.foes.some(f => f.kind === 'shark' && !f.isBoss && f.waterZone && f.waterZone.deep), 'tiburones comunes en el mar');
+  assert.ok(sub.foes.some(f => f.kind === 'pulpo' && f.waterZone), 'pulpos en el mar');
   assert.ok(sub.foes.some(f => f.kind === 'piranha' && !f.isBoss), 'pirañas en el mundo submarino');
   assert.ok(sub.foes.every(f => f.kind !== 'pigeon' && f.kind !== 'bat'), 'no palomas ni murciélagos en mundo marino');
   const seen = new Map();
@@ -40,7 +43,9 @@ test('V57: dos misiones especiales usan enemigos propios, sin palomas submarinas
     assert.ok(f.y > f.waterZone.y && f.y < f.waterZone.y2);
     seen.set(f.waterZone.id, (seen.get(f.waterZone.id) || 0) + 1);
   }
-  assert.ok([...seen.values()].every(n => n <= 2), 'máximo dos pirañas por estanque');
+  // V58: máximo dos por poza; el mar abierto admite seis repartidas.
+  for (const f of sub.foes.filter(f => f.kind === 'piranha')) assert.ok(seen.get(f.waterZone.id) <= (f.waterZone.sea ? 6 : 2), 'pirañas por estanque');
+  assert.ok(sub.waters.some(z => z.sea), 'hay mar abierto');
   assert.ok(space.foes.some(f => f.kind === 'drone' && !f.isBoss), 'drones comunes en órbita');
   assert.ok(space.foes.some(f => f.kind === 'drone' && f.isBoss), 'dron centinela como jefe');
   assert.ok(space.foes.every(f => f.kind !== 'pigeon' && f.kind !== 'bat'), 'sin palomas/murciélagos en espacio');
@@ -151,9 +156,9 @@ test('V57: la cadena de evento y arte es consistente sin cambiar la geometría',
   assert.match(render, /f\.kind === 'piranha' \|\| f\.kind === 'shark'/);
   assert.match(render, /f\.kind === 'drone'/);
   assert.match(render, /s\.kind === 'plasma'/);
-  assert.match(read('sw.js'), /camion-v57-thematic-villains/);
-  assert.equal(LV.SUBMARINO_MAP.width, 940);
-  assert.equal(LV.SUBMARINO_MAP.height, 3072);
-  assert.equal(LV.ESPACIAL_MAP.width, 940);
-  assert.equal(LV.ESPACIAL_MAP.height, 3072);
+  assert.match(read('sw.js'), /camion-v5[7-9]-/);   // V58 renovó la caché (la de V57 se invalida)
+  // V58: los mundos especiales se rehicieron al doble (ver v54.test.js).
+  assert.ok(LV.SUBMARINO_MAP.width >= 1880);   // V58.1: trazado sobre el arte V4 (2039)
+  assert.ok(LV.ESPACIAL_MAP.width >= 1880);   // V58.1: trazado sobre el arte V5 (2205)
+  assert.ok(LV.SUBMARINO_MAP.height >= 6144 && LV.ESPACIAL_MAP.height >= 6144);
 });

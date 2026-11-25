@@ -62,3 +62,77 @@ button:focus-visible{outline:3px solid #fbd58b;outline-offset:3px}
  .menuActions .opt{min-width:120px}
 }
 @media(prefers-reduced-motion:reduce){.primary,.ctl,#banner,.tramo,.mission{animation:none;transition:none}}
+
+/* ---------- V58.6 · Menú principal compacto ----------
+   Cabecera (título + objetos), tarjetas de misión con el arte de su mundo, paradas y JUGAR, y una franja de
+   opciones abajo. En vertical: una columna; en horizontal y en PC: dos columnas, sin desplazarse. */
+#menu.menu{width:min(94vw,460px);max-height:min(94vh,860px);padding:16px 16px 12px;display:flex;flex-direction:column;gap:12px;border-radius:20px;
+ background:radial-gradient(ellipse at 100% 0%,#8a3c7d38,transparent 50%),linear-gradient(160deg,#121630fc,#0d1a2bfc 55%,#160f28fc);border-color:#bba5ff5c;box-shadow:0 24px 70px #02030dd0}
+#menu .menuHead{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+#menu .menuBrand{min-width:0}
+#menu .menuBrand .eyebrow{color:#ffadd5;font-size:10px;letter-spacing:.2em}
+#menu h1{font-size:clamp(28px,8.6vw,40px);line-height:.92;letter-spacing:-.05em;margin:6px 0 0;text-shadow:0 3px 0 #08070e,0 0 22px #e55d9640}
+#menu h1 span{display:block;color:var(--lime);text-shadow:0 0 15px #b0fc6950}
+#menu .menuStat{flex:none;display:grid;justify-items:end;gap:3px;padding:8px 10px;border-radius:12px;background:#ffffff0a;border:1px solid #ffffff14}
+#menu .menuStat b{font-size:18px;line-height:1;color:var(--lime);font-variant-numeric:tabular-nums}
+#menu .menuStat small{font-size:9px;font-weight:800;letter-spacing:.16em;color:#a9b6c8}
+#menu .pips{display:flex;gap:4px}
+#menu .pip{width:8px;height:8px;border-radius:2px;background:#2a3047;box-shadow:inset 0 0 0 1px #ffffff1f}
+#menu .pip.got{background:var(--lime);box-shadow:0 0 6px #c9ff7280}
+#menu .menuBody{display:flex;flex-direction:column;gap:12px;min-height:0}
+#menu .menuCol{min-width:0}
+#menu .label{margin:0 0 6px;font-size:10px;letter-spacing:.2em;color:#a9eddf}
+#menu .missionGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0}
+#menu #missions .mission{position:relative;isolation:isolate;overflow:hidden;display:grid;grid-template-rows:auto 1fr auto;justify-items:start;align-items:end;gap:2px;min-width:0;min-height:80px;padding:8px 10px;
+ border:1px solid #ffffff22;border-radius:12px;text-align:left;color:#fff;background:#1d2238 var(--art,none) center 25%/cover no-repeat;box-shadow:none;transition:transform .12s,box-shadow .12s}
+#menu #missions .mission::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,#0b0f1e30 0%,#0b0f1ee8 82%)}
+#menu .mission .mNum{font-size:10px;font-weight:950;letter-spacing:.08em;padding:2px 6px;border-radius:6px;background:#0b0f1ed0;color:var(--lime)}
+#menu .mission .mName{font-size:13px;font-weight:950;line-height:1.05;letter-spacing:.02em;text-shadow:0 1px 3px #000}
+#menu .mission .mMeta{font-size:9px;font-weight:800;letter-spacing:.1em;color:#d2dbec}
+#menu #missions .mission.sel{border-color:var(--lime);box-shadow:0 0 0 2px #c9ff72b0,0 8px 20px #0008}
+#menu #missions .mission:active{transform:scale(.98)}
+#menu #missions .mission.locked{filter:grayscale(1) brightness(.55);cursor:not-allowed}
+#menu #missions .mission.locked .mNum{color:#c3cad8}
+#menu .mission[data-m="escuela"]{--art:url("../assets/scenes/school_miguel_hidalgo/01_aulas_superiores.webp");background-position:center 6%}
+#menu .mission[data-m="guadalajara"]{--art:url("../assets/scenes/guadalajara_pro_v2/bg_centro_historico_pro_v2.webp");background-position:center 18%}
+#menu .mission[data-m="submarino"]{--art:url("../assets/cinematica/marino/fondo_isla_cima.webp");background-position:center 40%}
+#menu .mission[data-m="espacial"]{--art:url("../assets/parallax/espacial/depth_v5/background/page_01.webp");background-position:center 22%}
+#menu #tramos{display:flex;flex-wrap:wrap;gap:6px;margin:0}
+#menu .tramo{width:38px;height:38px;border-radius:10px;font-size:14px}
+#menu #start{margin-top:10px;min-height:50px;font-size:15px;letter-spacing:.05em}
+#menu .menuMeta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:8px 0 0;font-size:11px;line-height:1.35;color:#9fb0c4}
+#menu .chip{min-height:36px;padding:6px 12px;border-radius:999px;border:1px solid #aab9f250;background:#ffffff0d;color:#eef3ff;font-size:10px;font-weight:900;letter-spacing:.08em}
+#menu .chip:active{background:#453466}
+#menu .menuFoot{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding-top:10px;border-top:1px solid #ffffff14}
+#menu .menuFoot .opt{flex:1 1 28%;min-width:0;min-height:40px;padding:8px 6px;border-radius:10px;border:1px solid #ffffff24;background:#ffffff08;color:#dfe8f7;font-size:10.5px;letter-spacing:.06em}
+#menu .menuFoot .opt:active{background:#453466}
+@media(min-width:760px) and (min-height:560px){
+ #menu.menu{width:min(92vw,840px);padding:22px 24px 16px;gap:16px}
+ #menu h1{font-size:46px}
+ #menu h1 span{display:inline}
+ #menu .menuBody{flex-direction:row;gap:22px}
+ #menu .menuCol{flex:1 1 0}
+ #menu #missions .mission{min-height:104px;padding:10px 12px}
+ #menu .mission .mName{font-size:15px}
+ #menu .tramo{width:42px;height:42px}
+}
+@media(orientation:landscape) and (max-height:560px){
+ #menu.menu{width:min(96vw,860px);max-height:94vh;padding:10px 14px 8px;gap:8px}
+ #menu .menuHead{align-items:center}
+ #menu h1{font-size:clamp(20px,4.4vw,30px);margin-top:3px}
+ #menu h1 span{display:inline}
+ #menu .menuStat{padding:5px 9px}
+ #menu .menuBody{flex-direction:row;gap:14px}
+ #menu .menuCol{flex:1 1 0}
+ #menu .missionGrid{gap:6px}
+ #menu #missions .mission{min-height:60px;padding:6px 9px}
+ #menu .mission .mName{font-size:12px}
+ #menu .tramo{width:34px;height:34px;font-size:13px}
+ #menu #start{margin-top:8px;min-height:42px;padding:8px}
+ #menu .menuMeta{margin-top:6px;font-size:10.5px}
+ #menu .chip{min-height:32px;padding:4px 10px}
+ #menu .menuFoot{padding-top:6px}
+ #menu .menuFoot .opt{min-height:36px;padding:6px}
+}
+/* V58.6 · Con un panel abierto (menú, opciones), los avisos van abajo y por encima: ya no quedan medio tapados. */
+body:not(.playing) #toast{top:auto;bottom:max(10px,env(safe-area-inset-bottom));z-index:9}

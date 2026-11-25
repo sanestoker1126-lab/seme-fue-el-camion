@@ -40,7 +40,7 @@
     vib: [true, false], shake: ['normal', 'suave', 'no'], zoom: ['cerca', 'normal', 'lejos'],
     ctlSize: ['chico', 'normal', 'grande'], lefty: [false, true], landingRing: [true, false],
     catsHelp: [true, false], relaxed: [false, true], freeSelect: [false, true], cinematics: [true, false], fps: [false, true],
-    ninaLook: ['original', 'uniforme', 'rosa', 'buzo', 'astronauta']
+    ninaLook: ['original', 'rosa']   // V58.6: ropa de calle (Guadalajara y la isla); el uniforme, el buzo y el astronauta van por nivel
   };
   const readOpt = (k, def) => {
     const raw = store.get('camion-opt-' + k, null);
@@ -64,6 +64,15 @@
   Object.defineProperty(opt, 'music', { get: () => opt.musicVol > 0, enumerable: false });
   Object.defineProperty(opt, 'sfx', { get: () => opt.sfxVol > 0, enumerable: false });
   const cinematicSeen = () => !opt.cinematics || store.get('camion-cinematic-seen', '0') === '1';
+  // V58.2: la llegada al mar (Sofía asombrada + recuerdo con su papito Estoker) se ve la primera vez que empieza la misión 3.
+  const MARINE_CINE_KEY = 'camion-cinematic-marino-seen';
+  const marineCineSeen = () => store.get(MARINE_CINE_KEY, '0') === '1';
+  const refreshCineMenu = () => { if (NS.ToxiPlayer) NS.ToxiPlayer.refreshMenu(!!G.save.epilogue, marineCineSeen()); };
+  // El reproductor carga después de este archivo: al estar listo recibe el vestuario y pinta los botones del menú.
+  root.addEventListener('camion:toxiplayer-ready', () => {
+    if (NS.ToxiPlayer.setLook) NS.ToxiPlayer.setLook(opt.ninaLook);
+    refreshCineMenu();
+  });
   const FOE_TIPS = {
     rat: 'RATA · cae encima, patéala o usa DASH',
     dog: 'PERRO · avisa antes de embestir: salta y contraataca',
@@ -73,8 +82,17 @@
     pigeon: 'PALOMA · suelta «regalitos» si pasas debajo',
     kid: 'NIÑO · lanza piedras de lejos y embiste de cerca',
     piranha: 'PIRAÑA · vigila el agua y esquiva su carrera',
-    shark: 'TIBURÓN · espera a que termine de embestir',
-    drone: 'DRON · esquiva la marca y destruye su plasma con DASH'
+    shark: 'TIBURÓN · espera a que termine de embestir y golpéalo mareado',
+    pulpo: 'PULPO · se infla antes de lanzar tinta: esquívala o rómpela con DASH',
+    poseidon: 'POSEIDÓN · embiste con el tridente y lanza olas: golpéalo cuando quede mareado',
+    drone: 'DRON · esquiva la marca y destruye su plasma con DASH',
+    crab: 'CANGREJO · corre de lado: písalo, patéalo o usa DASH',
+    robot: 'ROBOT · embiste tras encender su visor: salta y golpéalo cuando se maree',
+    // V58.7 · zonas secretas
+    pulpito: 'PULPITO · de cerca se encoge y suelta un tentazo; de lejos escupe tinta: el DASH la rompe',
+    buzito: 'NIÑO BUZO · arroja piedras bajo el agua: esquívalas nadando o rómpelas con DASH',
+    marciano: 'MARCIANO · su puño brilla antes de disparar: muévete en cuanto lo veas',
+    astronino: 'NIÑO ASTRONAUTA · lanza piedras lunares de lejos y embiste de cerca'
   };
   const seenFoeKinds = new Set();
   const bossCinematicSeen = new Set();
@@ -93,8 +111,9 @@
     menu: () => toMenu(),
     togglePause: () => togglePause(),
     option: (k) => setOption(k),
-    look: (value) => chooseLook(value),
     resetProgress: () => resetProgress(),
+    story: () => playStory(),
+    epilogue: () => playEpilogue(),
     click: () => { audio.ensure(); audio.sfx('ui'); }
   });
 
@@ -102,6 +121,7 @@
   function applyOptions() {
     G.assist.catsHelp = opt.catsHelp; G.assist.relaxed = opt.relaxed;
     R.setOptions({ shake: { normal: 1, suave: 0.45, no: 0 }[opt.shake], landingRing: opt.landingRing, ninaLook: opt.ninaLook });
+    if (NS.ToxiPlayer && NS.ToxiPlayer.setLook) NS.ToxiPlayer.setLook(opt.ninaLook);
     const zf = { cerca: 0.86, normal: 1, lejos: 1.2 }[opt.zoom] || 1;
     G.viewScale = zf;
     const body = document.body;
@@ -112,8 +132,19 @@
     resize();
   }
 
+  // V58.6: los botones rápidos MÚSICA y EFECTOS (pausa) apagan y vuelven a encender el sonido. Antes llamaban a
+  // 'music'/'sfx', que no existían en OPTION_SPEC (desde V50 son volúmenes), y tocarlos no hacía nada.
+  const lastVol = { musicVol: 100, sfxVol: 100 };
   function setOption(k) {
     audio.ensure();
+    if (k === 'music' || k === 'sfx') {
+      const key = k + 'Vol';
+      if (opt[key] > 0) { lastVol[key] = opt[key]; opt[key] = 0; } else opt[key] = lastVol[key] || 100;
+      store.set('camion-opt-' + key, String(opt[key]));
+      if (key === 'musicVol') { if (opt.music && (G.state === 'playing' || G.state === 'transition')) audio.start(); else if (!opt.music) audio.stop(); }
+      applyOptions(); ui.paintOpts(opt); audio.sfx('ui');
+      return;
+    }
     const list = OPTION_SPEC[k];
     if (!list) return;
     const cur = opt[k], i = list.indexOf(cur);
@@ -129,18 +160,8 @@
     if (k === 'vib' && opt.vib) audio.vibrate(30);
   }
 
-  function chooseLook(value) {
-    if (!OPTION_SPEC.ninaLook.includes(value) || opt.ninaLook === value) return;
-    opt.ninaLook = value;
-    store.set('camion-opt-ninaLook', value);
-    applyOptions();
-    ui.paintMenu(G, opt);
-    audio.ensure();
-    audio.sfx('ui');
-  }
-
   function resetProgress() {
-    for (const key of [SAVE_KEY, 'camion-v35-save', 'camion-v34-save', 'camion-v33-save', 'camion-unlocked', 'camion-best-score', 'camion-descent-best', 'camion-cinematic-seen']) {
+    for (const key of [SAVE_KEY, 'camion-v35-save', 'camion-v34-save', 'camion-v33-save', 'camion-unlocked', 'camion-best-score', 'camion-descent-best', 'camion-cinematic-seen', MARINE_CINE_KEY]) {
       try { root.localStorage.removeItem(key); } catch (_) { /* sin almacenamiento */ }
     }
     for (let i = 0; i < 40; i++) { try { root.localStorage.removeItem('camion-boss-cinematic-v38-scene-' + i); } catch (_) { /* nada */ } }
@@ -148,6 +169,7 @@
     G.save = NS.Game.defaultSave();
     store.set(SAVE_KEY, JSON.stringify(G.save));
     ui.paintMenu(G, opt);
+    refreshCineMenu();
     ui.toast('PROGRESO BORRADO', 2, 2);
   }
 
@@ -160,8 +182,21 @@
       G.newRun({ mission, startTramo: tramo, difficulty: opt.difficulty });
       afterStart();
     };
-    if (!skipIntro && mission === 0 && tramo === 0 && !cinematicSeen()) ui.showCinematic(go); else go();
+    if (!skipIntro && mission === 0 && tramo === 0 && !cinematicSeen()) {
+      if (NS.ToxiPlayer && NS.ToxiPlayer.play({ set: 'prologo', onDone: go })) return;
+      ui.showCinematic(go);
+    } else if (!skipIntro && mission === 2 && tramo === 0 && opt.cinematics && !marineCineSeen() && NS.ToxiPlayer) {
+      // Terminarla o saltarla cuenta como vista (se repite desde el menú) y en ambos casos empieza la misión.
+      const dive = () => { store.set(MARINE_CINE_KEY, '1'); refreshCineMenu(); go(); };
+      if (!NS.ToxiPlayer.play({ set: 'marino', look: opt.ninaLook, finishLabel: '¡AL AGUA!', onDone: dive })) go();
+    } else go();
   }
+  function playStory() {
+    audio.ensure();
+    if (NS.ToxiPlayer && NS.ToxiPlayer.play({ set: 'prologo', onDone: (fin) => { if (fin) startRun(0, 0, true); } })) return true;
+    return false;
+  }
+  function playEpilogue() { audio.ensure(); return !!(NS.ToxiPlayer && NS.ToxiPlayer.play({ set: 'epilogo' })); }
   /* La Toxifamilia: entrega una mision SOLO al completar sus escenas.
      Mantiene intacta la seleccion normal del menu y no repite el intro de Sofía. */
   root.addEventListener('camion:toxifamilia:start-mission', (event) => {
@@ -178,8 +213,9 @@
     seenFoeKinds.clear();
     ui.show(null);
     acc = 0;
-    if (opt.music) audio.start();
+    // V58.3: primero el tema (para que el mar arranque directo con su banda sonora) y luego la música.
     audio.setTramo(G.tramo, !!G.room, sceneTheme(G.tramo));
+    if (opt.music) audio.start();
     handleEvents(G.drainEvents());
   }
   function toMenu() {
@@ -239,13 +275,15 @@
         case 'dying': audio.stop(); audio.sfx('lose'); break;
         case 'gameover': ui.showGameOver(e, G); break;
         case 'victoryStart': audio.stop(); audio.sfx('honk'); audio.sfx('motor'); audio.sfx('win'); audio.sfx('luna'); audio.sfx('morita'); break;
-        case 'victory': ui.showVictory(e); break;
+        case 'victory': ui.showVictory(e); refreshCineMenu(); break;
         case 'gem': audio.sfx('gem'); break;
         case 'power': audio.sfx('power'); break;
         case 'key': audio.sfx('key'); break;
         case 'item': audio.sfx('item'); ui.itemCard(e.item, e.first, e.count, e.total); break;
         case 'gateOpen': audio.sfx('gate'); break;
         case 'doorEnter': audio.sfx('door'); break;
+        case 'secretFound': audio.sfx('item'); audio.vibrate && audio.vibrate([30, 40, 30]); break;   // V58.7
+        case 'secretNear': audio.sfx('drip'); break;   // V58.7: un goteo apenas audible junto a la grieta
         case 'doorSwap': audio.setTramo(G.tramo, !!e.room, sceneTheme(G.tramo)); break;
         case 'checkpoint': audio.sfx('checkpoint'); audio.sfx(((e.cp?.scene ?? G.tramo) % 2) ? 'morita' : 'luna'); break;
         case 'companionWarning':
@@ -257,9 +295,21 @@
           ui.toast((e.cat === 'morita' ? 'MORITA' : 'LUNA') + ' distrajo al enemigo', 2, 1.1);
           break;
         case 'companionPurr': audio.sfx(e.cat === 'morita' ? 'moritaPurr' : 'lunaPurr'); break;
+        case 'catCommand': audio.sfx('cats'); audio.sfx(e.cat === 'morita' ? 'moritaAlert' : 'lunaAlert'); audio.vibrate && audio.vibrate(25); break;
+        case 'catScratch': audio.sfx('stomp'); audio.sfx('luna'); break;   // V58.2: el arañazo de Luna al caer sobre el enemigo
+        case 'ropeGrab': audio.sfx('zip'); break;
+        case 'ropeJump': case 'ropeDrop': audio.sfx('zipOff'); break;
         case 'crate': audio.sfx('stomp'); break;
         case 'enemyDiscovered':
-          if (e.foe?.isBoss) {
+          // V58.2: el otro gato maúlla al encontrar un enemigo (con su propio enfriamiento en audio.js).
+          if (e.foe && !e.foe.dead && (e.foe.scene | 0) >= G.tramo) audio.sfx('otroGato');
+          if (e.foe?.isBoss && e.foe.secret) {
+            // V58.7: jefe de una zona secreta: aviso propio, sin la cinemática de los jefes de las dos primeras paradas.
+            e.foe.bossIntroStart = animT;
+            G.shakeT = Math.max(G.shakeT || 0, 0.1);
+            audio.bossCue(e.foe.kind, 'intro', e.foe.scene);
+            ui.toast('JEFE SECRETO: ' + e.foe.bossName, 4, 2.6);
+          } else if (e.foe?.isBoss) {
             if ((e.foe.scene | 0) < G.tramo) break; // jefe de un tramo ya superado que asoma arriba: sin aviso
             e.foe.bossIntroStart = animT;
             const sceneIndex = e.foe.scene | 0;
@@ -367,10 +417,11 @@
     G.newRun({ startTramo: 0, difficulty: opt.difficulty });
     G.state = 'menu'; G.drainEvents();
     ui.paintMenu(G, opt); ui.show('menu');
+    refreshCineMenu();
     root.requestAnimationFrame(frame);
     const S = NS.LEVELS.LEVEL_SEQUENCE;
     const essential = [
-      ...S.map((d) => d.file).filter(Boolean), 'assets/backgrounds/atlas_parallax_city.webp',
+      ...S.map((d) => d.file).filter(Boolean), ...S.map((d) => d.overlay).filter(Boolean), 'assets/backgrounds/atlas_parallax_city.webp',
       'assets/companions/luna.png', 'assets/companions/morita.png', 'assets/companions/luna_shoulder.png', 'assets/companions/morita_shoulder.png',
       ...Object.values(R.COMPANIONS).flatMap((c) => [...c.idle, ...c.walk]),
       'assets/vehicles/camion_frame_01.png', 'assets/vehicles/camion_frame_02.png', 'assets/vehicles/camion_frame_03.png', 'assets/vehicles/camion_frame_04.png', 'assets/audio/motor_camion_guadalajara_v25.mp3', 'assets/audio/luna_ronroneo_v31.mp3', 'assets/audio/morita_ronroneo_v31.mp3', 'assets/audio/luna_alerta_v31.mp3', 'assets/audio/morita_alerta_v31.mp3', 'assets/audio/sofia_otro_gato_usuario_v38.mp3',
@@ -379,11 +430,12 @@
       ...Object.keys(NS.ART.SKINS).map((k) => 'assets/platforms/' + k + '.png'),
       ...(NS.ART.SWIM ? [NS.ART.SWIM.sheet] : []),   // V52: atlas de nado
       // V53: fondos de los mundos nuevos y gatitas submarinas.
-      'assets/scenes/generated/submarino_fondo.png', 'assets/scenes/generated/espacial_fondo.png',
       'assets/player/sofia/sofia_submarina_complementaria.png',
-      ...Object.values(R.PARALLAX_LAYERS || {}).flat(),
+      ...(R.backdropUrls ? R.backdropUrls() : []),   // V58: fondos del ancho del mundo, mar y órbita
       ...Object.values(R.COMPANIONS_SUB || {}).flatMap((c) => [...c.idle, ...c.walk, c.shoulder])];
-    for (const [kind, E] of Object.entries(NS.ART.ENEMY)) for (const f of Object.keys(E.frames)) essential.push('assets/enemies/v50/' + kind + '/' + f + '.png');
+    for (const [kind, E] of Object.entries(NS.ART.ENEMY)) for (const f of Object.keys(E.frames)) essential.push('assets/enemies/v50/' + kind + '/' + f + (R.enemyExt ? R.enemyExt(kind) : '.png'));
+    if (R.castUrls) essential.push(...R.castUrls());   // V58.1: Sofía y gatitas astronautas, niño con traje
+    if (R.secretUrls) essential.push(...R.secretUrls());   // V58.7: enemigos secretos, jefes nuevos y zonas secretas
     let timer;
     const res = await Promise.race([R.preload(essential), new Promise((r) => { timer = setTimeout(() => r(null), 1500); })]);
     clearTimeout(timer);

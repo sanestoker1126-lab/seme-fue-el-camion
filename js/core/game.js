@@ -15,7 +15,7 @@
   function defaultSave() {
     // V53 · progreso por misión: tramos desbloqueados en cada una (0 = misión bloqueada). La 1 empieza abierta.
     return { unlocked: 1, bestTime: 0, bestScore: 0, bestDepth: 0, items: {}, wins: 0,
-      missions: { escuela: 1, guadalajara: 0, submarino: 0, espacial: 0 } };
+      missions: { escuela: 1, guadalajara: 0, submarino: 0, espacial: 0 }, secrets: {} };
   }
 
   function createGame(opts = {}) {
@@ -89,8 +89,8 @@
     const active = (x, y) => onScreen(x, y, 280);
     // V52: sumergida a más de 14 u (la cabeza bajo el agua) los enemigos no la alcanzan: bucear también es esquivar.
     const NOWHERE = { x1: -1e9, y1: -1e9, x2: -1e9 + 1, y2: -1e9 + 1 };
-    const hurtbox = () => (G.P.water && G.P.submerged && G.P.y - G.P.h / 2 > G.P.water.y + 14) ? NOWHERE
-      : U.bodyRect(G.P, C.player.hurtScaleX, C.player.hurtScaleY, G.P.h * (1 - C.player.hurtScaleY) * 0.5);
+    const bodybox = () => U.bodyRect(G.P, C.player.hurtScaleX, C.player.hurtScaleY, G.P.h * (1 - C.player.hurtScaleY) * 0.5);
+    const hurtbox = () => (G.P.water && G.P.submerged && G.P.y - G.P.h / 2 > G.P.water.y + 14) ? NOWHERE : bodybox();
 
     /* ---------- Partida ---------- */
     function newRun(o = {}) {
@@ -101,16 +101,19 @@
       const hasMission = missions && o.mission != null;
       const mi = hasMission ? U.clamp(o.mission | 0, 0, missions.length - 1) : 0;
       G.mission = mi; G.missionId = missions ? missions[mi].id : 'escuela';
+      G.runMission = hasMission ? mi : null;   // V58: el reintento reconstruye la MISMA misión (antes armaba la secuencia completa)
       const W = NS.World.buildWorld({ difficulty: G.difficulty, seed: o.seed, levels: hasMission ? missions[mi].levels : undefined });
       G.world = W;
       const startTramo = U.clamp(o.startTramo | 0, 0, W.scenes.length - 1);
-      const cp = W.checkpoints[startTramo];
+      // V58: reintentar desde una parada intermedia reaparece ahí y no al inicio del nivel.
+      const mid = o.startMid ? (W.midpoints || []).find((q) => q.scene === startTramo) : null;
+      const cp = mid || W.checkpoints[startTramo];
       G.P = PHY.createPlayer(cp.x, cp.y);
       G.P.ground = cp.plat;
-      G.P.invuln = startTramo > 0 ? 1.2 : 0;
+      G.P.invuln = startTramo > 0 || mid ? 1.2 : 0;
       G.run = {
         t: 0, score: 0, combo: 0, comboT: 0, gems: 0, lives: d.lives, maxLives: d.lives, items: [],
-        keys: new Set(), deaths: o.deaths || 0, startTramo, maxDepth: 0, kills: 0, bosses: 0, seenChapters: new Set(), busSeen: false,
+        keys: new Set(), deaths: o.deaths || 0, startTramo, maxDepth: 0, kills: 0, bosses: 0, secretBosses: 0, secrets: 0, seenChapters: new Set(), busSeen: false,
         carriedItems: o.carriedItems ? o.carriedItems.slice() : []
       };
       for (const it of G.run.carriedItems) {
@@ -120,7 +123,8 @@
       }
       G.region = 'main'; G.room = null; G.tramo = startTramo; G.transition = null;
       G.timers = { dying: 0, victory: 0 }; G.shakeT = 0; G.fx = []; G.waterFx = []; G.bubbleT = 0; G.msgCD = Object.create(null); G.events.length = 0;
-      G.companions = { warningT: 0, meowCD: 0, senseCD: 0.8, assistCD: 4.2, warningCat: 'luna', warningKind: '', nextCat: 'luna', action: 'idle', actionT: 0, purrNext: 3.4, agents: createCompanionAgents(G.P) };
+      G.companions = { warningT: 0, meowCD: 0, senseCD: 0.8, assistCD: 4.2, warningCat: 'luna', warningKind: '', nextCat: 'luna', action: 'idle', actionT: 0, purrNext: 3.4, agents: createCompanionAgents(G.P),
+        cmdCD: 0, cmdMax: C.cats.cooldown, lastCmd: '' };
       activateCheckpoint(cp, true);
       updateCamera(0, true);
       G.state = 'playing';
@@ -130,14 +134,19 @@
     }
 
     function retry() {
-      const cpScene = G.checkpoint ? G.checkpoint.scene : 0;
-      const carried = G.run ? G.run.items.filter((i) => i < cpScene) : [];
-      newRun({ startTramo: cpScene, deaths: G.run ? G.run.deaths : 0, carriedItems: carried });
+      const cp = G.checkpoint, cpScene = cp ? cp.scene : 0;
+      // Objetos que ya se llevan: los de tramos anteriores a la parada (y, si es intermedia, los del mismo tramo).
+      // V58: se compara el tramo donde estaba el objeto, no su índice de historia (en la misión 2 no coinciden).
+      const sceneOfItem = (idx) => { const pk = G.world.pickups.find((p) => p.type === 'item' && p.itemIndex === idx); return pk ? pk.scene : Infinity; };
+      const carried = G.run ? G.run.items.filter((i) => sceneOfItem(i) < cpScene || (cp && cp.mid && sceneOfItem(i) === cpScene)) : [];
+      newRun({ mission: G.runMission, startTramo: cpScene, startMid: !!(cp && cp.mid), deaths: G.run ? G.run.deaths : 0, carriedItems: carried });
     }
 
     function activateCheckpoint(cp, silent) {
       for (const c of G.world.checkpoints) c.active = c === cp;
+      for (const c of G.world.midpoints || []) c.active = c === cp;
       G.checkpoint = cp;
+      if (cp.mid) { if (!silent) { emit('checkpoint', { cp }); message('cp', ST.MESSAGES.midCheckpoint, 3); } return; }
       if (!G.save.missions) G.save.missions = {};
       let changed = false;
       if (cp.scene + 1 > (G.save.missions[G.missionId] || 0)) { G.save.missions[G.missionId] = cp.scene + 1; changed = true; }
@@ -166,7 +175,7 @@
       c.warningCat = c.nextCat;
       c.nextCat = c.nextCat === 'luna' ? 'morita' : 'luna';
       const agent = c.agents && c.agents[c.warningCat];
-      if (agent && agent.mode !== 'assist') { agent.mode = 'alert'; agent.modeT = 1.65; }
+      if (agent && agent.mode !== 'assist' && agent.mode !== 'pounce' && agent.mode !== 'fetch') { agent.mode = 'alert'; agent.modeT = 1.65; }
       if (c.meowCD <= 0) {
         c.meowCD = 2.8;
         emit('companionWarning', { cat: c.warningCat, kind: c.warningKind });
@@ -214,6 +223,26 @@
         a.phase += dt * (a.moving ? 2.8 : 0.9);
         a.modeT = Math.max(0, a.modeT - dt);
 
+        if (a.mode === 'pounce' && a.pounce) {
+          const pz = a.pounce, f = a.target;
+          pz.t += dt / 0.36;
+          const k = Math.min(1, pz.t), tx = f ? f.x - Math.sign(f.x - pz.x0 || 1) * 6 : pz.x0, ty = f ? f.y - (f.h || 20) * 0.35 : pz.y0;
+          a.x = pz.x0 + (tx - pz.x0) * k; a.y = pz.y0 + (ty - pz.y0) * k - Math.sin(k * Math.PI) * 58;
+          a.face = tx < pz.x0 ? -1 : 1; a.moving = true; a.vx = 0;
+          if (pz.t >= 1 && !pz.hit) { pz.hit = true; catStrike(f); }
+          if (pz.t >= 1.55) { a.mode = 'return'; a.pounce = null; a.target = null; }
+          continue;
+        }
+        if (a.mode === 'fetch' && a.fetch) {
+          const fz = a.fetch;
+          fz.t += dt;
+          const goingOut = fz.t < 0.45, k = goingOut ? fz.t / 0.45 : Math.min(1, (fz.t - 0.45) / 0.5);
+          const fx0 = goingOut ? fz.x0 : fz.tx, fy0 = goingOut ? fz.y0 : fz.ty, fx1 = goingOut ? fz.tx : P.x + side * 46, fy1 = goingOut ? fz.ty : P.y + P.h / 2;
+          a.x = fx0 + (fx1 - fx0) * k; a.y = fy0 + (fy1 - fy0) * k - Math.sin(k * Math.PI) * 26;
+          a.face = fx1 < fx0 ? -1 : 1; a.moving = true; a.vx = 0;
+          if (fz.t >= 0.95) { a.mode = 'follow'; a.fetch = null; }
+          continue;
+        }
         if (a.mode === 'assist' && (!a.target || a.target.dead || a.modeT <= 0)) {
           a.target = null; a.mode = 'return';
         }
@@ -235,6 +264,8 @@
           }
         }
 
+        // V58: en la tirolesa las dos viajan en los hombros de Sofía.
+        if ((P.zip || P.rope) && a.mode !== 'assist' && a.mode !== 'pounce') { a.mode = 'shoulder'; a.modeT = 0.35; }
         if (COMPANION_IDLE_MODES.has(a.mode) && a.modeT <= 0) a.mode = a.mode === 'explore' ? 'return' : 'follow';
         if (a.mode === 'return') {
           const homeX = companionAnchorX(P.x + side * 48, P);
@@ -249,12 +280,16 @@
           tx = companionAnchorX(a.target.x - side * 20, P);
           ty = a.target.y + (a.target.h || 30) * 0.5;
         }
-        // V52: las gatitas no nadan: mientras Sofía está en agua profunda la esperan en la orilla más cercana.
-        if (P.water && a.mode !== 'assist') {
+        // V52: en tierra las gatitas no nadan: mientras Sofía está en agua profunda la esperan en la orilla.
+        // V58: en el mundo marino llevan casco y tanque: bucean a su lado.
+        const diving = P.water && P.water.theme === 'submarino';
+        if (P.water && a.mode !== 'assist' && diving) { tx = P.x + side * 40; ty = P.y + P.h / 2 - 6; }
+        else if (P.water && a.mode !== 'assist') {
           const z = P.water, nearLeft = P.x - z.x1 < z.x2 - P.x;
           tx = nearLeft ? z.x1 - 16 - (side < 0 ? 20 : 0) : z.x2 + 16 + (side > 0 ? 20 : 0);
           ty = z.y - 3;
         }
+        if (a.mode === 'shoulder' && (P.zip || P.rope)) { a.x = P.x + side * 12; a.y = foot; a.vx = 0; }
 
         const dx = tx - a.x, dy = ty - a.y;
         if (Math.hypot(dx, dy) > 230) {
@@ -292,14 +327,68 @@
       c.warningT = Math.max(c.warningT, 0.78);
       c.action = 'assist'; c.actionT = 0.78;
       const agent = c.agents && c.agents[c.warningCat];
-      if (agent) { agent.mode = 'assist'; agent.modeT = 0.58; agent.target = target; }
+      if (agent && agent.mode !== 'pounce' && agent.mode !== 'fetch') { agent.mode = 'assist'; agent.modeT = 0.58; agent.target = target; }
       emit('companionAssist', { cat: c.warningCat, foe: target });
+    }
+
+    /* ---------- V58 · Orden a las gatitas (botón GATAS) ----------
+       Si hay un enemigo cerca, Luna se lanza contra él: los comunes caen y un jefe recibe un golpe (si está
+       embistiendo de frente solo se marea). Si no hay enemigos, Morita trae los cristales cercanos.
+       Enfriamiento compartido (CONFIG.cats.cooldown). Devuelve qué hizo o null. */
+    function catCommand() {
+      const c = G.companions, P = G.P, W = G.world, CC = C.cats;
+      if (!c || !W || G.state !== 'playing' || P.dead || c.cmdCD > 0) { if (c && c.cmdCD > 0) message('catsCD', ST.MESSAGES.catsTired, 1.4, 0); return null; }
+      const near = W.foes.filter((f) => !f.dead && f.region === G.region && onScreen(f.x, f.y, 10) && Math.hypot(f.x - P.x, f.y - P.y) < CC.range)
+        .sort((a, b) => Math.hypot(a.x - P.x, a.y - P.y) - Math.hypot(b.x - P.x, b.y - P.y));
+      c.cmdCD = CC.cooldown; c.cmdMax = CC.cooldown;
+      if (near.length) {
+        const f = near[0], agent = c.agents && c.agents.luna;
+        // V58.2: Luna salta en arco hasta el enemigo y lo araña al caer (el golpe llega con ella, no antes).
+        if (agent) { agent.mode = 'pounce'; agent.modeT = 1.4; agent.target = f; agent.pounce = { t: 0, x0: agent.x, y0: agent.y, hit: false }; }
+        else catStrike(f);
+        c.warningCat = 'luna'; c.warningKind = 'enemy'; c.action = 'assist'; c.actionT = 0.7; c.lastCmd = 'luna';
+        burst(f.x, f.y - 14, 0xfff3c4, 16);
+        emit('catCommand', { cat: 'luna', foe: f });
+        message('catCmd', ST.MESSAGES.catsAttack, 1.2, 2);
+        return 'luna';
+      }
+      let n = 0;
+      for (const g of W.pickups) {
+        if (g.got || g.type !== 'gem' || g.region !== G.region) continue;
+        if (Math.hypot(g.x - P.x, g.y - P.y) < CC.gemRange) { g.fetchT = 2.2; n++; (W._chasing = W._chasing || new Set()).add(g); }
+      }
+      const agent = c.agents && c.agents.morita;
+      // V58.2: Morita corre hasta donde están los cristales y vuelve con ellos (vuelan detrás de ella hacia Sofía).
+      const fetched = W.pickups.filter((g) => g.fetchT > 0 && !g.got);
+      if (agent && fetched.length) {
+        const far = fetched.reduce((b, g) => (Math.hypot(g.x - P.x, g.y - P.y) > Math.hypot(b.x - P.x, b.y - P.y) ? g : b));
+        agent.mode = 'fetch'; agent.modeT = 1.4; agent.fetch = { t: 0, x0: agent.x, y0: agent.y, tx: far.x, ty: far.y + 14 };
+      } else if (agent) { agent.mode = 'explore'; agent.modeT = 0.9; }
+      c.action = 'excited'; c.actionT = 0.9; c.lastCmd = 'morita';
+      emit('catCommand', { cat: 'morita', gems: n });
+      message('catCmd', n ? ST.MESSAGES.catsFetch.replace('{n}', n) : ST.MESSAGES.catsNothing, 1.4, 2);
+      if (!n) c.cmdCD = Math.min(c.cmdCD, 1.2);   // sin nada que traer, se recupera pronto
+      return 'morita';
+    }
+
+    /** V58.2: el arañazo de Luna (al llegar su salto). Un jefe que embiste de frente solo queda mareado. */
+    function catStrike(f) {
+      const P = G.P, ev = [];
+      if (!f || f.dead) return;
+      if (f.isBoss && EN.bossArmored(f, P)) { f.state = 'dizzy'; f.stateT = 0; }
+      else EN.hit(f, 'cat', ev, f.x - (Math.sign(f.x - P.x) || 1) * 20);
+      for (const e of ev) handleWorldEvent(e);
+      burst(f.x, f.y - 14, 0xfff3c4, 16);
+      (G.catFx = G.catFx || []).push({ kind: 'claw', x: f.x, y: f.y - (f.h || 24) * 0.55, t: 0, dir: Math.sign(f.x - P.x) || 1 });
+      emit('catScratch', { cat: 'luna', foe: f });
     }
 
     /* ---------- Daño ---------- */
     function hurt(srcX, srcY, kind) {
       const P = G.P, CB = C.combat;
       if (G.state !== 'playing' || P.invuln > 0 || P.dead || G.godMode) return false;
+      if (P.zip) { P.zip = null; P.zipCD = 0.6; }   // V58: un golpe la suelta de la tirolesa
+      if (P.rope) { P.ropeLast = P.rope; P.rope = null; P.ropeCD = 0.6; }   // V58.2: y de la cuerda
       const dir = U.sign(P.x - srcX) || -P.face || 1;
       if (P.shield) {
         P.shield = false;
@@ -318,6 +407,10 @@
       if (kind !== 'fall') { P.vx = dir * CB.knockX; P.vy = CB.knockY; P.noCut = true; P.ground = null; }
       G.shakeT = Math.max(G.shakeT, 0.3);
       emit('hurt', { kind, lives: G.run.lives, x: P.x, y: P.y });
+      if (G.companions && G.companions.agents && kind !== 'fall') {
+        for (const name of COMPANION_NAMES) { const a = G.companions.agents[name]; if (a && a.mode !== 'pounce' && a.mode !== 'fetch') { a.mode = 'alert'; a.modeT = 0.8; } }
+        G.companions.hissT = 0.8;
+      }
       burst(P.x, P.y - 10, 0xff6b69, 14);
       if (G.run.lives <= 0) die();
       return true;
@@ -325,6 +418,7 @@
 
     function die() {
       const P = G.P;
+      P.zip = null; P.rope = null;
       P.dead = true; P.vx = 0; P.vy = P.water ? 40 : -260; P.ground = null; P.noCut = true;   // en el agua se hunde
       G.state = 'dying'; G.timers.dying = 0;
       G.run.deaths++;
@@ -370,13 +464,20 @@
       if (next) G.save.missions[next.id] = Math.max(G.save.missions[next.id] || 0, 1);
       const depth = Math.floor(r.maxDepth / 10);
       if (depth > G.save.bestDepth) G.save.bestDepth = depth;
+      // V58 · Escena post-créditos (nexo con Legend of Presos): al terminar la última misión con las 6 llaves.
+      const keys = ST.ITEMS.filter((it) => G.save.items[it.id]).length;
+      const lastMission = !missions || G.mission === missions.length - 1;
+      const postCredits = lastMission && keys >= ST.ITEMS.length;
+      if (postCredits) G.save.epilogue = true;
       persist();
-      emit('victory', { summary: summary(), stars, newTime, newScore, fullRun, ending: ST.ending(items, total, r.lives) });
+      emit('victory', { summary: summary(), stars, newTime, newScore, fullRun, ending: ST.ending(items, total, r.lives),
+        postCredits, keys, totalKeys: ST.ITEMS.length, lastMission });
     }
 
     function summary() {
       const r = G.run;
-      return { time: r.t, score: r.score, gems: r.gems, lives: r.lives, maxLives: r.maxLives, items: r.items.slice(), totalItems: G.world.totalItems, depth: Math.floor(r.maxDepth / 10), kills: r.kills, bosses: r.bosses, totalBosses: G.world.foes.filter((f) => f.isBoss).length, deaths: r.deaths, tramo: G.tramo, relaxed: !!G.assist.relaxed };
+      return { time: r.t, score: r.score, gems: r.gems, lives: r.lives, maxLives: r.maxLives, items: r.items.slice(), totalItems: G.world.totalItems, depth: Math.floor(r.maxDepth / 10), kills: r.kills, bosses: r.bosses, totalBosses: G.world.foes.filter((f) => f.isBoss && !f.secret).length, secrets: r.secrets || 0,
+        totalSecrets: G.world.rooms.filter((q) => q.secret).length, secretBosses: r.secretBosses || 0, deaths: r.deaths, tramo: G.tramo, relaxed: !!G.assist.relaxed };
     }
 
     /* ---------- Puntuación y efectos ---------- */
@@ -438,8 +539,17 @@
         updateRegion();
         updateCamera(0, true);
         const room = G.room;
+        // V58.7: la primera vez que se entra a una zona secreta se anuncia y queda guardada.
+        if (room && room.secret && !room.visited) {
+          G.run.secrets = (G.run.secrets || 0) + 1;
+          const first = !(G.save.secrets && G.save.secrets[room.secret]);
+          G.save.secrets = Object.assign({}, G.save.secrets, { [room.secret]: true }); persist();
+          addScore(C.scoring.secret);
+          emit('secretFound', { room, first });
+        }
         if (room && !room.visited) { room.visited = true; }
-        if (room) message('room', ST.MESSAGES.roomEnter[room.theme] || 'ZONA ESCONDIDA', 2.5);
+        if (room && room.secret) message('room', '¡ZONA SECRETA! ' + room.label, 3, 2);
+        else if (room) message('room', ST.MESSAGES.roomEnter[room.theme] || 'ZONA ESCONDIDA', 2.5);
         else message('roomExit', ST.MESSAGES.roomExit, 2.5);
         emit('doorSwap', { door: tr.door, room });
       }
@@ -456,16 +566,40 @@
     }
 
     /* ---------- Recogida ---------- */
+    /* V58: índice de recogibles por franjas de 200 u de altura (hay ~1400 en la misión 2). Se busca en ±400 u: cubre
+       lo que el imán (170 u) o Morita (360 u) acercan desde su franja original. Se rehace si se agregan (cajas rotas). */
+    const BAND = 200, REACH_BANDS = 2;
+    function pickupBands(W) {
+      if (!W._pk || W._pkN !== W.pickups.length) {
+        W._pk = new Map();
+        for (const pk of W.pickups) { const b = Math.floor(pk.baseY / BAND); if (!W._pk.has(b)) W._pk.set(b, []); W._pk.get(b).push(pk); }
+        W._pkN = W.pickups.length;
+      }
+      return W._pk;
+    }
     function updatePickups(dt) {
       const P = G.P, W = G.world, PW = C.powers;
+      for (const pk of W.pickups) if (pk.baseY === undefined) { pk.baseX = pk.x; pk.baseY = pk.y; }
+      const bands = pickupBands(W), b0 = Math.floor(P.y / BAND);
+      const near = [];
+      for (let b = b0 - REACH_BANDS; b <= b0 + REACH_BANDS; b++) { const l = bands.get(b); if (l) for (const pk of l) if (!pk.got) near.push(pk); }
+      // Los que Morita trae persiguen a Sofía aunque ella ya esté lejos de donde estaban.
+      if (W._chasing) for (const g of W._chasing) { if (g.got || !(g.fetchT > 0)) W._chasing.delete(g); else if (Math.abs(Math.floor(g.baseY / BAND) - b0) > REACH_BANDS) near.push(g); }
       if (P.magnetT > 0) {
-        for (const g of W.pickups) {
+        for (const g of near) {
           if (g.got || g.type !== 'gem') continue;
           const dx = P.x - g.x, dy = P.y - g.y, d = Math.hypot(dx, dy);
           if (d < PW.magnetRadius && d > 1) { g.x += (dx / d) * PW.magnetSpeed * dt; g.y += (dy / d) * PW.magnetSpeed * dt; }
         }
       }
-      for (const pk of W.pickups) {
+      // V58: cristales que Morita va trayendo hasta Sofía.
+      for (const g of near) {
+        if (!(g.fetchT > 0) || g.got) continue;
+        g.fetchT -= dt;
+        const dx = P.x - g.x, dy = P.y - g.y, d = Math.hypot(dx, dy);
+        if (d > 1) { const v = Math.min(d, C.cats.fetchSpeed * dt); g.x += (dx / d) * v; g.y += (dy / d) * v; }
+      }
+      for (const pk of near) {
         if (pk.got) continue;
         if (Math.abs(P.x - pk.x) > 40 || Math.abs(P.y - pk.y) > 60) continue;
         const reach = pk.type === 'gem' ? 29 : 32;
@@ -510,6 +644,16 @@
 
     function updateSigns() {
       const P = G.P, foot = P.y + P.h / 2;
+      // V58.7: la primera vez en la partida que Sofía pasa junto a una grieta secreta, una pista (sin decir qué hay).
+      if (!G.run.secretHint) {
+        for (const d of G.world.doors) {
+          if (d.kind !== 'secreto' || d.region !== G.region || Math.abs(P.x - d.x) > 150 || Math.abs(foot - d.y) > 70) continue;
+          G.run.secretHint = true;
+          message('secretHint', ST.MESSAGES.secretHint, 30, 1);
+          emit('secretNear', { door: d });
+          break;
+        }
+      }
       for (const s of G.world.signs) {
         const near = Math.abs(P.x - s.x) < 46 && Math.abs(foot - s.y) < 40;
         if (near && !s.near && G.run.t - s.seenT > 4) { s.seenT = G.run.t; emit('sign', { sign: s }); }
@@ -534,6 +678,7 @@
         G.companions.warningT = Math.max(0, G.companions.warningT - dt);
         G.companions.meowCD = Math.max(0, G.companions.meowCD - dt);
         G.companions.actionT = Math.max(0, G.companions.actionT - dt);
+        G.companions.cmdCD = Math.max(0, (G.companions.cmdCD || 0) - dt);
         if (G.companions.actionT <= 0 && G.companions.action !== 'idle') G.companions.action = 'idle';
         scanCompanionThreats(dt);
         updateCompanionAgents(dt);
@@ -548,7 +693,7 @@
       if (G.run.comboT <= 0) G.run.combo = 0;
       PHY.updatePlatforms(W, W.t, dt);
 
-      const ctx = { active, onScreen, hurt, hurtbox, jumpHeld: !!inp.jumpHeld, busy: G.state !== 'playing' };
+      const ctx = { active, onScreen, hurt, hurtbox, bodybox, jumpHeld: !!inp.jumpHeld, busy: G.state !== 'playing' };
 
       if (G.state === 'transition') stepTransition(dt);
       else if (G.state === 'dying') {
@@ -565,6 +710,7 @@
           const d = doorAt(P);
           if (d) { startTransition(d); input = Object.assign({}, inp, { downPressed: false }); }
         }
+        if (G.state === 'playing' && inp.catsPressed) catCommand();
         if (G.state === 'playing') {
           const evs = PHY.stepPlayer(P, W, input, dt, []);
           for (const e of evs) handlePhysicsEvent(e);
@@ -574,8 +720,13 @@
             if (sc !== G.tramo && P.y < W.bounds.streetY) enterTramo(sc);
             G.run.maxDepth = Math.max(G.run.maxDepth, P.y - W.checkpoints[0].y + P.h / 2);
           }
+          // Paradas: solo hacia adelante. La intermedia de un tramo va después de su parada inicial.
+          const ahead = (cp) => !G.checkpoint || cp.scene > G.checkpoint.scene || (cp.scene === G.checkpoint.scene && cp.mid && !G.checkpoint.mid);
           for (const cp of W.checkpoints) {
-            if (!cp.active && P.ground === cp.plat && Math.abs(P.x - cp.x) < 70 && cp.scene >= (G.checkpoint ? G.checkpoint.scene : 0)) activateCheckpoint(cp);
+            if (!cp.active && P.ground === cp.plat && Math.abs(P.x - cp.x) < 70 && ahead(cp)) activateCheckpoint(cp);
+          }
+          for (const cp of W.midpoints || []) {   // V58: basta pisar la fila de la parada intermedia
+            if (!cp.active && P.ground === cp.plat && ahead(cp)) activateCheckpoint(cp);
           }
           const ev2 = [];
           EN.update(W, P, dt, ctx, ev2);
@@ -585,7 +736,8 @@
           updateGates();
           updateSigns();
           if (!G.run.busSeen && !G.room && P.y > W.bounds.streetY - 520) { G.run.busSeen = true; emit('busSeen'); }
-          if (P.ground === W.street && U.overlap(U.bodyRect(P), W.goal)) startVictory();
+          // V58.2: en el mar que baja hasta el lecho, la escotilla se alcanza buceando.
+          if ((P.ground === W.street || (P.water && P.water.toStreet)) && U.overlap(U.bodyRect(P), W.goal)) startVictory();
           // Red de seguridad: posición inválida o fuera de todo volumen jugable.
           const lost = !Number.isFinite(P.x) || !Number.isFinite(P.y) || P.y > W.bounds.y2 + 300 ||
             (!G.room && (P.x < W.bounds.x1 - 200 || P.x > W.bounds.x2 + 200));
@@ -597,6 +749,9 @@
       if (G.waterFx) updateWaterFx(dt);
       for (const f of G.fx) { f.x += f.vx * dt; f.y += f.vy * dt; f.vy += 220 * dt; f.life -= dt; }
       if (G.fx.length) G.fx = G.fx.filter((f) => f.life > 0);
+      // V58.2: efectos de las gatitas (arañazo) y su bufido al ver a Sofía herida.
+      if (G.catFx && G.catFx.length) { for (const f of G.catFx) f.t += dt; G.catFx = G.catFx.filter((f) => f.t < 0.42); }
+      if (G.companions && G.companions.hissT > 0) G.companions.hissT = Math.max(0, G.companions.hissT - dt);
     }
 
     function rescue() {
@@ -623,6 +778,10 @@
           break;
         }
         case 'dropDenied': message('dropDenied', ST.MESSAGES.dropDenied, 6, 0); break;
+        // V58 · Tirolesa.
+        case 'zipGrab': emit('sfx', { name: 'zip' }); message('zipHint', ST.MESSAGES.zipHint, 40, 1); burst(P.x, P.y - P.h / 2 - 6, 0xcfe8ff, 6); break;
+        case 'zipJump': case 'zipDrop': emit('sfx', { name: 'zipOff' }); break;
+        case 'zipEnd': if (!e.landed) emit('sfx', { name: 'zipOff' }); break;
         // V52 · Agua.
         case 'waterEnter': {
           const z = e.zone, big = e.vy > 520, mid = e.vy > 220;
@@ -697,7 +856,8 @@
           G.run.kills++; G.run.gems++; addCombo(1); addScore(C.scoring.foe);
           if (e.foe && e.foe.isBoss) {
             // V50: vencer al jefe ahora premia: +1 corazón (o escudo si vas completa), 5 cristales y 400 pts.
-            G.run.bosses++;
+            // V58.7: el jefe de una zona secreta premia igual, pero se cuenta aparte (no es «un jefe que faltó»).
+            if (e.foe.secret) G.run.secretBosses = (G.run.secretBosses || 0) + 1; else G.run.bosses++;
             G.run.gems += 5; addScore(C.scoring.boss || 400);
             if (G.run.lives < G.run.maxLives) { G.run.lives++; message('bossReward', '¡JEFE VENCIDO! +1 ♥ · +5 CRISTALES', 3, 3); }
             else { G.P.shield = true; message('bossReward', '¡JEFE VENCIDO! ESCUDO · +5 CRISTALES', 3, 3); }
@@ -732,13 +892,26 @@
         case 'potShake': emit('sfx', { name: 'potShake' }); companionAlert('falling-pot'); break;
         case 'potBreak': emit('sfx', { name: 'potBreak' }); burst(e.hazard.x, e.hazard.y, 0xc0704a, 12); break;
         case 'sparkOn': emit('sfx', { name: 'spark' }); companionAlert('electric'); break;
+        // V58.3 · Corrientes marinas y lluvia de asteroides.
+        case 'currentOn':
+          emit('sfx', { name: 'current' });
+          message('current', '¡CORRIENTE FUERTE! NADA HACIA ARRIBA O ABAJO PARA SALIR, O USA DASH', 90, 1);
+          break;
+        case 'asteroidWarn':
+          emit('sfx', { name: 'meteorWarn' }); companionAlert('falling-pot');
+          message('asteroid', '¡ASTEROIDE! QUÍTATE DE LA MIRA ROJA', 90, 1);
+          break;
+        case 'asteroidImpact':
+          emit('sfx', { name: 'meteorImpact' }); burst(e.x, e.y - 6, 0xffa25a, 14);
+          if (Math.abs(G.P.x - e.x) < 420 && Math.abs(G.P.y - e.y) < 300) G.shakeT = Math.max(G.shakeT || 0, 0.18);
+          break;
         default: break;
       }
     }
 
     function drainEvents() { const out = G.events.slice(); G.events.length = 0; return out; }
 
-    Object.assign(G, { setView, newRun, retry, pause, resume, step, hurt, drainEvents, mult, onScreen, updateCamera, defaultSave });
+    Object.assign(G, { setView, newRun, retry, pause, resume, step, hurt, drainEvents, mult, onScreen, updateCamera, defaultSave, catCommand });
     return G;
   }
 
