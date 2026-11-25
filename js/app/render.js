@@ -177,6 +177,7 @@
     for (const c of [...Object.values(COMPANIONS), ...Object.values(COMPANIONS_SUB)]) { image(c.src); for (const s of c.idle) image(s); for (const s of c.walk) image(s); image(c.shoulder); }
     image(BUS_FRAMES[0]);
     image(DIVE_SHEET);
+    image(RELEASE_FX_SHEET);
     resize();
   }
   function resize() {
@@ -3009,7 +3010,31 @@
     text(p < 0.38 ? '¡LUNA, MORITA, SUBAN!' : p < 0.72 ? 'EL MOTOR ARRANCA…' : 'RUTA 6 · A CASA', cw / 2, ch * 0.14, Math.max(12, Math.min(22, cw * 0.035)), '#ffe9a8');
   }
 
+  // Atlas RGBA original; un destello por evento, nunca un sprite por cada partícula.
+  const RELEASE_FX_SHEET = 'assets/fx/release_fx_rgba.png';
+  const RELEASE_FX_ROWS = {"impact":[0,62],"damage":[1,58],"collect":[2,52],"dash":[3,66],"dust":[4,52],"boss":[5,86]};
+  const RELEASE_FX_COLOR = {
+    0xff6b69:'damage',0xff755c:'boss',0xfff3c4:'impact',0xff9a5a:'impact',0xffd35a:'impact',
+    0xff7a5a:'impact',0xffb07a:'impact',0xffa25a:'impact',0xffe27a:'collect',0xd9ff65:'collect',
+    0xc9ff72:'collect',0x69d7d2:'dash',0x4ce7ee:'dash',0xbfe6ff:'dash',0xcfe8ff:'dash',
+    0xc9774f:'dust',0xc89a62:'dust',0xcfd8dc:'dust',0xc0704a:'dust',0xffd38a:'dust'
+  };
+  function drawReleaseFx(G, V) {
+    const im = image(RELEASE_FX_SHEET);
+    if (!ready(im)) return;
+    let count = 0;
+    for (const f of G.fx) {
+      const cue = f.cue, kind = RELEASE_FX_COLOR[f.color];
+      if (!cue || !kind || count >= 24) continue;
+      const age = Math.max(0, cue.life - f.life);
+      if (age >= 0.24 || cue.x < V.x1-50 || cue.x > V.x2+50 || cue.y < V.y1-50 || cue.y > V.y2+50) continue;
+      const [row, size] = RELEASE_FX_ROWS[kind], frame = Math.min(5, Math.floor(age / 0.04));
+      ctx.drawImage(im, frame*96,row*96,96,96,cue.x-size/2,cue.y-size/2,size,size);
+      count++;
+    }
+  }
   function drawParticles(G, V) {
+    drawReleaseFx(G, V);
     for (const f of G.fx) {
       if (f.x < V.x1 || f.x > V.x2 || f.y < V.y1 || f.y > V.y2) continue;
       circle(f.x, f.y, 2.5, hex(f.color), Math.max(0, Math.min(1, f.life / f.max)));

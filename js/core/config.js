@@ -6,7 +6,7 @@
   const NS = root.CAMION = root.CAMION || {};
 
   NS.CONFIG = {
-    version: '58.7.0',
+    version: '58.7.2',
     build: 'v58-1-mundos-pintados',
 
     sim: {

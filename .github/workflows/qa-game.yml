@@ -1,7 +1,7 @@
 name: QA videojuego
 on:
   push:
-    branches: ["feature/**"]
+    branches: ["feature/**", "desarrollo/**"]
   pull_request:
     branches: ["main"]
   workflow_dispatch:

@@ -487,7 +487,9 @@
     function burst(x, y, color, n) {
       for (let i = 0; i < n; i++) {
         const a = Math.random() * Math.PI * 2, s = 60 + Math.random() * 260;
-        G.fx.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0.25 + Math.random() * 0.45, max: 0.7, color });
+        const life = 0.25 + Math.random() * 0.45;
+        G.fx.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life, max: 0.7, color,
+          ...(i === 0 && n >= 6 ? { cue: { x, y, life } } : {}) });
       }
       if (G.fx.length > 360) G.fx.splice(0, G.fx.length - 360);
     }
