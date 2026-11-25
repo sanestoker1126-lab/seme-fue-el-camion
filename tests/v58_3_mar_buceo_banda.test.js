@@ -128,7 +128,7 @@ test('banda sonora del mar: archivo procesado (1:30–3:00), suena solo en el ma
 test('mapeo de buceo: 103 rectángulos, pivotes y límites del PNG', () => {
   const j = JSON.parse(read('assets/player/sofia/sofia_submarina_complementaria.json'));
   const src = read('js/app/render.js');
-  const m = src.match(/const DIVE_RECTS = (\\[[^\\n]+\\]);/);
+  const m = src.match(/const DIVE_RECTS = (\[[^\n]+\]);/);
   assert.ok(m);
   const rects = JSON.parse(m[1]);
   const png = fs.readFileSync(path.join(ROOT, 'assets/player/sofia/sofia_submarina_complementaria.png'));
@@ -145,9 +145,9 @@ test('mapeo de buceo: 103 rectángulos, pivotes y límites del PNG', () => {
 test('mapeo de natación: estados completos, recortes sin solapes y dentro del PNG', () => {
   const j = JSON.parse(read('tools/arte/swim_atlas.json'));
   const art = read('js/app/art_data.js');
-  const live = JSON.parse(art.match(/SWIM: (\\{[^\\n]+\\})/)[1]);
+  const live = JSON.parse(art.match(/SWIM: (\{[^\n]+\})/)[1]);
   const src = read('js/app/render.js');
-  const map = new Function('return ' + src.match(/const SWIM_STATE = (\\{[^;]+\\});/)[1])();
+  const map = new Function('return ' + src.match(/const SWIM_STATE = (\{[^;]+\});/)[1])();
   for (const state of ['swimFloat','swim','swimUnder','swimDown','swimUp','swimUpDiag','swimDash','swimKick','swimHurt','waterLeap','wadeIdle','wade','wadeRun','diveIn']) assert.ok(live.anims[map[state]], state);
   const png = fs.readFileSync(path.join(ROOT, 'assets/player/sofia/swim_atlas.png'));
   const w = png.readUInt32BE(16), h = png.readUInt32BE(20);
@@ -167,7 +167,7 @@ test('mapeo de natación: estados completos, recortes sin solapes y dentro del P
 });
 test('reloj de agua inicia en cuadro cero, repite ciclos y conserva el final de una pasada', () => {
   const src = read('js/app/render.js');
-  const fn = new Function(src.match(/function waterFrameIndex\\([\\s\\S]*?\\n  \\}/)[0] + '; return waterFrameIndex;')();
+  const fn = new Function(src.match(/function waterFrameIndex\([\s\S]*?\n  \}/)[0] + '; return waterFrameIndex;')();
   assert.equal(fn(0,100,6,true),0);
   assert.equal(fn(0.11,100,6,true),1);
   assert.equal(fn(0.61,100,6,true),0);

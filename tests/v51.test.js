@@ -117,7 +117,7 @@ test('las texturas declaradas coinciden con el tamaño real de sus PNG', () => {
 test('versión coherente: el HTML, el service worker y la configuración usan la misma versión', () => {
   const html = fs.readFileSync(path.join(ROOT, 'Se_Me_Fue_El_Camion.html'), 'utf8');
   const CODE = swList('CODE');
-  const v = NS.CONFIG.version.split('.').slice(0, 2).join('.');
+  const v = NS.CONFIG.version; // todos los módulos comparten la versión completa, incluso parches
   const tags = [...html.matchAll(/(?:src|href)="((?:js|css)\/[^"?]+)\?v=([\d.]+)"/g)];
   assert.ok(tags.length >= 16, 'scripts y estilos versionados en el HTML');
   for (const [, file, ver] of tags) {
