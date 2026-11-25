@@ -1,0 +1,22 @@
+name: Exportar base exacta para consolidacion
+on:
+  push:
+    branches: ["entregas/base-v58-7-2-consolidacion"]
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dfd080308ff0b7f0cd350175778d6c0a3ded5422
+      - run: |
+          git rev-parse HEAD
+          git archive --format=zip --output=base-exacta.zip HEAD
+          unzip -tq base-exacta.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: base-exacta-dfd08030
+          path: base-exacta.zip
+          compression-level: 0
