@@ -933,11 +933,12 @@
       [950, 1150, 1925],
       [1000, 1365, 1960],  // repisa de roca
       // Banda de roca (sólida; dos grietas la cruzan hacia la ciudad)
-      [315, 380, 2030],
+      // V58.9: el trozo izquierdo sube a la cima de sus rocas (antes Sofía quedaba hundida en la pared de roca) y el
+      // derecho de la grieta se quitó: estaba dentro de la roca, bajo la repisa de 1960, en un hueco que el dibujo no tiene.
+      [315, 380, 2003],
       [425, 600, 2030],
       [600, 950, 2088],
       [950, 1100, 2045],
-      [1150, 1365, 2045],
       // Ciudad bajo la Luna
       [1100, 1240, 2300],  // balcón de la ciudad
       [315, 450, 2310],    // repisa izquierda
@@ -950,7 +951,7 @@
       [440, 730, 2700],    // terraza izquierda
       [950, 1270, 2778],   // cúpula baja
       [500, 710, 2845],    // muelle izquierdo
-      [315, 470, 2905],    // roca de los cristales
+      [315, 470, 2894],    // roca de los cristales (V58.9: en la cima de las rocas, no 11 px dentro)
       [960, 1170, 2995],   // borde dorado derecho
       [560, 760, 3025, { exit: true }]                 // borde dorado izquierdo: salida (arena del dron)
     ],
@@ -970,7 +971,7 @@
       { x1: 1180, y1: 2610, x2: 985, y2: 2745, look: 'anclaje' }  // en la ciudad, a la cúpula baja
     ],
     // La banda de roca es sólida (no se dibuja: es el arte) salvo en sus dos grietas, que son pozos hacia la ciudad.
-    blocks: [[315, 380, 2032, 2178], [425, 600, 2032, 2178], [600, 950, 2090, 2182], [950, 1100, 2047, 2182], [1150, 1365, 2047, 2178]],
+    blocks: [[315, 380, 2005, 2178], [425, 600, 2032, 2178], [600, 950, 2090, 2182], [950, 1100, 2047, 2182], [1150, 1365, 1962, 2178]],
     cracks: [[380, 425, 2030, 2180], [1100, 1150, 2045, 2182]],
     // V58.2: cables para columpiarse (entre repisas) y uno de arco en la superficie lunar (base = piso, px).
     ropes: [
@@ -1090,6 +1091,7 @@
       id: 'guadalajara', label: 'EL CENTRO DE GUADALAJARA', file: 'assets/scenes/guadalajara_pro_v2/bg_guadalajara_pro_v2.webp', overlay: 'assets/scenes/guadalajara_pro_v2/architecture_guadalajara_pro_v2.png',
       map: SOFEVI_MAP, art: 'painted', stairsPainted: true, ledges2d: true, skin: 'stone_long',
       tint: 0xffffff, wash: 0x805633, shade: 0.045, theme: 'guadalajara', room: 'alcantarilla',
+      ledgeSkin: true,   // V58.9: sus repisas se dibujan (las cornisas de su capa no se ven y Sofía parecía flotar)
       foes: ['rat', 'dog', 'pigeon'], obstacles: ['pot', 'puddle', 'crate'], foeBudget: 5, obstacleBudget: 3, sideFoes: 2,
       boss: { kind: 'kid', name: 'DUEÑO DEL PERRO · 12 AÑOS', hp: 4 }, music: 1
     },
@@ -1200,9 +1202,8 @@
       // Sin sectores laterales: sus enemigos pasan al recorrido del nivel (si no, la misión quedaría con menos).
       d.foeBudget += d.sideFoes; d.sideFoes = 0;
     } else d.map = buildV58(d.map, cfg);
-    d.foeBudget = Math.round(d.foeBudget * 1.7);
-    d.obstacleBudget = Math.round(d.obstacleBudget * 1.6);
-    d.sideFoes = Math.round(d.sideFoes * 1.4);
+    // V58.9: sin los multiplicadores de V58 (×1,7 enemigos, ×1,6 obstáculos, ×1,4 en los sectores): con ellos la ciudad
+    // tenía de 13 a 27 enemigos por nivel, de 5 a 7 veces la densidad de la escuela, y todo se veía amontonado.
   });
 
   /* Niveles nuevos (misiones 3 y 4). storyIndex 16/17: su capítulo y letrero están en story.js. */

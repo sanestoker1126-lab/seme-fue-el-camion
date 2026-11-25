@@ -792,6 +792,26 @@
     W.goal = { x1: W.bus.doorX1 - 6, x2: W.bus.doorX2 + 6, y1: streetY - 110, y2: streetY + 1 };
     W.signs.push({ id: 'mundo:letrero:terminal', x: busX1 - 60, y: streetY, text: ST.MESSAGES.busWaiting, scene: W.scenes.length - 1, region: 'main', seenT: -99, busStop: true });
 
+    /* V58.9 · Menos cristales en pantalla: en el recorrido principal había filas de cristales a cada paso (100–270 por
+       nivel) y tapaban el dibujo. Se conserva uno cada ~200 u (el primero de cada grupo, de arriba abajo); siguen
+       marcando el camino. Los de las zonas inferiores y secretas son premio y se quedan todos. */
+    {
+      const MIN = 200, grid = new Map(), drop = new Set(), key = (x, y) => Math.floor(x / MIN) + ',' + Math.floor(y / MIN);
+      const gems = W.pickups.filter((g) => g.type === 'gem' && g.region === 'main').sort((a, b) => a.y - b.y || a.x - b.x);
+      for (const g of gems) {
+        const cx = Math.floor(g.x / MIN), cy = Math.floor(g.y / MIN);
+        let near = false;
+        for (let i = -1; i <= 1 && !near; i++) for (let j = -1; j <= 1 && !near; j++) {
+          for (const k of grid.get((cx + i) + ',' + (cy + j)) || []) if (Math.hypot(k.x - g.x, k.y - g.y) < MIN) { near = true; break; }
+        }
+        if (near) { drop.add(g); continue; }
+        const kk = key(g.x, g.y);
+        if (!grid.has(kk)) grid.set(kk, []);
+        grid.get(kk).push(g);
+      }
+      W.pickups = W.pickups.filter((g) => !drop.has(g));
+    }
+
     W.platforms.sort((a, b) => a.y - b.y);
     // V58: clave de orden fija (la y de origen) para buscar por franjas de altura en la física.
     for (const p of W.platforms) p.sortY = p.y;

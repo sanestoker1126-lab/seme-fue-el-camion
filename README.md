@@ -21,6 +21,15 @@ Controles en pantalla (táctil) y teclado. Se instala como app (PWA) y funciona 
 el juego (483 archivos, ~54 MB en la V58.7) y un `LEEME.txt` con instrucciones. En GitHub: Actions → «Empaquetar
 juego completo» → Run workflow.
 
+## Novedades V58.9 · Limpieza
+
+- Menos amontonado: cristales a no menos de 200 u entre sí (de 100–270 por nivel a 15–95), enemigos de la ciudad
+  sin los multiplicadores de V58 (de 13–27 a 8–17) y sin rótulos encimados.
+- Ya no se camina sobre el aire en Guadalajara (parada 1): el juego dibuja sus repisas.
+- En la Luna se retrazaron 3 repisas que no coincidían con la roca dibujada.
+- El fondo ya no se repite en espejo (el grafiti «GUADALAJARA» salía al revés).
+- Detalle: `CHANGELOG_V58_9.md`.
+
 ## Novedades V58.8
 
 - **Todos los niveles desbloqueados** desde el principio: las 4 misiones y todas sus paradas.
@@ -118,7 +127,7 @@ Opciones incluye **Aspecto de Sofía** (original / uniforme / rosa).
 node --test tests/*.test.js
 ```
 
-Versión de desarrollo: **V58.8** (`js/core/config.js` → 58.8.0).
+Versión de desarrollo: **V58.9** (`js/core/config.js` → 58.9.0).
 
 ## V54 · Submarino y Espacio ampliados
 

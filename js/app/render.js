@@ -509,20 +509,14 @@
     const bw = band.x2 - band.x1, bh = band.y2 - band.y1;
     const iw = im.naturalWidth || im.width, ih = im.naturalHeight || im.height;
     if (!iw || !ih) return;
-    const s = (bh / ih) * 1.08, tw = iw * s, th = ih * s, k = 1 - speed;
+    // V58.9: una sola copia que cubre el ancho de la banda. Antes, si el dibujo era más angosto, se repetía y cada
+    // segunda copia salía en espejo (el grafiti «GUADALAJARA» se leía al revés).
+    const s = Math.max((bh / ih) * 1.08, (bw / iw) * 1.02), tw = iw * s, th = ih * s, k = 1 - speed;
     const oy = Math.max(-0.035 * th, Math.min(0.035 * th, -(camCy - (band.y1 + band.y2) / 2) * k * 0.08));
     const top = band.y1 + (bh - th) / 2 + oy;
     const ox = -(camCx - (band.x1 + band.x2) / 2) * k * 0.3;
-    if (tw >= bw) {
-      const slack = (tw - bw) / 2;
-      blitCrop(im, (band.x1 + band.x2) / 2 - tw / 2 + Math.max(-slack, Math.min(slack, ox)), top, tw, th, false, clip);
-      return;
-    }
-    const period = 2 * tw, start = band.x1 + (((ox % period) + period) % period) - period;
-    for (let j = 0, x = start; x < band.x2; j++, x += tw) {
-      if (x + tw < clip.x1 || x > clip.x2) continue;
-      blitCrop(im, x, top, tw + 0.5, th, j % 2 === 1, clip);
-    }
+    const slack = (tw - bw) / 2;   // tw ≥ bw: una sola copia, con un poco de paralaje dentro de lo que sobra
+    blitCrop(im, (band.x1 + band.x2) / 2 - tw / 2 + Math.max(-slack, Math.min(slack, ox)), top, tw, th, false, clip);
   }
 
   function drawSceneBands(G, V) {
@@ -1573,7 +1567,10 @@
       if (p.y < V.y1 - 30 || p.y > V.y2 + 30 || p.x2 < V.x1 || p.x1 > V.x2) continue;
       const sc = p.scene >= 0 ? G.world.scenes[p.scene] : null;
       if (debug && (p.painted || p.hidden)) { line(p.x1, p.y, p.x2, p.y, p.drop ? '#ff44ed' : '#45ff9a', 0.95, 2); if (p.hidden) continue; }
-      if (p.hidden && !(sc && sc.missingArt)) continue; // cornisa pintada en el propio fondo
+      // Cornisa pintada en el propio fondo. V58.9: salvo en los niveles marcados `ledgeSkin` (Guadalajara PRO V2): ahí
+      // la capa de cornisas trae vigas de 2–7 u de grueso que sobre el cielo de la panorámica no se ven, y Sofía
+      // parecía caminar sobre el aire.
+      if (p.hidden && !(sc && (sc.missingArt || sc.def.ledgeSkin))) continue;
       const x = p.x1, y = p.y, w = p.x2 - p.x1, h = p.h || 12;
       if (p.kind === 'bounce') { if (p.artPainted) drawPaintedBounce(p, G); else if (p.umbrella) drawUmbrella(p, T, G); else drawAwning(p, T); continue; }
       if (p.kind === 'pigeon') { if (p.look) drawLookPlatform(p, T, G); else drawPigeon(p, T); continue; }
@@ -2655,7 +2652,7 @@
     }
     ctx.restore();
     // Nombre justo encima de la gatita (antes flotaba 58 u arriba, a la altura de la cabeza de Sofía).
-    if (!shoulder && !moving) text(c.name, x, foot - 24 + bob, 6, c.name === 'LUNA' ? '#ffffff' : '#e6e9f0', 'center', 900);
+    // V58.9: sin el nombre escrito bajo cada gata (era texto encimado sobre el dibujo).
   }
 
   function drawCompanions(G, T) {
@@ -2708,8 +2705,7 @@
     if (lunaWarn || moritaWarn) {
       const a = lunaWarn ? luna : morita, shoulder = lunaWarn ? lunaShoulder : moritaShoulder;
       const cx = a ? a.x : lunaWarn ? lunaX : moritaX, cy = (a ? a.y : foot) - (shoulder ? 86 : 58);
-      bang(cx, cy, T);
-      text('¡CUIDADO!', cx, cy - 13, 8, '#ffe27a', 'center', 900);
+      bang(cx, cy, T);   // V58.9: solo el signo de aviso, sin el rótulo «¡CUIDADO!» encima
     }
   }
 
