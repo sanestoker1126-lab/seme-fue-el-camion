@@ -6,7 +6,7 @@
   const NS = root.CAMION = root.CAMION || {};
 
   NS.CONFIG = {
-    version: '58.6.0',
+    version: '58.7.0',
     build: 'v58-1-mundos-pintados',
 
     sim: {
@@ -88,7 +88,7 @@
     },
 
     scoring: {
-      gem: 10, foe: 50, boss: 400, perfect: 25, item: 200, key: 50, crate: 15, shotBreak: 10,
+      gem: 10, foe: 50, boss: 400, perfect: 25, item: 200, key: 50, crate: 15, shotBreak: 10, secret: 300,
       comboTime: 3.4, comboStep: 3, comboMaxMult: 5
     },
 

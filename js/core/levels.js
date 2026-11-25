@@ -1115,7 +1115,8 @@
       id: 'escuela_ruinas', label: 'PASILLOS DE LA ESCUELA BAJO LA LLUVIA', file: 'assets/scenes/school_miguel_hidalgo/03_conserjeria_entrada.webp', map: PASILLOS_MAP, skin: 'concrete',
       tint: 0xaabda6, wash: 0x304b36, shade: 0.19, theme: 'escuela', room: 'sotano',
       foes: ['bat', 'kid', 'chile', 'dog', 'rat'], obstacles: ['spikes', 'spark', 'crate', 'puddle'], foeBudget: 7, obstacleBudget: 5, sideFoes: 3,   // V58.2: + el niño
-      boss: { kind: 'bravo', name: 'PERRO GUARDIÁN', hp: 5 }, music: 5
+      // V58.7: el jefe de los pasillos es El Maestro Enojón (antes el Perro Guardián, un perro bravo).
+      boss: { kind: 'maestro', name: 'EL MAESTRO ENOJÓN', hp: 6 }, music: 5
     },
     {
       id: 'centro_historico', label: 'CENTRO HISTÓRICO DE GUADALAJARA', file: 'assets/scenes/guadalajara_pro_v2/bg_centro_historico_pro_v2.webp', overlay: 'assets/scenes/guadalajara_pro_v2/architecture_centro_historico_pro_v2.png',
@@ -1217,7 +1218,7 @@
     // V58.2: mar completo. Pirañas, tiburones y pulpos nadan en sus carriles (topes 6/2/4); cangrejos y niños buzos
     // en las repisas (secas o sumergidas). El jefe es Poseidón, que custodia la escotilla del lecho marino.
     foes: ['crab', 'piranha', 'kid', 'pulpo', 'shark', 'crab', 'piranha', 'kid', 'pulpo', 'piranha'], obstacles: ['spark', 'crate'], foeBudget: 40, obstacleBudget: 8, sideFoes: 0,
-    boss: { kind: 'poseidon', name: 'POSEIDÓN, REY DEL MAR', hp: 8 }, music: 12
+    boss: { kind: 'poseidon', name: 'POSEIDÓN, REY DEL MAR', hp: 8 }, music: 12, secret: 'santuario'
   };
   const ESPACIAL_LEVEL = {
     id: 'espacial', label: 'LUNA HUECA', file: 'assets/parallax/espacial/depth_v5/background/page_01.webp', map: ESPACIAL_MAP, skin: 'scaffold', isNew: true,
@@ -1226,7 +1227,53 @@
     // Drones de disparo anunciado y robots que embisten.
     // V58.1: el niño gordito de las piedras, con traje de astronauta (atlas aportado).
     foes: ['drone', 'robot', 'kid', 'drone', 'robot'], obstacles: ['spark', 'crate'], foeBudget: 30, obstacleBudget: 10, sideFoes: 0,
-    boss: { kind: 'drone', name: 'DRON CENTINELA', hp: 7 }, final: true, music: 15
+    boss: { kind: 'drone', name: 'DRON CENTINELA', hp: 7 }, final: true, music: 15, secret: 'estacion'
+  };
+
+  /* V58.7 · Zonas secretas (paquete «niveles secretos»): una ilustración panorámica por zona, con el recorrido
+     trazado sobre el dibujo en px del arte (×scale = unidades). Se entra por una grieta escondida del nivel (BAJAR) y
+     se sale por la puerta del otro extremo, que regresa junto a la grieta. Sus enemigos son los del paquete
+     «enemigos secretos» y cada una tiene un jefe. `entry`: punto del mundo junto al que va la grieta (se busca la
+     cornisa seca más cercana). */
+  const SECRET_ROOMS = {
+    santuario: {
+      id: 'santuario', label: 'SANTUARIO PERDIDO DE POSEIDÓN', art: 'marino_oculto', artW: 2172, artH: 724, scale: 0.72,
+      entry: { x: -760, y: 861 },
+      // Todo el santuario está bajo el agua: la superficie corre pegada al techo de la cueva y se nada hasta las losas.
+      water: { y: 62, floor: 572 },
+      // Losas a flor de agua en las dos orillas: a la izquierda se llega, a la derecha está la salida (se sube de un salto).
+      ledges: [{ x1: 0, x2: 190, arrive: 70 }, { x1: 1982, x2: 2172, exit: 2080 }],
+      foes: [
+        { kind: 'pulpito', x1: 300, x2: 900, y: 250 }, { kind: 'pulpito', x1: 700, x2: 1300, y: 470, extra: true },
+        { kind: 'buzito', x1: 150, x2: 700, y: 400 }, { kind: 'buzito', x1: 1300, x2: 1900, y: 200, extra: true }
+      ],
+      boss: { kind: 'pulpo_abismo', name: 'PULPO DEL ABISMO', hp: 8, x1: 1080, x2: 2060, y: 390 },
+      gems: [[260, 185], [330, 220], [400, 290], [235, 420], [330, 430], [600, 515], [700, 515], [800, 515], [1000, 300],
+        [1110, 300], [1450, 230], [1700, 420], [1810, 420], [1920, 300]],
+      heart: [1840, 520]
+    },
+    estacion: {
+      id: 'estacion', label: 'ESTACIÓN ORBITAL ABANDONADA', art: 'espacial_oculto', artW: 1774, artH: 887, scale: 0.8,
+      entry: { x: 750, y: 2592 },
+      floor: 752,
+      // Rocas sólidas en las orillas (se pisan) y, flotando, asteroides y la estación (se atraviesan desde abajo).
+      blocks: [{ x1: 0, x2: 135, y: 588 }, { x1: 1610, x2: 1774, y: 625 }],
+      ledges: [
+        { x1: 25, x2: 128, y: 228 }, { x1: 152, x2: 200, y: 338 }, { x1: 550, x2: 685, y: 240 }, { x1: 650, x2: 688, y: 386 },
+        { x1: 372, x2: 415, y: 562 }, { x1: 1192, x2: 1262, y: 598 }, { x1: 1313, x2: 1378, y: 541 }, { x1: 1448, x2: 1480, y: 648 },
+        { x1: 1664, x2: 1716, y: 544 }, { x1: 1160, x2: 1312, y: 362, floor: true }, { x1: 1310, x2: 1560, y: 245, floor: true },
+        { x1: 1450, x2: 1774, y: 100, floor: true }
+      ],
+      arrive: [70, 588], exit: [1540, 752],
+      foes: [
+        { kind: 'marciano', plat: 'floor', x1: 380, x2: 1000 }, { kind: 'marciano', plat: [1160, 362], extra: true },
+        { kind: 'astronino', plat: 'floor', x1: 160, x2: 700 }, { kind: 'astronino', plat: [1310, 245], extra: true }
+      ],
+      boss: { kind: 'marciano', name: 'MARCIANO COMANDANTE', hp: 6, plat: [1450, 100] },
+      gems: [[250, 700], [420, 700], [600, 700], [394, 520], [669, 345], [590, 200], [640, 200], [176, 300], [76, 190],
+        [1227, 555], [1345, 500], [1236, 320], [1420, 205], [1690, 505], [1560, 60]],
+      heart: [1700, 60]
+    }
   };
 
   /* Misiones: separan el juego por mundos. Las 1 y 2 reúnen los 16 niveles existentes por su tema (sin cambiar su
@@ -1242,6 +1289,6 @@
   NS.LEVELS = { SCHOOL_MAP, GDL_MAP, SCHOOL_M, GDL_M, CENTRO_MAP, ZAPOPAN_MAP, SOFEVI_MAP, AZOTEAS_MAP, METRO_MAP, TLAQUE_MAP,
     PATIO_MAP, PASILLOS_MAP, NOCHE_MAP, CATEDRAL_MAP, BASILICA_MAP, TERMINAL_MAP, MERCADO_MAP, PARQUE_MAP, ANDEN_MAP, PLAZA_MAP,
     SUBMARINO_MAP, ESPACIAL_MAP, SUBMARINO_V54_MAP, ESPACIAL_V54_MAP, SUBMARINO_BASE_MAP, ESPACIAL_BASE_MAP,
-    SUBMARINO_LEVEL, ESPACIAL_LEVEL, MISSIONS, LEVEL_SEQUENCE, mirror, buildV58, V58_CFG, HAND,
+    SUBMARINO_LEVEL, ESPACIAL_LEVEL, MISSIONS, LEVEL_SEQUENCE, SECRET_ROOMS, mirror, buildV58, V58_CFG, HAND,
     MARINE_ART, MARINE_PX, buildMarineMap, LUNAR_ART, buildPaintedMap, SCHOOL_ART, SCHOOL_MAPS };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

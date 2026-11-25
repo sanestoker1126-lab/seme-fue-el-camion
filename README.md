@@ -18,8 +18,20 @@ Es un sitio estático, sin dependencias. Para jugarlo:
 Controles en pantalla (táctil) y teclado. Se instala como app (PWA) y funciona sin conexión tras la primera carga.
 
 **Paquete para jugar**: `bash tools/empaquetar.sh` arma `Se_Me_Fue_El_Camion_V<versión>.zip`. Lleva solo lo que usa
-el juego (474 archivos, ~53 MB en la V58.6) y un `LEEME.txt` con instrucciones. En GitHub: Actions → «Empaquetar
+el juego (483 archivos, ~54 MB en la V58.7) y un `LEEME.txt` con instrucciones. En GitHub: Actions → «Empaquetar
 juego completo» → Run workflow.
+
+## Novedades V58.7 · Zonas secretas
+
+- **Zonas secretas** en el mar y en la Luna, con los fondos del paquete «niveles secretos»: se entra por una grieta
+  escondida (BAJAR) y se sale por la puerta del otro extremo, de regreso junto a la grieta.
+  - En el mar, el **Santuario perdido de Poseidón**, todo bajo el agua.
+  - En la Luna, la **Estación orbital abandonada**, que se trepa por asteroides.
+- **Enemigos secretos**: pulpito, niño buzo, marciano y niño astronauta.
+- **Jefes nuevos**: el **Pulpo del Abismo** (santuario) y el **Marciano Comandante** (estación).
+- **El Maestro Enojón** es el nuevo jefe de los pasillos de la escuela (misión 1, parada 3).
+- Se revisaron los 192 cuadros de los paquetes, uno por uno, y se usaron los 118 completos.
+- Detalle, qué se dejó fuera y por qué, y lo que se comprobó: `CHANGELOG_V58_7.md`.
 
 ## Novedades V58.3 – V58.6
 
@@ -99,7 +111,7 @@ Opciones incluye **Aspecto de Sofía** (original / uniforme / rosa).
 node --test tests/*.test.js
 ```
 
-Versión de desarrollo: **V58.2** (`js/core/config.js` → 58.2.0), en la rama `ccr-83eefefd-4flatp`.
+Versión de desarrollo: **V58.7** (`js/core/config.js` → 58.7.0).
 
 ## V54 · Submarino y Espacio ampliados
 

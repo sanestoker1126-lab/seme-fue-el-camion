@@ -108,6 +108,7 @@
     checkpoint: 'PARADA ALCANZADA · AQUÍ REAPARECES',
     roomEnter: { sotano: 'SÓTANO DE LA ESCUELA', alcantarilla: 'ALCANTARILLA DEL CENTRO' },
     roomExit: 'SALIDA AL CALLEJÓN',
+    secretHint: '¿UN BRILLO EN LA ROCA? PÁRATE AHÍ Y PULSA BAJAR',   // V58.7: junto a la grieta de una zona secreta
     dropDenied: 'LA PIEDRA NO SE ATRAVIESA · BUSCA UN BORDE O UN PELDAÑO',
     hardLanding: '¡CAÍDA DURA!',
     fallHurt: '¡AUCH! CAÍDA DEMASIADO ALTA',

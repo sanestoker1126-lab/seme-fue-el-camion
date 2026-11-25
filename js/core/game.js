@@ -15,7 +15,7 @@
   function defaultSave() {
     // V53 · progreso por misión: tramos desbloqueados en cada una (0 = misión bloqueada). La 1 empieza abierta.
     return { unlocked: 1, bestTime: 0, bestScore: 0, bestDepth: 0, items: {}, wins: 0,
-      missions: { escuela: 1, guadalajara: 0, submarino: 0, espacial: 0 } };
+      missions: { escuela: 1, guadalajara: 0, submarino: 0, espacial: 0 }, secrets: {} };
   }
 
   function createGame(opts = {}) {
@@ -113,7 +113,7 @@
       G.P.invuln = startTramo > 0 || mid ? 1.2 : 0;
       G.run = {
         t: 0, score: 0, combo: 0, comboT: 0, gems: 0, lives: d.lives, maxLives: d.lives, items: [],
-        keys: new Set(), deaths: o.deaths || 0, startTramo, maxDepth: 0, kills: 0, bosses: 0, seenChapters: new Set(), busSeen: false,
+        keys: new Set(), deaths: o.deaths || 0, startTramo, maxDepth: 0, kills: 0, bosses: 0, secretBosses: 0, secrets: 0, seenChapters: new Set(), busSeen: false,
         carriedItems: o.carriedItems ? o.carriedItems.slice() : []
       };
       for (const it of G.run.carriedItems) {
@@ -476,7 +476,8 @@
 
     function summary() {
       const r = G.run;
-      return { time: r.t, score: r.score, gems: r.gems, lives: r.lives, maxLives: r.maxLives, items: r.items.slice(), totalItems: G.world.totalItems, depth: Math.floor(r.maxDepth / 10), kills: r.kills, bosses: r.bosses, totalBosses: G.world.foes.filter((f) => f.isBoss).length, deaths: r.deaths, tramo: G.tramo, relaxed: !!G.assist.relaxed };
+      return { time: r.t, score: r.score, gems: r.gems, lives: r.lives, maxLives: r.maxLives, items: r.items.slice(), totalItems: G.world.totalItems, depth: Math.floor(r.maxDepth / 10), kills: r.kills, bosses: r.bosses, totalBosses: G.world.foes.filter((f) => f.isBoss && !f.secret).length, secrets: r.secrets || 0,
+        totalSecrets: G.world.rooms.filter((q) => q.secret).length, secretBosses: r.secretBosses || 0, deaths: r.deaths, tramo: G.tramo, relaxed: !!G.assist.relaxed };
     }
 
     /* ---------- Puntuación y efectos ---------- */
@@ -538,8 +539,17 @@
         updateRegion();
         updateCamera(0, true);
         const room = G.room;
+        // V58.7: la primera vez que se entra a una zona secreta se anuncia y queda guardada.
+        if (room && room.secret && !room.visited) {
+          G.run.secrets = (G.run.secrets || 0) + 1;
+          const first = !(G.save.secrets && G.save.secrets[room.secret]);
+          G.save.secrets = Object.assign({}, G.save.secrets, { [room.secret]: true }); persist();
+          addScore(C.scoring.secret);
+          emit('secretFound', { room, first });
+        }
         if (room && !room.visited) { room.visited = true; }
-        if (room) message('room', ST.MESSAGES.roomEnter[room.theme] || 'ZONA ESCONDIDA', 2.5);
+        if (room && room.secret) message('room', '¡ZONA SECRETA! ' + room.label, 3, 2);
+        else if (room) message('room', ST.MESSAGES.roomEnter[room.theme] || 'ZONA ESCONDIDA', 2.5);
         else message('roomExit', ST.MESSAGES.roomExit, 2.5);
         emit('doorSwap', { door: tr.door, room });
       }
@@ -634,6 +644,16 @@
 
     function updateSigns() {
       const P = G.P, foot = P.y + P.h / 2;
+      // V58.7: la primera vez en la partida que Sofía pasa junto a una grieta secreta, una pista (sin decir qué hay).
+      if (!G.run.secretHint) {
+        for (const d of G.world.doors) {
+          if (d.kind !== 'secreto' || d.region !== G.region || Math.abs(P.x - d.x) > 150 || Math.abs(foot - d.y) > 70) continue;
+          G.run.secretHint = true;
+          message('secretHint', ST.MESSAGES.secretHint, 30, 1);
+          emit('secretNear', { door: d });
+          break;
+        }
+      }
       for (const s of G.world.signs) {
         const near = Math.abs(P.x - s.x) < 46 && Math.abs(foot - s.y) < 40;
         if (near && !s.near && G.run.t - s.seenT > 4) { s.seenT = G.run.t; emit('sign', { sign: s }); }
@@ -836,7 +856,8 @@
           G.run.kills++; G.run.gems++; addCombo(1); addScore(C.scoring.foe);
           if (e.foe && e.foe.isBoss) {
             // V50: vencer al jefe ahora premia: +1 corazón (o escudo si vas completa), 5 cristales y 400 pts.
-            G.run.bosses++;
+            // V58.7: el jefe de una zona secreta premia igual, pero se cuenta aparte (no es «un jefe que faltó»).
+            if (e.foe.secret) G.run.secretBosses = (G.run.secretBosses || 0) + 1; else G.run.bosses++;
             G.run.gems += 5; addScore(C.scoring.boss || 400);
             if (G.run.lives < G.run.maxLives) { G.run.lives++; message('bossReward', '¡JEFE VENCIDO! +1 ♥ · +5 CRISTALES', 3, 3); }
             else { G.P.shield = true; message('bossReward', '¡JEFE VENCIDO! ESCUDO · +5 CRISTALES', 3, 3); }

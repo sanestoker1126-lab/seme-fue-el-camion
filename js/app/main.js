@@ -87,7 +87,12 @@
     poseidon: 'POSEIDÓN · embiste con el tridente y lanza olas: golpéalo cuando quede mareado',
     drone: 'DRON · esquiva la marca y destruye su plasma con DASH',
     crab: 'CANGREJO · corre de lado: písalo, patéalo o usa DASH',
-    robot: 'ROBOT · embiste tras encender su visor: salta y golpéalo cuando se maree'
+    robot: 'ROBOT · embiste tras encender su visor: salta y golpéalo cuando se maree',
+    // V58.7 · zonas secretas
+    pulpito: 'PULPITO · de cerca se encoge y suelta un tentazo; de lejos escupe tinta: el DASH la rompe',
+    buzito: 'NIÑO BUZO · arroja piedras bajo el agua: esquívalas nadando o rómpelas con DASH',
+    marciano: 'MARCIANO · su puño brilla antes de disparar: muévete en cuanto lo veas',
+    astronino: 'NIÑO ASTRONAUTA · lanza piedras lunares de lejos y embiste de cerca'
   };
   const seenFoeKinds = new Set();
   const bossCinematicSeen = new Set();
@@ -277,6 +282,8 @@
         case 'item': audio.sfx('item'); ui.itemCard(e.item, e.first, e.count, e.total); break;
         case 'gateOpen': audio.sfx('gate'); break;
         case 'doorEnter': audio.sfx('door'); break;
+        case 'secretFound': audio.sfx('item'); audio.vibrate && audio.vibrate([30, 40, 30]); break;   // V58.7
+        case 'secretNear': audio.sfx('drip'); break;   // V58.7: un goteo apenas audible junto a la grieta
         case 'doorSwap': audio.setTramo(G.tramo, !!e.room, sceneTheme(G.tramo)); break;
         case 'checkpoint': audio.sfx('checkpoint'); audio.sfx(((e.cp?.scene ?? G.tramo) % 2) ? 'morita' : 'luna'); break;
         case 'companionWarning':
@@ -296,7 +303,13 @@
         case 'enemyDiscovered':
           // V58.2: el otro gato maúlla al encontrar un enemigo (con su propio enfriamiento en audio.js).
           if (e.foe && !e.foe.dead && (e.foe.scene | 0) >= G.tramo) audio.sfx('otroGato');
-          if (e.foe?.isBoss) {
+          if (e.foe?.isBoss && e.foe.secret) {
+            // V58.7: jefe de una zona secreta: aviso propio, sin la cinemática de los jefes de las dos primeras paradas.
+            e.foe.bossIntroStart = animT;
+            G.shakeT = Math.max(G.shakeT || 0, 0.1);
+            audio.bossCue(e.foe.kind, 'intro', e.foe.scene);
+            ui.toast('JEFE SECRETO: ' + e.foe.bossName, 4, 2.6);
+          } else if (e.foe?.isBoss) {
             if ((e.foe.scene | 0) < G.tramo) break; // jefe de un tramo ya superado que asoma arriba: sin aviso
             e.foe.bossIntroStart = animT;
             const sceneIndex = e.foe.scene | 0;
@@ -422,6 +435,7 @@
       ...Object.values(R.COMPANIONS_SUB || {}).flatMap((c) => [...c.idle, ...c.walk, c.shoulder])];
     for (const [kind, E] of Object.entries(NS.ART.ENEMY)) for (const f of Object.keys(E.frames)) essential.push('assets/enemies/v50/' + kind + '/' + f + (R.enemyExt ? R.enemyExt(kind) : '.png'));
     if (R.castUrls) essential.push(...R.castUrls());   // V58.1: Sofía y gatitas astronautas, niño con traje
+    if (R.secretUrls) essential.push(...R.secretUrls());   // V58.7: enemigos secretos, jefes nuevos y zonas secretas
     let timer;
     const res = await Promise.race([R.preload(essential), new Promise((r) => { timer = setTimeout(() => r(null), 1500); })]);
     clearTimeout(timer);

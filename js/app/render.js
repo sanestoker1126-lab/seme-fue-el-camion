@@ -1394,8 +1394,42 @@
     for (const wx of [x1 + 70, x2 - 70]) { circle(wx, y2 + 2, 17, '#101418'); circle(wx, y2 + 2, 7, '#8b969c'); }
   }
 
-  function drawRoomBackground(r, V) {
+  /* V58.7 · Zonas secretas: la ilustración panorámica del paquete, fija a la zona (se pisa lo que se ve). Alrededor,
+     el color de su borde para que la cámara nunca muestre un hueco; en el santuario, la roca del techo de la cueva
+     (sobre el borde de arriba del dibujo) y burbujas que suben; en la estación, estrellas que titilan. */
+  function drawSecretRoom(r, V, T) {
+    const bg = NS.ART && NS.ART.SECRET_BG && NS.ART.SECRET_BG[r.art], im = bg && image(bg.src);
+    const marine = r.art === 'marino_oculto', ay1 = r.artY1 ?? r.y1, ay2 = r.artY2 ?? r.y2, w = r.x2 - r.x1;
+    fillRect(r.x1 - 900, r.y1 - 900, w + 1800, ay2 - r.y1 + 1800, marine ? '#041b2c' : '#0b0a24');
+    if (ready(im)) ctx.drawImage(im, r.x1, ay1, w, ay2 - ay1);
+    else fillRect(r.x1, ay1, w, ay2 - ay1, marine ? '#0d4a6b' : '#1b1650');
+    if (marine) {
+      // Techo de la cueva: roca oscura que baja hasta el borde del dibujo (donde ya empieza su propia roca).
+      const g = ctx.createLinearGradient(0, ay1 - 220, 0, ay1 + 14);
+      g.addColorStop(0, '#010a12'); g.addColorStop(0.8, '#062436'); g.addColorStop(1, 'rgba(6,36,54,0)');
+      ctx.fillStyle = g; ctx.fillRect(r.x1 - 60, ay1 - 220, w + 120, 234);
+      for (let x = r.x1 + 30; x < r.x2; x += 74) {
+        const hgt = 10 + (hash(x | 0, 7) % 22);
+        tri(x - 12, ay1 - 2, x + 12, ay1 - 2, x + ((hash(x | 0, 3) % 9) - 4), ay1 + hgt, '#06283b', 0.9);
+      }
+      for (let k = 0; k < 18; k++) {   // burbujas que suben por el santuario
+        const bx = r.x1 + ((k * 211) % 1000) / 1000 * w, span = r.y2 - ay1 - 40;
+        const by = r.y2 - ((T * (22 + (k % 5) * 6) + k * 97) % span);
+        if (by < V.y1 - 10 || by > V.y2 + 10) continue;
+        ring(bx + Math.sin(T * 2 + k) * 4, by, 2.2 + (k % 3), 2.2 + (k % 3), '#c9f6ff', 0.45, 1);
+      }
+    } else {
+      for (let k = 0; k < 26; k++) {
+        const sx = r.x1 + (hash(k, 11) / 997) * w, sy = ay1 + (hash(k, 29) / 997) * (r.y2 - ay1) * 0.8;
+        const tw = 0.5 + 0.5 * Math.sin(T * (1.5 + (k % 4) * 0.6) + k);
+        circle(sx, sy, 1 + (k % 2) * 0.6, '#ffffff', 0.25 + 0.55 * tw);
+      }
+    }
+  }
+
+  function drawRoomBackground(r, V, T) {
     if (!inView(V, r.x1 - 60, r.y1 - 60, r.x2 + 60, r.y2 + 60)) return;
+    if (r.secret) { drawSecretRoom(r, V, T); return; }
     const sewer = r.theme === 'alcantarilla';
     fillRect(r.x1, r.y1, r.x2 - r.x1, r.y2 - r.y1, sewer ? '#1d2b28' : '#2a2a35');
     for (let by = r.y1 + 6; by < r.y2; by += 22) {
@@ -1532,6 +1566,7 @@
       if (p.kind === 'pigeon') { if (p.look) drawLookPlatform(p, T, G); else drawPigeon(p, T); continue; }
       if (p.kind === 'crumble') { drawCrumble(p, T); continue; }
       if (p.kind === 'belt') { drawBelt(p, T); continue; }
+      if (p.look === 'losa') { drawLosa(p, T); continue; }   // V58.7: losas a flor de agua del santuario secreto
       if (p.kind === 'thin') {
         // V51: tablón con la misma textura de madera que el resto del arte (tablas de wood_table) + ménsulas.
         line(x + 8, y + 6, x + 18, y + 22, '#3b2a1d', 0.9, 3);
@@ -1558,6 +1593,21 @@
       fillRR(x, y, w, h, Math.min(5, h * 0.25), base);
       fillRR(x, y, w, Math.max(3, h * 0.24), 3, topc);
     }
+  }
+
+  /* V58.7 · Losa de piedra con musgo a flor de agua (orillas del santuario secreto) y su pilar hundido. */
+  function drawLosa(p, t) {
+    const x = p.x1, y = p.y, w = p.x2 - p.x1;
+    fillRect(x + w * 0.3, y + 10, w * 0.4, 60, '#123a4a', 0.55);
+    fillRR(x - 2, y + 2, w + 4, 15, 4, '#02121c', 0.45);
+    fillRR(x, y, w, 13, 4, '#5f7d86');
+    fillRR(x, y, w, 4, 2, '#a8c7c4');
+    for (let k = 0; k < Math.floor(w / 18); k++) {
+      const mx = x + 6 + k * 18 + (hash(k, x | 0) % 7);
+      fillRR(mx, y - 2, 9, 4, 2, '#5fae5a', 0.9);
+      line(mx + 4, y + 2, mx + 4 + Math.sin(t * 2 + k) * 2, y + 9, '#3f8f45', 0.7, 1.4);
+    }
+    for (let k = 1; k < 4; k++) line(x + w * k / 4, y + 4, x + w * k / 4 + 3, y + 12, '#33505a', 0.7, 1);
   }
 
   function drawAwning(p, t) {
@@ -1648,6 +1698,7 @@
     for (const d of G.world.doors) {
       if (d.x < V.x1 - 40 || d.x > V.x2 + 40 || d.y < V.y1 - 60 || d.y > V.y2 + 30) continue;
       const pulse = 0.72 + 0.28 * Math.sin(T * 4 + d.phase);
+      if (d.kind === 'secreto') { drawSecretDoor(d, G, T); continue; }
       if (d.kind === 'trampilla') {
         fillRR(d.x - 22, d.y - 5, 44, 7, 2, '#6b4a2e');
         line(d.x - 18, d.y - 2, d.x + 18, d.y - 2, '#3b2a1d', 0.8, 1);
@@ -1662,6 +1713,34 @@
       }
       ellipse(d.x, d.y - 26, 26, 30, '#69d7d2', 0.08 * pulse);
       tri(d.x - 7, d.y - 30 - pulse * 3, d.x + 7, d.y - 30 - pulse * 3, d.x, d.y - 20 - pulse * 3, '#69d7d2', 0.9 * pulse);
+    }
+  }
+
+  /* V58.7 · Grieta escondida hacia una zona secreta: apenas un brillo tenue en la roca que se aviva cuando Sofía se
+     acerca (en el mar, una grieta con burbujas; en la Luna, una escotilla con un símbolo extraño). */
+  function drawSecretDoor(d, G, T) {
+    const P = G.P, near = P ? Math.max(0, 1 - Math.hypot(P.x - d.x, P.y - d.y) / 200) : 0;
+    const k = 0.22 + 0.78 * near, glow = 0.5 + 0.5 * Math.sin(T * 2.4 + d.phase);
+    const sea = d.look === 'submarino', col = sea ? '#7ff6ff' : '#c48bff';
+    ellipse(d.x, d.y - 2, 26, 6, col, (0.08 + 0.1 * glow) * k);
+    if (sea) {
+      // Grieta en zigzag con luz de adentro.
+      ctx.globalAlpha = (0.45 + 0.45 * glow) * k; ctx.strokeStyle = col; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(d.x - 16, d.y - 1); ctx.lineTo(d.x - 7, d.y - 4); ctx.lineTo(d.x, d.y); ctx.lineTo(d.x + 8, d.y - 4); ctx.lineTo(d.x + 17, d.y - 1); ctx.stroke();
+      ctx.globalAlpha = 1;
+      for (let i = 0; i < 3; i++) {
+        const q = (T * 0.6 + i / 3) % 1;
+        ring(d.x - 8 + i * 8 + Math.sin(T * 3 + i) * 2, d.y - 6 - q * 34, 1.6 + i * 0.5, 1.6 + i * 0.5, '#dffcff', (1 - q) * 0.8 * k, 1);
+      }
+    } else {
+      ring(d.x, d.y - 2, 18, 4.5, col, (0.5 + 0.4 * glow) * k, 1.6);
+      ctx.globalAlpha = (0.55 + 0.4 * glow) * k; ctx.strokeStyle = '#f0dcff'; ctx.lineWidth = 1.4;
+      ctx.beginPath(); ctx.moveTo(d.x - 5, d.y - 2); ctx.lineTo(d.x, d.y - 5); ctx.lineTo(d.x + 5, d.y - 2); ctx.moveTo(d.x, d.y - 5); ctx.lineTo(d.x, d.y + 1); ctx.stroke();
+      ctx.globalAlpha = 1;
+      for (let i = 0; i < 2; i++) { const q = (T * 0.9 + i * 0.5) % 1; circle(d.x + (i ? 9 : -9), d.y - 4 - q * 24, 1.6, '#e7c9ff', (1 - q) * k); }
+    }
+    if (near > 0.55) {   // ya muy cerca: la flecha de BAJAR, como en las demás puertas
+      tri(d.x - 6, d.y - 30 - glow * 3, d.x + 6, d.y - 30 - glow * 3, d.x, d.y - 21 - glow * 3, col, 0.85 * (near - 0.55) / 0.45);
     }
   }
 
@@ -1887,7 +1966,8 @@
     fillRect(x - 3, y - 1, 6, 4, '#ffe14a');
   }
 
-  const BOSS_GLOW = { dog: '#ff984f', kid: '#ff6868', chile: '#ff593f', bat: '#b48cff', pigeon: '#63d9ed', bravo: '#ff625b', rat: '#d9ff65', piranha: '#76ffca', shark: '#6cefff', drone: '#b69bff', pulpo: '#d58bff', poseidon: '#7ff0ff' };
+  const BOSS_GLOW = { dog: '#ff984f', kid: '#ff6868', chile: '#ff593f', bat: '#b48cff', pigeon: '#63d9ed', bravo: '#ff625b', rat: '#d9ff65', piranha: '#76ffca', shark: '#6cefff', drone: '#b69bff', pulpo: '#d58bff', poseidon: '#7ff0ff',
+    maestro: '#ffd34a', pulpo_abismo: '#ff7ad9', marciano: '#b6ff5a' };   // V58.7
   function drawBossFX(f, T) {
     if (!f.isBoss) return;
     const color = BOSS_GLOW[f.kind] || '#ffd35a', cx = f.x;
@@ -2065,18 +2145,167 @@
     if ((f.state === 'windup' || f.state === 'aim') && !f.dead) bang(f.x, f.y - ch * s * 0.42, T);
   }
 
+  /* ---------- V58.7 · Enemigos secretos y jefes nuevos (NS.ART.ATLAS_FOES, js/app/art_secretos.js) ----------
+     Cuadros [x, y, w, h, ox, oy] respecto a un ancla fija por personaje (los pies si camina, el centro si nada): así no
+     tiemblan. Se escala por el alto: el cuerpo en reposo (`ref` px) mide f.h × ATLAS_VIS u. Solo se usaron los cuadros
+     completos del paquete (ver tools/arte/secretos_pack.py); lo que el arte no trae (el golpe del Pulpo del Abismo, su
+     tinta y su chorro, los mareos) se dibuja con efectos encima de esos cuadros. */
+  const ATLAS_FOES = () => (NS.ART && NS.ART.ATLAS_FOES) || {};
+  const ATLAS_VIS = { pulpito: 1.55, buzito: 1.35, marciano: 1.12, astronino: 1.14, maestro: 1.13, pulpo_abismo: 1.45 };
+  const ATLAS_LIFE = { maestro: 1.5, pulpo_abismo: 1.2, marciano: 0.75, astronino: 0.7, pulpito: 0.7, buzito: 0.6 };
+  const atlasReady = (kind) => { const A = ATLAS_FOES()[kind]; return !!A && ready(image(A.src)); };
+  const atlasLife = (f) => ATLAS_LIFE[f.kind] || 0.45;
+  /** Animación del enemigo según su estado: [nombre, tiempo (null = bucle), efectos]. */
+  function atlasPick(f) {
+    const k = f.kind, st = f.state, T = NS.Enemies.TYPES[k] || {};
+    const fx = {};
+    if (f.dead) {
+      if (k === 'maestro') return f.deadT < 0.42 ? ['fall', f.deadT, fx] : ['ko', f.deadT - 0.42, fx];
+      if (k === 'pulpo_abismo') { fx.dy = f.deadT * 30; return ['ko', f.deadT, fx]; }
+      if (k === 'buzito' || k === 'pulpito') fx.dy = f.deadT * 26;   // se hunde
+      return ['death', f.deadT, fx];
+    }
+    if (st === 'windup' || st === 'aim' || st === 'shout') fx.bang = true;
+    if (st === 'dizzy') fx.stars = true;
+    switch (k) {
+      case 'pulpito':
+        if (st === 'charge') return ['tentacle', f.stateT, fx];
+        if (st === 'windup') { fx.shake = 1.4; return ['idle', null, fx]; }
+        if (st === 'aim') { fx.scale = 1 + 0.12 * Math.min(1, f.stateT / ((T.windup || 0.5) * 1.1)); return ['idle', null, fx]; }
+        return [st === 'dizzy' ? 'idle' : 'swim', null, fx];
+      case 'buzito':
+        if (st === 'aim') return ['throw', f.stateT, fx];
+        if (f.flash > 0 || st === 'dizzy') return ['hurt', f.flash > 0 ? 0.2 - f.flash : f.stateT % 0.4, fx];
+        return ['swim', null, fx];
+      case 'marciano':
+        if (f.flash > 0 || st === 'recoil') return ['hurt', f.flash > 0 ? 0.2 - f.flash : f.stateT, fx];
+        if (st === 'aim') { fx.charge = Math.min(1, f.stateT / (T.windup || 0.6)); return ['shoot', Math.min(f.stateT, 0.279), fx]; }
+        if (f.shotT > 0) return ['shoot', 0.29, fx];
+        if (st === 'dizzy') return ['hurt', f.stateT % 0.4, fx];
+        return ['walk', null, fx];
+      case 'astronino':
+        if (f.flash > 0 || st === 'recoil') return ['hurt', f.flash > 0 ? 0.2 - f.flash : f.stateT, fx];
+        if (st === 'aim') return ['throw', f.stateT, fx];
+        if (st === 'windup') { fx.shake = 1.2; return ['idle', null, fx]; }
+        if (st === 'charge') { fx.fast = 2; fx.lines = true; return ['walk', null, fx]; }
+        if (st === 'dizzy') return ['hurt', f.stateT % 0.4, fx];
+        return ['walk', null, fx];
+      case 'maestro':
+        if (f.flash > 0 || st === 'recoil') return ['hurt', f.flash > 0 ? 0.2 - f.flash : f.stateT, fx];
+        if (st === 'windup') return ['ruler', f.stateT, fx];
+        if (st === 'charge') { fx.swoosh = true; fx.lines = true; return ['run', null, fx]; }
+        if (st === 'aim') return [f.throwKind === 'borrador' ? 'eraser' : 'book', f.stateT, fx];
+        if (st === 'shout') { fx.shout = Math.min(1, f.stateT / (T.shoutWindup || 0.75)); return ['shout', null, fx]; }
+        if (st === 'dizzy') {
+          const rec = T.recover || 1.1;
+          if (f.stateT > rec - 0.34) { fx.stars = false; return ['getup', f.stateT - (rec - 0.34), fx]; }
+          fx.stars = false;   // el cuadro de mareo ya trae sus estrellas
+          return ['dizzy', null, fx];
+        }
+        return ['walk', null, fx];
+      case 'pulpo_abismo':
+        if (st === 'windup') { fx.shake = 1.6; fx.glow = '#ffd36a'; fx.glowK = Math.min(1, f.stateT / (T.windup || 0.8)); return ['windup', 0, fx]; }
+        if (st === 'charge') { fx.lines = true; fx.fast = 2.4; return ['swim', null, fx]; }
+        if (st === 'aim') {
+          fx.glow = f.shotKind === 'chorro' ? '#8ff3ff' : '#9b4dd6'; fx.glowK = Math.min(1, f.stateT / ((T.windup || 0.8) * 1.1));
+          fx.scale = 1 + 0.08 * fx.glowK; return ['idle', null, fx];
+        }
+        return [st === 'dizzy' ? 'idle' : 'swim', null, fx];
+      default: return ['idle', null, fx];
+    }
+  }
+  function drawAtlasFoe(f, T) {
+    const A = ATLAS_FOES()[f.kind], im = image(A.src);
+    const [name, t, fx] = atlasPick(f);
+    const an = A.anims[name] || A.anims.idle || A.anims.swim || A.anims.walk;
+    const [list, ms, loop] = an;
+    const speed = fx.fast || 1;
+    const i = t === null || loop ? Math.floor((T * 1000 * speed + f.phase * 400) / ms) % list.length : Math.min(list.length - 1, Math.floor(Math.max(0, t) * 1000 / ms));
+    const fr = A.frames[list[i]];
+    const s = f.h * (ATLAS_VIS[f.kind] || 1.2) / A.ref * (fx.scale || 1);
+    const flyer = !!NS.Enemies.TYPES[f.kind].flyer;
+    const bob = flyer && !f.dead ? Math.sin(T * 2.2 + f.phase) * 1.5 : 0;
+    const jit = fx.shake ? Math.sin(T * 55 + f.phase) * fx.shake : 0;
+    const bodyH = A.ref * s, d = f.dir || 1;
+    const cy = flyer ? f.y : f.y - bodyH * 0.5;
+    if (!flyer && !f.dead) ellipse(f.x, f.y + 1, Math.min(f.w * 0.8, 42), 4, '#06111b', 0.4);
+    if (fx.glow) {   // carga de tinta / chorro / tentáculo: un resplandor que crece frente a la boca
+      const gx = f.x + d * f.w * 0.42, k = fx.glowK || 0;
+      circle(gx, f.y + 2, 6 + k * 16, fx.glow, 0.12 + 0.2 * k);
+      ring(gx, f.y + 2, 5 + k * 13, 5 + k * 13, fx.glow, 0.35 + 0.4 * k, 2);
+    }
+    if (fx.lines) for (let k = 1; k <= 3; k++) line(f.x - d * (f.w * 0.5 + k * 9), cy - 8 + k * 6, f.x - d * (f.w * 0.5 + 16 + k * 12), cy - 8 + k * 6, '#ffffff', 0.42 - k * 0.1, 1.6);
+    ctx.save();
+    ctx.translate(f.x + jit, f.y + bob + (fx.dy || 0));
+    if (d < 0) ctx.scale(-1, 1);
+    ctx.drawImage(im, fr[0], fr[1], fr[2], fr[3], fr[4] * s, fr[5] * s, fr[2] * s, fr[3] * s);
+    if (f.flash > 0 && !f.dead) {
+      const sil = silhouette(im, '#ffffff');
+      if (sil) { ctx.globalAlpha = Math.min(1, f.flash / 0.2) * 0.75; ctx.drawImage(sil, fr[0], fr[1], fr[2], fr[3], fr[4] * s, fr[5] * s, fr[2] * s, fr[3] * s); ctx.globalAlpha = 1; }
+    }
+    if (fx.charge) {   // marciano: el orbe crece en su puño
+      const k = fx.charge;
+      circle(f.w * 0.75, -f.h * 0.6, 3 + k * 6, '#e9a6ff', 0.35 + 0.4 * k); circle(f.w * 0.75, -f.h * 0.6, 1.5 + k * 3, '#ffffff', 0.8);
+    }
+    if (fx.swoosh) {   // maestro: la regla barre el aire frente a él
+      const a0 = -1.2 + ((T * 9) % 1) * 1.6;
+      ctx.globalAlpha = 0.75; ctx.strokeStyle = '#ffd34a'; ctx.lineWidth = 4; ctx.beginPath();
+      ctx.arc(f.w * 0.35, -f.h * 0.62, f.h * 0.55, a0, a0 + 0.9); ctx.stroke();
+      ctx.globalAlpha = 0.35; ctx.lineWidth = 9; ctx.beginPath(); ctx.arc(f.w * 0.35, -f.h * 0.62, f.h * 0.55, a0 - 0.25, a0 + 0.6); ctx.stroke(); ctx.globalAlpha = 1;
+    }
+    if (fx.shout) {   // maestro: ondas del grito saliendo de la boca
+      for (let k = 0; k < 3; k++) {
+        const r = 8 + ((T * 2.2 + k / 3) % 1) * 26 * (0.4 + fx.shout);
+        ctx.globalAlpha = 0.55 * (1 - ((T * 2.2 + k / 3) % 1)); ctx.strokeStyle = '#fff2a0'; ctx.lineWidth = 2.4;
+        ctx.beginPath(); ctx.arc(f.w * 0.3, -f.h * 0.86, r, -0.7, 0.7); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+    ctx.restore();
+    if (fx.stars && !f.dead) {
+      // Los que nadan: girando abiertas alrededor de la cabeza (arriba va su barra) y claras (el pulpo jefe tiene corona amarilla).
+      const hy = flyer ? f.y - bodyH * 0.3 : f.y - bodyH * 1.02, rx = bodyH * (flyer ? 0.42 : 0.22), col = flyer ? '#fffbe0' : '#ffe14a';
+      for (let k = 0; k < 3; k++) { const a = T * 6 + k * 2.1; circle(f.x + Math.cos(a) * rx, hy + Math.sin(a) * (flyer ? 7 : 4), flyer ? 3 : 2.4, col); }
+    }
+    if (fx.bang && !f.dead) bang(f.x, (flyer ? f.y - bodyH * 0.62 : f.y - bodyH * 1.08), T);
+  }
+  /* Proyectiles con el arte del paquete (orbe, tinta, piedras, borrador): `scale` = alto en u por unidad de radio. */
+  const ATLAS_SHOT = { orbe: ['marciano', 2.6, 'vel'], tinta: ['pulpito', 2.7, 'wobble'], piedra_mar: ['buzito', 2.3, 'vel'],
+    roca: ['astronino', 2.4, 'vel'], borrador: ['maestro', 2.4, 'spin'] };
+  function drawAtlasShot(s, T) {
+    const def = ATLAS_SHOT[s.kind], A = def && ATLAS_FOES()[def[0]];
+    if (!A || !A.anims.shot || !ready(image(A.src))) return false;
+    const [list, ms] = A.anims.shot, fr = A.frames[list[Math.floor((T * 1000 + s.x) / ms) % list.length]];
+    const k = (s.r * def[1]) / Math.max(4, fr[3]);
+    ctx.save(); ctx.translate(s.x, s.y);
+    if (def[2] === 'vel') ctx.rotate(Math.atan2(s.vy, s.vx));
+    else if (def[2] === 'spin') ctx.rotate((T * 10 + s.x * 0.05) % (Math.PI * 2));
+    else ctx.rotate(Math.sin(T * 6 + s.x * 0.03) * 0.15);
+    ctx.drawImage(image(A.src), fr[0], fr[1], fr[2], fr[3], fr[4] * k, fr[5] * k, fr[2] * k, fr[3] * k);
+    ctx.restore();
+    return true;
+  }
+
+  /** V58.7 · Atlas de los enemigos secretos y jefes nuevos y fondos de las zonas secretas (precarga y sin conexión). */
+  function secretUrls() {
+    const B = (NS.ART && NS.ART.SECRET_BG) || {};
+    return [...Object.values(ATLAS_FOES()).map((a) => a.src), ...Object.values(B).map((b) => b.src)];
+  }
+
   function drawFoes(G, V, T) {
     const t9 = T * 9;
     for (const f of G.world.foes) {
       if (f.x < V.x1 - 50 || f.x > V.x2 + 50 || f.y < V.y1 - 60 || f.y > V.y2 + 50) continue;
-      if (f.dead && f.deadT > 0.45) continue;
-      const a = f.dead ? 1 - f.deadT / 0.45 : 1;
+      // V58.7: los del atlas nuevo terminan su animación de derrota (el maestro cae y queda noqueado) antes de esfumarse.
+      const atlas = atlasReady(f.kind), life = atlas ? atlasLife(f) : 0.45;
+      if (f.dead && f.deadT > life) continue;
+      const a = f.dead ? (atlas ? Math.min(1, (life - f.deadT) / (life * 0.35)) : 1 - f.deadT / 0.45) : 1;
       // V58.1: en el mar y en la Luna el niño lleva traje de buzo o de astronauta (si sus cuadros cargaron).
       const fTheme = f.kind === 'kid' && f.scene >= 0 && G.world.scenes[f.scene] ? G.world.scenes[f.scene].theme : null;
       const suit = fTheme === 'submarino' ? 'kid_buzo' : fTheme === 'espacial' ? 'kid_astronauta' : null;
       const sk = f.kind === 'bravo' ? 'dog' : suit && enemyReady(suit) ? suit : f.kind;
-      const useSprite = !!ESPR[sk] && enemyReady(sk);
-      const marine = !useSprite && marineReady(f.kind);   // V58.2: piraña, tiburón, pulpo y Poseidón con su atlas
+      const useSprite = !atlas && !!ESPR[sk] && enemyReady(sk);
+      const marine = !atlas && !useSprite && marineReady(f.kind);   // V58.2: piraña, tiburón, pulpo y Poseidón con su atlas
       drawToxiThreat(f, T);
       drawBossFX(f, T);
       ctx.save();
@@ -2084,10 +2313,11 @@
         const punch = Math.sin(Math.min(1, f.flash / 0.2) * Math.PI) * 0.12;
         ctx.translate(f.x, f.y); ctx.scale(1 + punch, 1 - punch); ctx.translate(-f.x, -f.y);
       }
-      if (f.dead && !useSprite && !marine) { ctx.globalAlpha = a; ctx.translate(f.x, f.y); ctx.scale(1, -1); ctx.translate(-f.x, -f.y + 18); }
+      if (f.dead && !useSprite && !marine && !atlas) { ctx.globalAlpha = a; ctx.translate(f.x, f.y); ctx.scale(1, -1); ctx.translate(-f.x, -f.y + 18); }
       else if (f.dead) ctx.globalAlpha = a;
       const b = Math.sin(t9 + f.x) * 1.5, d = f.dir, fl = f.flash > 0;
-      if (useSprite) { drawEnemySprite(f, T, sk); }
+      if (atlas) { drawAtlasFoe(f, T); }
+      else if (useSprite) { drawEnemySprite(f, T, sk); }
       else if (marine) { drawMarineFoe(f, T); }
       else if (f.kind === 'piranha' || f.kind === 'shark') {
         // V57: siluetas acuáticas con hitbox próxima al cuerpo; giro horizontal,
@@ -2243,7 +2473,11 @@
         text('¿?', f.x, f.y - f.h - 20, 7, '#fff3a8');
       }
       if (f.isBoss) {
-        const bw = Math.max(58, Math.min(104, f.w + 18)), by = f.y - f.h - 7;
+        // V58.7: con el atlas nuevo el cuerpo se ve más alto que su caja: la barra va sobre la cabeza que se ve.
+        const vis = atlas ? f.h * (ATLAS_VIS[f.kind] || 1.2) : f.h, flyer = !!NS.Enemies.TYPES[f.kind].flyer;
+        ctx.font = '900 7px system-ui,-apple-system,Segoe UI,sans-serif';
+        const nameW = ctx.measureText(f.bossName).width + 12;   // V58.7: el nombre completo cabe en su caja
+        const bw = Math.max(58, Math.min(104, f.w + 18), nameW), by = (atlas ? (flyer ? f.y - vis * 0.5 : f.y - vis) : f.y - f.h) - 7;
         fillRR(f.x - bw / 2, by - 17, bw, 14, 5, '#132330', 0.88);
         text(f.bossName, f.x, by - 10, 7, '#fff0bd');
         fillRR(f.x - bw / 2, by, bw, 5, 2, '#251c24', 0.95);
@@ -2254,6 +2488,37 @@
     for (const s of G.world.shots) {
       if (s.x < V.x1 || s.x > V.x2 || s.y < V.y1 || s.y > V.y2) continue;
       if (s.kind === 'poop') { circle(s.x, s.y, 7, '#ffffff', 0.25); circle(s.x, s.y, 4.5, '#f2f2ea'); }
+      // V58.7: orbe del marciano, tinta del pulpito y del Pulpo del Abismo, piedras de los niños y borrador del maestro.
+      else if (ATLAS_SHOT[s.kind] && drawAtlasShot(s, T)) { /* dibujado con el arte del paquete */ }
+      else if (s.kind === 'libro') {
+        // Libro de texto rojo girando (el paquete no lo trae suelto: lo tiene en la mano).
+        ctx.save(); ctx.translate(s.x, s.y); ctx.rotate((T * 8 + s.x * 0.04) % (Math.PI * 2));
+        fillRR(-11, -8, 22, 16, 2, '#b3262e'); fillRect(-9, -6, 18, 3, '#f6ecd2'); fillRect(-11, -8, 4, 16, '#7a1418');
+        ctx.restore();
+      }
+      else if (s.kind === 'grito') {
+        // Onda del grito del maestro corriendo por el piso: arcos amarillos (se saltan).
+        const dd = Math.sign(s.vx) || 1;
+        for (let k = 0; k < 3; k++) {
+          ctx.globalAlpha = 0.8 - k * 0.22; ctx.strokeStyle = k ? '#ffe27a' : '#fff6c8'; ctx.lineWidth = 3 - k * 0.6;
+          const a0 = dd > 0 ? 0 : Math.PI;   // «)» hacia la derecha, «(» hacia la izquierda
+          ctx.beginPath(); ctx.arc(s.x - dd * k * 7, s.y + 4, s.r + k * 2, a0 - 1.1, a0 + 1.1); ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+      }
+      else if (s.kind === 'chorro') {
+        // Chorro de agua del Pulpo del Abismo: núcleo blanco y estela de burbujas.
+        const dd = Math.hypot(s.vx, s.vy) || 1, ux = s.vx / dd, uy = s.vy / dd;
+        ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(Math.atan2(uy, ux));
+        ellipse(-14, 0, 26, s.r * 0.9, '#58d6ff', 0.45); ellipse(-6, 0, 16, s.r * 0.6, '#bff6ff', 0.8); ellipse(0, 0, 7, s.r * 0.45, '#ffffff', 0.95);
+        ctx.restore();
+        for (let k = 1; k <= 4; k++) circle(s.x - ux * (16 + k * 9) + Math.sin(T * 9 + k) * 3, s.y - uy * (16 + k * 9), 2.6 - k * 0.4, '#dff9ff', 0.7 - k * 0.12);
+      }
+      else if (s.kind === 'tinta' || s.kind === 'orbe' || s.kind === 'piedra_mar' || s.kind === 'roca' || s.kind === 'borrador') {
+        // Respaldo si el atlas aún no carga.
+        const col = { tinta: '#2a0f35', orbe: '#d59bff', piedra_mar: '#5d6d78', roca: '#9a7a52', borrador: '#3f7fd6' }[s.kind];
+        circle(s.x, s.y, s.r, col); circle(s.x - s.r * 0.3, s.y - s.r * 0.3, s.r * 0.35, '#ffffff', 0.35);
+      }
       else if (s.kind === 'ink') {
         // V58.2: tinta del pulpo (mancha morada con gotas que se quedan atrás).
         for (let k = 1; k <= 3; k++) circle(s.x - s.vx * 0.02 * k, s.y - s.vy * 0.02 * k, s.r * (0.7 - k * 0.15), '#3b1747', 0.5 - k * 0.12);
@@ -2463,12 +2728,13 @@
     for (const z of W.waters || []) {
       if (z.x2 + 14 < V.x1 || z.x1 - 14 > V.x2 || z.y2 + 16 < V.y1 || z.y - 10 > V.y2) continue;
       const w = z.x2 - z.x1, h = z.y2 - z.y, fountain = z.kind === 'fuente';
-      if (!front && z.breach) {
+      if (!front && (z.breach || z.painted)) {
         // V58.1 · Mar pintado: el arte ya muestra el agua y el fondo (la meseta y sus puentes). Solo un velo tenue y
         // las brechas de los puentes por donde se baja.
         let g = waterGrad.get(z);
         if (!g) { g = ctx.createLinearGradient(0, z.y, 0, z.y2); g.addColorStop(0, 'rgba(120,225,240,0.05)'); g.addColorStop(1, 'rgba(6,42,74,0.16)'); waterGrad.set(z, g); }
         ctx.fillStyle = g; ctx.fillRect(z.x1, z.y, w, h);
+        if (z.painted) continue;   // V58.7: el santuario secreto ya pinta su agua
         for (const d of z.drains || []) drawBreach({ x1: d.x1, x2: d.x2, y1: z.y2 - 30, y2: z.y2 }, T);
         for (const b of G.world.breaches || []) if (b.x2 > V.x1 && b.x1 < V.x2 && b.y2 > V.y1 - 40 && b.y1 < V.y2 + 40) drawBreach(b, T);
         continue;
@@ -2502,7 +2768,7 @@
       }
       // Delante: tinte translúcido (lo sumergido se ve bajo el agua) y superficie con olas.
       // V58.1: en el mar pintado no hay velo delantero (el arte ya se ve bajo el agua): solo la superficie.
-      if (!z.breach) fillRect(z.x1, z.y + 3, w, h - 3, fountain ? '#4fb3d1' : '#1f6f93', fountain ? 0.22 : z.sea ? 0.1 : 0.3);
+      if (!z.breach && !z.painted) fillRect(z.x1, z.y + 3, w, h - 3, fountain ? '#4fb3d1' : '#1f6f93', fountain ? 0.22 : z.sea ? 0.1 : 0.3);
       ctx.globalAlpha = 0.9; ctx.strokeStyle = '#d6f8ff'; ctx.lineWidth = 2; ctx.beginPath();
       for (let x = z.x1; x <= z.x2; x += 6) {
         const yy = z.y + Math.sin(x * 0.07 + T * 2.4) * 1.6 + Math.sin(x * 0.023 - T * 1.3) * 1.2;
@@ -2764,7 +3030,7 @@
     // V58.1: mar, Luna y escuela son mundos pintados fijos al mundo (DEPTH_ART); el resto, fondos del ancho del mundo.
     const depth = !G.room && drawDepthArt(G, V);
     if (!G.room) { if (depth) drawCracks(G, V, T); else drawBackdrop(G, V); drawStreet(G, V, T); drawToxiAtmosphere(G, V, T); }
-    for (const r of W.rooms) drawRoomBackground(r, V);
+    for (const r of W.rooms) drawRoomBackground(r, V, T);
     drawWaters(G, V, false);
     drawCascades(G, V, T);
     drawSolids(G, V);
@@ -2793,5 +3059,5 @@
   }
 
   NS.Render = { init, resize, draw, preload, setQuality, setOptions, image, ready, outfitFor, NINA, NINA_DIR, NINA_VARIANT_DIR, COMPANIONS, COMPANIONS_SUB, PAINTERS,
-    BACKDROPS, DEPTH_ART, backdropUrls, depthUrls, castUrls, enemyExt, COMPANIONS_SPACE, toggleDebug: () => (debug = !debug), get debug() { return debug; } };
+    BACKDROPS, DEPTH_ART, backdropUrls, depthUrls, castUrls, secretUrls, enemyExt, COMPANIONS_SPACE, toggleDebug: () => (debug = !debug), get debug() { return debug; } };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

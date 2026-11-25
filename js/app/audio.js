@@ -208,7 +208,8 @@
       if (!AC) return;
       const profiles = {
         dog: [104, 'sawtooth'], bravo: [76, 'sawtooth'], kid: [245, 'triangle'],
-        chile: [430, 'sawtooth'], bat: [515, 'triangle'], pigeon: [640, 'triangle'], rat: [735, 'square']
+        chile: [430, 'sawtooth'], bat: [515, 'triangle'], pigeon: [640, 'triangle'], rat: [735, 'square'],
+        maestro: [92, 'sawtooth'], pulpo_abismo: [128, 'square'], marciano: [372, 'square']   // V58.7
       };
       const p = profiles[kind] || [220, 'triangle'];
       const semitone = ((Math.abs(Number(scene) || 0) % 5) - 2) / 12;

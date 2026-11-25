@@ -76,6 +76,9 @@ test('agua del submarino: profunda, ninguna plataforma dentro y cada orilla con 
     }
     // V58.2: el mar abierto va de pared a pared y baja hasta el lecho, donde está la escotilla (la meta). Que no sea
     // una trampa lo comprueba el análisis de alcanzabilidad (se llega buceando).
+    // V58.7: el santuario secreto es un mar cerrado dentro de su zona (no baja al lecho). Que se salga de él (saltando a
+    // la losa de la derecha) lo comprueba el análisis de alcanzabilidad: la zona no puede quedar como trampa.
+    if (z.sea && z.room) { assert.ok(W.rooms.some((r) => r.id === z.room && r.secret), 'el mar cerrado pertenece a una zona secreta'); continue; }
     if (z.sea) { assert.ok(z.toStreet && Math.abs(z.y2 - W.bounds.streetY) < 1, 'el mar llega al lecho de la escotilla'); continue; }
     for (const side of ['left', 'right']) {
       const edge = side === 'left' ? z.x1 : z.x2;

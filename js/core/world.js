@@ -687,6 +687,100 @@
       }
     }
 
+    /* ---------- V58.7 · Zonas secretas (mar y Luna) ----------
+       Se arman al final: así ningún reparto anterior (peces del mar abierto, jefe, corrientes, asteroides) toma su agua
+       ni sus repisas. Ver LEVELS.SECRET_ROOMS: el recorrido está trazado en px del arte panorámico de cada zona. */
+    let secretN = 0;
+    for (const sc of W.scenes) {
+      const Z = sc.def.secret && LV.SECRET_ROOMS && LV.SECRET_ROOMS[sc.def.secret];
+      if (!Z) continue;
+      const i = sc.index, scope = 't' + i, rng = U.makeRng(U.hashSeed(seed, 'secreto', i));
+      // La grieta va en la cornisa seca más cercana al punto marcado, en un hueco libre (sin obstáculo ni puerta).
+      const dist = (p) => Math.hypot(U.clamp(Z.entry.x, p.x1, p.x2) - Z.entry.x, p.y - Z.entry.y);
+      const near = W.platforms.filter((p) => p.region === 'main' && p.scene === i && p.kind === 'floor' && !p.underwater &&
+        !p.transition && !p.start && !p.exit && !p.mid && p.w >= 90).sort((a, b) => dist(a) - dist(b))[0];
+      if (!near) continue;
+      const free = (x) => x - 30 >= near.x1 + 8 && x + 30 <= near.x2 - 8 && near.occupied.every(([o1, o2]) => x + 30 <= o1 || x - 30 >= o2);
+      const spots = [];
+      for (let x = near.x1 + 38; x <= near.x2 - 38; x += 6) if (free(x)) spots.push(x);
+      const doorX = spots.length ? spots.sort((a, b) => Math.abs(a - Z.entry.x) - Math.abs(b - Z.entry.x))[0] : (near.x1 + near.x2) / 2;
+      reserve(near, doorX - 30, doorX + 30);
+      // Al salir se regresa a la misma cornisa, a un paso de la grieta (sin quedar encima de ella).
+      const backX = U.clamp(doorX + (doorX + 56 <= near.x2 - 14 ? 56 : -56), near.x1 + 14, near.x2 - 14);
+      reserve(near, backX - 18, backX + 18);
+
+      const s = Z.scale, AW = Z.artW * s, AH = Z.artH * s;
+      const rx = C.world.roomOriginX + W.scenes.length * C.world.roomSpacing + 300 + secretN * 2400, ry = Math.round(near.y - AH / 2);
+      secretN++;
+      const X = (px) => rx + px * s, Y = (py) => ry + py * s;
+      const floorY = Y(Z.water ? Z.water.floor : Z.floor);
+      // En el santuario la superficie del agua queda pegada al borde de arriba del arte: el techo de la cueva sube
+      // `ceil` u sobre ese borde para que Sofía (62 u) quepa de pie en las losas (render.js pinta ahí roca de cueva).
+      const ceil = Z.water ? 46 : 0, top = ry - ceil;
+      // `y1` deja a la cámara subir 60 u sobre el techo: así la losa de salida y su letrero quedan bajo el HUD de arriba.
+      const room = { id: scope + ':secreto', index: i, scene: i, theme: 'secreto', secret: Z.id, label: Z.label, art: Z.art,
+        x1: rx, y1: top - (Z.water ? 60 : 0), x2: rx + AW, y2: floorY, ceilY: top, artY1: ry, artY2: ry + AH, scale: s, visited: false };
+      W.rooms.push(room);
+      const reg = room.id, th = sc.theme;
+      // Paredes, techo y piso de la zona: invisibles (los pinta el arte).
+      addSolid({ scope, kind: 'roomwall', x1: rx - 60, y1: floorY, x2: rx + AW + 60, y2: floorY + 60, region: reg, scene: i, theme: th, draw: false });
+      addSolid({ scope, kind: 'roomwall', x1: rx - 60, y1: top - 60, x2: rx + AW + 60, y2: top, region: reg, scene: i, theme: th, draw: false });
+      addSolid({ scope, kind: 'roomwall', x1: rx - 60, y1: top, x2: rx, y2: floorY, region: reg, scene: i, theme: th, draw: false });
+      addSolid({ scope, kind: 'roomwall', x1: rx + AW, y1: top, x2: rx + AW + 60, y2: floorY, region: reg, scene: i, theme: th, draw: false });
+      // Mar cerrado del santuario: de la superficie (pegada al techo de la cueva) hasta las losas del fondo.
+      let water = null;
+      if (Z.water) {
+        water = { id: scope + ':agua-secreta', x1: rx, x2: rx + AW, y: Y(Z.water.y), y2: floorY, scene: i, theme: th, kind: 'mar', banks: [],
+          sea: true, deep: true, boss: false, breach: false, toStreet: false, drains: [], painted: true, room: reg };
+        W.waters.push(water);
+      }
+      for (const b of Z.blocks || []) addSolid({ scope, kind: 'block', x1: X(b.x1), x2: X(b.x2), y1: Y(b.y), y2: floorY, region: reg, scene: i, theme: th, draw: false, secret: true });
+      // Repisas: en el mar, losas a flor de agua (las dibuja el juego); en la Luna, asteroides y la estación (pintados).
+      const ledges = (Z.ledges || []).map((q) => addPlatform({ scope, kind: water || q.floor ? 'floor' : 'thin', drop: !water && !q.floor,
+        x1: X(q.x1), x2: X(q.x2), y: water ? water.y - 2 : Y(q.y), h: water ? 14 : 9, theme: th, scene: i, region: reg, secret: true,
+        look: water ? 'losa' : null, draw: !!water, hidden: !water, painted: !water, arrive: q.arrive, exitAt: q.exit }));
+      const ledgeAt = ([px, py]) => ledges.find((p) => Math.abs(p.y - Y(py)) < 1 && X(px) >= p.x1 - 1 && X(px) <= p.x2 + 1);
+      let arrive, exitSpot;
+      if (water) {
+        const a = ledges.find((p) => p.arrive !== undefined), e = ledges.find((p) => p.exitAt !== undefined);
+        arrive = { x: X(a.arrive), y: a.y, plat: a };
+        exitSpot = { x: X(e.exitAt), y: e.y, plat: e };
+      } else {
+        arrive = { x: X(Z.arrive[0]), y: Y(Z.arrive[1]), plat: null };
+        exitSpot = { x: X(Z.exit[0]), y: Y(Z.exit[1]), plat: null };
+      }
+      const entryDoor = { id: scope + ':grieta', kind: 'secreto', x: doorX, y: near.y, plat: near, scene: i, region: 'main', room: reg,
+        to: { x: arrive.x, y: arrive.y, region: reg }, phase: rng() * 6, secret: Z.id, look: th };
+      const exitDoor = { id: scope + ':salida-secreta', kind: 'salida', x: exitSpot.x, y: exitSpot.y, plat: exitSpot.plat, scene: i, region: reg,
+        room: reg, to: { x: backX, y: near.y, region: 'main' }, phase: rng() * 6, look: th };
+      W.doors.push(entryDoor, exitDoor);
+      room.entry = entryDoor; room.exit = exitDoor;
+      // Enemigos del paquete «enemigos secretos» (en FÁCIL, uno de cada tipo) y el jefe de la zona.
+      const floorPl = { x1: rx + 16, x2: rx + AW - 16, y: floorY, occupied: [] };
+      const platOf = (q) => (q.plat === 'floor' ? { x1: X(q.x1), x2: X(q.x2), y: floorY, occupied: [] } : ledgeAt(q.plat));
+      for (const q of Z.foes || []) {
+        if (q.extra && diffKey === 'facil') continue;
+        if (water) {
+          addFoe(EN.create(q.kind, { x: X((q.x1 + q.x2) / 2), y: Y(q.y), waterZone: water, lane: { x1: X(q.x1), x2: X(q.x2) }, scene: i, region: reg, diff, rng }));
+        } else {
+          const pl = platOf(q);
+          if (pl) addFoe(EN.create(q.kind, { x: (pl.x1 + pl.x2) / 2, y: pl.y, plat: pl, scene: i, region: reg, diff, rng }));
+        }
+      }
+      if (Z.boss) {
+        const B = Z.boss, pl = water ? null : platOf(B);
+        const boss = water
+          ? EN.create(B.kind, { x: X((B.x1 + B.x2) / 2), y: Y(B.y), waterZone: water, lane: { x1: X(B.x1), x2: X(B.x2) }, scene: i, region: reg,
+            diff, rng, isBoss: true, bossName: B.name, hp: B.hp })
+          : EN.create(B.kind, { x: (pl.x1 + pl.x2) / 2, y: pl.y, plat: pl, scene: i, region: reg, diff, rng, isBoss: true, bossName: B.name, hp: B.hp });
+        boss.secret = Z.id; boss.arena = pl || floorPl;
+        addFoe(boss);
+        room.boss = boss;
+      }
+      for (const [gx, gy] of Z.gems || []) addGem(X(gx), Y(gy), i, reg, rng);
+      if (Z.heart) addPickup({ scope, type: 'power', power: 'heart', x: X(Z.heart[0]), y: Y(Z.heart[1]), scene: i, region: reg, phase: rng() * 6, secret: true });
+    }
+
     /* ---------- Meta: la terminal y el camión ---------- */
     const busX1 = 150, busX2 = 500;
     W.bus = { x1: busX1, x2: busX2, y1: streetY - 150, y2: streetY, doorX1: busX1 + 22, doorX2: busX1 + 78, state: 'waiting', t: 0 };

@@ -112,11 +112,14 @@
     function hud(G) {
       if (!G.run) return;
       const r = G.run, P = G.P, total = G.world.scenes.length;
-      set('hudTramo', G.room ? (G.room.theme === 'alcantarilla' ? 'ALCANTARILLA' : 'SÓTANO') : 'TRAMO ' + (G.tramo + 1) + '/' + total);
+      set('hudTramo', G.room ? (G.room.secret ? 'ZONA SECRETA' : G.room.theme === 'alcantarilla' ? 'ALCANTARILLA' : 'SÓTANO') : 'TRAMO ' + (G.tramo + 1) + '/' + total);
       const boss = G.world.foes.find((f) => f.isBoss && !f.dead && f.scene === G.tramo && f.region === 'main');
+      // V58.7: en una zona secreta el objetivo es su jefe; ya vencido, la salida (al otro extremo).
+      const secretBoss = G.room && G.room.secret ? G.world.foes.find((f) => f.isBoss && !f.dead && f.region === G.room.id) : null;
       const worldTheme = G.world.scenes[G.tramo] && G.world.scenes[G.tramo].theme;
       const goalLabel = worldTheme === 'submarino' ? 'META: LLEGA A LA ESCOTILLA' : worldTheme === 'espacial' ? 'META: LLEGA AL MÓDULO' : 'META: LLEGA AL CAMIÓN';
-      set('objective', boss ? 'JEFE: ' + boss.bossName : G.tramo === total - 1 ? goalLabel : 'META: SIGUE BAJANDO');
+      if (G.room && G.room.secret) set('objective', secretBoss ? 'JEFE SECRETO: ' + secretBoss.bossName : 'SALIDA: AL OTRO EXTREMO DE LA ZONA');
+      else set('objective', boss ? 'JEFE: ' + boss.bossName : G.tramo === total - 1 ? goalLabel : 'META: SIGUE BAJANDO');
       set('hudTime', fmtTime(r.t));
       set('score', String(r.score));
       set('combo', r.combo >= 2 ? '  ×' + G.mult() + ' COMBO ' + r.combo : '');
@@ -332,7 +335,7 @@
       const s = e.summary;
       $('resultTag').textContent = 'TERMINAL ARCADAS · RUTA 6';
       $('resultTitle').innerHTML = e.ending.title;
-      $('resultText').innerHTML = esc(e.ending.text) + '<br><br>Tiempo ' + fmtTime(s.time) + (e.newTime ? ' (¡mejor tiempo!)' : '') + ' · ' + s.score + ' pts' + (e.newScore ? ' (¡récord!)' : '') + ' · ' + plural(s.gems, 'cristal', 'cristales') + ' · ' + plural(s.kills, 'enemigo', 'enemigos') + ' · jefes ' + (s.bosses || 0) + '/' + (s.totalBosses || NLV) + (s.relaxed ? '<br><small>Modo relajado activo: los récords cuentan igual, pero sin perder vidas.</small>' : '') + (e.fullRun ? '' : '<br><small>Empezaste en un tramo intermedio: el mejor tiempo solo cuenta desde el tramo 1.</small>');
+      $('resultText').innerHTML = esc(e.ending.text) + '<br><br>Tiempo ' + fmtTime(s.time) + (e.newTime ? ' (¡mejor tiempo!)' : '') + ' · ' + s.score + ' pts' + (e.newScore ? ' (¡récord!)' : '') + ' · ' + plural(s.gems, 'cristal', 'cristales') + ' · ' + plural(s.kills, 'enemigo', 'enemigos') + ' · jefes ' + (s.bosses || 0) + '/' + (s.totalBosses || NLV) + (s.totalSecrets ? ' · zona secreta ' + (s.secrets ? 'encontrada' : 'sin encontrar') : '') + (s.relaxed ? '<br><small>Modo relajado activo: los récords cuentan igual, pero sin perder vidas.</small>' : '') + (e.fullRun ? '' : '<br><small>Empezaste en un tramo intermedio: el mejor tiempo solo cuenta desde el tramo 1.</small>');
       $('resultStars').innerHTML = '<span class="on">★</span>'.repeat(e.stars) + '<span>★</span>'.repeat(3 - e.stars);
       // V58 · Llaves USB (los seis objetos) y escena post-créditos.
       const keysLine = '<br><b>LLAVES USB RECUPERADAS: ' + (e.keys || 0) + ' / ' + (e.totalKeys || 6) + '</b>' +
