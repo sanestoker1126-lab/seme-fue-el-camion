@@ -123,3 +123,54 @@ test('banda sonora del mar: archivo procesado (1:30–3:00), suena solo en el ma
     assert.deepEqual(playing(), [], 'al detener se callan también las que se estaban desvaneciendo');
   } finally { globalThis.Audio = prev; }
 });
+
+// Regresión: todos los recortes/pivotes compilados corresponden al atlas original.
+test('mapeo de buceo: 103 rectángulos, pivotes y límites del PNG', () => {
+  const j = JSON.parse(read('assets/player/sofia/sofia_submarina_complementaria.json'));
+  const src = read('js/app/render.js');
+  const m = src.match(/const DIVE_RECTS = (\\[[^\\n]+\\]);/);
+  assert.ok(m);
+  const rects = JSON.parse(m[1]);
+  const png = fs.readFileSync(path.join(ROOT, 'assets/player/sofia/sofia_submarina_complementaria.png'));
+  const width = png.readUInt32BE(16), height = png.readUInt32BE(20);
+  assert.deepEqual([width, height], j.size);
+  assert.equal(rects.length, j.frame_count);
+  for (const f of Object.values(j.frames)) {
+    const { x, y, w, h } = f.rect;
+    assert.deepEqual(rects[f.index], [x, y, w, h, f.pivot.x, f.pivot.y]);
+    assert.ok(x >= 0 && y >= 0 && x + w <= width && y + h <= height);
+    assert.ok(f.pivot.x >= 0 && f.pivot.x <= w && f.pivot.y >= 0 && f.pivot.y <= h);
+  }
+});
+test('mapeo de natación: estados completos, recortes sin solapes y dentro del PNG', () => {
+  const j = JSON.parse(read('tools/arte/swim_atlas.json'));
+  const art = read('js/app/art_data.js');
+  const live = JSON.parse(art.match(/SWIM: (\\{[^\\n]+\\})/)[1]);
+  const src = read('js/app/render.js');
+  const map = new Function('return ' + src.match(/const SWIM_STATE = (\\{[^;]+\\});/)[1])();
+  for (const state of ['swimFloat','swim','swimUnder','swimDown','swimUp','swimUpDiag','swimDash','swimKick','swimHurt','waterLeap','wadeIdle','wade','wadeRun','diveIn']) assert.ok(live.anims[map[state]], state);
+  const png = fs.readFileSync(path.join(ROOT, 'assets/player/sofia/swim_atlas.png'));
+  const w = png.readUInt32BE(16), h = png.readUInt32BE(20);
+  const all = [];
+  for (const [name,a] of Object.entries(j.anims)) {
+    assert.deepEqual(live.anims[name].frames,a.frames);
+    assert.equal(live.anims[name].fps,a.fps);
+    all.push(...a.frames);
+  }
+  assert.deepEqual(live.fx,j.fx); all.push(...Object.values(j.fx));
+  for (const [i,r] of all.entries()) {
+    const [x,y,rw,rh,ax,ay]=r;
+    assert.ok(x>=0 && y>=0 && rw>0 && rh>0 && x+rw<=w && y+rh<=h);
+    assert.ok(ax>=0 && ax<=rw && ay>=0 && ay<=rh+1);
+    for (const q of all.slice(i+1)) assert.ok(!(x<q[0]+q[2] && q[0]<x+rw && y<q[1]+q[3] && q[1]<y+rh));
+  }
+});
+test('reloj de agua inicia en cuadro cero, repite ciclos y conserva el final de una pasada', () => {
+  const src = read('js/app/render.js');
+  const fn = new Function(src.match(/function waterFrameIndex\\([\\s\\S]*?\\n  \\}/)[0] + '; return waterFrameIndex;')();
+  assert.equal(fn(0,100,6,true),0);
+  assert.equal(fn(0.11,100,6,true),1);
+  assert.equal(fn(0.61,100,6,true),0);
+  assert.equal(fn(3,100,6,false),5);
+  assert.equal(fn(-1,100,6,false),0);
+});
