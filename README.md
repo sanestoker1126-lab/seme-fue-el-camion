@@ -18,7 +18,7 @@ Es un sitio estático, sin dependencias. Para jugarlo:
 Controles en pantalla (táctil) y teclado. Se instala como app (PWA) y funciona sin conexión tras la primera carga.
 
 **Paquete para jugar**: `bash tools/empaquetar.sh` arma `Se_Me_Fue_El_Camion_V<versión>.zip`. Lleva solo lo que usa
-el juego (483 archivos, ~54 MB en la V58.7) y un `LEEME.txt` con instrucciones. En GitHub: Actions → «Empaquetar
+el juego (485 archivos, ~54 MB en la V58.9) y un `LEEME.txt` con instrucciones. En GitHub: Actions → «Empaquetar
 juego completo» → Run workflow.
 
 ## Novedades V58.9 · Limpieza
