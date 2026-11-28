@@ -162,3 +162,23 @@ test('campaña: un perfil nuevo completa las cuatro misiones en modo relajado y 
     }
   }
 });
+
+// V58.8.38 · Final de la historia: si faltan llaves USB, la victoria de la última misión dice cuáles y en qué parada
+// (cuarto secreto) están; con las seis se desbloquea la escena post-créditos y ya no hay lista.
+test('final: la última misión lista las llaves que faltan y dónde están', () => {
+  const G = NS.Game.createGame({ onSave: () => {} });
+  G.save.items = { credencial: true, tarjeta: true, sueter: true };
+  G.newRun({ mission: 4, startTramo: 2 });
+  const win = boardFromDoor(G);
+  assert.equal(win.lastMission, true);
+  assert.equal(win.postCredits, false);
+  assert.deepEqual(win.missingKeys.map((k) => k.id).sort(), ['audifonos', 'cuaderno', 'llavero']);
+  const where = Object.fromEntries(win.missingKeys.map((k) => [k.id, [k.mission, k.tramo]]));
+  assert.deepEqual(where, { cuaderno: [0, 2], llavero: [0, 3], audifonos: [1, 2] });
+  const G2 = NS.Game.createGame({ onSave: () => {} });
+  for (const it of NS.STORY.ITEMS) G2.save.items[it.id] = true;
+  G2.newRun({ mission: 4, startTramo: 2 });
+  const win2 = boardFromDoor(G2);
+  assert.equal(win2.postCredits, true);
+  assert.deepEqual(win2.missingKeys, []);
+});

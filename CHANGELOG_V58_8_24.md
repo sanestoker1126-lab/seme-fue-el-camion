@@ -754,3 +754,51 @@ había entendido «dejar a Doña Tóxica para después». Ahora sí entra al jue
   - Capturé la cortinilla, la línea del tramo y sus ocho poses en el juego (maneja, aviso, cucharazo, embestida, salto,
     mareo, golpe, derrota), y la comparé lado a lado con el Maestro en escritorio y teléfono.
   - Sin errores ni archivos faltantes.
+
+# V58.8.38 · Pulido integral: menú de inicio, historia de punta a punta y fondos de cada mundo
+
+## 1. Menú de inicio
+- **Nada se encima.** En teléfono horizontal (844 × 390, 740 × 360, 667 × 375) y en tabletas de 1024 × 600, las
+  tarjetas de los mundos se montaban de 33 a 125 px sobre la fila de botones. Tapaban «Historia» y «Cómo jugar» y
+  encimaban el texto del banco. Ahora el cuerpo del menú no se encoge por debajo de su contenido y, si no cabe, el
+  panel hace scroll. La altura de las tarjetas y de la portada se ajusta a la pantalla, y los cuatro botones de abajo
+  van en una fila en horizontal. Medí 13 tamaños, del teléfono pequeño al de 1920 × 1080: ninguno se encima. En los
+  dos horizontales más bajos queda un scroll de 5–19 px.
+- **Nombres y textos coherentes.** La tarjeta, la portada y el HUD usan el mismo nombre: la portada de las cascadas
+  decía «PARAFALLS» y su tarjeta «CASCADAS DEL CIELO». Cada portada dice el objetivo y el jefe del mundo. Por ejemplo, la
+  Calzada nombra al Maestro y a la Señora de la Cuchara, y el Espacio, al Emperador Marciano.
+- **Portada del Espacio:** la imagen traía franjas laterales difuminadas que se veían como una banda oscura. Recorté su
+  parte nítida.
+
+## 2. Historia de principio a fin
+Recorrí en orden las 43 escenas de los 8 conjuntos (prólogo, Guadalajara, Calzada, fin de la Calzada, mar, espacio,
+cascadas y epílogo), sin errores ni archivos faltantes. La cadena está conectada. Corregí lo que no cuadraba:
+- **Salida de la escuela:** el recuadro grande del título tapaba a Sofía y a Luna. Ahora usa el formato de diálogo,
+  con el texto arriba.
+- **Panel maestro (epílogo):** Estoker volvía a ser la silueta provisional. Ahora lleva su arte real, como en la escena
+  anterior. Doña Tóxica sigue en silueta hasta que llegue su arte.
+- **El final:** la escena de Puente Grande exige las seis llaves USB, como en tu guion (Estoker conecta las seis USB).
+  Si terminas sin todas, la pantalla final dice cuáles faltan y en qué parada están: en el cuarto secreto de las paradas
+  1–3 de la Escuela y 1–3 de Guadalajara.
+
+## 3. Nivel por nivel
+Recorrí cada tramo en varios puntos, de arriba abajo: los 3 de la Escuela, los 13 de Guadalajara, los 3 del mar, la
+Luna y los 3 de las cascadas.
+- **Guadalajara, fondos.** La «ciudad lejana» del paquete es una viñeta: una ciudad dentro de una nube, con sombra negra
+  translúcida y un fleco magenta del recorte. Repetida en espejo dejaba columnas moradas y bordes rosas en los tramos
+  que la usan (Centro Histórico, Azoteas, Zapopan…). Recorté una franja limpia de su interior, de 576 × 524 px. Al
+  repetirse forma una ciudad continua de jacarandas y catedrales que se funde arriba con el cielo. El primer tramo
+  también la usa en su mitad baja, la arena del jefe, que antes era lila liso.
+- **La Luna:** su meta es el módulo de regreso, pero junto a él había una parada «RUTA 6» que al acercarse decía
+  «¡AHÍ ESTÁ EL CAMIÓN!». Ahora el letrero habla del módulo de regreso.
+- **Final de Guadalajara:** la calle donde espera la Ruta 6 estaba rotulada «TERMINAL ARCADAS» (el tramo 7). Ahora dice
+  «PLAZA DE LAS JACARANDAS», como el último tramo y la cinemática.
+
+**QA**
+- **Node:** 163/163.
+  - Pruebas nuevas: llaves que faltan al final y dónde están; meta de la Luna sin parada de camión; Plaza de las
+    Jacarandas al final de Guadalajara.
+  - Actualicé la prueba de los fondos de Guadalajara.
+- **Chromium:**
+  - Recorrí los 23 tramos sin errores ni archivos faltantes y las 43 escenas de la historia.
+  - Revisé el menú en 13 tamaños, las portadas de los 6 mundos y los finales de 4 misiones.

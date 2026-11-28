@@ -304,12 +304,16 @@
   // Guadalajara V58.4.1: capas independientes del paquete adaptadas a la escala del renderer vigente.
   // Se usan solo cielo y ciudad lejana; los primeros planos incluyen repisas de otra versión y no coinciden con las colisiones V58.8.1.
   const GDL_V584 = PXD + 'guadalajara_v584/';
-  const GDL = () => [[[GDL_V584 + '00_cielo_atardecer.webp'], 0.16], [[GDL_V584 + '01_ciudad_lejana.webp'], 0.08]];
+  /* V58.8.38: la «ciudad lejana» del paquete es una viñeta (ciudad dentro de una nube con sombra negra translúcida y un
+     fleco magenta de recorte). Repetida en espejo dejaba columnas moradas y bordes rosas. Ahora es una franja limpia
+     recortada de su interior (576 × 524 px, la ciudad en la mitad baja de la capa): al repetirse queda continua. */
+  const GDL = () => [[[GDL_V584 + '00_cielo_atardecer.webp'], 0.16], [[GDL_V584 + '01_ciudad_lejana_franja.webp'], 0.08]];
   // El primer Guadalajara ya trae ciudad/plataformas en su arte central; conservar solo el cielo fuera del panel.
   const GDL_SKY = () => [[[GDL_V584 + '00_cielo_atardecer.webp'], 0.16]];
   const BACKDROPS = {
     // V58.8.30: también en la mitad alta (pintada): a los lados del panel quedaba un relleno gris plano.
-    guadalajara: { top: GDL_SKY('barrios_inferiores'), bottom: GDL_SKY('barrios_inferiores') },
+    // V58.8.38: la mitad baja (arena del jefe, sin panel pintado) lleva además la ciudad lejana, como los demás tramos.
+    guadalajara: { top: GDL_SKY('barrios_inferiores'), bottom: GDL('barrios_inferiores') },
     gdl_noche: { bottom: GDL('barrios_inferiores') },
     azoteas: { top: GDL('azoteas'), bottom: GDL('azoteas') },
     centro_historico: { top: GDL('mercado_parque'), bottom: GDL('mercado_parque') },
@@ -1534,7 +1538,9 @@
       fillRR(ax + 18, y - 200, 84, 150, 40, '#16222c', 0.9);
       fillRR(ax + 26, y - 192, 68, 138, 34, hash(ax, 5) % 3 ? '#f1c57d' : '#9bd5d1', 0.18);
     }
-    text('TERMINAL ARCADAS', W.bus.x1 + 170, y - 222, 14, '#d9ff65');
+    // V58.8.38: solo Guadalajara llega a esta calle, y su último tramo es la Plaza de las Jacarandas (ahí alcanza la
+    // Ruta 6, como en la cinemática); antes decía «TERMINAL ARCADAS», que es el tramo 7.
+    text('PLAZA DE LAS JACARANDAS', W.bus.x1 + 170, y - 222, 14, '#d9ff65');
     fillRect(V.x1, y, V.x2 - V.x1, 16, '#9aa5a8');
     fillRect(V.x1, y + 16, V.x2 - V.x1, 220, '#262b30');
     for (let lx = Math.floor(V.x1 / 90) * 90; lx < V.x2; lx += 90) fillRect(lx, y + 80, 46, 5, '#e8d36a', 0.7);

@@ -148,3 +148,13 @@ body.chaseMode #bubble{display:none}
 #menu #missions .mission .mRank{position:absolute;top:6px;right:6px}
 .rS{background:linear-gradient(135deg,#ffe07a,#ff9d2e)!important;color:#2a1500!important}.rA{background:#55d38a!important;color:#062211!important}.rB{background:#5aa7ff!important;color:#061a33!important}.rC{background:#8a93a3!important}
 #menu #missions .mission{position:relative}
+/* V58.8.38 · Menú de inicio: nada se encima. El cuerpo ya no se encoge por debajo de su contenido (antes las tarjetas
+   se montaban 33–125 px sobre los botones de abajo en horizontal y en tabletas); si de verdad no cabe, el panel se
+   desplaza. Las tarjetas y la portada se miden con la altura de la pantalla y los cuatro botones de abajo van en una
+   fila (salvo en vertical), así cabe sin desplazarse en las pantallas comunes. */
+#menu.menu{overflow-y:auto}
+#menu .menuBody{flex:0 0 auto}
+@media(min-width:760px) and (min-height:560px){#menu #missions .mission{min-height:clamp(70px,12.5vh,122px)}#menu #missions .mission[data-m=parafalls]{min-height:clamp(58px,10vh,100px)}#menu .worldHero{min-height:clamp(118px,23vh,192px)}#menu .tramo{height:clamp(34px,5.6vh,44px)}}
+@media(orientation:landscape){#menu .menuFoot{flex-wrap:nowrap}#menu .menuFoot .opt{flex:1 1 0}}
+@media(orientation:landscape) and (max-height:550px){#menu #missions .mission{min-height:46px}#menu #missions .mission[data-m=parafalls]{min-height:42px}#menu .worldHero{min-height:72px}}
+@media(orientation:landscape) and (max-height:380px){#menu .menuBrand .eyebrow{display:none}#menu .menuBrand h1{font-size:22px}#menu #missions .mission{min-height:41px}#menu #missions .mission[data-m=parafalls]{min-height:37px}#menu .worldHero{min-height:62px}#menu #start{min-height:32px}}

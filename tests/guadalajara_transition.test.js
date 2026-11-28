@@ -34,7 +34,7 @@ test('la transición escuela–Guadalajara valida escenas breves, visuales y sin
   assert.equal(scenes[2].layout, 'dialogo');
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   for (const asset of scenes[1].backgrounds) assert.ok(sw.includes(asset), `Service Worker no precarga ${asset}`);
-  for (const asset of ['00_cielo_atardecer.webp', '01_ciudad_lejana.webp']) assert.ok(sw.includes(`assets/parallax/guadalajara_v584/${asset}`), `Service Worker no precarga ${asset}`);
+  for (const asset of ['00_cielo_atardecer.webp', '01_ciudad_lejana_franja.webp']) assert.ok(sw.includes(`assets/parallax/guadalajara_v584/${asset}`), `Service Worker no precarga ${asset}`);
   for (const asset of ['canal_inundado_redisenio.webp', 'bosque_algas.webp', 'fosa_azul.webp']) {
     assert.ok(sw.includes(`assets/scenes/underwater/v59/${asset}`), `Service Worker no precarga el fondo V59 ${asset}`);
   }
@@ -43,9 +43,10 @@ test('la transición escuela–Guadalajara valida escenas breves, visuales y sin
   const render = fs.readFileSync(path.join(ROOT, 'js/app/render.js'), 'utf8');
   assert.match(render, /GDL_V584 = PXD \+ 'guadalajara_v584\/'/);
   assert.match(render, /00_cielo_atardecer\.webp/);
-  assert.match(render, /01_ciudad_lejana\.webp/);
-  // V58.8.30: el primer Guadalajara usa solo el cielo (no la ciudad lejana) también en su mitad alta pintada.
-  assert.match(render, /guadalajara:\s+\{ top: GDL_SKY\('barrios_inferiores'\), bottom: GDL_SKY\('barrios_inferiores'\) \}/);
+  assert.match(render, /01_ciudad_lejana_franja\.webp/);   // V58.8.38: franja limpia (sin la viñeta ni su fleco)
+  // V58.8.30: el primer Guadalajara usa solo el cielo junto a su panel pintado (mitad alta); V58.8.38: en la mitad
+  // baja (la arena del jefe, sin panel) también la ciudad lejana.
+  assert.match(render, /guadalajara:\s+\{ top: GDL_SKY\('barrios_inferiores'\), bottom: GDL\('barrios_inferiores'\) \}/);
   assert.match(render, /own && !\(sc\.artPainted && sc\.map\.art && sc\.map\.art\.length\)/);
   const lv = fs.readFileSync(path.join(ROOT, 'js/core/levels.js'), 'utf8');
   assert.match(lv, /guadalajara:\s+\{ keepWidth: true, painted: true, pieces: \[\'plain\', \'zip\', \'bounce\'\] \}/);

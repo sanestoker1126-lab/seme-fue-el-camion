@@ -68,8 +68,9 @@
     let toastT = 0, toastPri = -1, bannerT = 0, bubbleT = 0, cardT = 0, introIndex = 0, introThen = null;
     let cinematicIndex = 0, cinematicThen = null, cinematicT = 0, bossCineData = null, bossCineThen = null, bossCineIndex = 0, bossCineT = 0, activePanel = null;
     const hudCache = {};
-    const worldNames = {escuela:'LA ESCUELA',guadalajara:'GUADALAJARA',calzada:'LA CALZADA',submarino:'EL SUBMARINO',espacial:'EL ESPACIO',parafalls:'PARAFALLS'};
-    const worldDescriptions = {escuela:'La campana sonó. Alcanza la ruta 6.',guadalajara:'Azoteas, barrios y el corazón de la ciudad.',calzada:'Misión especial: Sofía arranca la moto de su mamá en el Parque Agua Azul, esquiva patrullas, vuela en las rampas y derriba el tráiler blindado.',submarino:'Regresa a la isla, cruza el bosque de algas y desciende a la fosa de Poseidón.',espacial:'Salta entre cráteres y pasarelas lunares.',parafalls:'Desciende por las cascadas del cielo.'};
+    // V58.8.38: la tarjeta, la portada y el HUD usan el mismo nombre de cada mundo; cada texto dice el objetivo y el jefe.
+    const worldNames = {escuela:'LA ESCUELA',guadalajara:'GUADALAJARA',calzada:'LA CALZADA',submarino:'EL SUBMARINO',espacial:'EL ESPACIO',parafalls:'CASCADAS DEL CIELO'};
+    const worldDescriptions = {escuela:'La campana sonó. Baja por la escuela y alcanza la Ruta 6.',guadalajara:'Del centro a la Plaza de las Jacarandas: cruza la ciudad y alcanza la Ruta 6.',calzada:'Sofía arranca la moto de su mamá en el Parque Agua Azul, vence al Maestro y a la Señora de la Cuchara y derriba el tráiler blindado.',submarino:'Regresa a la isla, cruza el bosque de algas y desciende a la fosa de Poseidón.',espacial:'Cruza la Luna hueca y vence al Emperador Marciano para volver a la Tierra.',parafalls:'Parafalls: cruza el portal en versión cúbica y libera a los guardianes de las cascadas.'};
 
     function show(id) {
       activePanel = id || null;
@@ -478,7 +479,9 @@
       $('resultStars').innerHTML = '<span class="on">★</span>'.repeat(e.stars) + '<span>★</span>'.repeat(3 - e.stars);
       // V58 · Llaves USB (los seis objetos) y escena post-créditos.
       const keysLine = '<br><b>LLAVES USB RECUPERADAS: ' + (e.keys || 0) + ' / ' + (e.totalKeys || 6) + '</b>' +
-        (e.postCredits ? ' · ¡ESCENA POST-CRÉDITOS DESBLOQUEADA!' : e.lastMission ? ' · Reúne las seis para ver la escena final.' : '');
+        (e.postCredits ? ' · ¡ESCENA POST-CRÉDITOS DESBLOQUEADA!' : e.lastMission ? ' · Reúne las seis para ver la escena final.' : '') +
+        // V58.8.38: dónde quedó cada llave que falta (cuarto secreto de esa parada).
+        (e.missingKeys && e.missingKeys.length ? '<br><small>Faltan: ' + e.missingKeys.map((k) => esc(k.name.toLowerCase()) + ' (' + esc(k.world.replace(/^MISIÓN \d+ · /, '').toLowerCase()) + ', parada ' + k.tramo + ')').join(' · ') + '. Están en los cuartos secretos.</small>' : '');
       const cs = s.contracts, contractLine = cs && cs.total ? '<br><b>MISIONES CUMPLIDAS: ' + cs.main + ' / ' + cs.total + ' · OPCIONALES: ' + cs.bonus + ' / ' + cs.total + '</b>' : '';
       const rankLine = e.rank ? '<br><span class="rankBadge r' + e.rank + '">' + e.rank + '</span> <b>CALIFICACIÓN ' + e.rank + '</b>' + (e.rankNew ? ' · ¡NUEVO RÉCORD!' : e.fullRun ? '' : ' <small>(solo cuenta desde la parada 1)</small>') : '';
       const bankLine = e.bank != null ? '<br><small>+' + (e.banked | 0) + ' cristales al banco · total ' + e.bank + ' ◆ (gástalos en 🛒 MEJORAS)</small>' : '';

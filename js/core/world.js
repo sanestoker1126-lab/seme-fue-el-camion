@@ -840,6 +840,8 @@
     W.bus = { x1: busX1, x2: busX2, y1: streetY - 150, y2: streetY, doorX1: busX1 + 22, doorX2: busX1 + 78, state: 'waiting', t: 0 };
     W.goal = { x1: W.bus.doorX1 - 6, x2: W.bus.doorX2 + 6, y1: streetY - 110, y2: streetY + 1 };
     W.signs.push({ id: 'mundo:letrero:terminal', x: busX1 - 60, y: streetY, text: ST.MESSAGES.busWaiting, scene: W.scenes.length - 1, region: 'main', seenT: -99, busStop: true });
+    // V58.8.38: en la Luna la meta es el módulo de regreso (así se dibuja): no hay camión ni parada «RUTA 6».
+    if (seq.length === 1 && seq[0].theme === 'espacial') Object.assign(W.signs[W.signs.length - 1], { text: 'EL MÓDULO DE REGRESO TE LLEVA DE VUELTA A LA TIERRA', busStop: false });
 
     if (seq.every(d => d.room === 'gruta')) {
       const last = W.scenes[W.scenes.length - 1], plat = last.exitPlatform;

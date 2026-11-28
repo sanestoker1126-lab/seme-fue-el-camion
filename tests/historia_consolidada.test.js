@@ -86,3 +86,18 @@ test('hilo de la historia: cada misión termina donde empieza la siguiente', () 
   const chapters = NS.STORY.CHAPTERS.map((c) => c.line + ' ' + c.driver);
   for (const t of [...labels, ...chapters]) assert.doesNotMatch(t, /amanecer|atardecer/i, t);
 });
+
+// V58.8.38 · La meta de cada misión coincide con su historia: la Luna termina en el módulo de regreso (sin parada
+// «RUTA 6» ni «¡AHÍ ESTÁ EL CAMIÓN!») y la calle final de Guadalajara es la Plaza de las Jacarandas.
+test('metas: la Luna no tiene parada de camión y Guadalajara termina en la Plaza de las Jacarandas', () => {
+  const fs = require('fs'), path = require('path');
+  const G = NS.Game.createGame({ onSave: () => {} });
+  G.newRun({ mission: 3, practice: true });
+  const sign = G.world.signs.find((s) => s.id === 'mundo:letrero:terminal');
+  assert.ok(sign && !sign.busStop && /MÓDULO DE REGRESO/.test(sign.text));
+  G.newRun({ mission: 1, practice: true });
+  assert.ok(G.world.signs.find((s) => s.id === 'mundo:letrero:terminal').busStop, 'en Guadalajara sí está la parada de la Ruta 6');
+  const render = fs.readFileSync(path.join(__dirname, '..', 'js', 'app', 'render.js'), 'utf8');
+  assert.match(render, /text\('PLAZA DE LAS JACARANDAS', W\.bus\.x1 \+ 170/);
+  assert.doesNotMatch(render, /text\('TERMINAL ARCADAS'/);
+});

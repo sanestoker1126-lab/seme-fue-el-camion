@@ -584,6 +584,8 @@
       const lastMission = !missions || G.mission === missions.length - 1;
       const postCredits = !r.practice && lastMission && keys >= ST.ITEMS.length;
       if (postCredits) runSave.epilogue = true;
+      // V58.8.38: al final, qué llaves faltan y dónde están (cuarto secreto de qué parada), para cerrar la historia.
+      const missingKeys = lastMission && !postCredits ? missingKeysWhere(runSave) : [];
       // V58.8.27: los cristales del último tramo al banco y calificación de la misión (solo cuenta desde la parada 1).
       const banked = bankGems(false);
       const sum = summary();
@@ -591,8 +593,19 @@
       const rankNew = !!(grade && fullRun && !r.practice && UP.recordRank(runSave, G.missionId, grade.rank));
       persist();
       emit('victory', { summary: sum, stars, newTime, newScore, fullRun, ending: ST.ending(items, total, r.lives, G.missionId),
-        postCredits, keys, totalKeys: ST.ITEMS.length, lastMission, mission:G.mission, nextMission: special || (next ? G.mission+1 : null),
+        postCredits, keys, totalKeys: ST.ITEMS.length, missingKeys, lastMission, mission:G.mission, nextMission: special || (next ? G.mission+1 : null),
         rank: grade && grade.rank, rankPoints: grade && grade.points, rankNew, banked, bank: runSave.bank | 0 });
+    }
+
+    /** Llaves USB (objetos) que faltan en el guardado y la parada cuyo cuarto secreto las guarda. */
+    function missingKeysWhere(save) {
+      const out = [], missions = NS.LEVELS && NS.LEVELS.MISSIONS;
+      if (!missions) return out;
+      missions.forEach((m, mi) => m.levels.forEach((d, t) => {
+        const it = ST.ITEMS[d.storyIndex];
+        if (it && !(save.items && save.items[it.id])) out.push({ id: it.id, name: it.name, mission: mi, world: m.label, tramo: t + 1 });
+      }));
+      return out;
     }
 
     function summary() {

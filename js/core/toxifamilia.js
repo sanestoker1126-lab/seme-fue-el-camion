@@ -68,7 +68,8 @@
     { id: 'pc_apagon', tag: 'EL PANEL MAESTRO', title: 'SE ABRIERON LAS JAULAS', layout: 'dialogo',
       text: 'Estoker conecta las seis USB en el panel maestro. Un estruendo sordo hace temblar todo. Las luces de emergencia de Puente Grande se apagan a la vez y la fortaleza queda en absoluta oscuridad. Desde adentro, los gritos de victoria de los reclusos.\nDOÑA TÓXICA (sonriendo de medio lado): «Se abrieron las jaulas. Ahora nos toca a nosotros.»',
       background: [GDL + 'barrios_inferiores/02_arquitectura_anclada.webp', GDL + 'barrios_inferiores/00_cielo_degradado.webp'],
-      durationMs: 12000, fx: 'apagon', cast: [Object.assign({}, ESTOKER, { entrance: 'enter-rise' }), Object.assign({}, TOXICA, { entrance: 'enter-rise' })] },
+      // V58.8.38: Estoker con su arte real, igual que en la escena anterior (antes volvía a ser la silueta provisional).
+      durationMs: 12000, fx: 'apagon', cast: [Object.assign({}, ESTOKER, { sprite: 'assets/cinematica/llegadas/estoker_original.webp', scale: 1.15, entrance: 'enter-rise' }), Object.assign({}, TOXICA, { entrance: 'enter-rise' })] },
     { id: 'pc_legend', tag: '¡SE ME FUE EL CAMIÓN! → …', title: 'LEGEND OF PRESOS',
       text: 'LA VERDADERA BATALLA COMIENZA AHORA…', background: null, durationMs: 9000, fx: 'legend', cast: [] }
   ];
@@ -172,7 +173,8 @@
   /* Transición visual solicitada: escuela → camión → centro de Guadalajara.
      No forma parte del guion fuente ni añade diálogo; reutiliza fondos y sprites activos. */
   const GDL_TRANSITION = [
-    { id: 'gdl_salida', tag: 'TRANSICIÓN · ESCUELA BENITO JUÁREZ', title: 'SALIDA DE LA ESCUELA',
+    // V58.8.38: formato de diálogo (texto arriba): el recuadro grande de abajo tapaba a Sofía y a Luna en la reja.
+    { id: 'gdl_salida', tag: 'TRANSICIÓN · ESCUELA BENITO JUÁREZ', title: 'SALIDA DE LA ESCUELA', layout: 'dialogo',
       background: 'assets/scenes/school_pro/school_exit_facade.webp', text: '', durationMs: 4200,
       cast: [
         { name: 'SOFÍA', frames: ['assets/player/variants/uniforme/run_01.png', 'assets/player/variants/uniforme/run_02.png',
