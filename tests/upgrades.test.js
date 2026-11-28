@@ -109,10 +109,12 @@ test('reparto protagonista: cada tramo de Guadalajara tiene sus enemigos propios
 test('enemigos secretos extra: aparecen en su zona secreta con la conducta base y su arte', () => {
   require('../js/app/art_extra.js');
   const EXTRA = NS.ART.EXTRA_FOES, fs = require('node:fs'), path = require('node:path');
-  const size = { marciano_v2: [2716, 203] };   // los demás: atlas 4 × 4 de 1254 px
+  // Los demás: atlas 4 × 4 de 1254 px. V58.8.29: jefes de «RECURSOS_CURADOS_V1» en atlas propios.
+  const size = { marciano_v2: [2716, 203], poseidon_v2: [1967, 853], pulpo_rey: [1623, 889], emperador_marciano: [1603, 1047] };
+  const count = { marciano_v2: 15, poseidon_v2: 22, pulpo_rey: 20, emperador_marciano: 25 };
   for (const [skin, A] of Object.entries(EXTRA)) {
     assert.ok(fs.existsSync(path.join(__dirname, '..', A.src)), A.src);
-    assert.equal(A.frames.length, skin === 'marciano_v2' ? 15 : 16, skin);
+    assert.equal(A.frames.length, count[skin] || 16, skin);
     for (const [name, [list]] of Object.entries(A.anims)) assert.ok(list.every((i) => A.frames[i]), skin + ' ' + name);
     const [aw, ah] = size[skin] || [1254, 1254];
     assert.ok(A.frames.every((f) => f[2] > 20 && f[3] > 20 && f[0] >= 0 && f[1] >= 0 && f[0] + f[2] <= aw && f[1] + f[3] <= ah), skin + ' cuadros dentro del atlas');
@@ -137,4 +139,31 @@ test('enemigos secretos extra: aparecen en su zona secreta con la conducta base 
       }
     }
   }
+});
+
+test('jefes nuevos: Poseidón y el Pulpo Rey con arte nuevo; el Emperador Marciano gobierna la Luna', () => {
+  require('../js/app/art_extra.js');
+  const EXTRA = NS.ART.EXTRA_FOES;
+  for (const [kind, skin] of [['poseidon', 'poseidon_v2'], ['pulpo_abismo', 'pulpo_rey']]) {
+    const f = NS.Enemies.create(kind, { x: 0, y: 0 });
+    assert.equal(f.skin, skin); assert.equal(f.kind, kind); assert.ok(EXTRA[skin]);
+  }
+  const mi = NS.LEVELS.MISSIONS.findIndex((m) => m.id === 'espacial');
+  const W = NS.World.buildWorld({ levels: NS.LEVELS.MISSIONS[mi].levels, difficulty: 'normal' });
+  const b = W.foes.find((f) => f.isBoss && f.region === 'main');
+  assert.equal(b.kind, 'drone'); assert.equal(b.skin, 'emperador_marciano'); assert.equal(b.bossName, 'EMPERADOR MARCIANO');
+  assert.deepEqual([b.w, b.h], [62, 72]);
+  assert.ok(b.arena.y - (b.y + b.h / 2) >= 62, 'Sofía (62 u) cabe debajo');
+  assert.match(NS.Contracts.PLAN.espacial.why, /Emperador Marciano/);
+  // Dispara tras la carga con aviso: un orbe; en segunda fase, abanico de tres.
+  const shots = (enraged) => {
+    const f = NS.Enemies.create('drone', { x: 0, y: 0, isBoss: true, hp: 7, skin: 'emperador_marciano', size: [62, 72], lane: { x1: -300, x2: 300 } });
+    f.enraged = enraged; f.state = 'aim'; f.stateT = 5; f.targetX = 200; f.targetY = 0;
+    const Wd = { shots: [], solids: [], foes: [f], platforms: [], waters: [], obstacles: [] }, P = { x: 200, y: 0, dead: false, w: 32, h: 62 };
+    const ctx = { hurtbox: () => ({ x1: 0, x2: 0, y1: 0, y2: 0 }), active: () => true, onScreen: () => true, busy: true };
+    NS.Enemies.update(Wd, P, 1 / 60, ctx, []);
+    return Wd.shots;
+  };
+  assert.equal(shots(false).length, 1); assert.equal(shots(true).length, 3);
+  assert.ok(shots(true).every((s) => s.skin === 'emperador_marciano' && s.r === 10));
 });

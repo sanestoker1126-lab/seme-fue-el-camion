@@ -1237,7 +1237,7 @@
     // Drones de disparo anunciado y robots que embisten.
     // V58.1: el niño gordito de las piedras, con traje de astronauta (atlas aportado).
     foes: ['drone', 'robot', 'kid', 'drone', 'robot'], obstacles: ['spark', 'crate'], foeBudget: 30, obstacleBudget: 10, sideFoes: 0,
-    boss: { kind: 'drone', name: 'DRON CENTINELA', hp: 7 }, final: true, music: 15, secret: 'estacion'
+    boss: { kind: 'drone', skin: 'emperador_marciano', size: [62, 72], name: 'EMPERADOR MARCIANO', hp: 7 }, final: true, music: 15, secret: 'estacion'
   };
 
   /* V58.7 · Zonas secretas (paquete «niveles secretos»): una ilustración panorámica por zona, con el recorrido
@@ -1262,7 +1262,7 @@
         { kind: 'pulpo', skin: 'medusa_electrica', x1: 900, x2: 1400, y: 170 },
         { kind: 'pulpo', skin: 'medusa_electrica', x1: 1500, x2: 2000, y: 480, extra: true }
       ],
-      boss: { kind: 'pulpo_abismo', name: 'PULPO DEL ABISMO', hp: 8, x1: 1080, x2: 2060, y: 390 },
+      boss: { kind: 'pulpo_abismo', name: 'PULPO REY DEL ABISMO', hp: 8, x1: 1080, x2: 2060, y: 390 },
       gems: [[260, 185], [330, 220], [400, 290], [235, 420], [330, 430], [600, 515], [700, 515], [800, 515], [1000, 300],
         [1110, 300], [1450, 230], [1700, 420], [1810, 420], [1920, 300]],
       heart: [1840, 520]

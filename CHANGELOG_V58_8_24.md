@@ -307,3 +307,77 @@ Integro tres archivos aportados.
 
 - El tamaño en pantalla y el equilibrio de los enemigos nuevos con jugadores reales.
 - La medusa usa la conducta del pulpo, no una descarga de área propia.
+
+# V58.8.29 · Jefes nuevos del paquete «RECURSOS_CURADOS_V1»
+
+Integro cuatro de las cinco hojas de jefes del paquete. La de Doña Tóxica en scooter queda guardada para después, como
+pediste.
+
+**Preparación de las hojas.** Cada hoja traía el alfa sucio y algunos cuadros pegados entre sí (rayos y chorros que
+cruzan de una celda a otra). Hice lo siguiente:
+- separé los cuadros por filas y columnas;
+- limpié el alfa (menos de 90 fuera) y quité motas sueltas;
+- recorté cada cuadro a su contenido;
+- los empaqué en atlas WebP.
+
+El ancla de cada cuadro es el centro del cuerpo: se calcula con las columnas más densas, así un rayo o un chorro no
+mueven al personaje. Resultado: 4 atlas de 0,3–0,54 MB.
+
+**1. Poseidón** (22 cuadros), arte nuevo con la misma conducta:
+- flota;
+- se impulsa al avisar la embestida;
+- gira el tridente al embestir;
+- carga y suelta la ola;
+- queda aturdido;
+- se derrumba en 4 cuadros.
+
+**2. Pulpo Rey** (20 cuadros) reemplaza el arte del Pulpo del Abismo, jefe del Santuario. Su conducta es la misma.
+- Ahora se llama «PULPO REY DEL ABISMO».
+- Animaciones: flota (y nada más rápido en segunda fase), prepara y lanza el tentáculo, escupe tinta, se marea y cae
+  noqueado.
+
+**3. Emperador Marciano** (25 cuadros) es el nuevo jefe final de la Luna en lugar del Dron Centinela.
+- Usa la conducta del dron, pero con su propio tamaño (62 × 72 u) y una altura que deja pasar a Sofía por debajo.
+- Su orbe es magenta y más grande. En segunda fase dispara un abanico de tres orbes, siempre después de la misma
+  carga avisada.
+- La misión de la Luna ahora dice «El Emperador Marciano custodia el módulo de regreso».
+
+**4. El Maestro Enojón en su moto roja** (20 cuadros) es el jefe del tramo 2 de La Calzada.
+- **Duelo al final del tramo.** La avenida se despeja: lo que sigue de la ruta se aparta y, al vencerlo, vuelve
+  delante a la misma distancia. La ruta no avanza durante el duelo, así que las rampas nunca se mezclan con la pelea.
+- **Barra de vida:** 4 en Fácil, 6 en Normal y 7 en Difícil.
+- **Ataques, todos avisados:**
+  - **Reglazo:** alcanza su carril y los dos vecinos.
+  - **Embestida:** marca tu carril y llega desde atrás.
+  - **Caballito:** solo con media vida. Salta y cae en el carril marcado.
+- **Cuándo se le puede pegar:** se cubre con la regla, salvo mientras la levanta, mientras golpea o cuando frena
+  aturdido. Entonces se le patea de lado o se le embiste por detrás. Las gatas siempre le pegan.
+- **Contacto:** los roces de lado ya no hieren a Sofía; solo hieren sus ataques avisados.
+- **Al vencerlo:** +1 de reparación y nitro.
+- Durante los duelos (el del maestro y el del tráiler), los demás perseguidores se retiran y ya no estorban.
+
+## QA
+
+- **Node: 152/152.** Dos pruebas nuevas confirman:
+  - las pieles de Poseidón y del Pulpo Rey;
+  - que el jefe de la Luna es el Emperador, con su tamaño, su texto y su abanico solo en segunda fase;
+  - que en el duelo del maestro, sin reaccionar, solo pegan sus tres ataques avisados;
+  - que se cubre fuera de sus ventanas;
+  - que la ruta se detiene durante el duelo y regresa delante al vencerlo.
+- **Bot en las tres dificultades y tres semillas:** gana siempre.
+  - Duración del duelo: 17 s en Fácil, 21 s en Normal y 34 s en Difícil.
+  - Ninguno de sus ataques avisados lo alcanza.
+- **Ruta grabada de la Luna:** se desviaba unos 60 u porque el Emperador tiene otra caja de golpe que el dron (Sofía
+  quedaba en x 306 y la meta está en 166–234). Alargué su último tramo a la izquierda de 81 a 100 fotogramas. Sigue
+  ganando sin daño, con el jefe nuevo y con el anterior.
+- **Chromium (1280 × 720):**
+  - los cuatro jefes cambian de animación según su estado;
+  - el Pulpo Rey se ve dentro del Santuario;
+  - el Maestro en moto en todos sus estados, incluidos el caballito en el aire con su sombra y la derrota;
+  - sin errores ni archivos faltantes.
+
+## No verificado
+
+- El equilibrio de los cuatro jefes con jugadores reales (el bot reacciona perfecto).
+- La barra del Maestro durante los primeros segundos: la tarjeta del capítulo la tapa en la captura de QA (en el
+  juego esa tarjeta se va sola).

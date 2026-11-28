@@ -493,10 +493,12 @@
       }
       const boss = EN.create(bossDef.kind, {
         id: scope + ':jefe', x: bossX, y: flyY, plat: arena, scene: sc.index,
-        region: 'main', diff, rng, isBoss: true, bossName: bossDef.name, hp: bossDef.hp,
+        region: 'main', diff, rng, isBoss: true, bossName: bossDef.name, hp: bossDef.hp, skin: bossDef.skin, size: bossDef.size,
         waterZone: bossWater, lane: bossLane || { x1: Math.max(W.bounds.x1 + 30, arena.x1 + 22), x2: Math.min(W.bounds.x2 - 30, arena.x2 - 22) }
       });
       boss.arena = arena;
+      // V58.8.29: un jefe volador más alto que el dron sube lo necesario para que Sofía siga pasando por debajo.
+      if ((bossDef.kind === 'pigeon' || bossDef.kind === 'drone') && boss.h > 42) { boss.y = boss.baseY = arena.y - 63 - boss.h / 2; boss.spawn = { x: boss.x, y: boss.y }; }
       addFoe(boss);
     }
 

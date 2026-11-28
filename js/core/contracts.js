@@ -66,7 +66,7 @@
       why: 'Poseidón guarda la escotilla de rescate. Vence al rey del mar para salir.' },
     // MISIÓN 4 · EL ESPACIO
     espacial: { main: { type: 'jefe' }, bonus: { type: 'secreto' }, mod: null,
-      why: 'El Dron Centinela custodia el módulo de regreso. Derríbalo para volver a la Tierra.' },
+      why: 'El Emperador Marciano custodia el módulo de regreso. Derríbalo para volver a la Tierra.' },
     // MISIÓN 5 · CASCADAS DEL CIELO
     parafalls_1: { main: { type: 'cristales', n: 30 }, bonus: { type: 'intacto' }, mod: null,
       why: 'Los niños guardianes dejaron cristales en las repisas. Junta treinta para abrir el primer paso.' },

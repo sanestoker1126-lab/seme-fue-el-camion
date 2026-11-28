@@ -2579,6 +2579,29 @@
       case 'medusa_electrica':
         if (st === 'aim') { fx.bang = true; return ['descarga', prog((T.windup || 0.62) * 1.1), fx]; }
         return [Math.abs(f.vx || 0) > 8 ? 'desplazamiento' : 'flotacion', null, fx];
+      // V58.8.29 · Jefes del paquete «RECURSOS_CURADOS_V1» (misma conducta; la animación sale del estado).
+      case 'poseidon_v2':
+        if (f.flash > 0) return ['hurt', 0, fx];
+        if (st === 'windup') { fx.bang = true; return ['impulso', prog((T.windup || 0.95) * (f.reaction || 1)), fx]; }
+        if (st === 'charge') return ['tridente', null, Object.assign(fx, { lines: true })];
+        if (st === 'aim') { fx.bang = true; return ['ola', prog((T.windup || 0.95) * 1.1 * (f.reaction || 1)), fx]; }
+        if (st === 'dizzy') return ['hurt', 0, fx];
+        return ['flota', null, fx];
+      case 'pulpo_rey':
+        if (f.flash > 0) return ['hurt', 0, fx];
+        if (st === 'windup') { fx.bang = true; return ['tentaculo_carga', prog((T.windup || 0.8) * (f.reaction || 1)), fx]; }
+        if (st === 'charge') return ['tentaculo', null, Object.assign(fx, { lines: true })];
+        if (st === 'aim') { fx.bang = true; return ['tinta', prog((T.windup || 0.8) * 1.1 * (f.reaction || 1)), fx]; }
+        if (st === 'dizzy') { fx.stars = false; return ['mareo', null, fx]; }   // el cuadro trae su mareo
+        return [f.enraged ? 'nado' : 'flota', null, fx];
+      case 'emperador_marciano': {
+        if (f.flash > 0) return ['hurt', 0, fx];
+        if (st === 'aim') { fx.bang = true; return ['carga', prog((T.windup || 0.64) * (f.reaction || 1)), fx]; }
+        const cd = (T.cooldown || 2.4) * (f.reaction || 1), after = cd - (f.cool || 0);
+        if (st === 'fly' && after >= 0 && after < 0.5) return ['disparo', after / 0.5, fx];
+        if (st === 'dizzy') { fx.stars = false; return ['mareo', null, fx]; }
+        return [f.enraged ? 'avance' : 'flota', null, fx];
+      }
       default: return [Object.keys(EXTRA()[f.skin].anims)[0], null, fx];
     }
   }
@@ -2941,6 +2964,13 @@
         const dd = Math.hypot(s.vx, s.vy) || 1;
         line(s.x - s.vx / dd * 22, s.y - s.vy / dd * 22, s.x, s.y, '#ff4a5a', 0.85, 4);
         circle(s.x, s.y, s.r + 5, '#ff3b4b', 0.2); circle(s.x, s.y, s.r, '#ff8a8a', 0.95); circle(s.x, s.y, 2.4, '#ffffff');
+      }
+      else if (s.kind === 'plasma' && s.skin === 'emperador_marciano') {
+        // V58.8.29: orbe magenta del Emperador Marciano (como la de su bastón en el arte), con estela.
+        const dd = Math.hypot(s.vx, s.vy) || 1, p = 0.5 + 0.5 * Math.sin(G.world.t * 14 + s.x * 0.05);
+        for (let k = 1; k <= 3; k++) circle(s.x - s.vx / dd * k * 8, s.y - s.vy / dd * k * 8, s.r * (0.8 - k * 0.17), '#e04bff', 0.4 - k * 0.1);
+        circle(s.x, s.y, s.r + 7 + p * 3, '#c93cff', 0.2); circle(s.x, s.y, s.r, '#ff5ce8', 0.95);
+        circle(s.x, s.y, s.r * 0.5, '#ffd7fb', 0.95);
       }
       else if (s.kind === 'plasma') {
         const dd = Math.hypot(s.vx, s.vy) || 1;

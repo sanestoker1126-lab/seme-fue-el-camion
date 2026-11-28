@@ -44,7 +44,7 @@
     marciano: { color:'#b6ff5a', warning:'MARCIANO · MUÉVETE CUANDO BRILLE', emblem:'✦' },
     astronino: { color:'#f5d071', warning:'NIÑO ASTRONAUTA · ESQUIVA / CONTRAATACA', emblem:'!' },
     maestro: { color:'#ffd34a', warning:'MAESTRO · SALTA LA REGLA Y LAS ONDAS', emblem:'!' },
-    pulpo_abismo: { color:'#ff7ad9', warning:'PULPO DEL ABISMO · ESPERA SU MAREO', emblem:'!' }
+    pulpo_abismo: { color:'#ff7ad9', warning:'PULPO REY · ESPERA SU MAREO', emblem:'!' }
   };
   const FALLBACK = Object.freeze({ tag:'RUTA ALTERADA', accent:'#b7f560', edge:'#ff77bd', haze:'#1a2731', motif:'poster', intensity:0.5 });
   const PROFILES = Object.freeze(Object.fromEntries(Object.entries(P).map(([id, p])=>[id,Object.freeze(p)])));

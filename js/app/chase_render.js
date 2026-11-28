@@ -26,7 +26,11 @@
   };
   const riderFrame = (kind, row, col) => 'assets/calzada/enemigos/' + RIDERS[kind].name + '_' + row + col + '.webp';
   const RIDER_URLS = Object.keys(RIDERS).flatMap((kd) => [1, 2, 3, 4].flatMap((r) => [1, 2, 3].map((c) => riderFrame(kd, r, c))));
-  const urls = () => [MOTO.ride, MOTO.boost, MOTO.air, LUNA, MORITA, SOFIA, ...FONDOS, ...RIDER_URLS];
+  /* V58.8.29 · El Maestro Enojón en su moto roja, jefe del tramo 2 (hoja de «RECURSOS_CURADOS_V1», 5 × 4 limpiada):
+     maneja, embiste, reglazo, caballito, golpe/mareo y derrota. Cuadros [x, y, w, h, ox, oy]; ox = ancla del cuerpo. */
+  const MJEFE = { src: 'assets/calzada/enemigos/maestro_jefe_moto.webp', ride: 199,
+    frames: [[0,0,199,257,-104,-128],[203,0,198,264,-104,-136],[405,0,198,254,-102,-126],[607,0,200,251,-103,-122],[811,0,230,245,-131,-116],[1045,0,240,242,-134,-114],[0,268,262,237,-154,-108],[266,268,272,229,-167,-100],[542,268,213,255,-92,-126],[759,268,224,249,-108,-120],[987,268,252,235,-116,-106],[1243,268,258,226,-118,-98],[0,527,225,243,-96,-114],[229,527,230,253,-100,-124],[463,527,233,260,-102,-132],[700,527,247,239,-114,-110],[951,527,219,246,-100,-118],[1174,527,224,236,-106,-108],[0,791,273,179,-130,-50],[277,791,303,132,-144,-4]] };
+  const urls = () => [MOTO.ride, MOTO.boost, MOTO.air, LUNA, MORITA, SOFIA, ...FONDOS, ...RIDER_URLS, MJEFE.src];
 
   let canvas = null, ctx = null, shakeMul = 1, camY = 0, lastT = 0;
   const R = () => NS.Render;
@@ -243,6 +247,13 @@
     if (f.kind === 'moto') { moto(f, k, T); ctx.restore(); return; }
     if (RIDERS[f.kind]) { rider(f, k, T, S); ctx.restore(); if (!f.dead && f.state === 'stunned') stars(x, ground - K.h * k - 10 * k, k, T); if (!f.dead) telegraph(f, L, T, x, ground - K.h * k - 6 * k, k); return; }
     if (f.kind === 'truck') { truck(f, k, len, h, T, S); ctx.restore(); return; }
+    if (f.kind === 'mjefe') {
+      mjefe(f, k, T, L); ctx.restore();
+      const top = ground - h - (f.z || 0) * L.k * 0.55 - 10 * k;
+      if (!f.dead && f.state === 'dizzy') stars(x, top, k, T);
+      if (!f.dead) telegraph(f, L, T, x, top, k);
+      return;
+    }
     const civilColor = CIVIL_COLORS[hash(String(f.id)) % CIVIL_COLORS.length];
     const body = f.kind === 'patrol' ? '#f1f3f7' : f.kind === 'suv' ? '#15161b' : f.kind === 'taxi' ? '#f4d23a' : f.kind === 'vocho' ? '#7fc243' : civilColor;
     const low = f.kind === 'patrol' ? '#1b2b5e' : f.kind === 'suv' ? '#0a0b0e' : shade(body, -0.25);
@@ -296,6 +307,33 @@
     if (ok(im)) ctx.drawImage(im, -cx * sc, -R.ground * sc + bob, R.box.w * sc, R.box.h * sc);
     else { ctx.fillStyle = f.kind === 'kid' ? '#2f7d3a' : '#e8e8ee'; rr(-len / 2, -len * 0.6, len, len * 0.5, 6 * k); ctx.fill(); }
     if (f.dead) smoke(0, -len * 0.5, k, T, f.x);
+  }
+
+  /** El Maestro jefe: el cuadro sale del estado; en el caballito se eleva (z) y su sombra queda en el piso. */
+  function mjefe(f, k, T, L) {
+    const im = img(MJEFE.src), sc = NS.Chase.KIND.mjefe.len * k / MJEFE.ride;
+    const pick = (list, p) => list[Math.max(0, Math.min(list.length - 1, Math.floor(p * list.length)))];
+    const loop = (list, fps) => list[Math.floor(T * fps + (f.x % 5)) % list.length];
+    let i;
+    if (f.dead) i = pick([18, 19], (f.deadT || 0) / 0.6);
+    else if (f.state === 'hit') i = 16;
+    else if (f.state === 'dizzy') i = 17;
+    else if (f.state === 'tele') {
+      const p = 1 - Math.max(0, f.tele) / (f.teleMax || 1);
+      i = f.atk === 'swing' ? pick([8, 9], p) : f.atk === 'dash' ? pick([4, 5], p) : 12;
+    } else if (f.state === 'swing') i = pick([10, 11], 1 - f.swingT / 0.42);
+    else if (f.state === 'dash') i = loop([6, 7], 14);
+    else if (f.state === 'jump') i = pick([13, 14, 15], f.jumpT / 0.85);
+    else i = loop([0, 1, 2, 3], 9);
+    const fr = MJEFE.frames[i], z = (f.z || 0) * L.k * 0.55;
+    if (f.state === 'dash') for (let n = 1; n <= 3; n++) {
+      ctx.strokeStyle = 'rgba(255,255,255,' + (0.45 - n * 0.12) + ')'; ctx.lineWidth = 3 * k;
+      ctx.beginPath(); ctx.moveTo(-90 * k - n * 22 * k, -60 * k + n * 18 * k); ctx.lineTo(-150 * k - n * 30 * k, -60 * k + n * 18 * k); ctx.stroke();
+    }
+    if (ok(im)) {
+      ctx.drawImage(im, fr[0], fr[1], fr[2], fr[3], fr[4] * sc, -fr[3] * sc - z, fr[2] * sc, fr[3] * sc);
+    } else { ctx.fillStyle = '#c8202a'; rr(-86 * k, -110 * k - z, 172 * k, 90 * k, 8 * k); ctx.fill(); }
+    if (f.dead) smoke(0, -120 * k, k, T, f.x);
   }
 
   function moto(f, k, T) {
@@ -423,7 +461,7 @@
     for (const f of S.foes) {
       if (f.dead || f.state !== 'tele') continue;
       const a = 0.25 + 0.25 * Math.sin(T * 16);
-      if (f.kind === 'maestro') {
+      if (f.kind === 'maestro' || (f.kind === 'mjefe' && f.atk === 'swing')) {
         // Alcance de la regla: su carril y los dos vecinos, a su altura.
         for (const l of [f.lane - 1, f.lane, f.lane + 1]) {
           if (l < 0 || l > 2) continue;
@@ -437,7 +475,10 @@
       for (const l of lanes) {
         const y = L.laneY(l) + 26 * L.k * L.laneS(l), hh = 30 * L.k;
         // La piedra del niño cae alrededor de donde va Sofía; tachuelas y cajas, delante.
-        const x0 = L.sx(f.kind === 'kid' ? P.x - 80 : P.x + 160), x1 = L.sx(f.kind === 'moto' ? P.x + 620 : f.kind === 'kid' ? P.x + 280 : f.x);
+        // V58.8.29: la embestida del maestro barre el carril desde atrás; su caballito cae delante.
+        const mj = f.kind === 'mjefe', dash = mj && f.atk === 'dash';
+        const x0 = L.sx(dash ? P.x - 420 : mj ? P.x + 40 : f.kind === 'kid' ? P.x - 80 : P.x + 160);
+        const x1 = L.sx(dash ? P.x + 520 : mj ? P.x + 460 : f.kind === 'moto' ? P.x + 620 : f.kind === 'kid' ? P.x + 280 : f.x);
         ctx.fillStyle = 'rgba(255,50,50,' + a + ')'; ctx.fillRect(Math.min(x0, x1), y - hh, Math.abs(x1 - x0), hh);
         ctx.fillStyle = 'rgba(255,230,120,' + (0.6 + a) + ')'; ctx.font = '900 ' + Math.round(18 * L.k) + 'px system-ui,sans-serif';
         ctx.fillText('⚠', x0 + 8, y - 8 * L.k);
@@ -560,18 +601,19 @@
     ctx.fillText('LA CALZADA · ' + SEC[S.section].title, bx + 10 * k, by + 13 * k);
     const tx = bx + 10 * k, tw = bw - 20 * k, ty = by + 22 * k;
     ctx.fillStyle = 'rgba(255,255,255,0.18)'; rr(tx, ty, tw, 5 * k, 3 * k); ctx.fill();
-    const prog = Math.max(0, Math.min(1, P.x / endX));
+    const prog = Math.max(0, Math.min(1, (S.routeX ? S.routeX() : P.x) / endX));
     ctx.fillStyle = '#ffcf4a'; rr(tx, ty, tw * prog, 5 * k, 3 * k); ctx.fill();
     for (const s of SEC) { ctx.fillStyle = '#fff'; ctx.fillRect(tx + tw * s.x / endX - 1, ty - 3 * k, 2, 11 * k); }
     ctx.fillStyle = '#ffcf4a'; ctx.beginPath(); ctx.arc(tx + tw * prog, ty + 2.5 * k, 5 * k, 0, 7); ctx.fill();
     // Barra del jefe.
-    const b = S.boss;
-    if (b && !b.dead) {
+    // V58.8.29: también la del Maestro en su moto roja (jefe del tramo 2).
+    const b = S.boss && !S.boss.dead ? S.boss : S.mb && !S.mb.dead ? S.mb : null;
+    if (b) {
       const bbw = bw, bbx = bx, bby = by + 40 * k;
       ctx.fillStyle = 'rgba(30,8,10,0.85)'; rr(bbx, bby, bbw, 30 * k, 8 * k); ctx.fill();
       ctx.fillStyle = '#ff9a9a'; ctx.font = '900 ' + Math.round(11 * k) + 'px system-ui,sans-serif'; ctx.textAlign = 'center';
-      const doors = b.state === 'doors';
-      ctx.fillText(doors && Math.floor(T * 6) % 2 ? '¡PUERTAS ABIERTAS · EMBISTE!' : b.name, L.W / 2, bby + 12 * k); ctx.textAlign = 'left';
+      const doors = b.state === 'doors', open = b.miniboss && (b.state === 'dizzy' || (b.state === 'tele' && b.atk === 'swing'));
+      ctx.fillText((doors || open) && Math.floor(T * 6) % 2 ? (doors ? '¡PUERTAS ABIERTAS · EMBISTE!' : b.state === 'dizzy' ? '¡ATURDIDO · EMBÍSTELO!' : '¡LEVANTA LA REGLA · PATÉALO!') : b.name, L.W / 2, bby + 12 * k); ctx.textAlign = 'left';
       for (let i = 0; i < b.maxHp; i++) {
         ctx.fillStyle = i < b.hp ? '#ff4a4a' : 'rgba(255,255,255,0.15)';
         rr(bbx + 10 * k + i * ((bbw - 20 * k) / b.maxHp), bby + 18 * k, (bbw - 20 * k) / b.maxHp - 3 * k, 7 * k, 3 * k); ctx.fill();

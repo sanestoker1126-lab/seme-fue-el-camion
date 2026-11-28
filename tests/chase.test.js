@@ -44,8 +44,14 @@ test('Calzada: el bot completa la misión en las tres dificultades (jefe, salto 
     for (const k of ['chapter', 'checkpoint', 'ramp', 'land', 'bossIntro', 'bossHit', 'bossDefeated', 'finale', 'splash', 'victory']) assert.ok(kinds.has(k), difficulty + ' sin ' + k);
     const chapters = r.log.filter((e) => e.type === 'chapter').map((e) => e.index);
     assert.deepEqual([...new Set(chapters)], [0, 1, 2, 3, 4]);
-    const hits = r.log.filter((e) => e.type === 'bossHit').length;
+    const hits = r.log.filter((e) => e.type === 'bossHit' && e.foe.kind === 'truck').length;
     assert.ok(hits >= 3 && hits <= 7, 'golpes al jefe: ' + hits);
+    // V58.8.29: antes, el duelo con El Maestro en su moto roja (jefe del tramo 2), vencido antes de las rampas.
+    const mbIn = r.log.find((e) => e.type === 'bossIntro' && e.mini), mbOut = r.log.find((e) => e.type === 'bossDefeated' && e.mini);
+    assert.ok(mbIn && mbOut && mbOut.i > mbIn.i, difficulty + ': duelo del maestro');
+    const ramps = r.log.find((e) => e.type === 'chapter' && e.index === 2);
+    assert.ok(ramps.i > mbOut.i, 'las rampas llegan después del duelo');
+    assert.ok((mbOut.i - mbIn.i) / 60 > 10, 'el duelo dura: ' + ((mbOut.i - mbIn.i) / 60).toFixed(1) + ' s');
     assert.ok(r.log.filter((e) => e.type === 'takedown').length >= 2, 'hubo derribos (en todos los intentos)');
     assert.ok(r.S.stats.t > 60 && r.S.stats.t < 240, 'duración razonable: ' + r.S.stats.t);
   }
@@ -183,4 +189,35 @@ test('Calzada: el niño de las piedras y El Maestro Enojón pegan si no reaccion
   }
   assert.ok(kicked && !hurt4, 'la PATADA durante el aviso lo detiene');
   assert.equal(m2.hp, m2.maxHp - 1);
+});
+
+test('Calzada: El Maestro en moto roja (jefe del tramo 2) avisa sus tres ataques, se cubre y detiene la ruta', () => {
+  const S = NS.Chase.createChase({ seed: 6, difficulty: 'normal' });
+  S.newRun({ section: 1 });
+  S.P.x = 20500; S.course.triggers.forEach((t) => { if (t.x < 20500) t.done = true; }); S.foes = S.foes.filter((f) => f.x > 21500);
+  const reasons = {}; let intro = null;
+  for (let i = 0; i < 60 * 60 && S.state === 'playing'; i++) {
+    S.P.hp = 99; S.step(1 / 60, { right: true });
+    if (S.mb && S.mb.hp > 3) S.mb.hp = 3;    // media vida: también el caballito
+    for (const e of S.drainEvents()) { if (e.type === 'hurt') reasons[e.reason] = (reasons[e.reason] || 0) + 1; if (e.type === 'bossIntro') intro = e; }
+  }
+  assert.ok(intro && intro.mini && intro.foe.kind === 'mjefe' && intro.foe.maxHp === 6);
+  // Sin reaccionar solo pegan sus ataques avisados (ningún roce ni golpe sin aviso).
+  assert.deepEqual(Object.keys(reasons).sort(), ['caballito', 'dash', 'regla']);
+  assert.equal(S.section, 1, 'la ruta no avanza mientras dura el duelo');
+  assert.ok(S.course.statics.every((s) => s.x < S.P.x + 2000 || s.x > 5e5), 'avenida despejada');
+  // Se cubre con la regla fuera de sus ventanas; se le pega al levantarla y cuando frena aturdido.
+  const b = S.mb; b.hitCD = 0; b.state = 'ride';
+  assert.equal(S.damageFoe(b, 1, 'ram'), false); assert.ok(b.blocked);
+  b.hitCD = 0; b.state = 'tele'; b.atk = 'swing';
+  assert.equal(S.damageFoe(b, 1, 'ram'), true); assert.equal(b.hp, 2);
+  b.hitCD = 0; b.state = 'dizzy';
+  assert.equal(S.damageFoe(b, 2, 'boostRam'), true);
+  assert.ok(b.dead, 'vencido');
+  // Al vencerlo, la ruta vuelve delante a la misma distancia y sigue hacia las rampas.
+  const next = S.course.statics.filter((s) => s.x > S.P.x).sort((a, c) => a.x - c.x)[0];
+  assert.ok(next && next.x - S.P.x < 3500, 'la ruta regresó');
+  const gap = S.course.gaps[0];
+  assert.ok(gap.x1 > S.P.x && gap.x1 - S.P.x < 7000, 'la primera zanja quedó adelante');
+  assert.ok(S.routeX() < NS.Chase.SECTIONS[2].x, 'progreso consistente');
 });

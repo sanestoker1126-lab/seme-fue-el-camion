@@ -68,7 +68,8 @@
   const LANE_FLYERS = new Set(['piranha', 'shark', 'drone', 'pulpo', 'poseidon', 'pulpito', 'buzito', 'pulpo_abismo']);
 
   // V58.8.28: el marciano usa siempre el arte nuevo (tira aportada de 15 cuadros); conducta sin cambios.
-  const DEFAULT_SKIN = { marciano: 'marciano_v2' };
+  // V58.8.29: Poseidón y el Pulpo del Abismo usan siempre el arte nuevo del paquete «RECURSOS_CURADOS_V1» (Pulpo Rey).
+  const DEFAULT_SKIN = { marciano: 'marciano_v2', poseidon: 'poseidon_v2', pulpo_abismo: 'pulpo_rey' };
   function create(kind, o) {
     const T = Object.assign({}, TYPES[kind]);
     // V58.8.28 · Arte alterno (paquete «enemigos secretos extra»): misma conducta del tipo base, otro aspecto y algo
@@ -78,6 +79,8 @@
       T.w = Math.round(T.w * 1.5); T.h = Math.round(T.h * 1.45);
       T.hp = Math.max(T.hp, o.hp || 4);
       T.minPlatform = Math.min(T.minPlatform || 180, 160);
+      // V58.8.29: el jefe puede traer su propia caja (el Emperador Marciano es más grande que un dron).
+      if (Array.isArray(o.size)) { T.w = o.size[0]; T.h = o.size[1]; }
     }
     const rng = o.rng || Math.random;
     const diff = o.diff || NS.CONFIG.difficulty.normal;
@@ -430,9 +433,15 @@
             const vx = f.targetX - f.x, vy = f.targetY - f.y;
             const dist = Math.hypot(vx, vy) || 1;
             const speed = T.shotSpeed * f.shotMul;
-            W.shots.push({ kind: 'plasma', skin: f.skin, x: f.x + f.dir * 13, y: f.y,
-              vx: vx / dist * speed, vy: vy / dist * speed,
-              g: 0, r: 7, life: 2.4, from: f.id });
+            // V58.8.29: el Emperador Marciano (jefe de la Luna) dispara orbes más grandes y, en su segunda fase, un
+            // abanico de tres; siempre tras la misma carga con aviso.
+            const emp = f.isBoss && f.skin === 'emperador_marciano';
+            for (const turn of emp && f.enraged ? [-0.2, 0, 0.2] : [0]) {
+              const c = Math.cos(turn), sn = Math.sin(turn), ux = vx / dist, uy = vy / dist;
+              W.shots.push({ kind: 'plasma', skin: f.skin, x: f.x + f.dir * (emp ? f.w * 0.5 : 13), y: f.y,
+                vx: (ux * c - uy * sn) * speed, vy: (ux * sn + uy * c) * speed,
+                g: 0, r: emp ? 10 : 7, life: 2.4, from: f.id });
+            }
             ev.push({ type: 'shoot', foe: f });
             f.cool = T.cooldown * f.reaction;
             setState(f, 'fly');
