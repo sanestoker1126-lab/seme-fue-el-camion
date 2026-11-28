@@ -291,7 +291,8 @@
       ui.showCinematic(go);
     } else if (!skipIntro && mission === 1 && tramo === 0 && opt.cinematics && !guadalajaraCineSeen() && NS.ToxiPlayer) {
       const arrive = () => { if (!practice) store.set(GDL_CINE_KEY, '1'); refreshCineMenu(); go(); };
-      if (!NS.ToxiPlayer.play({ set: 'guadalajara', look: 'uniforme', finishLabel: '¡AL CENTRO!', onDone: arrive })) go();
+      // V58.8.30: la llegada al centro ya va con la ropa de calle con la que se juega Guadalajara.
+      if (!NS.ToxiPlayer.play({ set: 'guadalajara', look: opt.ninaLook, finishLabel: '¡AL CENTRO!', onDone: arrive })) go();
     } else if (!skipIntro && mission === 2 && tramo === 0 && opt.cinematics && !marineCineSeen() && NS.ToxiPlayer) {
       // Terminarla o saltarla cuenta como vista (se repite desde el menú) y en ambos casos empieza la misión.
       const dive = () => { if (!practice) store.set(MARINE_CINE_KEY, '1'); refreshCineMenu(); go(); };

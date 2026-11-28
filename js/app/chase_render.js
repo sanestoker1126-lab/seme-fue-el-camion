@@ -31,6 +31,184 @@
   const MJEFE = { src: 'assets/calzada/enemigos/maestro_jefe_moto.webp', ride: 199,
     frames: [[0,0,199,257,-104,-128],[203,0,198,264,-104,-136],[405,0,198,254,-102,-126],[607,0,200,251,-103,-122],[811,0,230,245,-131,-116],[1045,0,240,242,-134,-114],[0,268,262,237,-154,-108],[266,268,272,229,-167,-100],[542,268,213,255,-92,-126],[759,268,224,249,-108,-120],[987,268,252,235,-116,-106],[1243,268,258,226,-118,-98],[0,527,225,243,-96,-114],[229,527,230,253,-100,-124],[463,527,233,260,-102,-132],[700,527,247,239,-114,-110],[951,527,219,246,-100,-118],[1174,527,224,236,-106,-108],[0,791,273,179,-130,-50],[277,791,303,132,-144,-4]] };
   const urls = () => [MOTO.ride, MOTO.boost, MOTO.air, LUNA, MORITA, SOFIA, ...FONDOS, ...RIDER_URLS, MJEFE.src];
+  /* V58.8.30 · Llantas que giran. [cx, cy, r] de cada llanta (trasera, delantera) en píxeles del cuadro, medidas sobre el
+     arte (anillo oscuro con transparencia afuera; ver CHANGELOG). La moto de Sofía tiene rines de rayos: se arma una vez una
+     textura limpia del rin con su mitad de abajo (sin escape ni bota) repitiendo el periodo de los rayos (°), y se gira solo
+     en esa mitad [a1, a2] (°). Los jinetes y el Maestro tienen rines lisos: giran las marcas de la llanta y un brillo. */
+  const MOTO_WHEELS = { [MOTO.ride]: [[132,195,40,25,160,53],[312,193,42,20,162,90]], [MOTO.boost]: [[134,194,40,25,160,54],[313,192,42,20,162,46]], [MOTO.air]: [[139,194,39,55,165,54],[315,193,40,20,162,47]] };
+  const RIDER_WHEELS = { nino: {"11":[[115,226,34],[291,224,36]],"12":[[115,226,34],[291,224,36]],"13":[[115,226,34],[291,224,36]],"21":[[119,226,34],[296,224,36]],"22":[[120,226,34],[296,224,36]],"23":[[121,226,34],[297,224,36]],"31":[[107,225,34],[284,223,36]],"32":[[106,225,34],[283,223,36]],"33":[[110,225,34],[289,223,36]],"41":[[129,221,36],[313,222,38]],"42":[[130,219,38],[316,222,38]],"43":[[134,219,39],[326,219,41]]}, maestro: {"11":[[72,221,41],[265,217,43]],"12":[[61,221,41],[254,217,43]],"13":[[51,220,41],[245,217,43]],"21":[[72,219,42],[265,218,44]],"22":[[62,219,42],[255,217,43]],"23":[[52,219,42],[246,218,43]],"31":[[73,221,41],[265,218,43]],"32":[[59,220,41],[255,218,43]],"33":[[50,219,42],[246,218,43]],"41":[[72,221,41],[265,218,43]],"42":[[62,220,42],[256,219,43]],"43":[[51,221,41],[248,219,43]]} };
+  const MJEFE_WHEELS = [[[37,225,31],[167,228,29]],[[37,230,31],[167,234,29]],[[37,222,30],[167,225,28]],[[36,218,31],[168,221,29]],[[66,208,29],[190,216,28]],[[66,206,29],[193,212,29]],[[79,200,30],[210,208,29]],[[88,192,29],[222,200,29]],[[48,224,29],[182,226,28]],[[60,219,29],[192,221,28]],[[53,204,29],[183,208,27]],[[43,196,28],[171,199,27]],[[77,213,29],[194,172,30]],[[92,207,29],[200,155,28]],[[94,199,27],[204,151,29]],[[90,209,29],[216,196,29]],[[40,214,30],[167,218,28]],[[36,204,30],[162,208,28]],null,null];
+  const RAD = Math.PI / 180;
+  const wheelTex = new Map();
+  /** Textura limpia del rin (una vez por llanta y cuadro): la mitad de abajo, repetida por el periodo de los rayos. */
+  function wheelTexture(src, im, w) {
+    const key = src + '|' + w[0] + ',' + w[1];
+    if (wheelTex.has(key)) return wheelTex.get(key);
+    if (!ok(im) || typeof document === 'undefined') return null;
+    let out = false;
+    try {
+      const [cx, cy, r, a1, a2, per] = w, R = Math.ceil(r) + 1, N = 2 * R + 1;
+      const c = document.createElement('canvas'); c.width = c.height = N;
+      const g = c.getContext('2d');
+      g.drawImage(im, cx - R, cy - R, N, N, 0, 0, N, N);
+      const src0 = g.getImageData(0, 0, N, N).data, dst = g.createImageData(N, N), d = dst.data;
+      const span = per ? Math.floor((a2 - a1) / per) * per : a2 - a1;
+      for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+        const dx = x - R, dy = y - R, rho = Math.hypot(dx, dy);
+        if (rho > r) continue;
+        let t = (Math.atan2(dy, dx) / RAD + 360) % 360;
+        if (t < a1 || t > a2) t = a1 + (((t - a1) % span) + span) % span;
+        const sx = Math.round(R + rho * Math.cos(t * RAD)), sy = Math.round(R + rho * Math.sin(t * RAD));
+        if (sx < 0 || sy < 0 || sx >= N || sy >= N) continue;
+        const i = (y * N + x) * 4, j = (sy * N + sx) * 4;
+        d[i] = src0[j]; d[i + 1] = src0[j + 1]; d[i + 2] = src0[j + 2]; d[i + 3] = src0[j + 3];
+      }
+      g.putImageData(dst, 0, 0);
+      out = { c, R, N, r, a1: a1 * RAD, a2: a2 * RAD, per: (per || 45) * RAD };
+    } catch (e) { out = false; }   // p. ej., lienzo bloqueado al abrir el HTML como archivo local: quedan solo las marcas
+    wheelTex.set(key, out);
+    return out;
+  }
+  // Ángulo de cada llanta por vehículo. El paso por cuadro se limita a un tercio del periodo de los rayos para que
+  // nunca parezca girar hacia atrás (efecto estroboscópico); lo que sobra de velocidad se ve como estela de giro.
+  const spin = new Map();
+  let frameDt = 0;
+  function spinOf(id, speedPx, wheels, s) {
+    let st = spin.get(id);
+    if (!st) { if (spin.size > 160) spin.clear(); st = { a: [0, 0], blur: [0, 0] }; spin.set(id, st); }
+    for (let i = 0; i < 2; i++) {
+      const w = wheels[i], per = (w[5] || 40) * RAD, rs = Math.max(3, w[2] * s);
+      const omega = Math.abs(speedPx) * frameDt / rs;
+      st.a[i] = (st.a[i] + Math.sign(speedPx) * Math.min(omega, per * 0.32)) % (Math.PI * 2);
+      st.blur[i] = Math.max(0, Math.min(1, (omega - per * 0.12) / (per * 0.5)));
+    }
+    return st;
+  }
+  /** Rin girando (textura) en su mitad limpia, con dos copias tenues detrás cuando va rápido. */
+  function spinTexture(tex, X, Y, s, ang, blur) {
+    const base = ctx.globalAlpha;
+    ctx.save();
+    ctx.beginPath(); ctx.moveTo(X, Y); ctx.arc(X, Y, tex.r * s * 0.985, tex.a1, tex.a2); ctx.closePath(); ctx.clip();
+    const copies = blur > 0.05 ? 3 : 1;
+    for (let j = 0; j < copies; j++) {
+      ctx.save();
+      ctx.globalAlpha = base * (j === 0 ? 1 : (j === 1 ? 0.42 : 0.22) * blur);
+      ctx.translate(X, Y); ctx.rotate(ang - j * tex.per * 0.14);
+      ctx.drawImage(tex.c, -tex.R * s, -tex.R * s, tex.N * s, tex.N * s);
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+  /* ---------- V58.8.30 · Efectos de movimiento (solo dibujo: no tocan la simulación ni su determinismo) ----------
+     Polvo de la llanta trasera (azul con nitro), marcas de derrape al cambiar de carril, aro de polvo y golpe de cámara al
+     aterrizar o despegar, y estallido radial al encender el nitro. Todo en coordenadas del mundo: se queda atrás solo. */
+  const VFX = { S: null, dust: [], skids: [], rings: [], prev: null, punch: 0, burst: 0, acc: 0, seed: 1 };
+  const vrand = () => { VFX.seed = (VFX.seed * 16807) % 2147483647; return VFX.seed / 2147483647; };
+  function puff(x, ly, boost, big) {
+    if (VFX.dust.length > 110) VFX.dust.shift();
+    VFX.dust.push({ x, ly: ly + (vrand() - 0.5) * 0.18, z: vrand() * 8, vx: -(20 + vrand() * 55) * (big ? 2.4 : 1), vz: 8 + vrand() * (big ? 110 : 34),
+      r0: 5 + vrand() * 4, r1: (big ? 32 : 22) + vrand() * 16, t: 0, life: 0.5 + vrand() * 0.4, boost: !!boost, sq: 0.7 + vrand() * 0.5 });
+  }
+  function vfxStep(S, dt) {
+    const P = S.P, T = NS.Chase.TUNE;
+    if (VFX.S !== S || !VFX.prev || P.x < VFX.prev.x - 400) {   // partida nueva o reintento
+      Object.assign(VFX, { S, dust: [], skids: [], rings: [], punch: 0, burst: 0, acc: 0, prev: null });
+    }
+    const pv = VFX.prev || { x: P.x, ly: P.ly, air: P.air, boost: P.boostT > 0, v: P.v };
+    const rear = P.x - T.busLen * 0.3;
+    if (dt > 0) {
+      // Polvo continuo de la llanta trasera según la velocidad (más con nitro).
+      if (!P.air && S.state === 'playing') {
+        VFX.acc += dt * (Math.max(0, (P.v - 330) / 560) * 15 + (P.boostT > 0 ? 26 : 0));
+        while (VFX.acc >= 1) { VFX.acc -= 1; puff(rear - vrand() * 20, P.ly + (vrand() - 0.5) * 0.12, P.boostT > 0); }
+      }
+      // Los perseguidores en moto también levantan polvo.
+      for (const f of S.foes) {
+        if (f.dead || f.civil || !(f.kind === 'kid' || f.kind === 'maestro' || f.kind === 'mjefe' || f.kind === 'moto')) continue;
+        if (Math.abs(f.x - P.x) > 1400 || (f.z || 0) > 10 || vrand() > dt * 11) continue;
+        puff(f.x - NS.Chase.KIND[f.kind].len * 0.3, f.ly, false);
+      }
+      // Derrape: al cambiar de carril o frenar fuerte en tierra deja marcas que se desvanecen.
+      const lateral = Math.abs(P.ly - pv.ly) / dt, braking = (pv.v - P.v) / dt;
+      if (!P.air && (lateral > 1.6 || braking > 900) && S.state === 'playing') {
+        if (VFX.skids.length > 70) VFX.skids.shift();
+        VFX.skids.push({ x1: pv.x - T.busLen * 0.3, ly1: pv.ly, x2: rear, ly2: P.ly, t: 0, life: 1.6 });
+      }
+      // Despegue y aterrizaje: aro de polvo, nube y golpe de cámara.
+      if (pv.air && !P.air) {
+        const big = P.airMax > 140;
+        VFX.rings.push({ x: P.x - T.busLen * 0.1, ly: P.ly, t: 0, life: big ? 0.65 : 0.45, r: big ? 150 : 95 });
+        for (let i = 0; i < (big ? 14 : 7); i++) puff(rear + (vrand() - 0.3) * 120, P.ly + (vrand() - 0.5) * 0.3, false, true);
+        VFX.punch = Math.max(VFX.punch, big ? 0.055 : 0.03);
+      } else if (!pv.air && P.air) {
+        VFX.punch = Math.max(VFX.punch, 0.025);
+        for (let i = 0; i < 6; i++) puff(rear, P.ly, P.boostT > 0, true);
+      }
+      // Nitro: estallido radial al encenderlo.
+      if (!pv.boost && P.boostT > 0) { VFX.burst = 0.5; VFX.punch = Math.max(VFX.punch, 0.035); }
+    }
+    for (const d of VFX.dust) { d.t += dt; d.x += d.vx * dt; d.z += d.vz * dt; d.vz *= Math.max(0, 1 - dt * 2.5); }
+    VFX.dust = VFX.dust.filter((d) => d.t < d.life);
+    for (const q of VFX.skids) q.t += dt;
+    VFX.skids = VFX.skids.filter((q) => q.t < q.life);
+    for (const r of VFX.rings) r.t += dt;
+    VFX.rings = VFX.rings.filter((r) => r.t < r.life);
+    VFX.punch *= Math.exp(-dt * 8);
+    VFX.burst = Math.max(0, VFX.burst - dt);
+    VFX.prev = { x: P.x, ly: P.ly, air: P.air, boost: P.boostT > 0, v: P.v };
+  }
+  const roadY = (L, ly) => L.laneY(ly) + 26 * L.k * L.laneS(ly);
+  /** Lo que va sobre el asfalto (bajo los vehículos): derrapes, aros de aterrizaje y polvo. */
+  function vfxGround(L) {
+    ctx.lineCap = 'round';
+    for (const q of VFX.skids) {
+      const a = 1 - q.t / q.life;
+      ctx.strokeStyle = 'rgba(14,14,18,' + (0.42 * a) + ')'; ctx.lineWidth = 4 * L.k * L.laneS(q.ly2);
+      ctx.beginPath(); ctx.moveTo(L.sx(q.x1), roadY(L, q.ly1)); ctx.lineTo(L.sx(q.x2), roadY(L, q.ly2)); ctx.stroke();
+    }
+    for (const r of VFX.rings) {
+      const p = r.t / r.life, k = L.k * L.laneS(r.ly), rad = r.r * k * (0.25 + p);
+      ctx.strokeStyle = 'rgba(235,222,200,' + (0.55 * (1 - p)) + ')'; ctx.lineWidth = (6 - 4 * p) * k;
+      ctx.beginPath(); ctx.ellipse(L.sx(r.x), roadY(L, r.ly), rad, rad * 0.18, 0, 0, 7); ctx.stroke();
+    }
+    for (const d of VFX.dust) {
+      const p = d.t / d.life, k = L.k * L.laneS(d.ly), rad = (d.r0 + (d.r1 - d.r0) * p) * k;
+      const x = L.sx(d.x), y = roadY(L, d.ly) - d.z * L.k * 0.55 - rad * 0.35, a = Math.pow(1 - p, 1.5) * (d.boost ? 0.42 : 0.3);
+      // Nube achatada (más ancha que alta) con un núcleo claro: se lee como polvo, no como burbuja.
+      ctx.fillStyle = d.boost ? 'rgba(175,225,255,' + a + ')' : 'rgba(205,193,172,' + a + ')';
+      ctx.beginPath(); ctx.ellipse(x, y, rad * 1.25, rad * d.sq * 0.75, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,' + a * 0.3 + ')';
+      ctx.beginPath(); ctx.ellipse(x - rad * 0.3, y - rad * 0.15, rad * 0.6, rad * 0.4, 0, 0, 7); ctx.fill();
+    }
+  }
+  /** Estallido de nitro: rayos que salen de la moto. */
+  function vfxBurst(S, L) {
+    if (VFX.burst <= 0) return;
+    const P = S.P, a = VFX.burst / 0.5, cx = L.sx(P.x), cy = roadY(L, P.ly) - P.z * L.k * 0.55 - 40 * L.k;
+    ctx.save(); ctx.lineCap = 'round';
+    for (let i = 0; i < 22; i++) {
+      const ang = i / 22 * Math.PI * 2 + hash('nb' + i) % 100 / 300, r0 = (60 + (1 - a) * 160) * L.k, r1 = r0 + (40 + hash('nl' + i) % 90) * L.k * a;
+      ctx.strokeStyle = i % 3 ? 'rgba(160,235,255,' + 0.6 * a + ')' : 'rgba(255,210,120,' + 0.6 * a + ')'; ctx.lineWidth = (2 + (i % 3)) * L.k;
+      ctx.beginPath(); ctx.moveTo(cx + Math.cos(ang) * r0, cy + Math.sin(ang) * r0 * 0.6); ctx.lineTo(cx + Math.cos(ang) * r1, cy + Math.sin(ang) * r1 * 0.6); ctx.stroke();
+    }
+    ctx.restore();
+  }
+  /** Marcas de la llanta y brillo del rin que giran, solo en la mitad de abajo (arriba están el guardafango y el cuerpo). */
+  function spinTread(X, Y, rs, ang, blur, a1, a2) {
+    const base = ctx.globalAlpha;
+    ctx.save();
+    ctx.beginPath(); ctx.moveTo(X, Y); ctx.arc(X, Y, rs, a1, a2); ctx.closePath(); ctx.clip();
+    ctx.lineCap = 'round'; ctx.lineWidth = Math.max(1, rs * 0.085);
+    for (let i = 0; i < 10; i++) {
+      const t = ang + i * Math.PI / 5;
+      ctx.strokeStyle = i % 2 ? 'rgba(255,255,255,' + (0.18 + 0.12 * blur) * base + ')' : 'rgba(0,0,0,' + 0.34 * base + ')';
+      ctx.beginPath(); ctx.arc(X, Y, rs * 0.87, t, t + 0.15 + 0.4 * blur); ctx.stroke();
+    }
+    ctx.strokeStyle = 'rgba(255,255,255,' + (0.26 + 0.2 * blur) * base + ')'; ctx.lineWidth = Math.max(1, rs * 0.07);
+    for (let i = 0; i < 2; i++) { const t = ang + i * Math.PI; ctx.beginPath(); ctx.arc(X, Y, rs * 0.52, t, t + 0.45 + 0.7 * blur); ctx.stroke(); }
+    ctx.restore();
+  }
+
 
   let canvas = null, ctx = null, shakeMul = 1, camY = 0, lastT = 0;
   const R = () => NS.Render;
@@ -105,6 +283,15 @@
       const sxp = (W * (L.portrait ? 0.24 : 0.22)) + (x - base) * k;
       if (sxp < -20 || sxp > W + 20) continue;
       ctx.fillStyle = '#3c424b'; ctx.fillRect(sxp - 3 * k, rail - 4 * k, 6 * k, 30 * k);
+    }
+    // V58.8.30: manchas, parches y grietas del asfalto (fijos en el mundo): se ven pasar con la velocidad.
+    for (let x = Math.floor(L.x1 / 150) * 150; x < L.x2; x += 150) {
+      const h1 = hash('as' + x);
+      if (h1 % 4 === 0) continue;
+      const ly = ((h1 >>> 4) % 260) / 100 - 0.05, w = (26 + (h1 >>> 8) % 70) * k * L.laneS(ly), yy = L.laneY(ly) + 26 * k * L.laneS(ly) - (8 + (h1 >>> 12) % 14) * k;
+      const sxp = L.sx(x + (h1 >>> 16) % 90);
+      if (h1 % 7 === 1) { ctx.strokeStyle = 'rgba(20,20,26,0.35)'; ctx.lineWidth = 1.4 * k; ctx.beginPath(); ctx.moveTo(sxp, yy); ctx.lineTo(sxp + w * 0.4, yy - 3 * k); ctx.lineTo(sxp + w * 0.7, yy + 2 * k); ctx.lineTo(sxp + w, yy - 1 * k); ctx.stroke(); }
+      else { ctx.fillStyle = h1 % 5 === 2 ? 'rgba(255,255,255,0.045)' : 'rgba(0,0,0,0.11)'; ctx.beginPath(); ctx.ellipse(sxp, yy, w, (2 + (h1 >>> 20) % 3) * k, 0, 0, 7); ctx.fill(); }
     }
     // Líneas de carril.
     ctx.fillStyle = 'rgba(240,240,220,0.75)';
@@ -304,7 +491,16 @@
     else if (f.state === 'recover' || (f.state === 'approach' && dx < -260)) { row = 4; col = 1 + (Math.floor(T * 10) % 3); }
     const im = img(riderFrame(f.kind, row, col));
     const bob = f.dead ? 0 : Math.sin(T * 24 + f.x) * 0.8 * k;
-    if (ok(im)) ctx.drawImage(im, -cx * sc, -R.ground * sc + bob, R.box.w * sc, R.box.h * sc);
+    // V58.8.30: cada cuadro se apoya en sus propias llantas (antes la moto se corría hasta 20 px entre cuadros).
+    const W = RIDER_WHEELS[R.name] && RIDER_WHEELS[R.name][row + '' + col];
+    const ax = W ? (W[0][0] + W[1][0]) / 2 : cx, gy = W ? Math.max(W[0][1] + W[0][2], W[1][1] + W[1][2]) : R.ground;
+    if (ok(im)) {
+      ctx.drawImage(im, -ax * sc, -gy * sc + bob, R.box.w * sc, R.box.h * sc);
+      if (W && !f.dead) {
+        const st = spinOf(f.id, (f.v || 0) * k, W, sc);
+        for (let i = 0; i < 2; i++) spinTread((W[i][0] - ax) * sc, (W[i][1] - gy) * sc + bob, W[i][2] * sc, st.a[i], st.blur[i], 18 * RAD, 162 * RAD);
+      }
+    }
     else { ctx.fillStyle = f.kind === 'kid' ? '#2f7d3a' : '#e8e8ee'; rr(-len / 2, -len * 0.6, len, len * 0.5, 6 * k); ctx.fill(); }
     if (f.dead) smoke(0, -len * 0.5, k, T, f.x);
   }
@@ -325,13 +521,21 @@
     else if (f.state === 'dash') i = loop([6, 7], 14);
     else if (f.state === 'jump') i = pick([13, 14, 15], f.jumpT / 0.85);
     else i = loop([0, 1, 2, 3], 9);
-    const fr = MJEFE.frames[i], z = (f.z || 0) * L.k * 0.55;
+    const fr = MJEFE.frames[i], z = (f.z || 0) * L.k * 0.55, W = MJEFE_WHEELS[i];
+    // V58.8.30: apoyado en sus llantas (en el caballito, en la trasera); sin llantas visibles (derrota), como antes.
+    const wheelie = i >= 12 && i <= 14;
+    const ax = W ? (wheelie ? W[0][0] + 65 : (W[0][0] + W[1][0]) / 2) : -fr[4];
+    const gy = W ? (wheelie ? W[0][1] + W[0][2] : Math.max(W[0][1] + W[0][2], W[1][1] + W[1][2])) : fr[3];
     if (f.state === 'dash') for (let n = 1; n <= 3; n++) {
       ctx.strokeStyle = 'rgba(255,255,255,' + (0.45 - n * 0.12) + ')'; ctx.lineWidth = 3 * k;
       ctx.beginPath(); ctx.moveTo(-90 * k - n * 22 * k, -60 * k + n * 18 * k); ctx.lineTo(-150 * k - n * 30 * k, -60 * k + n * 18 * k); ctx.stroke();
     }
     if (ok(im)) {
-      ctx.drawImage(im, fr[0], fr[1], fr[2], fr[3], fr[4] * sc, -fr[3] * sc - z, fr[2] * sc, fr[3] * sc);
+      ctx.drawImage(im, fr[0], fr[1], fr[2], fr[3], -ax * sc, -gy * sc - z, fr[2] * sc, fr[3] * sc);
+      if (W && !f.dead) {
+        const st = spinOf(f.id, (f.v || 0) * k, W, sc);
+        for (let n = 0; n < 2; n++) spinTread((W[n][0] - ax) * sc, (W[n][1] - gy) * sc - z, W[n][2] * sc, st.a[n], st.blur[n], 18 * RAD, 162 * RAD);
+      }
     } else { ctx.fillStyle = '#c8202a'; rr(-86 * k, -110 * k - z, 172 * k, 90 * k, 8 * k); ctx.fill(); }
     if (f.dead) smoke(0, -120 * k, k, T, f.x);
   }
@@ -430,8 +634,33 @@
     ctx.rotate(pitch + P.tilt * 0.6 - (P.boostT > 0 ? 0.04 : 0));
     const bob = P.air ? 0 : Math.sin(T * 26) * 0.7 * k;
     if (blink) ctx.globalAlpha = 0.45;
-    if (ok(im)) ctx.drawImage(im, MOTO_BOX.x, MOTO_BOX.y, MOTO_BOX.w, MOTO_BOX.h, -len / 2, -h + bob, len, h);
-    else { ctx.fillStyle = '#2140c8'; rr(-len / 2, -h * 0.5, len, h * 0.4, 8 * k); ctx.fill(); }
+    // V58.8.30: con nitro, estela fantasma de la moto (tres copias que se desvanecen hacia atrás).
+    if (ok(im) && P.boostT > 0) {
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      for (let i = 3; i >= 1; i--) { ctx.globalAlpha = (blink ? 0.45 : 1) * [0, 0.2, 0.12, 0.06][i]; ctx.drawImage(im, MOTO_BOX.x, MOTO_BOX.y, MOTO_BOX.w, MOTO_BOX.h, -len / 2 - i * 16 * k * Math.min(1.4, P.v / 900), -h + bob, len, h); }
+      ctx.restore();
+    }
+    // Viento: líneas que salen de la espalda de Sofía a alta velocidad.
+    if (P.v > 800) {
+      const wa = Math.min(0.55, (P.v - 800) / 700);
+      ctx.strokeStyle = 'rgba(255,255,255,' + wa + ')'; ctx.lineWidth = 1.6 * k; ctx.lineCap = 'round';
+      for (let i = 0; i < 4; i++) {
+        const ph = ((T * 3.1 + i * 0.27) % 1), yy = -h * (0.82 - i * 0.09) + bob, x0 = -len * (0.18 + ph * 0.5);
+        ctx.beginPath(); ctx.moveTo(x0, yy); ctx.lineTo(x0 - len * (0.18 + 0.1 * (i % 2)), yy); ctx.stroke();
+      }
+    }
+    if (ok(im)) {
+      ctx.drawImage(im, MOTO_BOX.x, MOTO_BOX.y, MOTO_BOX.w, MOTO_BOX.h, -len / 2, -h + bob, len, h);
+      // V58.8.30: llantas girando con la velocidad (en el aire siguen girando: la moto no frena en el salto).
+      const src = P.air ? MOTO.air : P.boostT > 0 ? MOTO.boost : MOTO.ride, WH = MOTO_WHEELS[src], s = len / MOTO_BOX.w;
+      const st = spinOf('sofia', P.v * k, WH, s);
+      for (let i = 0; i < 2; i++) {
+        const w = WH[i], X = -len / 2 + (w[0] - MOTO_BOX.x) * s, Y = -h + bob + (w[1] - MOTO_BOX.y) * s;
+        const tex = wheelTexture(src, im, w);
+        if (tex) spinTexture(tex, X, Y, s, st.a[i], st.blur[i]);
+        spinTread(X, Y, w[2] * s, st.a[i], st.blur[i], w[3] * RAD, w[4] * RAD);
+      }
+    } else { ctx.fillStyle = '#2140c8'; rr(-len / 2, -h * 0.5, len, h * 0.4, 8 * k); ctx.fill(); }
     // Luna y Morita viajan en el portabultos, sobre la llanta trasera (encima del sprite para que se vean).
     const lu = img(LUNA), mo = img(MORITA), cs = 28 * k;
     if (ok(mo)) ctx.drawImage(mo, -len * 0.56, -h * 0.5 - cs * 0.72 + bob, cs, cs);
@@ -557,7 +786,7 @@
     ctx.lineWidth = 2;
     for (let i = 0; i < n; i++) {
       const sd = hash('sl' + i), y = (sd % 1000) / 1000 * L.H;
-      const len = 60 + (sd >> 10) % 120, x = L.W - ((T * v * 1.4 + (sd % 977)) % (L.W + 200));
+      const len = 60 + (sd >>> 10) % 120, x = L.W - ((T * v * 1.4 + (sd % 977)) % (L.W + 200));
       ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + len, y); ctx.stroke();
     }
   }
@@ -638,11 +867,19 @@
     const lo = L.H * 0.26, hi = L.H * 0.6;
     const want = busY < lo ? lo - busY : busY > hi ? hi - busY : 0;
     const dtR = Math.max(0, Math.min(0.1, T - lastT)); lastT = T;
+    frameDt = dtR * (S.timeScale || 1);   // V58.8.30: en cámara lenta las llantas también van lentas
     camY += (want - camY) * Math.min(1, dtR * 10);
     if (Math.abs(camY) < 0.3 && want === 0) camY = 0;
     ctx.save(); ctx.translate(0, camY * 0.6); backdrop(S, L); ctx.restore();
+    vfxStep(S, frameDt);
     ctx.save(); ctx.translate(0, camY);
+    // V58.8.30: golpe de cámara (zoom breve hacia la moto) al aterrizar, despegar o encender el nitro.
+    if (VFX.punch > 0.002 && shakeMul > 0) {
+      const px = L.sx(P.x), py = L.laneY(P.ly), z = 1 + VFX.punch * Math.min(1, shakeMul);
+      ctx.translate(px, py); ctx.scale(z, z); ctx.translate(-px, -py);
+    }
     road(S, L, T);
+    vfxGround(L);
     // Letreros de obra (en la banqueta lejana) y objetos por carril, de lejos a cerca.
     const statics = S.course.statics.filter((s) => s.x > L.x1 && s.x < L.x2);
     for (const s of statics) if (s.kind === 'sign') drawStatic(s, L, T);
@@ -655,6 +892,7 @@
     drawables.sort((a, b) => a.ly - b.ly);
     for (const d of drawables) d.fn();
     particles(S, L);
+    vfxBurst(S, L);
     ctx.restore();
     speedLines(S, L, T);
     // Cámara lenta: franjas de cine y un velo frío.
@@ -688,5 +926,5 @@
     if (S.flashT > 0) { ctx.fillStyle = 'rgba(255,250,235,' + Math.min(0.6, S.flashT * 2.4) + ')'; ctx.fillRect(0, 0, L.W, L.H); }
   }
 
-  NS.ChaseRender = { init, draw, setOptions, urls };
+  NS.ChaseRender = { init, draw, setOptions, urls, WHEELS: { MOTO_WHEELS, RIDER_WHEELS, MJEFE_WHEELS, MOTO } };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

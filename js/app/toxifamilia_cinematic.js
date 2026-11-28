@@ -24,7 +24,9 @@
   if (!SETS.prologo.length) return;
 
   let overlay = null, scenes = [], index = 0, active = false, elapsed = 0, prev = 0, frame = 0, onDone = null;
-  let look = 'original', finishLabel = null, actors = [], lineIndex = -1;
+  // V58.8.30: `menuLook` es la ropa de calle elegida en el menú; `look`, la de la cinemática en curso. Antes un
+  // play({look}) dejaba ese vestuario puesto para las siguientes (p. ej., la llegada al mar repetida en uniforme).
+  let menuLook = 'original', look = 'original', finishLabel = null, actors = [], lineIndex = -1;
   const preloaded = new Map();
   // Porcentaje transparente bajo el último píxel opaco de los pies. Se mide al empaquetar.
   const sole = {
@@ -33,6 +35,10 @@
   "assets/companions/morita.png": 2.23,
   "assets/player/sofia/land_01.png": 2.68,
   "assets/player/sofia/run_02.png": 2.68,
+  "assets/player/variants/rosa/idle_01.png": 2.68,
+  "assets/player/variants/rosa/land_01.png": 2.68,
+  "assets/player/variants/rosa/run_02.png": 2.68,
+  "assets/player/astronauta/idle.webp": 3.33,
   "assets/player/variants/uniforme/kick_01.png": 4.02,
   "assets/player/variants/uniforme/run_01.png": 4.02,
   "assets/player/variants/uniforme/run_02.png": 4.02,
@@ -133,12 +139,6 @@
   "assets/cinematica/marino/estoker_explica_04.webp": 0.74,
   "assets/cinematica/marino/estoker_explica_05.webp": 0.74,
   "assets/cinematica/marino/estoker_explica_06.webp": 0.74,
-  "assets/cinematica/marino/poseidon_tridente_00.webp": 1.52,
-  "assets/cinematica/marino/poseidon_tridente_01.webp": 2.02,
-  "assets/cinematica/marino/poseidon_tridente_02.webp": 4.04,
-  "assets/cinematica/marino/poseidon_tridente_03.webp": 9.6,
-  "assets/cinematica/marino/poseidon_tridente_04.webp": 14.14,
-  "assets/cinematica/marino/poseidon_tridente_05.webp": 6.57,
   "assets/enemies/v50/kid_buzo/idle_01.webp": 3.2,
   "assets/enemies/v50/kid_buzo/idle_02.webp": 3.2,
   "assets/enemies/v50/kid_buzo/idle_03.webp": 3.2,
@@ -493,7 +493,7 @@
     const o = opts || {}, set = SETS[o.set || 'prologo'];
     if (active || !set || !set.length) return false;
     ensureOverlay();
-    look = typeof o.look === 'string' ? o.look : look;
+    look = typeof o.look === 'string' ? o.look : menuLook;
     finishLabel = typeof o.finishLabel === 'string' && o.finishLabel.trim() ? o.finishLabel : null;
     scenes = set; index = 0; active = true; onDone = typeof o.onDone === 'function' ? o.onDone : null;
     overlay.hidden = false;
@@ -521,13 +521,13 @@
     menuButton('btnEpilogo', '▶ ESCENA FINAL', !!epilogueUnlocked && SETS.epilogo.length > 0, () => play({ set: 'epilogo' }));
     menuButton('btnMarino', '▶ LLEGADA AL MAR', !!marineSeen && SETS.marino.length > 0, () => play({ set: 'marino' }));
     menuButton('btnGuadalajara', '▶ TRANSICIÓN A GUADALAJARA', !!guadalajaraSeen && SETS.guadalajara.length > 0,
-      () => play({ set: 'guadalajara', look }));
+      () => play({ set: 'guadalajara' }));
     menuButton('btnEspacio', '▶ LLEGADA A LA LUNA', !!espacioSeen && SETS.espacio.length > 0, () => play({ set: 'espacio' }));
     menuButton('btnParafalls', '▶ PORTAL DE PARAFALLS', !!parafallsSeen && SETS.parafalls.length > 0,
       () => play({ set: 'parafalls', finishLabel: '¡AL PARAFALLS!' }));
   }
   /** El menú avisa el vestuario elegido (lo usa la llegada al mar al repetirse desde el menú). */
-  function setLook(value) { if (typeof value === 'string') look = value; }
+  function setLook(value) { if (typeof value === 'string') { menuLook = value; if (!active) look = value; } }
   NS.ToxiPlayer = { play, refreshMenu, setLook, get active() { return active; }, count: (set) => (SETS[set || 'prologo'] || []).length };
   // Este archivo carga después de main.js: avisa que ya está listo para que el menú pinte sus botones.
   root.dispatchEvent(new CustomEvent('camion:toxiplayer-ready'));

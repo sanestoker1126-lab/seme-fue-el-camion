@@ -590,7 +590,7 @@
       const grade = UP ? UP.rank({ contracts: sum.contracts, lives: r.lives, maxLives: r.maxLives, deaths: r.deaths }) : null;
       const rankNew = !!(grade && fullRun && !r.practice && UP.recordRank(runSave, G.missionId, grade.rank));
       persist();
-      emit('victory', { summary: sum, stars, newTime, newScore, fullRun, ending: ST.ending(items, total, r.lives),
+      emit('victory', { summary: sum, stars, newTime, newScore, fullRun, ending: ST.ending(items, total, r.lives, G.missionId),
         postCredits, keys, totalKeys: ST.ITEMS.length, lastMission, mission:G.mission, nextMission: special || (next ? G.mission+1 : null),
         rank: grade && grade.rank, rankPoints: grade && grade.points, rankNew, banked, bank: runSave.bank | 0 });
     }

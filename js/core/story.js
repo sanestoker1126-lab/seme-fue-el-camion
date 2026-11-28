@@ -40,14 +40,15 @@
     { title: 'ZAPOPAN · PLAZA DE LAS AMÉRICAS', line: 'La ruta corta por Zapopan. La Basílica está iluminada y las gatitas conocen el camino.', driver: 'El motor espera al otro lado de la plaza.' },
     { title: 'LAS ARCADAS DE CANTERA', line: 'La terminal está abajo. El chofer ya encendió el motor.', driver: '¡Último aviso para la ruta 6!' },
     { title: 'LÍNEA 3 · ESTACIÓN SUBTERRÁNEA', line: 'Atajo bajo tierra. Las bandas eléctricas te llevan… a donde ellas quieren.', driver: 'Arriba retumba la avenida: el camión todavía no arranca.' },
-    { title: 'MERCADO TAPATÍO', line: 'El mercado despierta con el amanecer; los puestos ya están abriendo.', driver: '¡La ruta 6 salió de la terminal!' },
-    { title: 'PARQUE METROPOLITANO', line: 'Cruza el parque al atardecer: el camión sigue rumbo a casa.', driver: '¡Última vuelta antes del anochecer!' },
+    // V58.8.30: sin horas que choquen con la historia (todo pasa esa noche, antes de la medianoche).
+    { title: 'MERCADO TAPATÍO', line: 'Los últimos puestos bajan sus toldos. Corta camino entre los carritos antes de que cierren.', driver: '¡La ruta 6 salió de la terminal!' },
+    { title: 'PARQUE METROPOLITANO', line: 'Cruza el parque junto al lago: el camión sigue su ruta por la avenida.', driver: '¡Última vuelta antes de la Plaza de las Jacarandas!' },
     { title: 'TLAQUEPAQUE', line: 'Sombrillas de colores cuelgan sobre el callejón. ¡Rebota en ellas para cruzar!', driver: 'El chofer se detuvo por un café de olla. ¡Aprovecha!' },
     { title: 'ANDÉN DEL TREN LIGERO', line: 'El tren se va; Sofía usa el andén como atajo hacia la ruta 6.', driver: '¡La terminal está muy cerca!' },
     { title: 'PLAZA DE LAS JACARANDAS', line: 'El último guardián espera en la plaza. Después, solo queda llegar a la terminal.', driver: '¡Corre, el camión está por arrancar!' },
     // V53 · Misiones nuevas (16 submarino, 17 espacial).
     { title: 'ISLA DEL CANAL', line: 'La ruta hacia el fondo marino empieza arriba, en la isla. Baja al canal, cruza el bosque de algas y llega a la fosa de Poseidón.', driver: 'Burbujas y un claxon lejano bajo el agua…' },
-    { title: 'LUNA HUECA', line: 'Ni el espacio la detiene: baja de la estación lunar por las cavernas de cristal hasta la ciudad bajo la Luna.', driver: 'La estación avisa: último acople de la ruta 6.' },
+    { title: 'LUNA HUECA', line: 'Ni el espacio la detiene: baja de la estación por las cavernas de cristal. Al fondo, el Emperador Marciano custodia el módulo de regreso.', driver: 'La estación avisa: el módulo de regreso espera en la base.' },
     { title: 'CASCADAS DEL CIELO · INICIO', line: 'La primera repisa marca el comienzo del descenso. Usa los apoyos de roca que ya forman parte del paisaje.', driver: 'El rugido del agua cubre los sonidos de la ciudad.' },
     { title: 'CASCADAS DEL CIELO · TRAMO MEDIO', line: 'La ruta baja entre cascadas y plataformas de piedra. La bandera señala el siguiente punto seguro.', driver: 'La corriente cae entre los acantilados.' },
     { title: 'CASCADAS DEL CIELO · LLEGADA', line: 'Sigue las repisas visibles hasta la plataforma circular de llegada.', driver: 'El agua se abre alrededor de la plataforma final.' },
@@ -131,31 +132,39 @@
     catsTired: 'LAS GATITAS RECUPERAN EL ALIENTO…'
   };
 
-  /** Final según objetos recuperados; las rutas sin colección usan un cierre neutral. */
-  function ending(itemsFound, total, livesLeft) {
+  /* V58.8.30 · Cierre de cada misión sin objetos de mochila: enlaza con la cinemática de la siguiente. */
+  const MISSION_END = {
+    submarino: 'Poseidón se hunde en la fosa y la escotilla de rescate se abre. Adentro no hay salida a la superficie: hay una cápsula de la Toxifamilia.',
+    espacial: 'El Emperador Marciano cae y el módulo de regreso enciende sus motores. Sofía, Luna y Morita despegan rumbo a la Tierra.',
+    parafalls: 'Los guardianes de las cascadas vuelven a ser niños y el portal se apaga. Papito Estoker se adelanta: «Te espero en la reja de Puente Grande, princesa. Llega antes de la medianoche.»'
+  };
+  /** Final según objetos recuperados; las rutas sin colección usan un cierre neutral (con su enlace de historia). */
+  function ending(itemsFound, total, livesLeft, missionId) {
     if (total <= 0) {
       return {
         title: '¡MISIÓN<br><span>COMPLETADA!</span>',
-        text: 'Llegaste al final de este recorrido. Los seis objetos de la mochila se buscan en la historia principal; su progreso se conserva.'
+        text: MISSION_END[missionId] || 'Llegaste al final de este recorrido. Los seis objetos de la mochila se buscan en la historia principal; su progreso se conserva.'
       };
     }
+    // Guadalajara: Sofía alcanza la Ruta 6 en la Plaza de las Jacarandas; adelante la espera la Calzada.
+    const calzada = ' Pero adelante, en la Calzada, ya se ven luces de patrulla…';
     if (itemsFound >= total) {
       return {
         title: '¡LLEGASTE<br><span>CON TODO!</span>',
-        text: 'Sofía sube al camión con la mochila completa. Luna y Morita se acomodan a sus pies y el chofer sonríe: “Te esperé un minuto más, eh”. La credencial, la tarjeta, el cuaderno, los audífonos, el suéter y las llaves: nada se quedó atrás.'
+        text: 'Sofía sube a la Ruta 6 con todo lo que se le cayó en el camino. Luna y Morita se acomodan a sus pies y el chofer sonríe: “Te esperé un minuto más, eh”.' + calzada
       };
     }
     if (itemsFound >= Math.ceil(total / 2)) {
       return {
         title: '¡LLEGASTE<br><span>AL CAMIÓN!</span>',
-        text: 'Sofía se deja caer en el último asiento, sin aliento. Luna y Morita ronronean junto a ella. Faltan algunas cosas en la mochila, pero mañana puede volver a buscarlas con luz de día.'
+        text: 'Sofía se deja caer en el último asiento, sin aliento. Luna y Morita ronronean junto a ella. Todavía faltan cosas en la mochila: puede volver por ellas desde el menú.' + calzada
       };
     }
     return {
       title: '¡JUSTO<br><span>A TIEMPO!</span>',
-      text: livesLeft <= 1
-        ? 'Raspada, despeinada y con la mochila casi vacía, Sofía alcanza la puerta en el último segundo. Luna y Morita saltan detrás de ella. Lo importante es que van a casa.'
-        : 'La puerta se cierra detrás de Sofía. Luna y Morita se asoman por la ventana. Casi todo lo que se le cayó sigue allá arriba, escondido en sótanos y alcantarillas.'
+      text: (livesLeft <= 1
+        ? 'Raspada, despeinada y con la mochila casi vacía, Sofía alcanza la puerta en el último segundo. Luna y Morita saltan detrás de ella.'
+        : 'La puerta se cierra detrás de Sofía. Luna y Morita se asoman por la ventana. Casi todo lo que se le cayó sigue escondido en sótanos y alcantarillas.') + calzada
     };
   }
 

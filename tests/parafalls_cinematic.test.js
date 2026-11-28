@@ -10,7 +10,9 @@ const manifest = globalThis.CAMION.TOXIFAMILIA;
 
 test('Parafalls: transformación y llegada al checkpoint valida solo recursos existentes y poses de atlas activos', () => {
   const scenes = manifest.validate(manifest.PARAFALLS);
-  assert.deepEqual(scenes.map((s) => s.id), ['pf_luz', 'pf_portal', 'pf_guardianes', 'pf_llegada', 'pf_repisa']);
+  // V58.8.30: escena puente al inicio (de la Luna al bosque de las cascadas, con Papito Estoker).
+  assert.deepEqual(scenes.map((s) => s.id), ['pf_regreso', 'pf_luz', 'pf_portal', 'pf_guardianes', 'pf_llegada', 'pf_repisa']);
+  const byId = (id) => scenes.find((s) => s.id === id);
   assert.ok(scenes.every((s) => s.tag.includes('ADAPTACIÓN') || s.tag.includes('MISIÓN PARAFALLS') || s.arrival === 4));
   const paths = manifest.assetsOf(scenes);
   assert.ok(paths.length >= 10);
@@ -19,13 +21,18 @@ test('Parafalls: transformación y llegada al checkpoint valida solo recursos ex
   assert.ok(dialogue.includes('¡Papá... mira eso! ¿Qué es esa luz?'));
   assert.ok(dialogue.includes('Parece un portal... ¡Vamos a ver!'));
   assert.ok(dialogue.includes('Al acercarse, una fuerza los absorbió de repente.'));
-  assert.equal(new Set(scenes[1].cast.find(a => a.name === 'SOFÍA').frames).size, 12);   // V58.8.28: transformación en 12 cuadros
-  assert.equal(scenes[4].arrival,4);
-  const sofia = scenes[3].cast.find((a) => a.name === 'SOFÍA');
+  assert.equal(new Set(byId('pf_portal').cast.find(a => a.name === 'SOFÍA').frames).size, 12);   // V58.8.28: transformación en 12 cuadros
+  assert.equal(byId('pf_repisa').arrival, 4);
+  assert.equal(scenes[scenes.length - 1].arrival, 4);
+  const sofia = byId('pf_llegada').cast.find((a) => a.name === 'SOFÍA');
   assert.equal(sofia.fitWidth, true);
   assert.equal(sofia.frames.length, 3, 'tres cuadros auténticos distintos de Sofía');
-  assert.ok(scenes[3].cast.some((a) => a.name === 'LUNA'));
-  assert.ok(scenes[3].cast.some((a) => a.name === 'MORITA'));
+  assert.ok(byId('pf_llegada').cast.some((a) => a.name === 'LUNA'));
+  assert.ok(byId('pf_llegada').cast.some((a) => a.name === 'MORITA'));
+  // El puente: Sofía llega con el traje espacial de la Luna y Papito Estoker le trae la ropa con la que entra al portal.
+  const puente = byId('pf_regreso');
+  assert.equal(puente.cast.find((a) => a.name === 'SOFÍA').sprite, 'assets/player/astronauta/idle.webp');
+  assert.ok(puente.lines.some((l) => l.who === 'PAPITO ESTOKER' && /ropa/.test(l.text)));
   assert.ok(scenes.reduce((sum, s) => sum + s.durationMs, 0) < 45000, 'adaptación breve y omisible');
 });
 
@@ -42,7 +49,7 @@ test('Parafalls: primer inicio y replay usan progreso persistente y assets cache
     assert.ok(sw.includes(asset), `Service Worker sin ${asset}`);
   }
   const html = read('Se_Me_Fue_El_Camion.html');
-  for (const route of ['js/core/toxifamilia.js?v=58.8.28', 'js/app/main.js?v=58.8.27', 'js/app/toxifamilia_cinematic.js?v=58.8.25', 'css/toxifamilia.css?v=58.8.25']) {
+  for (const route of ['js/core/toxifamilia.js?v=58.8.30', 'js/app/main.js?v=58.8.30', 'js/app/toxifamilia_cinematic.js?v=58.8.30', 'css/toxifamilia.css?v=58.8.25']) {
     assert.ok(html.includes(route), `HTML no versiona ${route}`);
   }
 });

@@ -53,6 +53,15 @@
           { tag: 'EL GUARDIÁN DEL ABISMO', word: '¡GLUUM!', title: 'POSEIDÓN APARECE', text: 'Una figura enorme emerge con su tridente y cierra el paso. Poseidón custodia la salida del fondo marino y no piensa dejarla pasar sin luchar.', cue: 'TRIDENTE EN ALTO = ATAQUE IMPULSIVO.' },
           { tag: 'PLAN DE BATALLA', word: '¡ESQUIVA!', title: 'GOLPEA TRAS SU CARGA', text: 'Espera su avance, aléjate del tridente y contraataca cuando termine su embestida. Si lo mareas, aprovecha para seguir golpeando antes de buscar la escotilla.', cue: 'AVISO → ESQUIVA → CONTRAATAQUE' }
         ]
+      },
+      // V58.8.30 · Jefe final de la Luna (conducta del dron, arte del paquete «RECURSOS_CURADOS_V1»).
+      drone: {
+        kind: 'drone', saveIndex: 3, stage: 'MISIÓN 4 · LUNA HUECA', boss: 'JEFE FINAL · EMPERADOR MARCIANO',
+        scenes: [
+          { tag: 'LA BASE TOMADA', word: '¡ZZZT!', title: 'EL MÓDULO DE REGRESO', text: 'Al fondo de la Luna hueca brilla el módulo que lleva de vuelta a la Tierra. Algo flota frente a él y cierra el paso.', cue: 'UN ZUMBIDO MORADO LLENA LA CAVERNA.' },
+          { tag: 'EL QUE TOMÓ LA BASE', word: '¡JA, JA!', title: 'EL EMPERADOR MARCIANO', text: 'Con su capa y su bastón de cristal, el Emperador custodia el módulo. Antes de cada disparo, su bastón carga una orbe morada.', cue: 'BASTÓN BRILLANDO = ORBE EN CAMINO.' },
+          { tag: 'PLAN DE BATALLA', word: '¡ESQUIVA!', title: 'MUÉVETE CUANDO BRILLE', text: 'Cuando cargue, sal de la línea del disparo. Con media vida lanza tres orbes en abanico: busca el hueco. Pégale con PATADA, un pisotón o DASH.', cue: 'CARGA → ESQUIVA → CONTRAATAQUE' }
+        ]
       }
     };
     let toastT = 0, toastPri = -1, bannerT = 0, bubbleT = 0, cardT = 0, introIndex = 0, introThen = null;
@@ -370,16 +379,15 @@
     function paintBossCinematic() {
       const c = bossCineData.scenes[bossCineIndex], word = $('bossCineWord');
       $('bossCinematic').dataset.kind = bossCineData.kind;
-      const bg = bossCineData.kind === 'dog'
-        ? 'assets/scenes/school_miguel_hidalgo/02_patio_escolar.webp'
-        : bossCineData.kind === 'kid'
-          ? 'assets/scenes/guadalajara_pro_v2/bg_centro_historico_pro_v2.webp'
-          : 'assets/cinematica/marino/fondo_santuario.webp';
+      const bg = { dog: 'assets/scenes/school_miguel_hidalgo/02_patio_escolar.webp', kid: 'assets/scenes/guadalajara_pro_v2/bg_centro_historico_pro_v2.webp',
+        drone: 'assets/cinematica/llegadas/estacion_lunar.webp' }[bossCineData.kind] || 'assets/cinematica/marino/fondo_santuario.webp';
       const stage = $('bossCineScene');
       stage.style.backgroundImage = 'linear-gradient(180deg,rgba(4,14,26,.48),rgba(4,12,24,.9)),url("' + bg + '")';
       stage.style.backgroundSize = 'cover'; stage.style.backgroundPosition = 'center';
       const backdrop=$('poseidonCineBackdrop');if(backdrop){backdrop.hidden=bossCineData.kind!=='poseidon';if(!backdrop.hidden)backdrop.src='assets/backgrounds/secretos/marino_oculto.webp';}
-      const portrait=$('poseidonCinePortrait');if(portrait){portrait.hidden=bossCineData.kind!=='poseidon';if(!portrait.hidden)portrait.src='assets/cinematica/marino/poseidon_tridente_0'+[0,2,4][bossCineIndex]+'.webp';}
+      // V58.8.30: retrato con el arte con que se pelea (Poseidón nuevo; Emperador Marciano en la Luna).
+      const PORTRAIT = { poseidon: (i) => 'assets/cinematica/marino/poseidon_rey_0' + [0, 2, 4][i] + '.webp', drone: (i) => 'assets/cinematica/espacio/emperador_0' + i + '.webp' };
+      const portrait=$('poseidonCinePortrait');if(portrait){const pf=PORTRAIT[bossCineData.kind];portrait.hidden=!pf;if(pf){portrait.src=pf(bossCineIndex);portrait.alt=bossCineData.boss;}}
       $('bossCineStage').textContent = bossCineData.stage;
       $('bossCineBoss').textContent = bossCineData.boss;
       $('bossCineTag').textContent = c.tag;
@@ -480,7 +488,7 @@
         nextButton.hidden = false; nextButton.dataset.mission = '2'; nextButton.textContent = 'CONTINUAR · EL SUBMARINO';
         $('resultTag').textContent = 'MISIÓN ESPECIAL · LA CALZADA';
         $('resultTitle').innerHTML = '¡CALZADA<br><span>SUPERADA!</span>';
-        $('resultText').innerHTML = esc('El tráiler de Los Zopilotes quedó atrás y la moto de mamá voló sobre la barranca. La corriente de la presa llevó a Sofía, Luna y Morita hasta el mar.') + '<br><br>' + line +
+        $('resultText').innerHTML = esc('El Maestro Enojón se quedó sin moto, el tráiler de Los Zopilotes quedó atrás y la moto de mamá voló sobre la barranca. La corriente de la presa llevó a Sofía, Luna y Morita hasta el mar.') + '<br><br>' + line +
           (e.best && e.best.bestTime ? '<br><small>Mejor tiempo completo ' + fmtTime(e.best.bestTime) + ' · récord ' + (e.best.bestScore || 0) + ' pts</small>' : '') +
           (s.practice ? '<br><small>Práctica · el progreso y los récords de campaña se conservan.</small>' : '');
         $('resultStars').innerHTML = '<span class="on">★</span>'.repeat(e.stars || 1) + '<span>★</span>'.repeat(3 - (e.stars || 1));
@@ -488,7 +496,7 @@
         if (e.best && e.best.lastRank) $('resultText').innerHTML += '<br><span class="rankBadge r' + e.best.lastRank + '">' + e.best.lastRank + '</span> <b>CALIFICACIÓN ' + e.best.lastRank + '</b>';
       } else {
         nextButton.hidden = true;
-        const why = { traffic: 'Chocaste con el tráfico', barrier: 'Te estrellaste contra una valla', ram: 'Una patrulla te embistió', crash: 'Te cerraron el paso', gap: 'Caíste a la zanja', crate: 'Una caja del tráiler te detuvo', barrel: 'Un barril de Los Zopilotes te detuvo', spikes: 'Las tachuelas te poncharon la llanta', truck: 'Chocaste con el tráiler blindado' }[e.reason] || 'La moto ya no aguanta';
+        const why = { traffic: 'Chocaste con el tráfico', barrier: 'Te estrellaste contra una valla', ram: 'Una patrulla te embistió', crash: 'Te cerraron el paso', gap: 'Caíste a la zanja', crate: 'Una caja del tráiler te detuvo', barrel: 'Un barril de Los Zopilotes te detuvo', spikes: 'Las tachuelas te poncharon la llanta', truck: 'Chocaste con el tráiler blindado', piedra: 'Una piedra del niño te detuvo', regla: 'El Maestro te alcanzó con la regla', dash: 'El Maestro te embistió', caballito: 'El Maestro te cayó encima en caballito' }[e.reason] || 'La moto ya no aguanta';
         $('resultTag').textContent = 'LA CALZADA · TRAMO ' + ((s.section | 0) + 1) + ' · ' + (SEC[s.section | 0] ? SEC[s.section | 0].title : '');
         $('resultTitle').innerHTML = '¡TE<br><span>DETUVIERON!</span>';
         $('resultText').innerHTML = esc(why + '.') + '<br><br>' + line + '<br>Reaparecerás al inicio del tramo ' + ((e.section | 0) + 1) + ' con la moto reparada.';

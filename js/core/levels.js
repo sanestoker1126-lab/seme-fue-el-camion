@@ -1100,7 +1100,7 @@
       boss: { kind: 'bravo', name: 'PERRO BRAVO DE ZAPOPAN', hp: 5 }, music: 8
     },
     {
-      id: 'arcadas', label: 'TERMINAL DE GUADALAJARA AL AMANECER', file: 'assets/scenes/generated/terminal_guadalajara_amanecer.webp', map: TERMINAL_MAP, skin: 'stone_long',
+      id: 'arcadas', label: 'TERMINAL DE GUADALAJARA · LAS ARCADAS', file: 'assets/scenes/generated/terminal_guadalajara_amanecer.webp', map: TERMINAL_MAP, skin: 'stone_long',
       tint: 0xa7b0a8, wash: 0x344448, shade: 0.2, theme: 'guadalajara', room: 'alcantarilla',
       foes: ['dog', 'chile', 'bat', 'pigeon'], obstacles: ['spark', 'spikes', 'pot', 'puddle'], foeBudget: 9, obstacleBudget: 6, sideFoes: 4,
       boss: { kind: 'rat', name: 'RATA DE LAS ARCADAS', hp: 5 }, music: 9
@@ -1112,13 +1112,13 @@
       boss: { kind: 'rat', name: 'RATA DEL TÚNEL', hp: 6 }, music: 10
     },
     {
-      id: 'mercado_tapatio', label: 'MERCADO TAPATÍO AL AMANECER', file: 'assets/scenes/generated/mercado_tapatio_amanecer.webp', map: MERCADO_MAP, skin: 'wood_table',
+      id: 'mercado_tapatio', label: 'MERCADO TAPATÍO', file: 'assets/scenes/generated/mercado_tapatio_amanecer.webp', map: MERCADO_MAP, skin: 'wood_table',
       tint: 0xffe2bd, wash: 0x905b36, shade: 0.06, theme: 'guadalajara', room: 'alcantarilla',
       foes: ['rat', 'dog', 'pigeon', 'kid'], obstacles: ['pot', 'puddle', 'crate', 'spark'], foeBudget: 9, obstacleBudget: 6, sideFoes: 4,
       boss: { kind: 'dog', name: 'PERRO DEL MERCADO', hp: 5 }, music: 11
     },
     {
-      id: 'parque_metropolitano', label: 'PARQUE METROPOLITANO AL ATARDECER', file: 'assets/scenes/generated/parque_metropolitano_atardecer.webp', map: PARQUE_MAP, skin: 'stone_moss',
+      id: 'parque_metropolitano', label: 'PARQUE METROPOLITANO', file: 'assets/scenes/generated/parque_metropolitano_atardecer.webp', map: PARQUE_MAP, skin: 'stone_moss',
       tint: 0xf3d6c9, wash: 0x465f53, shade: 0.11, theme: 'guadalajara', room: 'alcantarilla',
       foes: ['bat', 'dog', 'pigeon', 'kid', 'bravo'], obstacles: ['spark', 'puddle', 'spikes', 'crate'], foeBudget: 10, obstacleBudget: 7, sideFoes: 5,
       boss: { kind: 'bravo', name: 'GUARDIÁN DEL PARQUE', hp: 6 }, music: 12

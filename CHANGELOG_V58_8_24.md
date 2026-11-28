@@ -381,3 +381,118 @@ mueven al personaje. Resultado: 4 atlas de 0,3–0,54 MB.
 - El equilibrio de los cuatro jefes con jugadores reales (el bot reacciona perfecto).
 - La barra del Maestro durante los primeros segundos: la tarjeta del capítulo la tapa en la captura de QA (en el
   juego esa tarjeta se va sola).
+
+# V58.8.30 · Historia consolidada, Sofía igual que al jugar y llantas que giran en la Calzada
+
+## 1. La historia de principio a fin
+
+Revisé todas las escenas en el orden real del juego: escuela → Guadalajara → Calzada → mar → Luna → Parafalls → epílogo.
+
+**Huecos que llené**
+- **De la Luna a Parafalls:** nueva escena puente «EL REGRESO». El módulo de regreso cae en un bosque lleno de cascadas
+  y Papito Estoker llega por Sofía. Le trae su ropa rosa, que es la que lleva en el arte del portal. Antes, Sofía
+  pasaba de la Luna a caminar con su papá por un bosque sin explicación.
+- **Cada misión termina donde empieza la siguiente.** Los textos de victoria del mar, la Luna y Parafalls ahora
+  enlazan con la escena que sigue:
+  - mar: «la escotilla… una cápsula de la Toxifamilia»;
+  - Luna: «el módulo… despegan rumbo a la Tierra»;
+  - Parafalls: Papito Estoker espera en la reja de Puente Grande.
+
+  Conservé el título «¡MISIÓN COMPLETADA!», porque esas misiones no tienen objetos de mochila.
+- **Guadalajara:** su final decía «lo importante es que van a casa» y «mañana con luz de día». Ahora termina en la
+  Ruta 6 y anuncia la Calzada. Antes, además, con 3 de 3 objetos decía que había recuperado los seis.
+- **El jefe de la Luna se presenta antes de la misión:** Doña Tóxica avisa por radio que el Emperador Marciano tomó la
+  base. Tiene su propia presentación de jefe (como Poseidón) y el capítulo de la Luna lo nombra.
+
+**Contradicciones de hora.** El prólogo dice «antes de la medianoche», pero tres tramos decían «AL AMANECER» o «AL
+ATARDECER» («el mercado despierta con el amanecer»). Cambié esos textos por otros sin hora. El arte tiene el sol en el
+horizonte y se lee bien como atardecer.
+
+**Jefes en las cinemáticas.** El recuerdo del templo y la presentación de Poseidón todavía mostraban al Poseidón
+anterior (humano, con capa). Ahora muestran el mismo Poseidón con el que se pelea. Usé 6 cuadros del arte nuevo, en
+lienzo uniforme para que no salten.
+
+**Epílogo**
+- La caja de texto tapaba a los tres personajes. Ahora el texto va arriba y los personajes quedan a la vista.
+- Estoker sale con su arte real, el mismo Papito Estoker de Parafalls.
+- Doña Tóxica sigue en silueta hasta integrar su arte, como pediste.
+
+## 2. Sofía con la misma ropa en la cinemática y al jugar
+
+Así se viste Sofía al jugar: uniforme en la escuela, ropa de calle en Guadalajara y la isla (ORIGINAL o ROSA, la
+opción del menú), buzo dentro del mar, astronauta en la Luna y Roblox en Parafalls. Las cinemáticas ahora siguen la
+misma regla:
+- **Llegada a Guadalajara:** antes Sofía llegaba en uniforme y al tomar el control aparecía con otra ropa. Ahora llega
+  con su ropa de calle y la narración lo explica: «en el camión cambió el uniforme por su ropa de calle».
+- **Mercado del prólogo y epílogo:** siguen la ropa elegida (antes, siempre la original).
+- **Error corregido:** el reproductor de cinemáticas dejaba «pegado» el último vestuario que se le pasaba. Por eso la
+  llegada al mar, repetida desde el menú, podía salir en uniforme.
+
+## 3. La Calzada: llantas que giran y efectos en movimiento
+
+**Llantas que giran**
+- **Cómo medí las llantas:** en los 50 cuadros de motos que la tienen (Sofía, el niño, el Maestro jinete y el Maestro
+  jefe). Busqué el anillo oscuro de la llanta con transparencia afuera y verifiqué cada cuadro a ojo.
+- **Moto de Sofía:** tiene rines de rayos. Con la mitad de abajo de cada rin (sin escape ni bota) se arma una vez una
+  textura limpia, repitiendo el periodo de los rayos (7 y 8). El juego la gira en esa mitad.
+  - Velocidad: gira según la velocidad real, sin pasar de un tercio de rayo por cuadro, para que nunca parezca ir hacia
+    atrás.
+  - A más velocidad deja una estela de giro.
+  - En cámara lenta también gira lento.
+- **Jinetes y Maestro jefe:** tienen rines lisos. Giran las marcas de la llanta y un brillo del rin.
+- **Temblor corregido:** cada cuadro de los jinetes ahora se ancla a sus propias llantas. Antes la moto se corría hasta
+  20 px entre cuadros y temblaba.
+
+**Efectos (solo de dibujo: no cambian la simulación, así que el bot y las pruebas siguen valiendo)**
+- polvo de la llanta trasera (azul con nitro), también en los perseguidores;
+- marcas de derrape al cambiar de carril o frenar;
+- aro y nube de polvo al aterrizar, más un golpe breve de cámara (respeta la opción TEMBLOR);
+- estela fantasma y estallido de rayos al encender el nitro;
+- viento detrás de Sofía a alta velocidad;
+- grietas y manchas del asfalto que pasan con la velocidad.
+
+**Corrección.** Las líneas de velocidad usaban un desplazamiento con signo sobre un número sin signo, y algunas salían
+al revés.
+
+## 4. Pulido nivel por nivel
+
+Recorrí en Chromium los 23 tramos y las 5 secciones de la Calzada, con capturas: sin errores de consola ni archivos
+faltantes.
+- **Centro Histórico, Los Portales y el primer Guadalajara:** a los lados del panel pintado, en la mitad alta, quedaba
+  un bloque gris plano. Ahora se ven el cielo y la ciudad lejana del mismo paquete.
+- **Rótulos de zona:** isla, bosque de algas, fosa y las tres cascadas mostraban el rótulo de respaldo «RUTA ALTERADA».
+  Ahora tienen el suyo: «BOSQUE DE ALGAS», «SANTUARIO DE POSEIDÓN», «CASCADAS DEL CIELO»…
+- **Resultado de la Calzada:** menciona al Maestro. Los motivos de derrota «regla», «embestida», «caballito» y
+  «piedra» tienen texto propio (antes caían en «La moto ya no aguanta»).
+
+## QA
+
+- **Node: 157/157.** Pruebas nuevas:
+  - **Historia consolidada:** vestuario por escena, jefes con el arte con que se pelean, enlaces entre misiones y
+    textos sin horas contradictorias.
+  - **Calzada dibujada completa:** el bot la juega mientras se dibuja sobre un contexto falso que, como el navegador,
+    rechaza radios negativos. Comprobé que atrapa el error que encontré: con el desplazamiento con signo, la prueba
+    falla.
+  - **Tablas de llantas:** cada cuadro tiene datos, las llantas caen dentro del cuadro, son del mismo tamaño y la
+    distancia entre ejes es estable.
+- **Pruebas actualizadas:**
+  - la de Parafalls, por la escena puente nueva (busca las escenas por id y conserva todas sus comprobaciones);
+  - la de Guadalajara, que fijaba el texto exacto del fondo;
+  - las que fijan versiones.
+- **Chromium:**
+  - **Giro de las llantas:** con la simulación congelada y solo el reloj del dibujo avanzando, dentro de las llantas
+    cambian 800–1.500 px por cuadro.
+  - **Efectos:** los capturé andando, al cambiar de carril, con nitro, en el aire y al aterrizar, en 1280 × 720 y en
+    teléfono vertical.
+  - **Cinemáticas cambiadas:** las revisé una por una, al igual que las presentaciones del Emperador y de Poseidón.
+
+## Pendiente o no verificado
+
+- **Parafalls tiene dos Sofía Roblox distintas.** La de tu hoja de transformación (pelo rizado, moño azul, ropa rosa)
+  y la del atlas de 30 poses con que se juega (cola de caballo, lentes, mochila). Para que coincidan hace falta decidir
+  cuál es la oficial. Si es la de la transformación, se necesita su hoja de animaciones: caminar, correr, saltar,
+  caer, patada, golpe y celebrar.
+- **La Calzada con la ropa ROSA:** el arte de la moto solo existe con la ropa original. Quien elige ROSA juega
+  Guadalajara de rosa y la Calzada sale con la original.
+- **Arte pendiente:** Doña Tóxica sigue en silueta en el epílogo, y falta la imagen del tráiler blindado.
+- **Rendimiento de los efectos:** no lo medí en un teléfono real; en Chromium de escritorio no hubo problemas.

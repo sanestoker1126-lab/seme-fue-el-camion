@@ -19,6 +19,10 @@
   const SOFIA = (o) => Object.assign({ name: 'SOFÍA · LA NIÑA TÓXICA', sprite: ST + 'idle_01.png', x: 50, bottom: 16, scale: 1.2, entrance: 'enter-rise' }, o || {});
   const LUNA = (o) => Object.assign({ name: 'LUNA', sprite: CAT + 'luna.png', x: 22, bottom: 58, scale: 0.6, entrance: 'enter-left' }, o || {});
   const MORITA = (o) => Object.assign({ name: 'MORITA', sprite: CAT + 'morita.png', x: 80, bottom: 60, scale: 0.6, entrance: 'enter-right' }, o || {});
+  /* V58.8.30 · En Guadalajara, la isla y el epílogo Sofía lleva su ropa de calle: la de la opción del menú (ORIGINAL o
+     ROSA), igual que al jugar (Render.outfitFor). El uniforme solo en la escuela; el astronauta, en la Luna. */
+  const RS = 'assets/player/variants/rosa/';
+  const CALLE = (f) => ({ original: [ST + f + '.png'], rosa: [RS + f + '.png'] });
 
   const SCENES = [
     /* V58.6 · Apertura en penumbra: al principio solo se ven las dos siluetas, a contraluz de los monitores; luego
@@ -37,15 +41,15 @@
     { id: 'e2_mercado', tag: 'ESCENA 2 · MERCADO SAN JUAN DE DIOS · CALLE ALDAMA', title: 'LA ODISEA URBANA', layout: 'dialogo',
       text: 'Lluvia intensa sobre el mercado. Sofía, empapada pero con mirada desafiante, ajusta las correas de su mochila. Siluetas de pandilleros bloquean los callejones. Sobre los tejados, Luna y Morita brillan con un aura sutil: listas para interceptar francotiradores o activar trampas del entorno.',
       background: [GDL + 'mercado_parque/02_arquitectura_anclada.webp', GDL + 'mercado_parque/01_nubes_reales.webp', GDL + 'mercado_parque/00_cielo_degradado.webp'],
-      durationMs: 10000, fx: 'lluvia', cast: [SOFIA({ sprite: ST + 'idle_01.png' }), LUNA({ x: 16, perch: true, entrance: 'enter-fade' }), MORITA({ x: 83, perch: true, entrance: 'enter-fade' })] },
+      durationMs: 10000, fx: 'lluvia', cast: [SOFIA({ looks: CALLE('idle_01') }), LUNA({ x: 16, perch: true, entrance: 'enter-fade' }), MORITA({ x: 83, perch: true, entrance: 'enter-fade' })] },
     { id: 'e2_voz', tag: 'SOFÍA · VOZ EN OFF', title: 'NO SABEN LO QUE LLEVO', layout: 'dialogo',
       text: '«Piensan que solo soy una estudiante que perdió el camión. No saben lo que llevo en la mochila.»',
       background: [GDL + 'mercado_parque/02_arquitectura_anclada.webp', GDL + 'mercado_parque/00_cielo_degradado.webp'],
-      durationMs: 8000, fx: 'lluvia', cast: [SOFIA({ sprite: ST + 'land_01.png', scale: 1.35, entrance: 'enter-rise' })] },
+      durationMs: 8000, fx: 'lluvia', cast: [SOFIA({ looks: CALLE('land_01'), scale: 1.35, entrance: 'enter-rise' })] },
     { id: 'e2_usb', tag: 'SOFÍA · CLOSE-UP A LA MOCHILA (ZUMBIDO)', title: 'SEIS LLAVES ENCRIPTADAS', layout: 'dialogo',
       text: '«Seis memorias USB. Seis llaves encriptadas. Recuperar los objetos que perdí en la huida no es capricho… es la única forma de abrir las puertas de máxima seguridad.»',
       background: [GDL + 'barrios_inferiores/02_arquitectura_anclada.webp', GDL + 'barrios_inferiores/00_cielo_degradado.webp'],
-      durationMs: 11000, fx: 'lluvia', cast: [SOFIA({ sprite: ST + 'run_02.png', x: 46, entrance: 'enter-left' }), LUNA({ bottom: 14, x: 18 }), MORITA({ bottom: 14, x: 78 })] },
+      durationMs: 11000, fx: 'lluvia', cast: [SOFIA({ looks: CALLE('run_02'), x: 46, entrance: 'enter-left' }), LUNA({ bottom: 14, x: 18 }), MORITA({ bottom: 14, x: 78 })] },
     { id: 'e3_start', tag: 'ESCENA 3 · EL FRENTE CONJUNTO', title: 'OBJETIVO: CRUZA LA CIUDAD. RECUPERA LAS 6 LLAVES. SOBREVIVE.',
       text: 'Sofía truena los nudillos. El HUD de combate parpadea y se enciende línea por línea.\n[ INSERT COIN / PRESS START ]',
       background: 'assets/scenes/school_pro/school_exit_facade.webp', layout: 'dialogo', durationMs: 9000, fx: 'hud',
@@ -54,11 +58,14 @@
   ];
 
   const EPILOGUE = [
-    { id: 'pc_reja', tag: 'ESCENA POST-CRÉDITOS · A 500 METROS DEL MURO DE PUENTE GRANDE', title: 'JUSTO A TIEMPO',
+    // V58.8.30: acomodo de diálogo (texto arriba): antes la caja grande tapaba a Sofía, a Estoker y a Doña Tóxica.
+    { id: 'pc_reja', tag: 'ESCENA POST-CRÉDITOS · A 500 METROS DEL MURO DE PUENTE GRANDE', title: 'JUSTO A TIEMPO', layout: 'dialogo',
       text: 'Sofía llega exhausta, cubierta de rasguños, a la entrada del alcantarillado. Al fondo, Doña Tóxica despacha a dos guardias de élite con un combo devastador. Estoker abre una pesada reja de acero y recibe la mochila.\nESTOKER: «Justo a tiempo, niña tóxica.»',
       background: [GDL + 'barrios_inferiores/02_arquitectura_anclada.webp', GDL + 'barrios_inferiores/00_cielo_degradado.webp'],
-      durationMs: 11000, fx: 'lluvia', cast: [ESTOKER, SOFIA({ sprite: ST + 'land_01.png', x: 52 }), TOXICA] },
-    { id: 'pc_apagon', tag: 'EL PANEL MAESTRO', title: 'SE ABRIERON LAS JAULAS',
+      // V58.8.30: Estoker con su arte real (el mismo Papito Estoker de Parafalls y del recuerdo del mar). Doña Tóxica
+      // sigue en silueta hasta integrar su arte (pendiente por decisión del autor).
+      durationMs: 11000, fx: 'lluvia', cast: [Object.assign({}, ESTOKER, { sprite: 'assets/cinematica/llegadas/estoker_original.webp', scale: 1.15 }), SOFIA({ looks: CALLE('land_01'), x: 52 }), TOXICA] },
+    { id: 'pc_apagon', tag: 'EL PANEL MAESTRO', title: 'SE ABRIERON LAS JAULAS', layout: 'dialogo',
       text: 'Estoker conecta las seis USB en el panel maestro. Un estruendo sordo hace temblar todo. Las luces de emergencia de Puente Grande se apagan a la vez y la fortaleza queda en absoluta oscuridad. Desde adentro, los gritos de victoria de los reclusos.\nDOÑA TÓXICA (sonriendo de medio lado): «Se abrieron las jaulas. Ahora nos toca a nosotros.»',
       background: [GDL + 'barrios_inferiores/02_arquitectura_anclada.webp', GDL + 'barrios_inferiores/00_cielo_degradado.webp'],
       durationMs: 12000, fx: 'apagon', cast: [Object.assign({}, ESTOKER, { entrance: 'enter-rise' }), Object.assign({}, TOXICA, { entrance: 'enter-rise' })] },
@@ -134,7 +141,8 @@
     { id: 'm5_templo', tag: 'RECUERDO · EL TEMPLO DEL FONDO DEL MAR', title: 'POSEIDÓN, REY DEL MAR', layout: 'dialogo',
       background: MAR + 'fondo_santuario.webp', fx: ['recuerdo', 'burbujas'], text: '',
       cast: [
-        { name: 'POSEIDÓN', frames: seq('poseidon_tridente', 6), x: 54, bottom: 8, scale: 1.9, flip: true, float: true, entrance: 'enter-rise', loop: true,
+        // V58.8.30: arte nuevo de Poseidón (paquete «RECURSOS_CURADOS_V1»), el mismo con el que se pelea en la fosa.
+        { name: 'POSEIDÓN', frames: seq('poseidon_rey', 6), x: 54, bottom: 8, scale: 2.6, float: true, entrance: 'enter-rise', loop: true,
           anim: [{ f: [0], ms: 1600 }, { f: [1, 2], fps: 5, ms: 800 }, { f: [3, 4], fps: 5, ms: 800 }, { f: [5], ms: 700 }] },
         { name: 'NIÑO BUZO', frames: [...['idle_01', 'idle_02', 'idle_03', 'idle_04', 'throw_prepare', 'throw_windup', 'throw_release', 'throw_projectile', 'throw_recovery'].map((n) => KID + n + '.webp')],
           x: 86, bottom: 3, scale: 1.05, flip: true, entrance: 'enter-right', loop: true,
@@ -181,9 +189,10 @@
         anim: [{ f: [0], ms: 4800, to: 93 }] }] },
     { id: 'gdl_llegada', tag: 'DESTINO · CENTRO DE GUADALAJARA', title: '¡AL CENTRO!', layout: 'dialogo',
       background: 'assets/scenes/guadalajara_pro_v2/transit_street.webp',
-      text: '', durationMs: 4600,
+      // V58.8.30: en el camión se cambia el uniforme por su ropa de calle, la misma con la que se juega Guadalajara.
+      text: 'En el camión, Sofía cambió el uniforme por su ropa de calle: en el centro nadie debe reconocerla.', durationMs: 4600,
       cast: [
-        SOFIA({ sprite: 'assets/player/variants/uniforme/idle_01.png', x: 49, bottom: 3, scale: 1.3, entrance: 'enter-rise' }),
+        SOFIA({ looks: CALLE('idle_01'), x: 49, bottom: 3, scale: 1.3, entrance: 'enter-rise' }),
         LUNA({ x: 25, bottom: 2, scale: 0.62 }), MORITA({ x: 74, bottom: 2, scale: 0.62 })
       ] }
   ];
@@ -197,6 +206,18 @@
   const hija = (o) => Object.assign({ name: 'SOFÍA', x: 62, scale: 1.12, label: false, entrance: 'enter-fade' }, o);
   const SOFIA_ROBLOX = Array.from({ length: 12 }, (_, i) => PF + 'sofia_roblox_' + String(i + 1).padStart(2, '0') + '.webp');
   const PARAFALLS = [
+    /* V58.8.30 · Escena puente (de esta versión, no sale de los tableros): une el final de la Luna con el bosque de
+       Parafalls. Explica por qué Papito Estoker está con ella y por qué cambia el traje espacial por la ropa rosa con la
+       que aparece en el arte del portal. */
+    { id: 'pf_regreso', tag: 'MISIÓN PARAFALLS · EL REGRESO', title: 'DE VUELTA EN LA TIERRA', layout: 'dialogo', text: '',
+      background: PF + 'forest_approach.webp', introMs: 300,
+      cast: [papi({ sprite: ARR + 'estoker_original.webp', x: 30 }),
+        hija({ sprite: 'assets/player/astronauta/idle.webp', x: 64, scale: 1.05 })],
+      lines: [
+        { who: 'NARRADOR', tone: 'narra', text: 'El módulo de regreso cae en un bosque lleno de cascadas.', ms: 3400 },
+        { who: 'PAPITO ESTOKER', tone: 'estoker', text: '¡Sofi! Seguí la señal de tu cápsula. Te traje tu ropa rosa.', ms: 4200 },
+        { who: 'SOFÍA', tone: 'sofia', text: '¡Papito! ¡Le gané al Emperador Marciano!', ms: 3600 }
+      ] },
     { id: 'pf_luz', tag: 'PARAFALLS · ADAPTACIÓN DEL ARTE CONCEPTUAL', title: 'UNA LUZ ENTRE LAS CASCADAS',
       layout: 'dialogo', text: '', background: PF + 'forest_approach.webp', introMs: 350,
       cast: [papi({ sprite: ARR + 'estoker_original.webp' }), hija({ sprite: ARR + 'sofia_02.webp' })],
@@ -308,7 +329,12 @@
       ] },
     { id: 'orbita_estacion', tag: 'MISIÓN 4 · ÓRBITA LUNAR', title: 'LA ESTACIÓN SOBRE EL CRÁTER',
       layout: 'dialogo', text: '', background: ARR + 'estacion_lunar.webp', cast: [],
-      lines: [{ who: 'SOFÍA', tone: 'sofia', text: 'Desde aquí se ve toda la Luna. Luna, Morita… ¿listas para salir por la esclusa?' }] }
+      lines: [
+        // V58.8.30: el jefe de la Luna se presenta antes de la misión (por radio, como en la Calzada).
+        { who: 'DOÑA TÓXICA', tone: 'toxica', text: 'Niña tóxica, ¿me escuchas? El Emperador Marciano tomó la base de la Luna.' },
+        { who: 'DOÑA TÓXICA', tone: 'toxica', text: 'Él custodia el módulo de regreso: tendrás que vencerlo para volver a la Tierra.' },
+        { who: 'SOFÍA', tone: 'sofia', text: 'Desde aquí se ve toda la Luna. Luna, Morita… ¿listas para salir por la esclusa?' }
+      ] }
   ];
   // El último plano usa el fondo, el vestuario, las compañeras y la colisión del primer tramo jugable.
   function arrival(id, mission, title, text) {
@@ -337,7 +363,7 @@
     m1_isla: [971,405,161,490,272], m2_recuerdo: [1600,667,35,317,491],
     m3_tiburones: [1600,667,1100,1510,413], m6_bucear: [971,405,311,469,246],
     gdl_salida: [1521,365,110,1410,353], gdl_camion: [1920,900,20,1900,828], gdl_llegada: [1920,900,130,1790,800],
-    pf_luz: [2816,1584,855,2030,1430], pf_portal: [2816,1584,1290,2480,1390],
+    pf_regreso: [2816,1584,855,2030,1430], pf_luz: [2816,1584,855,2030,1430], pf_portal: [2816,1584,1290,2480,1390],
     pf_guardianes: [2816,1584,1300,2460,1390], pf_llegada: [2816,1584,710,2130,1440]
   };
 

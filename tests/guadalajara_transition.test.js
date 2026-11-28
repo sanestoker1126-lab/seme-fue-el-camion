@@ -44,7 +44,8 @@ test('la transición escuela–Guadalajara valida escenas breves, visuales y sin
   assert.match(render, /GDL_V584 = PXD \+ 'guadalajara_v584\/'/);
   assert.match(render, /00_cielo_atardecer\.webp/);
   assert.match(render, /01_ciudad_lejana\.webp/);
-  assert.match(render, /guadalajara:\s+\{ bottom: GDL_SKY\('barrios_inferiores'\) \}/);
+  // V58.8.30: el primer Guadalajara usa solo el cielo (no la ciudad lejana) también en su mitad alta pintada.
+  assert.match(render, /guadalajara:\s+\{ top: GDL_SKY\('barrios_inferiores'\), bottom: GDL_SKY\('barrios_inferiores'\) \}/);
   assert.match(render, /own && !\(sc\.artPainted && sc\.map\.art && sc\.map\.art\.length\)/);
   const lv = fs.readFileSync(path.join(ROOT, 'js/core/levels.js'), 'utf8');
   assert.match(lv, /guadalajara:\s+\{ keepWidth: true, painted: true, pieces: \[\'plain\', \'zip\', \'bounce\'\] \}/);

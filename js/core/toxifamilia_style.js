@@ -1,6 +1,6 @@
 /* V56 · Dirección de arte provisional: La Toxifamilia.
    Únicamente estética; los personajes y la historia del PDF siguen sin definirse.
-   Perfil explícito para cada uno de los 18 niveles y para los siete enemigos existentes.
+   Perfil explícito para cada uno de los 23 tramos (V58.8.30: también isla, bosque, fosa y cascadas) y sus enemigos.
    No agrega colisiones, peligros invisibles ni altera mapas. */
 (function (root) {
   'use strict';
@@ -23,7 +23,14 @@
     anden_tren_ligero:   { tag:'ANDÉN PROHIBIDO', accent:'#88f7f0', edge:'#b1a1ff', haze:'#1d203c', motif:'caution', intensity:0.76 },
     plaza_jacarandas:    { tag:'JACARANDAS OSCURAS', accent:'#d59eff', edge:'#ff80c0', haze:'#271a42', motif:'spores', intensity:0.87 },
     submarino:           { tag:'ABISMO BIOLUMINISCENTE', accent:'#77f3da', edge:'#b0b3ff', haze:'#052e3a', motif:'bubbles', intensity:0.68 },
-    espacial:            { tag:'ÓRBITA ANÓMALA', accent:'#b49cff', edge:'#85f6ed', haze:'#151532', motif:'stardust', intensity:0.68 }
+    espacial:            { tag:'ÓRBITA ANÓMALA', accent:'#b49cff', edge:'#85f6ed', haze:'#151532', motif:'stardust', intensity:0.68 },
+    // V58.8.30 · Los tramos nuevos tenían el rótulo de respaldo («RUTA ALTERADA»).
+    submarino_isla:      { tag:'LA ISLA DEL CANAL', accent:'#8ff0c8', edge:'#ffd36a', haze:'#0b3a3a', motif:'bubbles', intensity:0.5 },
+    submarino_bosque:    { tag:'BOSQUE DE ALGAS', accent:'#7ff5a8', edge:'#9fd8ff', haze:'#06342c', motif:'bubbles', intensity:0.62 },
+    submarino_fosa:      { tag:'SANTUARIO DE POSEIDÓN', accent:'#77f3da', edge:'#ffd36a', haze:'#041f33', motif:'bubbles', intensity:0.72 },
+    parafalls_1:         { tag:'CASCADAS DEL CIELO', accent:'#8fe8ff', edge:'#ffd36a', haze:'#10384b', motif:'spores', intensity:0.45 },
+    parafalls_2:         { tag:'CASCADAS DEL CIELO', accent:'#8fe8ff', edge:'#ff9ad6', haze:'#10384b', motif:'spores', intensity:0.48 },
+    parafalls_3:         { tag:'LA PLATAFORMA FINAL', accent:'#ffe08a', edge:'#8fe8ff', haze:'#10384b', motif:'spores', intensity:0.5 }
   };
   const ENEMIES = {
     rat: { color:'#adff63', warning:'RATA · SALTA / DASH', emblem:'◆' },

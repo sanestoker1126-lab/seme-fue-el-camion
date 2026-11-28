@@ -307,11 +307,12 @@
   // El primer Guadalajara ya trae ciudad/plataformas en su arte central; conservar solo el cielo fuera del panel.
   const GDL_SKY = () => [[[GDL_V584 + '00_cielo_atardecer.webp'], 0.16]];
   const BACKDROPS = {
-    guadalajara: { bottom: GDL_SKY('barrios_inferiores') },
+    // V58.8.30: también en la mitad alta (pintada): a los lados del panel quedaba un relleno gris plano.
+    guadalajara: { top: GDL_SKY('barrios_inferiores'), bottom: GDL_SKY('barrios_inferiores') },
     gdl_noche: { bottom: GDL('barrios_inferiores') },
     azoteas: { top: GDL('azoteas'), bottom: GDL('azoteas') },
-    centro_historico: { bottom: GDL('mercado_parque') },
-    portales: { bottom: GDL('mercado_parque') },
+    centro_historico: { top: GDL('mercado_parque'), bottom: GDL('mercado_parque') },
+    portales: { top: GDL('mercado_parque'), bottom: GDL('mercado_parque') },
     zapopan: { bottom: GDL('barrios_inferiores') },
     mercado_tapatio: { top: GDL('mercado_parque') },
     parque_metropolitano: { bottom: GDL('mercado_parque') },
