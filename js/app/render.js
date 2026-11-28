@@ -2547,6 +2547,65 @@
     }
     if (fx.bang && !f.dead) bang(f.x, (flyer ? f.y - bodyH * 0.62 : f.y - bodyH * 1.08), T);
   }
+  /* ---------- V58.8.28 · Enemigos secretos extra (NS.ART.EXTRA_FOES, js/app/art_extra.js) ----------
+     Mismo enemigo base (dron, murciélago, piraña, pulpo) con otro arte: la animación sale de su estado. */
+  const EXTRA = () => (NS.ART && NS.ART.EXTRA_FOES) || {};
+  const extraReady = (skin) => { const A = EXTRA()[skin]; return !!A && ready(image(A.src)); };
+  const EXTRA_LIFE = 0.85;
+  function extraPick(f) {
+    const st = f.state, T = NS.Enemies.TYPES[f.kind] || {}, fx = {};
+    const prog = (dur) => Math.max(0, Math.min(0.999, f.stateT / Math.max(0.05, dur)));
+    if (f.dead) return ['derrota', Math.min(0.999, f.deadT / EXTRA_LIFE), fx];
+    if (st === 'dizzy') fx.stars = true;
+    switch (f.skin) {
+      case 'robot_centinela':
+        if (st === 'aim') { fx.bang = true; return ['disparo', prog((T.windup || 0.6) * (f.reaction || 1)), fx]; }
+        return [f.cool > (T.cooldown || 2.4) * 0.8 ? 'embestida' : 'hover', null, fx];
+      case 'murcielago_alienigena':
+        if (st === 'sleep') return ['vuelo', null, Object.assign(fx, { slow: 0.35 })];
+        if (st === 'alert') { fx.bang = true; return ['mordida', null, fx]; }
+        if (st === 'swoop') return ['picada', null, fx];
+        return ['vuelo', null, fx];
+      case 'pirana_furiosa':
+        if (st === 'windup') { fx.bang = true; return ['mordida', prog(T.windup || 0.46), fx]; }
+        if (st === 'charge') return ['persecucion', null, Object.assign(fx, { lines: true })];
+        return ['nado_lento', null, fx];
+      case 'marciano_v2':
+        if (f.flash > 0 || st === 'recoil') return ['hurt', 0, fx];
+        if (st === 'aim') { fx.bang = true; return ['shoot', Math.min(0.74, prog((T.windup || 0.62) * (f.reaction || 1)) * 0.75), fx]; }
+        if (f.shotT > 0) return ['shoot', 0.9, fx];
+        if (st === 'dizzy') { fx.stars = false; return ['dizzy', null, fx]; }   // el cuadro ya trae los ojos cerrados
+        return [Math.abs(f.vx || 0) > 4 || st === 'patrol' ? 'walk' : 'idle', null, fx];
+      case 'medusa_electrica':
+        if (st === 'aim') { fx.bang = true; return ['descarga', prog((T.windup || 0.62) * 1.1), fx]; }
+        return [Math.abs(f.vx || 0) > 8 ? 'desplazamiento' : 'flotacion', null, fx];
+      default: return [Object.keys(EXTRA()[f.skin].anims)[0], null, fx];
+    }
+  }
+  function drawExtraFoe(f, T) {
+    const A = EXTRA()[f.skin], im = image(A.src);
+    const [name, t, fx] = extraPick(f);
+    const [list, ms, loop] = A.anims[name];
+    const i = t === null ? Math.floor((T * 1000 * (fx.slow || 1) + f.phase * 400) / ms) % list.length : Math.min(list.length - 1, Math.floor(t * list.length));
+    const fr = A.frames[list[i]];
+    const s = f.h * A.vis / A.ref, d = f.dir || 1, feet = A.anchor === 'feet';
+    const bob = !f.dead && !feet ? Math.sin(T * 2.2 + f.phase) * 1.5 : 0;
+    if (feet && !f.dead) ellipse(f.x, f.y + 1, Math.min(f.w * 0.8, 42), 4, '#06111b', 0.4);
+    if (fx.lines) for (let k = 1; k <= 3; k++) line(f.x - d * (f.w * 0.6 + k * 9), f.y - 8 + k * 5, f.x - d * (f.w * 0.6 + 18 + k * 12), f.y - 8 + k * 5, '#ffffff', 0.42 - k * 0.1, 1.6);
+    ctx.save();
+    ctx.translate(f.x, f.y + bob);
+    if (d < 0) ctx.scale(-1, 1);
+    ctx.drawImage(im, fr[0], fr[1], fr[2], fr[3], fr[4] * s, fr[5] * s, fr[2] * s, fr[3] * s);
+    if (f.flash > 0 && !f.dead) {
+      const sil = silhouette(im, '#ffffff');
+      if (sil) { ctx.globalAlpha = Math.min(1, f.flash / 0.2) * 0.75; ctx.drawImage(sil, fr[0], fr[1], fr[2], fr[3], fr[4] * s, fr[5] * s, fr[2] * s, fr[3] * s); ctx.globalAlpha = 1; }
+    }
+    ctx.restore();
+    const bodyH = A.ref * s, cy = feet ? f.y - bodyH * 0.5 : f.y;
+    if (fx.stars && !f.dead) for (let k = 0; k < 3; k++) { const a = T * 6 + k * 2.1; circle(f.x + Math.cos(a) * bodyH * 0.4, cy - bodyH * 0.35 + Math.sin(a) * 6, 3, '#fffbe0'); }
+    if (fx.bang && !f.dead) bang(f.x, cy - bodyH * 0.62, T);
+  }
+
   /* Proyectiles con el arte del paquete (orbe, tinta, piedras, borrador): `scale` = alto en u por unidad de radio. */
   const ATLAS_SHOT = { orbe: ['marciano', 2.6, 'vel'], tinta: ['pulpito', 2.7, 'wobble'], piedra_mar: ['buzito', 2.3, 'vel'],
     roca: ['astronino', 2.4, 'vel'], borrador: ['maestro', 2.4, 'spin'] };
@@ -2567,7 +2626,7 @@
   /** V58.7 · Atlas de los enemigos secretos y jefes nuevos y fondos de las zonas secretas (precarga y sin conexión). */
   function secretUrls() {
     const B = (NS.ART && NS.ART.SECRET_BG) || {};
-    return [...Object.values(ATLAS_FOES()).map((a) => a.src), ...Object.values(B).map((b) => b.src)];
+    return [...Object.values(ATLAS_FOES()).map((a) => a.src), ...Object.values(EXTRA()).map((a) => a.src), ...Object.values(B).map((b) => b.src)];
   }
 
   function drawSchoolBossWarning(G,V,T){
@@ -2633,15 +2692,16 @@
       // V58.7: los del atlas nuevo terminan su animación de derrota (el maestro cae y queda noqueado) antes de esfumarse.
       if (f.region !== G.region) continue;
       if (f.kind === 'guardian') { if (!f.dead || f.deadT <= .45) drawGuardian(f, T); continue; }
-      const atlas = atlasReady(f.kind), life = atlas ? atlasLife(f) : 0.45;
+      const extra = !!f.skin && extraReady(f.skin);   // V58.8.28: arte alterno
+      const atlas = !extra && atlasReady(f.kind), life = extra ? EXTRA_LIFE : atlas ? atlasLife(f) : 0.45;
       if (f.dead && f.deadT > life) continue;
-      const a = f.dead ? (atlas ? Math.min(1, (life - f.deadT) / (life * 0.35)) : 1 - f.deadT / 0.45) : 1;
+      const a = f.dead ? (atlas || extra ? Math.min(1, (life - f.deadT) / (life * 0.35)) : 1 - f.deadT / 0.45) : 1;
       // V58.1: en el mar y en la Luna el niño lleva traje de buzo o de astronauta (si sus cuadros cargaron).
       const fTheme = f.kind === 'kid' && f.scene >= 0 && G.world.scenes[f.scene] ? G.world.scenes[f.scene].theme : null;
       const suit = fTheme === 'submarino' && f.plat && f.plat.underwater ? 'kid_buzo' : fTheme === 'espacial' ? 'kid_astronauta' : null;
       const sk = f.kind === 'bravo' ? 'dog' : suit && enemyReady(suit) ? suit : f.kind;
-      const useSprite = !atlas && !!ESPR[sk] && enemyReady(sk);
-      const marine = !atlas && !useSprite && marineReady(f.kind);   // V58.2: piraña, tiburón, pulpo y Poseidón con su atlas
+      const useSprite = !atlas && !extra && !!ESPR[sk] && enemyReady(sk);
+      const marine = !atlas && !extra && !useSprite && marineReady(f.kind);   // V58.2: piraña, tiburón, pulpo y Poseidón con su atlas
       drawToxiThreat(f, T);
       drawBossFX(f, T);
       ctx.save();
@@ -2649,10 +2709,11 @@
         const punch = Math.sin(Math.min(1, f.flash / 0.2) * Math.PI) * 0.12;
         ctx.translate(f.x, f.y); ctx.scale(1 + punch, 1 - punch); ctx.translate(-f.x, -f.y);
       }
-      if (f.dead && !useSprite && !marine && !atlas) { ctx.globalAlpha = a; ctx.translate(f.x, f.y); ctx.scale(1, -1); ctx.translate(-f.x, -f.y + 18); }
+      if (f.dead && !useSprite && !marine && !atlas && !extra) { ctx.globalAlpha = a; ctx.translate(f.x, f.y); ctx.scale(1, -1); ctx.translate(-f.x, -f.y + 18); }
       else if (f.dead) ctx.globalAlpha = a;
       const b = Math.sin(t9 + f.x) * 1.5, d = f.dir, fl = f.flash > 0;
-      if (atlas) { drawAtlasFoe(f, T); }
+      if (extra) { drawExtraFoe(f, T); }
+      else if (atlas) { drawAtlasFoe(f, T); }
       else if (useSprite) { drawEnemySprite(f, T, sk); }
       else if (marine) { drawMarineFoe(f, T); }
       else if (f.kind === 'piranha' || f.kind === 'shark') {
@@ -2855,6 +2916,12 @@
         const col = { tinta: '#2a0f35', orbe: '#d59bff', piedra_mar: '#5d6d78', roca: '#9a7a52', borrador: '#3f7fd6' }[s.kind];
         circle(s.x, s.y, s.r, col); circle(s.x - s.r * 0.3, s.y - s.r * 0.3, s.r * 0.35, '#ffffff', 0.35);
       }
+      else if (s.kind === 'ink' && s.skin === 'medusa_electrica') {
+        // V58.8.28: la descarga de la medusa eléctrica (orbe que chisporrotea).
+        const tt = G.world.t * 30;
+        circle(s.x, s.y, s.r + 6, '#7ff6ff', 0.18); circle(s.x, s.y, s.r, '#b9f8ff', 0.85); circle(s.x, s.y, s.r * 0.45, '#ffffff', 0.95);
+        for (let k = 0; k < 4; k++) { const a = tt * 0.3 + k * 1.57; line(s.x + Math.cos(a) * s.r * 0.6, s.y + Math.sin(a) * s.r * 0.6, s.x + Math.cos(a + 0.4) * (s.r + 7), s.y + Math.sin(a + 0.4) * (s.r + 7), '#e8a6ff', 0.85, 1.6); }
+      }
       else if (s.kind === 'ink') {
         // V58.2: tinta del pulpo (mancha morada con gotas que se quedan atrás).
         for (let k = 1; k <= 3; k++) circle(s.x - s.vx * 0.02 * k, s.y - s.vy * 0.02 * k, s.r * (0.7 - k * 0.15), '#3b1747', 0.5 - k * 0.12);
@@ -2868,6 +2935,12 @@
           ctx.save(); ctx.translate(s.x, s.y); ctx.rotate((G.world.t * 6) % (Math.PI * 2));
           ctx.drawImage(fxIm, r[0], r[1], r[2], r[3], -d / 2, -d / 2 * r[3] / r[2], d, d * r[3] / r[2]); ctx.restore();
         } else { ring(s.x, s.y, s.r, s.r, '#9ff3ff', 0.85, 3); ring(s.x, s.y, s.r * 0.6, s.r * 0.6, '#e9fbff', 0.7, 2); }
+      }
+      else if (s.kind === 'plasma' && s.skin === 'robot_centinela') {
+        // V58.8.28: láser rojo del robot centinela.
+        const dd = Math.hypot(s.vx, s.vy) || 1;
+        line(s.x - s.vx / dd * 22, s.y - s.vy / dd * 22, s.x, s.y, '#ff4a5a', 0.85, 4);
+        circle(s.x, s.y, s.r + 5, '#ff3b4b', 0.2); circle(s.x, s.y, s.r, '#ff8a8a', 0.95); circle(s.x, s.y, 2.4, '#ffffff');
       }
       else if (s.kind === 'plasma') {
         const dd = Math.hypot(s.vx, s.vy) || 1;

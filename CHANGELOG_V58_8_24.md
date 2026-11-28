@@ -259,3 +259,51 @@ No verificado:
 - El equilibrio de precios y la dificultad con jugadores reales.
 - Parafalls sigue siendo el mundo más simple: 3 guardianes por tramo, sin jefe. Necesita arte de enemigos o de jefe
   para crecer.
+
+---
+
+# V58.8.28 · Enemigos secretos extra, marciano nuevo y transformación Roblox
+
+Integro tres archivos aportados.
+
+**1. Paquete «ENEMIGOS_SECRETOS_EXTRA_V2»** (4 enemigos × 16 cuadros)
+- **Preparación de los atlas:** traían el alfa sucio. Los limpié (alfa < 90 fuera, motas sueltas fuera), recorté cada
+  cuadro a su contenido real con el pivote al centro y los convertí a WebP: 7 MB en PNG quedaron en 0,96 MB.
+- **Conducta:** cada uno usa la de un enemigo ya probado, con su arte propio y +1 de resistencia.
+  - **Robot centinela:** conducta del dron. Animaciones: flota y dispara un láser rojo.
+  - **Murciélago alienígena:** conducta del murciélago. Animaciones: duerme, muerde en alerta y se lanza en picada.
+  - **Piraña furiosa:** conducta de la piraña. Animaciones: nada, muerde al avisar y persigue en la embestida.
+  - **Medusa eléctrica:** conducta del pulpo. Animaciones: flota, se desplaza y suelta descargas; su disparo sale
+    como un orbe eléctrico.
+- **Dónde aparecen:** en las zonas secretas a las que corresponden.
+  - Estación orbital: robot centinela y murciélago alienígena.
+  - Santuario de Poseidón: piraña furiosa y medusa eléctrica.
+  - Hay 2 de cada uno, y 1 en Fácil.
+- **Lo que no usé:** los GIF y los PNG sueltos del paquete; el juego usa el atlas.
+
+**2. Marciano** (tira de 15 cuadros)
+- Separé los cuadros automáticamente por los espacios vacíos entre figuras; descarté la orbe suelta y dos restos.
+- El ancla va en los pies. Animaciones: caminar, recibir golpe, cargar y disparar la orbe, mareo y derrota en 3 cuadros.
+- Todo marciano lo usa, también el jefe Marciano Comandante. Su conducta no cambia.
+
+**3. Sofía transformándose al estilo Roblox** (hoja de 12 cuadros)
+- Escena «El portal» de Parafalls: Sofía camina hacia el portal, toca la luz y se transforma.
+- Escena siguiente: ya aparece transformada (último cuadro de la hoja).
+
+## QA
+
+- **Node: 150/150.** La prueba nueva confirma que:
+  - cada atlas existe y sus cuadros caen dentro de él;
+  - cada enemigo aparece solo en su zona secreta, con su conducta base y su resistencia;
+  - en Fácil sale 1 de cada uno y en Normal 2;
+  - el marciano usa el arte nuevo.
+  - Ajusté a 12 las dos pruebas que fijaban en 6 los cuadros de la transformación anterior.
+- **Chromium (1280 × 720):**
+  - Dentro de las dos zonas secretas se ve a cada enemigo cambiar de estado (avisa, embiste o pica y dispara).
+  - Transformación completa en la cinemática del portal y marciano nuevo en la estación.
+  - Sin errores ni archivos faltantes.
+
+## No verificado
+
+- El tamaño en pantalla y el equilibrio de los enemigos nuevos con jugadores reales.
+- La medusa usa la conducta del pulpo, no una descarga de área propia.

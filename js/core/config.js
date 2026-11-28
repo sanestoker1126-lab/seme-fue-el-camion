@@ -6,8 +6,8 @@
   const NS = root.CAMION = root.CAMION || {};
 
   NS.CONFIG = {
-    version: '58.8.27',
-    build: 'v58-8-27-progreso',
+    version: '58.8.28',
+    build: 'v58-8-28-secretos-extra',
 
     sim: {
       fixedDt: 1 / 60,      // paso fijo de simulación (60 Hz), independiente de la tasa de refresco

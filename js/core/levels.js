@@ -1255,7 +1255,12 @@
       ledges: [{ x1: 0, x2: 190, arrive: 70 }, { x1: 1982, x2: 2172, exit: 2080 }],
       foes: [
         { kind: 'pulpito', x1: 300, x2: 900, y: 250 }, { kind: 'pulpito', x1: 700, x2: 1300, y: 470, extra: true },
-        { kind: 'buzito', x1: 150, x2: 700, y: 400 }, { kind: 'buzito', x1: 1300, x2: 1900, y: 200, extra: true }
+        { kind: 'buzito', x1: 150, x2: 700, y: 400 }, { kind: 'buzito', x1: 1300, x2: 1900, y: 200, extra: true },
+        // V58.8.28 · Enemigos secretos extra: piraña furiosa (conducta de piraña) y medusa eléctrica (dispara como el pulpo).
+        { kind: 'piranha', skin: 'pirana_furiosa', hpBonus: 1, x1: 1350, x2: 1900, y: 330 },
+        { kind: 'piranha', skin: 'pirana_furiosa', hpBonus: 1, x1: 300, x2: 800, y: 130, extra: true },
+        { kind: 'pulpo', skin: 'medusa_electrica', x1: 900, x2: 1400, y: 170 },
+        { kind: 'pulpo', skin: 'medusa_electrica', x1: 1500, x2: 2000, y: 480, extra: true }
       ],
       boss: { kind: 'pulpo_abismo', name: 'PULPO DEL ABISMO', hp: 8, x1: 1080, x2: 2060, y: 390 },
       gems: [[260, 185], [330, 220], [400, 290], [235, 420], [330, 430], [600, 515], [700, 515], [800, 515], [1000, 300],
@@ -1277,7 +1282,13 @@
       arrive: [70, 588], exit: [1540, 752],
       foes: [
         { kind: 'marciano', plat: 'floor', x1: 380, x2: 1000 }, { kind: 'marciano', plat: [1160, 362], extra: true },
-        { kind: 'astronino', plat: 'floor', x1: 160, x2: 700 }, { kind: 'astronino', plat: [1310, 245], extra: true }
+        { kind: 'astronino', plat: 'floor', x1: 160, x2: 700 }, { kind: 'astronino', plat: [1310, 245], extra: true },
+        // V58.8.28 · Enemigos secretos extra: robot centinela (patrulla y dispara como el dron) y murciélago alienígena
+        // (cuelga del techo de la estación y se lanza como el murciélago).
+        { kind: 'drone', skin: 'robot_centinela', hpBonus: 1, fly: true, x1: 300, x2: 900, y: 430 },
+        { kind: 'drone', skin: 'robot_centinela', hpBonus: 1, fly: true, x1: 1250, x2: 1650, y: 430, extra: true },
+        { kind: 'bat', skin: 'murcielago_alienigena', hpBonus: 1, fly: true, x1: 520, x2: 520, y: 110 },
+        { kind: 'bat', skin: 'murcielago_alienigena', hpBonus: 1, fly: true, x1: 1380, x2: 1380, y: 150, extra: true }
       ],
       boss: { kind: 'marciano', name: 'MARCIANO COMANDANTE', hp: 6, plat: [1450, 100] },
       gems: [[250, 700], [420, 700], [600, 700], [394, 520], [669, 345], [590, 200], [640, 200], [176, 300], [76, 190],

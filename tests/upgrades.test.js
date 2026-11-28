@@ -105,3 +105,36 @@ test('reparto protagonista: cada tramo de Guadalajara tiene sus enemigos propios
   const casts = M.levels.map((d) => (d.cast || d.foes).slice().sort().join());
   for (let i = 1; i < casts.length; i++) assert.notEqual(casts[i], casts[i - 1], M.levels[i].id);
 });
+
+test('enemigos secretos extra: aparecen en su zona secreta con la conducta base y su arte', () => {
+  require('../js/app/art_extra.js');
+  const EXTRA = NS.ART.EXTRA_FOES, fs = require('node:fs'), path = require('node:path');
+  const size = { marciano_v2: [2716, 203] };   // los demás: atlas 4 × 4 de 1254 px
+  for (const [skin, A] of Object.entries(EXTRA)) {
+    assert.ok(fs.existsSync(path.join(__dirname, '..', A.src)), A.src);
+    assert.equal(A.frames.length, skin === 'marciano_v2' ? 15 : 16, skin);
+    for (const [name, [list]] of Object.entries(A.anims)) assert.ok(list.every((i) => A.frames[i]), skin + ' ' + name);
+    const [aw, ah] = size[skin] || [1254, 1254];
+    assert.ok(A.frames.every((f) => f[2] > 20 && f[3] > 20 && f[0] >= 0 && f[1] >= 0 && f[0] + f[2] <= aw && f[1] + f[3] <= ah), skin + ' cuadros dentro del atlas');
+  }
+  // El marciano usa siempre el arte nuevo (conducta intacta).
+  const m = NS.Enemies.create('marciano', { x: 0, y: 0, plat: { x1: -200, x2: 200, y: 0 } });
+  assert.equal(m.skin, 'marciano_v2'); assert.equal(m.kind, 'marciano');
+  const expect = { submarino: { pirana_furiosa: 'piranha', medusa_electrica: 'pulpo' }, espacial: { robot_centinela: 'drone', murcielago_alienigena: 'bat' } };
+  for (const [mid, skins] of Object.entries(expect)) {
+    const mi = NS.LEVELS.MISSIONS.findIndex((m) => m.id === mid);
+    for (const difficulty of ['facil', 'normal']) {
+      const W = NS.World.buildWorld({ levels: NS.LEVELS.MISSIONS[mi].levels, difficulty });
+      for (const [skin, kind] of Object.entries(skins)) {
+        const list = W.foes.filter((f) => f.skin === skin);
+        assert.equal(list.length, difficulty === 'facil' ? 1 : 2, mid + ' ' + skin + ' ' + difficulty);
+        for (const f of list) {
+          assert.equal(f.kind, kind);
+          assert.ok(f.region !== 'main' && W.rooms.find((r) => r.id === f.region && r.secret), 'solo en la zona secreta');
+          assert.ok(f.maxHp >= NS.Enemies.TYPES[kind].hp, 'resistencia');
+          assert.ok(Number.isFinite(f.x) && Number.isFinite(f.y));
+        }
+      }
+    }
+  }
+});

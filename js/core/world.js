@@ -808,11 +808,15 @@
       const platOf = (q) => (q.plat === 'floor' ? { x1: X(q.x1), x2: X(q.x2), y: floorY, occupied: [] } : ledgeAt(q.plat));
       for (const q of Z.foes || []) {
         if (q.extra && diffKey === 'facil') continue;
+        const look = { skin: q.skin, hpBonus: q.hpBonus };   // V58.8.28: arte alterno (enemigos secretos extra)
         if (water) {
-          addFoe(EN.create(q.kind, { x: X((q.x1 + q.x2) / 2), y: Y(q.y), waterZone: water, lane: { x1: X(q.x1), x2: X(q.x2) }, scene: i, region: reg, diff, rng }));
+          addFoe(EN.create(q.kind, Object.assign({ x: X((q.x1 + q.x2) / 2), y: Y(q.y), waterZone: water, lane: { x1: X(q.x1), x2: X(q.x2) }, scene: i, region: reg, diff, rng }, look)));
+        } else if (q.fly) {
+          // Voladores en zona seca: patrullan su carril (dron) o cuelgan de su percha (murciélago) a la altura `y`.
+          addFoe(EN.create(q.kind, Object.assign({ x: X((q.x1 + q.x2) / 2), y: Y(q.y), lane: { x1: X(q.x1), x2: X(q.x2) }, scene: i, region: reg, diff, rng }, look)));
         } else {
           const pl = platOf(q);
-          if (pl) addFoe(EN.create(q.kind, { x: (pl.x1 + pl.x2) / 2, y: pl.y, plat: pl, scene: i, region: reg, diff, rng }));
+          if (pl) addFoe(EN.create(q.kind, Object.assign({ x: (pl.x1 + pl.x2) / 2, y: pl.y, plat: pl, scene: i, region: reg, diff, rng }, look)));
         }
       }
       if (Z.boss) {

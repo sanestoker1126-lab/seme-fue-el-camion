@@ -19,7 +19,7 @@ test('Parafalls: transformación y llegada al checkpoint valida solo recursos ex
   assert.ok(dialogue.includes('¡Papá... mira eso! ¿Qué es esa luz?'));
   assert.ok(dialogue.includes('Parece un portal... ¡Vamos a ver!'));
   assert.ok(dialogue.includes('Al acercarse, una fuerza los absorbió de repente.'));
-  assert.equal(new Set(scenes[1].cast.find(a => a.name === 'SOFÍA').frames).size, 6);
+  assert.equal(new Set(scenes[1].cast.find(a => a.name === 'SOFÍA').frames).size, 12);   // V58.8.28: transformación en 12 cuadros
   assert.equal(scenes[4].arrival,4);
   const sofia = scenes[3].cast.find((a) => a.name === 'SOFÍA');
   assert.equal(sofia.fitWidth, true);
@@ -42,7 +42,7 @@ test('Parafalls: primer inicio y replay usan progreso persistente y assets cache
     assert.ok(sw.includes(asset), `Service Worker sin ${asset}`);
   }
   const html = read('Se_Me_Fue_El_Camion.html');
-  for (const route of ['js/core/toxifamilia.js?v=58.8.26', 'js/app/main.js?v=58.8.27', 'js/app/toxifamilia_cinematic.js?v=58.8.25', 'css/toxifamilia.css?v=58.8.25']) {
+  for (const route of ['js/core/toxifamilia.js?v=58.8.28', 'js/app/main.js?v=58.8.27', 'js/app/toxifamilia_cinematic.js?v=58.8.25', 'css/toxifamilia.css?v=58.8.25']) {
     assert.ok(html.includes(route), `HTML no versiona ${route}`);
   }
 });

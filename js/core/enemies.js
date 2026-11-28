@@ -67,8 +67,13 @@
   // Voladores que patrullan un carril (los demás: el murciélago cuelga de su percha y la paloma tiene su ruta).
   const LANE_FLYERS = new Set(['piranha', 'shark', 'drone', 'pulpo', 'poseidon', 'pulpito', 'buzito', 'pulpo_abismo']);
 
+  // V58.8.28: el marciano usa siempre el arte nuevo (tira aportada de 15 cuadros); conducta sin cambios.
+  const DEFAULT_SKIN = { marciano: 'marciano_v2' };
   function create(kind, o) {
     const T = Object.assign({}, TYPES[kind]);
+    // V58.8.28 · Arte alterno (paquete «enemigos secretos extra»): misma conducta del tipo base, otro aspecto y algo
+    // más de resistencia (`hpBonus`). Ver js/app/art_extra.js.
+    if (o.hpBonus) T.hp += o.hpBonus;
     if (o.isBoss) {
       T.w = Math.round(T.w * 1.5); T.h = Math.round(T.h * 1.45);
       T.hp = Math.max(T.hp, o.hp || 4);
@@ -82,7 +87,7 @@
       dir: rng() < 0.5 ? -1 : 1, state: 'patrol', stateT: 0, t: rng() * 6, cool: 0.4 + rng() * 0.8,
       dead: false, deadT: 0, hitCD: 0, flash: 0, seen: false, scene: o.scene ?? -1, region: o.region || 'main',
       spd: (T.speed || 0) * diff.foeSpeed * (o.isBoss ? 1.12 : 1), reaction: diff.reaction, shotMul: diff.shotSpeed, phase: rng() * 6,
-      spawn: { x: o.x, y: o.y }
+      spawn: { x: o.x, y: o.y }, skin: o.skin || DEFAULT_SKIN[kind] || null
     };
     if (T.walker) {
       f.plat = o.plat;
@@ -360,7 +365,7 @@
         } else if (f.state === 'aim') {
           if (f.stateT >= T.windup * f.reaction) {
             const vx = f.targetX - f.x, vy = f.targetY - f.y, dist = Math.hypot(vx, vy) || 1, sp = T.shotSpeed * f.shotMul;
-            W.shots.push({ kind: 'ink', x: f.x + f.dir * 12, y: f.y + 4, vx: vx / dist * sp, vy: vy / dist * sp, g: 0, r: 9, life: 2.6, from: f.id });
+            W.shots.push({ kind: 'ink', x: f.x + f.dir * 12, y: f.y + 4, vx: vx / dist * sp, vy: vy / dist * sp, g: 0, r: 9, life: 2.6, from: f.id, skin: f.skin });
             ev.push({ type: 'shoot', foe: f });
             f.cool = T.cooldown * f.reaction; setState(f, 'fly');
           }
@@ -425,7 +430,7 @@
             const vx = f.targetX - f.x, vy = f.targetY - f.y;
             const dist = Math.hypot(vx, vy) || 1;
             const speed = T.shotSpeed * f.shotMul;
-            W.shots.push({ kind: 'plasma', x: f.x + f.dir * 13, y: f.y,
+            W.shots.push({ kind: 'plasma', skin: f.skin, x: f.x + f.dir * 13, y: f.y,
               vx: vx / dist * speed, vy: vy / dist * speed,
               g: 0, r: 7, life: 2.4, from: f.id });
             ev.push({ type: 'shoot', foe: f });

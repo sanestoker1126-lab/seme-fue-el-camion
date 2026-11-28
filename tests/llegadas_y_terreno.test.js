@@ -58,7 +58,7 @@ test('cinco cinemáticas terminan en el checkpoint de su propia misión y usan a
     assert.equal(scenes[scenes.length-1].arrival,i);
     for(const url of M.assetsOf(scenes)) assert.ok(fs.statSync(path.join(root,url)).isFile());
   }
-  assert.equal(M.PARAFALLS.find(s=>s.id==='pf_portal').cast[1].frames.length,6);
+  assert.equal(M.PARAFALLS.find(s=>s.id==='pf_portal').cast[1].frames.length,12);   // V58.8.28: hoja de transformación de 12 cuadros
 });
 
 test('Submarino empieza en seco, permite caminar al borde y equipa el buceo al entrar al mar', () => {

@@ -195,6 +195,7 @@
   const transform = (name, steps) => steps.map(n => ARR + name + '_' + n + '.webp');
   const papi = (o) => Object.assign({ name: 'PAPITO ESTOKER', x: 24, scale: 1.25, label: false, entrance: 'enter-fade' }, o);
   const hija = (o) => Object.assign({ name: 'SOFÍA', x: 62, scale: 1.12, label: false, entrance: 'enter-fade' }, o);
+  const SOFIA_ROBLOX = Array.from({ length: 12 }, (_, i) => PF + 'sofia_roblox_' + String(i + 1).padStart(2, '0') + '.webp');
   const PARAFALLS = [
     { id: 'pf_luz', tag: 'PARAFALLS · ADAPTACIÓN DEL ARTE CONCEPTUAL', title: 'UNA LUZ ENTRE LAS CASCADAS',
       layout: 'dialogo', text: '', background: PF + 'forest_approach.webp', introMs: 350,
@@ -203,15 +204,16 @@
     { id: 'pf_portal', tag: 'PARAFALLS · ADAPTACIÓN DEL ARTE CONCEPTUAL', title: 'EL PORTAL', layout: 'dialogo', text: '',
       background: PF + 'portal_reveal.webp',
       cast: [papi({ sprite: ARR + 'estoker_original.webp' }),
-        hija({ frames: transform('sofia', ['02','04','06','08','10','11']),
-          anim: [{ f: [0], ms: 2000 }, { f: [0,1,2,3,4,5], fps: 2, ms: 3000 }, { f: [5], ms: 60000 }] })],
+        // V58.8.28: hoja aportada de 12 cuadros: Sofía camina, toca la luz y se transforma al estilo Roblox.
+        hija({ frames: SOFIA_ROBLOX, x: 40, anim: [{ f: [0, 1], fps: 4, ms: 1800, to: 58 }, { f: [2, 3], fps: 2, ms: 1400 },
+          { f: [4, 5], fps: 3, ms: 1300 }, { f: [6, 7, 8, 9, 10, 11], fps: 2.4, ms: 2600 }, { f: [11], ms: 60000 }] })],
       lines: [{ who: 'PAPITO ESTOKER', tone: 'estoker', text: 'Parece un portal... ¡Vamos a ver!' },
         { who: 'NARRADOR', tone: 'narra', text: 'Al acercarse, una fuerza los absorbió de repente.' }] },
     { id: 'pf_guardianes', tag: 'MISIÓN PARAFALLS · LOS GUARDIANES', title: 'DEL OTRO LADO', layout: 'dialogo', text: '',
       background: PF + 'portal_reveal.webp',
       cast: [papi({ frames: transform('estoker', ['original','00','04','08','11']),
         anim: [{ f: [0], ms: 700 }, { f: [1,2,3,4], fps: 2, ms: 2000 }, { f: [4], ms: 60000 }] }),
-        hija({ sprite: ARR + 'sofia_11.webp' })],
+        hija({ sprite: SOFIA_ROBLOX[11] })],
       lines: [{ who: 'PAPITO ESTOKER', tone: 'estoker', text: 'Mira mis manos, Sofi. Los niños que se quedaron jugando aquí ahora vigilan las cascadas.' },
         { who: 'SOFÍA', tone: 'sofia', text: 'Voy a cruzar con Luna y Morita. Encontraremos a los niños, papá.' }] },
     { id: 'pf_llegada', tag: 'MISIÓN PARAFALLS · ROBLOX', title: 'LA PRIMERA CASCADA',
