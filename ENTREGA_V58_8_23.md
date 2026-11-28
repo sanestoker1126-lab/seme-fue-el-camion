@@ -30,3 +30,8 @@ La compilación incluye isla, bosque de algas, fosa oscura y santuario de Poseid
   «Empaquetar juego completo» nombraría el ZIP `V58.8.20`.
 - `README.md` y `tools/empaquetar.sh` siguen describiendo la V58.9.
 - No se modificó `main`.
+
+## Después de la importación
+
+- `CONFIG.version` quedó corregido en la V58.8.24 (`CHANGELOG_V58_8_24.md`), que se construye sobre esta compilación.
+- El commit de importación (`45a9047`) conserva el contenido original de los 680 archivos.

@@ -18,10 +18,27 @@ Es un sitio estático, sin dependencias. Para jugarlo:
 Controles en pantalla (táctil) y teclado. Se instala como app (PWA) y funciona sin conexión tras la primera carga.
 
 **Paquete para jugar**: `bash tools/empaquetar.sh` arma `Se_Me_Fue_El_Camion_V<versión>.zip`. Lleva solo lo que usa
-el juego (485 archivos, ~54 MB en la V58.9) y un `LEEME.txt` con instrucciones. En GitHub: Actions → «Empaquetar
-juego completo» → Run workflow.
+el juego y un `LEEME.txt` con instrucciones. En GitHub: Actions → «Empaquetar juego completo» → Run workflow.
 
-## Novedades V58.9 · Limpieza
+> **Rama `release/v58.8.23-poseidon`:** el juego de esta rama parte de la compilación **V58.8.23 · Santuario de
+> Poseidón** (ver `ENTREGA_V58_8_23.md`), no de la V58.9 de `main`. Las secciones «V58.9» y anteriores de este
+> archivo describen la historia de `main`; lo propio de esta rama está en «Novedades V58.8.24».
+
+## Novedades V58.8.24 · La Calzada y misiones por tramo
+
+- **Misión especial · La Calzada** (entre Guadalajara y el mar): Sofía maneja la Ruta 6 por la Calzada Olímpica en
+  cinco tramos —arranque, patrullas, rampas de la obra, Los Zopilotes y el tráiler blindado— y termina saltando la
+  barranca hacia la presa, lo que la lleva a la isla de la misión 3. Carriles, nitro, embestida, gatas, rampas con
+  cámara lenta, explosiones, sirenas y un jefe con puertas que se abren. Cinemáticas de entrada y salida.
+- **Cada tramo es una misión** (`js/core/contracts.js`): objetivo obligatorio (jefe, cacería, cristales, objeto de la
+  mochila o contrarreloj), objetivo opcional con medalla y efectos que cambian el juego: noche con linterna, lluvia
+  que moja el piso y ráfagas de viento anunciadas. Opción MISIONES: OBLIGATORIAS / OPCIONALES.
+- **Historia unida**: Guadalajara → la Ruta 6 en la Plaza de las Jacarandas → el retén de la Calzada → la presa →
+  la isla → la escotilla de Poseidón (una cápsula de la Toxifamilia) → la Luna. Los Zopilotes aparecen en los
+  contratos de Guadalajara antes de perseguir a Sofía en la Calzada.
+- Detalle y QA: `CHANGELOG_V58_8_24.md`.
+
+## Novedades V58.9 · Limpieza (rama `main`)
 
 - Menos amontonado: cristales a no menos de 200 u entre sí (de 100–270 por nivel a 15–95), enemigos de la ciudad
   sin los multiplicadores de V58 (de 13–27 a 8–17) y sin rótulos encimados.
@@ -100,7 +117,8 @@ Detalle, medidas y validación: `CHANGELOG_V58.md`. Procedencia del arte nuevo: 
 
 ## Misiones (V53)
 
-El juego está separado en cuatro misiones; en el menú eliges misión y después la parada:
+El juego está separado en misiones; en el menú eliges misión y después la parada (en la rama
+`release/v58.8.23-poseidon`: cinco mundos más la misión especial La Calzada entre Guadalajara y el submarino):
 
 1. **La Escuela** — los niveles de tema escolar.
 2. **Guadalajara** — el grueso del juego por la ciudad.
@@ -127,7 +145,7 @@ Opciones incluye **Aspecto de Sofía** (original / uniforme / rosa).
 node --test tests/*.test.js
 ```
 
-Versión de desarrollo: **V58.9** (`js/core/config.js` → 58.9.0).
+Versión de desarrollo: **V58.9** en `main` (`js/core/config.js` → 58.9.0); **V58.8.24** en `release/v58.8.23-poseidon`.
 
 ## V54 · Submarino y Espacio ampliados
 

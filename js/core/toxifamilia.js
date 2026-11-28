@@ -279,6 +279,15 @@
   ];
 
   const ESPACIO = [
+    /* V58.8.24 · Puente entre el mar y la Luna: la escotilla que custodiaba Poseidón era la entrada a una cápsula de la
+       Toxifamilia. Escena nueva de esta versión (no sale del guion fuente); usa fondos ya incluidos. */
+    { id: 'esp_capsula', tag: 'MISIÓN 4 · LA ESCOTILLA DE RESCATE', title: 'UNA CÁPSULA EN EL FONDO DEL MAR',
+      layout: 'dialogo', text: '', background: MAR + 'fondo_santuario.webp', fx: 'burbujas', cast: [],
+      lines: [
+        { who: 'NARRADOR', tone: 'narra', text: 'La escotilla que cuidaba Poseidón no daba a la superficie: era la puerta de una cápsula escondida de la Toxifamilia.' },
+        { who: 'SOFÍA', tone: 'sofia', text: '¿Un cohete? Papito Estoker decía que la Toxifamilia tenía una base en la Luna… ¡era verdad!' },
+        { who: 'NARRADOR', tone: 'narra', text: 'La cápsula despega con Sofía, Luna y Morita rumbo a la estación lunar.' }
+      ] },
     { id: 'orbita_estacion', tag: 'MISIÓN 4 · ÓRBITA LUNAR', title: 'LA ESTACIÓN SOBRE EL CRÁTER',
       layout: 'dialogo', text: '', background: ARR + 'estacion_lunar.webp', cast: [],
       lines: [{ who: 'SOFÍA', tone: 'sofia', text: 'Desde aquí se ve toda la Luna. Luna, Morita… ¿listas para salir por la esclusa?' }] }
