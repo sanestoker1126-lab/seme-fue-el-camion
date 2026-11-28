@@ -13,9 +13,9 @@ function pngSize(file) {
 
 test('Parafalls Roblox: atlas fuente completos, referencias dentro de hoja y metadata íntegra', () => {
   const sofia = JSON.parse(read('assets/player/sofia_roblox/sofia_atlas.json'));
-  assert.equal(sofia.meta.frameCount, 30);
+  assert.equal(sofia.meta.frameCount, 33);
   assert.deepEqual(pngSize('assets/player/sofia_roblox/sofia_atlas.png'), [sofia.meta.size.w, sofia.meta.size.h]);
-  assert.equal(Object.keys(sofia.frames).length, 30);
+  assert.equal(Object.keys(sofia.frames).length, 33);
   for (const [name, frame] of Object.entries(sofia.frames)) {
     const r = frame.frame;
     assert.ok(r.x >= 0 && r.y >= 0 && r.w > 0 && r.h > 0, `rectángulo Sofía ${name}`);
@@ -27,6 +27,15 @@ test('Parafalls Roblox: atlas fuente completos, referencias dentro de hoja y met
   assert.equal(sofia.animations.run.frames.length, 6);
   assert.equal(sofia.animations.walk.completeness, 'full_cycle');
   assert.deepEqual(sofia.meta.pivotPixels, { x: 128, y: 240 });
+  // V58.8.36: daño con sus tres poses propias (golpe, empujón, recuperación), no un cuadro sustituto; dura lo mismo que
+  // el estado de daño del juego (game.js: P.hurtT = 0.42) y se queda en la última pose.
+  const hurt = sofia.animations.hurt;
+  assert.deepEqual(hurt.frames, ['hurt_00', 'hurt_01', 'hurt_02']);
+  assert.equal(hurt.completeness, 'source_sequence');
+  assert.equal(hurt.loop, false);
+  assert.equal(hurt.durationsMs.reduce((s, d) => s + d, 0), 420);
+  assert.match(read('js/core/game.js'), /P\.hurtT = 0\.42;/);
+  for (const f of hurt.frames) assert.deepEqual(sofia.frames[f].pivot, { x: 0.5, y: 0.9375 }, 'ancla de pies de ' + f);
   // Cada estado que pide el juego (render.js: PARAFALLS_ROBLOX_PLAYER_STATE) tiene su animación y cuadros existentes.
   for (const st of ['idle', 'run', 'jump', 'fall', 'land', 'climb', 'glide', 'attack', 'hurt', 'knockdown', 'victory']) {
     const an = sofia.animations[st];

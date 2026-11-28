@@ -678,3 +678,31 @@ cuadros anteriores. La revisé a fondo y ahora la uso.
   comprobé que falla si se quita la marca o la condición.
 - **Chromium:** recorrí los 23 tramos sin errores ni archivos faltantes. Verifiqué el combo (patada, puñetazo
   encadenado, patada tras una pausa) y el destello de daño en capturas.
+
+# V58.8.36 · La Sofía cúbica ya tiene sus propias poses de daño
+
+Integré las tres poses de daño que mandaste. Antes, al recibir un golpe, la Sofía cúbica usaba un cuadro de aterrizaje
+como sustituto.
+- **Secuencia:** golpe (puños arriba y ojos cerrados), empujón hacia atrás (inclinada, con un pie en el aire) y
+  recuperación (encorvada, manos en las rodillas), en el orden de tu hoja. Duran 100, 140 y 180 ms. Suman 0,42 s, lo
+  mismo que el estado de daño del juego, y la última pose se mantiene hasta que Sofía recupera el control. El destello
+  rojo cubre el golpe y el inicio del empujón.
+- **Mismo tamaño que el resto:** medí la escala con el área de la silueta, los zapatos y una comparación directa con el
+  reposo (cabeza, moño y zapatos). Quedó en 0,315: Sofía no crece ni se encoge al recibir el golpe.
+- **Ancla en los pies:** como en el atlas, la suela queda en y = 239 de la celda de 256. Las poses de pie se centran en
+  ambos pies; el empujón, en el pie de apoyo.
+- **Limpieza:** la hoja traía un halo tenue y un borde cian grueso en el pelo (unos 20 px en el original). Quité el halo
+  (alfa < 90, como en el resto del atlas). El borde cian lo teñí con el color del pelo o de la piel vecinos y conservé el
+  sombreado de los cubos. Así el contorno queda con el mismo morado sutil del atlas: color medio del borde (72–79,
+  75–83, 122–132) contra (84, 84, 143) en el reposo. El moño y el morado de la falda a cuadros no se tocaron.
+- **Atlas:** los 30 cuadros anteriores no se movieron ni cambió un solo píxel (verificado). Las poses nuevas van en una
+  fila nueva, y el atlas pasa de 2048 × 1024 a 2048 × 1280 en la misma ruta. La caché nueva del service worker lo
+  renueva.
+
+**QA**
+- **Node:** 159/159. La prueba del atlas ahora exige las tres poses propias, que duren 0,42 s como el daño del juego y
+  que tengan el ancla en los pies.
+- **Chromium:**
+  - Provoqué un golpe en Parafalls y capturé la secuencia: golpe con destello, empujón, recuperación, final y vuelta al
+    reposo; también mirando a la izquierda.
+  - Recorrí los 23 tramos sin errores ni archivos faltantes.

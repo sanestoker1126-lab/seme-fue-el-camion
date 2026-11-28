@@ -1,5 +1,6 @@
-/* Sofía Roblox 30-authored-frame atlas renderer — HTML5 Canvas 2D.
+/* Sofía Roblox 33-authored-frame atlas renderer — HTML5 Canvas 2D.
  * V58.8.33: atlas de la Sofía cúbica oficial (durationsMs por cuadro; si no hay, fps por animación).
+ * V58.8.36: tres poses propias de daño (golpe, empujón, recuperación) en una fila nueva del atlas.
  * Does not mutate game physics, attack boxes, camera, or the world map.
  * Root x,feetY stay in world coordinates. Metadata includes alpha contour trimming.
  */
@@ -38,6 +39,6 @@
     ctx.restore();
     return true;
   }
-  target.SofiaRobloxAtlas = Object.freeze({draw,poseCount:30,
+  target.SofiaRobloxAtlas = Object.freeze({draw,poseCount:33,
     getFrames(meta,state){return (meta.animations[state]||meta.animations.idle).frames.slice();}});
 })(typeof window!=='undefined'?window:globalThis);
