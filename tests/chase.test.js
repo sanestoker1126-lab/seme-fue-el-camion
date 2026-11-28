@@ -52,6 +52,11 @@ test('Calzada: el bot completa la misión en las tres dificultades (jefe, salto 
     const ramps = r.log.find((e) => e.type === 'chapter' && e.index === 2);
     assert.ok(ramps.i > mbOut.i, 'las rampas llegan después del duelo');
     assert.ok((mbOut.i - mbIn.i) / 60 > 10, 'el duelo dura: ' + ((mbOut.i - mbIn.i) / 60).toFixed(1) + ' s');
+    // V58.8.37: después de las rampas, el duelo con la Señora de la Cuchara (otro personaje, no Doña Tóxica), antes de Los Zopilotes.
+    const scIn = r.log.find((e) => e.type === 'bossIntro' && e.mini && e.foe.kind === 'cuchara');
+    const scOut = r.log.find((e) => e.type === 'bossDefeated' && e.mini && e.foe.kind === 'cuchara');
+    const zop = r.log.find((e) => e.type === 'chapter' && e.index === 3);
+    assert.ok(scIn && scOut && scIn.i > ramps.i && scOut.i > scIn.i && zop.i > scOut.i, difficulty + ': duelo de la señora entre las rampas y Los Zopilotes');
     assert.ok(r.log.filter((e) => e.type === 'takedown').length >= 2, 'hubo derribos (en todos los intentos)');
     assert.ok(r.S.stats.t > 60 && r.S.stats.t < 240, 'duración razonable: ' + r.S.stats.t);
   }
@@ -220,4 +225,36 @@ test('Calzada: El Maestro en moto roja (jefe del tramo 2) avisa sus tres ataques
   const gap = S.course.gaps[0];
   assert.ok(gap.x1 > S.P.x && gap.x1 - S.P.x < 7000, 'la primera zanja quedó adelante');
   assert.ok(S.routeX() < NS.Chase.SECTIONS[2].x, 'progreso consistente');
+});
+
+test('Calzada: la Señora de la Cuchara en su scooter rosa (jefa al final de las rampas; no es Doña Tóxica)', () => {
+  const S = NS.Chase.createChase({ seed: 6, difficulty: 'normal' });
+  S.newRun({ section: 2 });
+  S.P.x = 36650; S.course.triggers.forEach((t) => { if (t.x < 36650) t.done = true; }); S.foes = S.foes.filter((f) => f.x > 37700);
+  const reasons = {}; let intro = null;
+  for (let i = 0; i < 60 * 60 && S.state === 'playing'; i++) {
+    S.P.hp = 99; S.step(1 / 60, { right: true });
+    if (S.mb && S.mb.hp > 3) S.mb.hp = 3;    // media vida: también salta con el scooter
+    for (const e of S.drainEvents()) { if (e.type === 'hurt') reasons[e.reason] = (reasons[e.reason] || 0) + 1; if (e.type === 'bossIntro') intro = e; }
+  }
+  assert.ok(intro && intro.mini && intro.foe.kind === 'cuchara' && intro.foe.maxHp === 6);
+  assert.match(intro.foe.name, /SEÑORA DE LA CUCHARA/);
+  assert.doesNotMatch(intro.foe.name, /T[ÓO]XICA/i, 'es otro personaje');
+  // Sus tres ataques avisados, con sus propias causas (no las del Maestro).
+  assert.deepEqual(Object.keys(reasons).sort(), ['cuchara', 'salto', 'scooter']);
+  assert.equal(S.section, 2, 'la ruta no avanza mientras dura el duelo');
+  assert.ok(S.course.statics.every((s) => s.x < S.P.x + 2000 || s.x > 5e5), 'avenida despejada');
+  const b = S.mb; b.hitCD = 0; b.state = 'ride';
+  assert.equal(S.damageFoe(b, 1, 'ram'), false); assert.ok(b.blocked, 'se cubre con la cuchara');
+  b.hitCD = 0; b.state = 'tele'; b.atk = 'swing';
+  assert.equal(S.damageFoe(b, 1, 'ram'), true); assert.equal(b.hp, 2);
+  b.hitCD = 0; b.state = 'dizzy';
+  assert.equal(S.damageFoe(b, 2, 'boostRam'), true);
+  assert.ok(b.dead, 'vencida');
+  // Al vencerla, la ruta regresa delante y sigue hacia Los Zopilotes.
+  const next = S.course.triggers.filter((t) => !t.done && t.x > S.P.x).sort((a, c) => a.x - c.x)[0];
+  assert.ok(next && next.kind === 'suv' && next.x - S.P.x < 3500, 'los Zopilotes quedaron adelante');
+  assert.ok(S.routeX() < NS.Chase.SECTIONS[3].x, 'progreso consistente');
+  for (let i = 0; i < 60 * 8; i++) S.step(1 / 60, { right: true });
+  assert.equal(S.section, 3, 'tras el duelo llega el tramo de Los Zopilotes');
 });

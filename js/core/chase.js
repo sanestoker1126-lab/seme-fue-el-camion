@@ -39,6 +39,8 @@
     kid: { len: 150, h: 120, hp: 2 }, maestro: { len: 160, h: 128, hp: 3 },
     // V58.8.29 · El Maestro Enojón en su moto roja (hoja de «RECURSOS_CURADOS_V1»): jefe del tramo 2.
     mjefe: { len: 172, h: 140, hp: 5 },
+    // V58.8.37 · La Señora de la Cuchara en su scooter rosa (hoja del mismo paquete; NO es Doña Tóxica): jefa del tramo 3.
+    cuchara: { len: 185, h: 140, hp: 5 },
     truck: { len: 330, h: 128, hp: 6 }
   });
   const SECTIONS = Object.freeze([
@@ -47,12 +49,30 @@
     { id: 'patrullas', x: 9000, title: 'LAS PATRULLAS Y EL MAESTRO',
       line: 'Patrullas y El Maestro Enojón en moto. Al final, el duelo con su moto roja: patéalo cuando levante la regla y embístelo cuando frene.' },
     { id: 'rampas', x: 24000, title: 'LAS RAMPAS DE LA OBRA',
-      line: 'El puente está a medio construir: toma las rampas con velocidad para volar sobre las zanjas.' },
+      line: 'El puente está a medio construir: toma las rampas con velocidad para volar sobre las zanjas. Al final, la Señora de la Cuchara en su scooter rosa: patéala cuando levante la cuchara y embístela cuando frene.' },
     { id: 'zopilotes', x: 38500, title: 'LOS ZOPILOTES Y EL NIÑO',
       line: 'Los Zopilotes lanzan barriles y el niño de las piedras te apunta desde su moto. Mira el carril marcado y cámbiate.' },
     { id: 'trailer', x: 53000, title: 'EL TRÁILER BLINDADO',
       line: 'El tráiler de Los Zopilotes bloquea la Calzada. Cuando abra las puertas, embístelo por detrás.' }
   ]);
+  /* V58.8.37 · Duelos en la Calzada: misma mecánica avisada (golpe con el arma, embestida y salto con media vida);
+     cambian el arma, los textos y el lugar. La Señora de la Cuchara es otro personaje: no es Doña Tóxica. */
+  const DUELS = Object.freeze({
+    mjefe: { name: 'EL MAESTRO ENOJÓN · MOTO ROJA', weapon: 'regla', jump: 'caballito', dash: 'dash',
+      intro: '¡EL MAESTRO EN SU MOTO ROJA! PATÉALO CUANDO LEVANTE LA REGLA Y ESQUIVA SUS EMBESTIDAS',
+      phase: '¡EL MAESTRO SE ENFURECE! AHORA TAMBIÉN SALTA EN CABALLITO',
+      jumpWarn: '¡CABALLITO! VA A CAER EN EL CARRIL MARCADO',
+      swingHit: '¡REGLAZO! PATÉALO MIENTRAS LEVANTA LA REGLA',
+      block: '¡SE CUBRE CON LA REGLA! PATÉALO CUANDO LA LEVANTE O EMBÍSTELO CUANDO FRENE',
+      down: '¡EL MAESTRO SE QUEDÓ SIN MOTO! +1 REPARACIÓN · ADELANTE, LAS RAMPAS DE LA OBRA' },
+    cuchara: { name: 'LA SEÑORA DE LA CUCHARA · SCOOTER ROSA', weapon: 'cuchara', jump: 'salto', dash: 'scooter',
+      intro: '¡LA SEÑORA DE LA CUCHARA! PATÉALA CUANDO LEVANTE LA CUCHARA Y ESQUIVA SUS EMBESTIDAS',
+      phase: '¡LA SEÑORA SE ENFURECE! AHORA TAMBIÉN SALTA CON EL SCOOTER',
+      jumpWarn: '¡SALTO EN SCOOTER! VA A CAER EN EL CARRIL MARCADO',
+      swingHit: '¡CUCHARAZO! PATÉALA MIENTRAS LEVANTA LA CUCHARA',
+      block: '¡SE CUBRE CON LA CUCHARA! PATÉALA CUANDO LA LEVANTE O EMBÍSTELA CUANDO FRENE',
+      down: '¡LA SEÑORA SE QUEDÓ SIN SCOOTER! +1 REPARACIÓN · ADELANTE, LOS ZOPILOTES' }
+  });
   const BOSS_X = 55500;            // donde aparece el tráiler (el tramo 4 sigue hasta vencerlo)
   const FINALE_GAP = 1500;         // distancia del jefe vencido al puente roto de la barranca
 
@@ -115,6 +135,8 @@
     });
     add({ kind: 'oil', x: 27900, lane: 1 }); add({ kind: 'oil', x: 33500, lane: 0 });
     add({ kind: 'repair', x: 36500, lane: 2 });
+    // V58.8.37: al final de las rampas, el duelo con la Señora de la Cuchara (la avenida se despeja, como con el Maestro).
+    triggers.push({ x: hard ? 37200 : easy ? 36800 : 37000, kind: 'cuchara', count: 1, done: false });
     triggers.push({ x: 30400, kind: 'kid', count: 1, done: false });   // el niño de las piedras entre las rampas
 
     // Tramo 3 · Los Zopilotes: camionetas que lanzan barriles y motos que tiran tachuelas.
@@ -229,7 +251,7 @@
     function fireTrigger(tr) {
       const P = S.P;
       if (tr.kind === 'boss') { spawnBoss(); return; }
-      if (tr.kind === 'mjefe') { spawnMaestroBoss(); return; }
+      if (DUELS[tr.kind]) { spawnDuelBoss(tr.kind); return; }
       for (let i = 0; i < tr.count; i++) {
         const lanes = [0, 1, 2].filter((l) => l !== P.lane);
         const lane = lanes[(i + (tr.x / 100 | 0)) % lanes.length];
@@ -255,14 +277,16 @@
       slowmo(1.2, 'boss');
     }
 
-    /* V58.8.29 · Duelo con El Maestro Enojón en su moto roja (fin del tramo 2). Mientras dura, lo que sigue de la
+    /* V58.8.29 · Duelo con El Maestro Enojón en su moto roja (fin del tramo 2); V58.8.37: igual con la Señora de la
+       Cuchara en su scooter rosa (fin de las rampas), con sus propios textos (DUELS). Mientras dura, lo que sigue de la
        ruta (tráfico, obstáculos, zanjas y disparadores) se aparta y la avenida queda despejada; al vencerlo vuelve a
        colocarse delante, a la misma distancia de antes. Tres ataques, todos avisados: el reglazo (su carril y los
        vecinos: patéalo durante el aviso), la embestida por tu carril (cámbiate; luego frena delante y se le puede
        embestir por detrás) y, con media vida, el caballito que cae sobre el carril marcado. */
     const MB_HOLD = 1e6;
     const mbActive = () => !!(S.mb && !S.mb.dead);
-    function spawnMaestroBoss() {
+    function spawnDuelBoss(kind) {
+      const DU = DUELS[kind];
       const P = S.P, pivot = P.x + 700;
       for (const f of S.foes) if (!f.civil && !f.dead) { f.state = 'leave'; f.targetLane = f.lane; }
       S.foes = S.foes.filter((f) => !(f.civil && f.x > pivot - 300));
@@ -272,12 +296,12 @@
       S.course.gaps.forEach((g) => { if (g.x1 > pivot) { g.x1 += MB_HOLD; g.x2 += MB_HOLD; g.held = true; } });
       S.projectiles = S.projectiles.filter((q) => q.x < P.x);
       const lane = P.lane === 1 ? 0 : 1;
-      const b = spawn('mjefe', P.x - 700, lane, { miniboss: true, hp: D().mb, maxHp: D().mb, state: 'enter', pattern: 0, hitCD: 0, z: 0,
-        name: 'EL MAESTRO ENOJÓN · MOTO ROJA' });
+      const b = spawn(kind, P.x - 700, lane, { miniboss: true, hp: D().mb, maxHp: D().mb, state: 'enter', pattern: 0, hitCD: 0, z: 0,
+        name: DU.name });
       S.mb = b; S.mbPivot = pivot;
       emit('bossIntro', { foe: b, mini: true });
       slowmo(1.0, 'boss');
-      message('mb', '¡EL MAESTRO EN SU MOTO ROJA! PATÉALO CUANDO LEVANTE LA REGLA Y ESQUIVA SUS EMBESTIDAS', 5, 6);
+      message('mb' + kind, DU.intro, 5, 6);
     }
     function releaseCourse() {
       const P = S.P, delta = P.x + 900 - S.mbPivot;
@@ -293,12 +317,12 @@
       slowmo(1.6, 'bossDown');
       emit('bossDefeated', { foe: f, mini: true });
       emit('takedown', { foe: f, total: S.stats.takedowns });
-      message('mbDown', '¡EL MAESTRO SE QUEDÓ SIN MOTO! +1 REPARACIÓN · ADELANTE, LAS RAMPAS DE LA OBRA', 5, 5);
+      message('mbDown' + f.kind, DUELS[f.kind].down, 5, 5);
       P.hp = Math.min(P.maxHp, P.hp + 1); P_nitro(40);
       releaseCourse();
     }
     function mbAI(f, dt) {
-      const P = S.P, aggr = D().aggr, enraged = f.hp <= f.maxHp / 2, dx = f.x - P.x;
+      const P = S.P, aggr = D().aggr, enraged = f.hp <= f.maxHp / 2, dx = f.x - P.x, DU = DUELS[f.kind];
       f.cd -= dt; f.hitCD = Math.max(0, f.hitCD - dt);
       const pace = (want, lim = 300) => { f.v = P.v + clamp((want - dx) * 1.6, -lim, lim + 120); };
       // Carril de al lado de Sofía; no cruza a través de ella (si tendría que hacerlo, se espera atrás).
@@ -307,7 +331,7 @@
         if (Math.abs(dx) < 240 && (f.ly - P.ly) * (want - P.ly) < 0) return f.lane;
         return want;
       };
-      if (enraged && !f.phase2) { f.phase2 = true; emit('bossPhase', { foe: f }); message('mbPhase', '¡EL MAESTRO SE ENFURECE! AHORA TAMBIÉN SALTA EN CABALLITO', 4, 3); }
+      if (enraged && !f.phase2) { f.phase2 = true; emit('bossPhase', { foe: f }); message('mbPhase' + f.kind, DU.phase, 4, 3); }
       if (f.state === 'enter') {
         pace(-260); f.targetLane = side();
         if (Math.abs(dx + 260) < 90) { f.state = 'ride'; f.cd = 1.0; }
@@ -320,7 +344,7 @@
           f.dropLane = atk === 'swing' ? null : P.lane;
           emit('foeWindup', { foe: f });
           if (atk === 'dash') message('mbDash', '¡VA A EMBESTIR POR TU CARRIL! CÁMBIATE', 3, 2);
-          if (atk === 'wheelie') message('mbJump', '¡CABALLITO! VA A CAER EN EL CARRIL MARCADO', 3, 2);
+          if (atk === 'wheelie') message('mbJump', DU.jumpWarn, 3, 2);
         }
       } else if (f.state === 'tele') {
         f.tele -= dt;
@@ -336,7 +360,7 @@
         pace(0); f.swingT -= dt;
         if (!f.swingHit && Math.abs(f.ly - P.ly) < 1.3 && Math.abs(f.x - P.x) < 150 && P.z < 60) {
           f.swingHit = true;
-          if (hurt('regla', Math.sign(P.ly - f.ly) || 1)) message('regla', '¡REGLAZO! PATÉALO MIENTRAS LEVANTA LA REGLA', 3, 2);
+          if (hurt(DU.weapon, Math.sign(P.ly - f.ly) || 1)) message(DU.weapon, DU.swingHit, 3, 2);
         }
         if (f.swingT <= 0) { f.state = 'ride'; f.cd = (enraged ? 1.4 : 2.0) / aggr; }
       } else if (f.state === 'dash') {
@@ -349,7 +373,7 @@
           f.z = 0; f.state = 'dizzy'; f.dizzyT = 1.3;
           S.fx.push({ kind: 'boom', x: f.x, ly: f.lane, t: 0, life: 0.45, r: 80 }); S.shakeT = Math.max(S.shakeT, 0.3);
           emit('sfx', { name: 'stomp' });
-          if (laneOverlap(f.lane, P.ly, 0.5) && Math.abs(f.x - P.x) < 300 && P.z < 60) hurt('caballito');
+          if (laneOverlap(f.lane, P.ly, 0.5) && Math.abs(f.x - P.x) < 300 && P.z < 60) hurt(DU.jump);
         }
       } else if (f.state === 'dizzy') {
         // Frena delante de Sofía: es el momento de embestirlo por detrás (o de patearlo si va al lado).
@@ -465,7 +489,7 @@
             if (rnd() < 0.5) f.targetLane = [0, 1, 2].filter((l) => l !== f.lane)[Math.floor(rnd() * 2)];
           }
         } else if (f.state === 'stunned') { f.stunT -= dt; f.v = P.v - 200; if (f.stunT <= 0) { f.state = 'lead'; f.cd = 1.5; } }
-      } else if (f.kind === 'mjefe') mbAI(f, dt);
+      } else if (DUELS[f.kind]) mbAI(f, dt);
       else if (f.kind === 'truck') bossAI(f, dt);
       f.x += f.v * dt;
       if (f.targetLane != null) { f.lane = f.targetLane; f.ly += (f.targetLane - f.ly) * Math.min(1, dt * (f.state === 'ram' ? 7 : 3.2)); }
@@ -532,7 +556,7 @@
         const open = (f.state === 'tele' && f.atk === 'swing') || f.state === 'swing' || f.state === 'dizzy';
         if (!open && why !== 'cats') {
           f.hitCD = 0.3; f.blocked = true; emit('sfx', { name: 'clank' }); sparks(f.x, f.ly, 6, '#cfd8e6');
-          message('mbBlock', '¡SE CUBRE CON LA REGLA! PATÉALO CUANDO LA LEVANTE O EMBÍSTELO CUANDO FRENE', 3, 3);
+          message('mbBlock', (DUELS[f.kind] || DUELS.mjefe).block, 3, 3);
           return false;
         }
         f.hp -= n; f.hitCD = 0.55;
@@ -790,7 +814,7 @@
         }
         if (f.miniboss) {
           if (f.state === 'jump' && f.z > 40) continue;
-          if (f.state === 'dash') { hurt('dash', Math.sign(P.ly - f.ly) || 1); continue; }
+          if (f.state === 'dash') { hurt((DUELS[f.kind] || DUELS.mjefe).dash, Math.sign(P.ly - f.ly) || 1); continue; }
           if (behind && f.x - P.x > (busLen + k.len) * 0.3) {   // embestida por detrás (no un roce de lado)
             if (!damageFoe(f, P.boostT > 0 ? 2 : 1, P.boostT > 0 ? 'boostRam' : 'ram') && f.blocked) hurt('crash');   // lo para con la regla
             P.v = Math.max(TUNE.vMin, f.v - 160); P.x = f.x - busLen / 2 - k.len / 2 - 6;
@@ -896,5 +920,5 @@
     return save;
   }
 
-  NS.Chase = { createChase, buildCourse, applyCheckpoint, applyVictory, SECTIONS, TUNE, KIND, LANES, BOSS_X, sectionAt };
+  NS.Chase = { createChase, buildCourse, applyCheckpoint, applyVictory, SECTIONS, TUNE, KIND, LANES, BOSS_X, sectionAt, DUELS };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

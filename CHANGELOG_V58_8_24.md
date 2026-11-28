@@ -310,8 +310,8 @@ Integro tres archivos aportados.
 
 # V58.8.29 · Jefes nuevos del paquete «RECURSOS_CURADOS_V1»
 
-Integro cuatro de las cinco hojas de jefes del paquete. La de Doña Tóxica en scooter queda guardada para después, como
-pediste.
+Integro cuatro de las cinco hojas de jefes del paquete. La del scooter rosa queda guardada para después. (Corrección
+posterior: el paquete la rotulaba como «Doña Tóxica», pero es otro personaje; ver V58.8.37.)
 
 **Preparación de las hojas.** Cada hoja traía el alfa sucio y algunos cuadros pegados entre sí (rayos y chorros que
 cruzan de una celda a otra). Hice lo siguiente:
@@ -706,3 +706,51 @@ como sustituto.
   - Provoqué un golpe en Parafalls y capturé la secuencia: golpe con destello, empujón, recuperación, final y vuelta al
     reposo; también mirando a la izquierda.
   - Recorrí los 23 tramos sin errores ni archivos faltantes.
+
+
+# V58.8.37 · La Señora de la Cuchara: el scooter rosa no es Doña Tóxica
+
+**Corrección.** El paquete «RECURSOS_CURADOS_V1» traía la hoja del scooter rosa rotulada como «Doña Tóxica», y yo
+repetí ese nombre al preguntarte. Me aclaraste que no es ella: Doña Tóxica es la Viridiana, la mamá de Sofía (la del
+panel de la moto azul: pelo negro, playera negra y jeans). La señora de tubos, vestido rosa floreado, delantal y
+cuchara de palo es otro personaje. Antes me habías pedido meterla «como otro personaje, en vez de carrera», y yo solo
+había entendido «dejar a Doña Tóxica para después». Ahora sí entra al juego.
+
+- **Nombre provisional:** «La Señora de la Cuchara». Va en una sola constante, así que se cambia en un momento si le
+  tienes otro nombre.
+- **Papel:** jefa de duelo al final de las rampas (tramo 3 de la Calzada), antes de Los Zopilotes. Usa la misma
+  mecánica avisada que el Maestro:
+  - el cucharazo alcanza su carril y los vecinos: patéala mientras levanta la cuchara;
+  - la embestida va por tu carril: cámbiate, y cuando frene aturdida, embístela por detrás;
+  - con media vida, salta con el scooter y cae en el carril marcado.
+  - Fuera de esas ventanas se cubre con la cuchara. Mientras dura el duelo la avenida se despeja y la ruta no avanza.
+  - Al vencerla te da +1 reparación y 40 de nitro.
+- **Duración del duelo (bot):** 15,5 s en fácil, 21,4 s en normal y 34,9 s en difícil, parecida a la del Maestro. La
+  Calzada completa sigue ganándose en las tres dificultades (157, 171 y 206 s).
+- **Historia y textos:**
+  - Doña Tóxica la presenta por radio en el retén («Y en la obra te espera la Señora de la Cuchara en su scooter rosa:
+    cuídate de sus cucharazos»), así queda claro que son personas distintas.
+  - La línea del tramo de las rampas la menciona y la cortinilla dice «DUELO EN LA CALZADA».
+  - Tiene sus propias causas de derrota (cucharazo, embestida con el scooter, salto) y aparece en el texto de victoria.
+- **Arte:**
+  - Esta hoja no tenía fondo transparente: era gris semiopaco (alfa 128–200) con un borde blanco tipo calcomanía. La
+    recorté por su contorno negro y suavicé la orilla descontando el gris del fondo.
+  - Conservé el polvo, el destello del golpe, las estrellas del mareo y el vapor. Quité una nube de polvo que había
+    quedado hueca.
+  - Usa la misma escala de arte que el Maestro (0,864 unidades por píxel).
+  - **Llantas que giran:** la delantera se detecta limpia en todos los cuadros. La trasera la tapa la carrocería, así que
+    tomé su centro y su borde de abajo con el radio de la delantera. En el aterrizaje el polvo la cubre: ahí apoya,
+    pero no se dibuja el giro.
+- **Código:** el duelo del Maestro pasó a ser genérico (tabla `DUELS` en `chase.js`). Las dos hojas tienen el mismo
+  orden de cuadros, así que se dibujan con la misma función.
+
+**QA**
+- **Node:** 161/161.
+  - Prueba nueva del duelo: sus tres ataques con sus propias causas, que se cubra fuera de sus ventanas, la ruta en pausa
+    y luego la llegada de Los Zopilotes, y que su nombre no sea Doña Tóxica.
+  - La partida completa con bot comprueba el orden Maestro → rampas → Señora → Zopilotes.
+  - Prueba de su hoja: los 20 cuadros dentro de la imagen y las llantas coherentes.
+- **Chromium:**
+  - Capturé la cortinilla, la línea del tramo y sus ocho poses en el juego (maneja, aviso, cucharazo, embestida, salto,
+    mareo, golpe, derrota), y la comparé lado a lado con el Maestro en escritorio y teléfono.
+  - Sin errores ni archivos faltantes.

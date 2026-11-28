@@ -74,3 +74,31 @@ test('llantas que giran: datos para cada cuadro, dentro del cuadro y del mismo t
   assert.equal(MJEFE_WHEELS.length, 20);
   MJEFE_WHEELS.forEach((W, i) => { if (i < 18) pair(W, 'maestro jefe ' + i); else assert.equal(W, null); });
 });
+
+// V58.8.37 · La Señora de la Cuchara (scooter rosa): 20 cuadros dentro de su hoja y llantas coherentes con cada uno.
+function webpSize(file) {
+  const b = require('fs').readFileSync(require('path').join(__dirname, '..', file));
+  assert.equal(b.toString('ascii', 0, 4) + b.toString('ascii', 8, 12), 'RIFFWEBP', file + ' es WEBP');
+  const chunk = b.toString('ascii', 12, 16);
+  if (chunk === 'VP8X') return [1 + b.readUIntLE(24, 3), 1 + b.readUIntLE(27, 3)];
+  if (chunk === 'VP8L') { const v = b.readUInt32LE(21); return [1 + (v & 0x3fff), 1 + ((v >> 14) & 0x3fff)]; }
+  return [b.readUInt16LE(26) & 0x3fff, b.readUInt16LE(28) & 0x3fff];
+}
+test('la Señora de la Cuchara: cuadros dentro de su hoja y llantas del scooter coherentes', () => {
+  const { SENORA_WHEELS } = NS.ChaseRender.WHEELS, A = NS.ChaseRender.SENORA;
+  const [w, h] = webpSize(A.src);
+  assert.equal(A.frames.length, 20);
+  A.frames.forEach((f, i) => assert.ok(f[0] >= 0 && f[1] >= 0 && f[0] + f[2] <= w && f[1] + f[3] <= h, 'cuadro ' + i + ' dentro de la hoja'));
+  assert.equal(A.ride, A.frames[0][2], 'ancho de referencia = cuadro de manejo');
+  assert.equal(SENORA_WHEELS.length, 20);
+  const bases = [];
+  SENORA_WHEELS.forEach((W, i) => {
+    if (i === 19) { assert.equal(W, null, 'el choque no apoya en llantas'); return; }
+    const [rear, front] = W, fr = A.frames[i];
+    assert.ok(rear[0] < front[0] && Math.abs(rear[2] - front[2]) <= 2, 'cuadro ' + i + ': trasera a la izquierda y del mismo tamaño');
+    for (const q of W) assert.ok(q[2] >= 20 && q[2] <= 30 && q[0] - q[2] >= -3 && q[0] + q[2] <= fr[2] + 3 && q[1] + q[2] <= fr[3] + 3, 'cuadro ' + i + ': llanta dentro del cuadro');
+    bases.push(front[0] - rear[0]);
+  });
+  assert.ok(Math.max(...bases) - Math.min(...bases) <= 22, 'distancia entre ejes estable: ' + Math.min(...bases) + '–' + Math.max(...bases));
+  assert.equal(SENORA_WHEELS[15][0][3], 0, 'en el aterrizaje la trasera (tapada por el polvo) no dibuja giro');
+});

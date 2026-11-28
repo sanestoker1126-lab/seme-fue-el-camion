@@ -501,7 +501,7 @@
         nextButton.hidden = false; nextButton.dataset.mission = '2'; nextButton.textContent = 'CONTINUAR · EL SUBMARINO';
         $('resultTag').textContent = 'MISIÓN ESPECIAL · LA CALZADA';
         $('resultTitle').innerHTML = '¡CALZADA<br><span>SUPERADA!</span>';
-        $('resultText').innerHTML = esc('El Maestro Enojón se quedó sin moto, el tráiler de Los Zopilotes quedó atrás y la moto de mamá voló sobre la barranca. La corriente de la presa llevó a Sofía, Luna y Morita hasta el mar.') + '<br><br>' + line +
+        $('resultText').innerHTML = esc('El Maestro Enojón se quedó sin moto, la Señora de la Cuchara sin scooter, el tráiler de Los Zopilotes quedó atrás y la moto de mamá voló sobre la barranca. La corriente de la presa llevó a Sofía, Luna y Morita hasta el mar.') + '<br><br>' + line +
           (e.best && e.best.bestTime ? '<br><small>Mejor tiempo completo ' + fmtTime(e.best.bestTime) + ' · récord ' + (e.best.bestScore || 0) + ' pts</small>' : '') +
           (s.practice ? '<br><small>Práctica · el progreso y los récords de campaña se conservan.</small>' : '');
         $('resultStars').innerHTML = '<span class="on">★</span>'.repeat(e.stars || 1) + '<span>★</span>'.repeat(3 - (e.stars || 1));
@@ -509,7 +509,7 @@
         if (e.best && e.best.lastRank) $('resultText').innerHTML += '<br><span class="rankBadge r' + e.best.lastRank + '">' + e.best.lastRank + '</span> <b>CALIFICACIÓN ' + e.best.lastRank + '</b>';
       } else {
         nextButton.hidden = true;
-        const why = { traffic: 'Chocaste con el tráfico', barrier: 'Te estrellaste contra una valla', ram: 'Una patrulla te embistió', crash: 'Te cerraron el paso', gap: 'Caíste a la zanja', crate: 'Una caja del tráiler te detuvo', barrel: 'Un barril de Los Zopilotes te detuvo', spikes: 'Las tachuelas te poncharon la llanta', truck: 'Chocaste con el tráiler blindado', piedra: 'Una piedra del niño te detuvo', regla: 'El Maestro te alcanzó con la regla', dash: 'El Maestro te embistió', caballito: 'El Maestro te cayó encima en caballito' }[e.reason] || 'La moto ya no aguanta';
+        const why = { traffic: 'Chocaste con el tráfico', barrier: 'Te estrellaste contra una valla', ram: 'Una patrulla te embistió', crash: 'Te cerraron el paso', gap: 'Caíste a la zanja', crate: 'Una caja del tráiler te detuvo', barrel: 'Un barril de Los Zopilotes te detuvo', spikes: 'Las tachuelas te poncharon la llanta', truck: 'Chocaste con el tráiler blindado', piedra: 'Una piedra del niño te detuvo', regla: 'El Maestro te alcanzó con la regla', dash: 'El Maestro te embistió', caballito: 'El Maestro te cayó encima en caballito', cuchara: 'La Señora de la Cuchara te alcanzó con su cuchara', scooter: 'La Señora de la Cuchara te embistió con su scooter', salto: 'La Señora de la Cuchara te cayó encima con su scooter' }[e.reason] || 'La moto ya no aguanta';
         $('resultTag').textContent = 'LA CALZADA · TRAMO ' + ((s.section | 0) + 1) + ' · ' + (SEC[s.section | 0] ? SEC[s.section | 0].title : '');
         $('resultTitle').innerHTML = '¡TE<br><span>DETUVIERON!</span>';
         $('resultText').innerHTML = esc(why + '.') + '<br><br>' + line + '<br>Reaparecerás al inicio del tramo ' + ((e.section | 0) + 1) + ' con la moto reparada.';

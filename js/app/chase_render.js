@@ -30,7 +30,12 @@
      maneja, embiste, reglazo, caballito, golpe/mareo y derrota. Cuadros [x, y, w, h, ox, oy]; ox = ancla del cuerpo. */
   const MJEFE = { src: 'assets/calzada/enemigos/maestro_jefe_moto.webp', ride: 199,
     frames: [[0,0,199,257,-104,-128],[203,0,198,264,-104,-136],[405,0,198,254,-102,-126],[607,0,200,251,-103,-122],[811,0,230,245,-131,-116],[1045,0,240,242,-134,-114],[0,268,262,237,-154,-108],[266,268,272,229,-167,-100],[542,268,213,255,-92,-126],[759,268,224,249,-108,-120],[987,268,252,235,-116,-106],[1243,268,258,226,-118,-98],[0,527,225,243,-96,-114],[229,527,230,253,-100,-124],[463,527,233,260,-102,-132],[700,527,247,239,-114,-110],[951,527,219,246,-100,-118],[1174,527,224,236,-106,-108],[0,791,273,179,-130,-50],[277,791,303,132,-144,-4]] };
-  const urls = () => [MOTO.ride, MOTO.boost, MOTO.air, LUNA, MORITA, SOFIA, ...FONDOS, ...RIDER_URLS, MJEFE.src];
+  /* V58.8.37 · La Señora de la Cuchara en su scooter rosa, jefa del tramo 3 (hoja del mismo paquete, 5 × 4, con el mismo
+     orden que la del Maestro: maneja, acelera, cucharazo, salto, golpe/mareo y derrota). Esa hoja venía con fondo gris
+     semiopaco: se recortó por su contorno negro. No es Doña Tóxica (aclaración del autor). */
+  const SENORA = { src: 'assets/calzada/enemigos/senora_cuchara_scooter.webp', ride: 214,
+    frames: [[0,0,214,261,-107,-130],[218,0,212,260,-106,-130],[434,0,213,260,-106,-130],[651,0,213,262,-106,-131],[868,0,238,254,-119,-127],[1110,0,212,252,-106,-126],[0,266,241,250,-120,-125],[245,266,263,246,-132,-123],[512,266,231,262,-116,-131],[747,266,217,262,-108,-131],[968,266,241,234,-120,-117],[1213,266,265,233,-132,-116],[0,532,232,221,-116,-110],[236,532,234,245,-117,-122],[474,532,241,247,-120,-124],[719,532,271,225,-136,-112],[994,532,213,238,-106,-119],[1211,532,221,245,-110,-122],[0,783,214,224,-107,-112],[218,783,310,152,-155,-76]] };
+  const urls = () => [MOTO.ride, MOTO.boost, MOTO.air, LUNA, MORITA, SOFIA, ...FONDOS, ...RIDER_URLS, MJEFE.src, SENORA.src];
   /* V58.8.30 · Llantas que giran. [cx, cy, r] de cada llanta (trasera, delantera) en píxeles del cuadro, medidas sobre el
      arte (anillo oscuro con transparencia afuera; ver CHANGELOG). La moto de Sofía tiene rines de rayos: se arma una vez una
      textura limpia del rin con su mitad de abajo (sin escape ni bota) repitiendo el periodo de los rayos (°), y se gira solo
@@ -38,6 +43,10 @@
   const MOTO_WHEELS = { [MOTO.ride]: [[132,195,40,25,160,53],[312,193,42,20,162,90]], [MOTO.boost]: [[134,194,40,25,160,54],[313,192,42,20,162,46]], [MOTO.air]: [[139,194,39,55,165,54],[315,193,40,20,162,47]] };
   const RIDER_WHEELS = { nino: {"11":[[115,226,34],[291,224,36]],"12":[[115,226,34],[291,224,36]],"13":[[115,226,34],[291,224,36]],"21":[[119,226,34],[296,224,36]],"22":[[120,226,34],[296,224,36]],"23":[[121,226,34],[297,224,36]],"31":[[107,225,34],[284,223,36]],"32":[[106,225,34],[283,223,36]],"33":[[110,225,34],[289,223,36]],"41":[[129,221,36],[313,222,38]],"42":[[130,219,38],[316,222,38]],"43":[[134,219,39],[326,219,41]]}, maestro: {"11":[[72,221,41],[265,217,43]],"12":[[61,221,41],[254,217,43]],"13":[[51,220,41],[245,217,43]],"21":[[72,219,42],[265,218,44]],"22":[[62,219,42],[255,217,43]],"23":[[52,219,42],[246,218,43]],"31":[[73,221,41],[265,218,43]],"32":[[59,220,41],[255,218,43]],"33":[[50,219,42],[246,218,43]],"41":[[72,221,41],[265,218,43]],"42":[[62,220,42],[256,219,43]],"43":[[51,221,41],[248,219,43]]} };
   const MJEFE_WHEELS = [[[37,225,31],[167,228,29]],[[37,230,31],[167,234,29]],[[37,222,30],[167,225,28]],[[36,218,31],[168,221,29]],[[66,208,29],[190,216,28]],[[66,206,29],[193,212,29]],[[79,200,30],[210,208,29]],[[88,192,29],[222,200,29]],[[48,224,29],[182,226,28]],[[60,219,29],[192,221,28]],[[53,204,29],[183,208,27]],[[43,196,28],[171,199,27]],[[77,213,29],[194,172,30]],[[92,207,29],[200,155,28]],[[94,199,27],[204,151,29]],[[90,209,29],[216,196,29]],[[40,214,30],[167,218,28]],[[36,204,30],[162,208,28]],null,null];
+  // V58.8.37: llantas del scooter. La trasera la tapa la carrocería arriba: centro x y borde de abajo medidos, con el radio
+  // de la delantera; en el aterrizaje (15) el polvo la cubre (cuarto valor 0: apoya, pero no se dibuja el giro).
+  const SENORA_WHEELS = [[[42,237,24],[180,237,24]],[[35,233,24],[178,236,24]],[[37,232,24],[180,236,24]],[[35,234,24],[179,238,24]],[[65,230,24],[202,227,24]],[[47,225,24],[176,228,24]],[[70,219,24],[200,226,24]],[[83,216,24],[218,223,24]],[[54,232,25],[197,237,25]],[[39,232,25],[184,237,25]],[[62,205,25],[207,210,25]],[[28,203,24],[169,209,24]],[[56,194,25],[193,195,25]],[[74,211,25],[205,172,25]],[[83,187,25],[213,158,25]],[[61,201,23,0],[199,201,23]],[[46,211,25],[185,213,25]],[[65,221,24],[189,222,24]],[[34,195,21],[179,196,21]],null];
+  const DUEL_ART = { mjefe: { art: MJEFE, wheels: MJEFE_WHEELS }, cuchara: { art: SENORA, wheels: SENORA_WHEELS } };
   const RAD = Math.PI / 180;
   const wheelTex = new Map();
   /** Textura limpia del rin (una vez por llanta y cuadro): la mitad de abajo, repetida por el periodo de los rayos. */
@@ -124,7 +133,7 @@
       }
       // Los perseguidores en moto también levantan polvo.
       for (const f of S.foes) {
-        if (f.dead || f.civil || !(f.kind === 'kid' || f.kind === 'maestro' || f.kind === 'mjefe' || f.kind === 'moto')) continue;
+        if (f.dead || f.civil || !(f.kind === 'kid' || f.kind === 'maestro' || DUEL_ART[f.kind] || f.kind === 'moto')) continue;
         if (Math.abs(f.x - P.x) > 1400 || (f.z || 0) > 10 || vrand() > dt * 11) continue;
         puff(f.x - NS.Chase.KIND[f.kind].len * 0.3, f.ly, false);
       }
@@ -462,8 +471,8 @@
     if (f.kind === 'moto') { moto(f, k, T); ctx.restore(); return; }
     if (RIDERS[f.kind]) { rider(f, k, T, S); ctx.restore(); if (!f.dead && f.state === 'stunned') stars(x, ground - K.h * k - 10 * k, k, T); if (!f.dead) telegraph(f, L, T, x, ground - K.h * k - 6 * k, k); return; }
     if (f.kind === 'truck') { truck(f, k, len, h, T, S); ctx.restore(); return; }
-    if (f.kind === 'mjefe') {
-      mjefe(f, k, T, L); ctx.restore();
+    if (DUEL_ART[f.kind]) {
+      duelBoss(f, k, T, L); ctx.restore();
       const top = ground - h - (f.z || 0) * L.k * 0.55 - 10 * k;
       if (!f.dead && f.state === 'dizzy') stars(x, top, k, T);
       if (!f.dead) telegraph(f, L, T, x, top, k);
@@ -533,9 +542,10 @@
     if (f.dead) smoke(0, -len * 0.5, k, T, f.x);
   }
 
-  /** El Maestro jefe: el cuadro sale del estado; en el caballito se eleva (z) y su sombra queda en el piso. */
-  function mjefe(f, k, T, L) {
-    const im = img(MJEFE.src), sc = NS.Chase.KIND.mjefe.len * k / MJEFE.ride;
+  /** Jefes de duelo (el Maestro y la Señora de la Cuchara): el cuadro sale del estado; en el salto se eleva (z) y su
+      sombra queda en el piso. Las dos hojas tienen el mismo orden de cuadros. */
+  function duelBoss(f, k, T, L) {
+    const D = DUEL_ART[f.kind], A = D.art, im = img(A.src), sc = NS.Chase.KIND[f.kind].len * k / A.ride;
     const pick = (list, p) => list[Math.max(0, Math.min(list.length - 1, Math.floor(p * list.length)))];
     const loop = (list, fps) => list[Math.floor(T * fps + (f.x % 5)) % list.length];
     let i;
@@ -549,7 +559,7 @@
     else if (f.state === 'dash') i = loop([6, 7], 14);
     else if (f.state === 'jump') i = pick([13, 14, 15], f.jumpT / 0.85);
     else i = loop([0, 1, 2, 3], 9);
-    const fr = MJEFE.frames[i], z = (f.z || 0) * L.k * 0.55, W = MJEFE_WHEELS[i];
+    const fr = A.frames[i], z = (f.z || 0) * L.k * 0.55, W = D.wheels[i];
     // V58.8.30: apoyado en sus llantas (en el caballito, en la trasera); sin llantas visibles (derrota), como antes.
     const wheelie = i >= 12 && i <= 14;
     const ax = W ? (wheelie ? W[0][0] + 65 : (W[0][0] + W[1][0]) / 2) : -fr[4];
@@ -562,9 +572,9 @@
       ctx.drawImage(im, fr[0], fr[1], fr[2], fr[3], -ax * sc, -gy * sc - z, fr[2] * sc, fr[3] * sc);
       if (W && !f.dead) {
         const st = spinOf(f.id, (f.v || 0) * k, W, sc);
-        for (let n = 0; n < 2; n++) spinTread((W[n][0] - ax) * sc, (W[n][1] - gy) * sc - z, W[n][2] * sc, st.a[n], st.blur[n], 18 * RAD, 162 * RAD);
+        for (let n = 0; n < 2; n++) if (W[n][3] !== 0) spinTread((W[n][0] - ax) * sc, (W[n][1] - gy) * sc - z, W[n][2] * sc, st.a[n], st.blur[n], 18 * RAD, 162 * RAD);
       }
-    } else { ctx.fillStyle = '#c8202a'; rr(-86 * k, -110 * k - z, 172 * k, 90 * k, 8 * k); ctx.fill(); }
+    } else { ctx.fillStyle = f.kind === 'cuchara' ? '#e8679a' : '#c8202a'; rr(-86 * k, -110 * k - z, 172 * k, 90 * k, 8 * k); ctx.fill(); }
     if (f.dead) smoke(0, -120 * k, k, T, f.x);
   }
 
@@ -718,8 +728,8 @@
     for (const f of S.foes) {
       if (f.dead || f.state !== 'tele') continue;
       const a = 0.25 + 0.25 * Math.sin(T * 16);
-      if (f.kind === 'maestro' || (f.kind === 'mjefe' && f.atk === 'swing')) {
-        // Alcance de la regla: su carril y los dos vecinos, a su altura.
+      if (f.kind === 'maestro' || (DUEL_ART[f.kind] && f.atk === 'swing')) {
+        // Alcance de la regla (o de la cuchara): su carril y los dos vecinos, a su altura.
         for (const l of [f.lane - 1, f.lane, f.lane + 1]) {
           if (l < 0 || l > 2) continue;
           const y = L.laneY(l) + 26 * L.k * L.laneS(l), hh = 30 * L.k;
@@ -733,7 +743,7 @@
         const y = L.laneY(l) + 26 * L.k * L.laneS(l), hh = 30 * L.k;
         // La piedra del niño cae alrededor de donde va Sofía; tachuelas y cajas, delante.
         // V58.8.29: la embestida del maestro barre el carril desde atrás; su caballito cae delante.
-        const mj = f.kind === 'mjefe', dash = mj && f.atk === 'dash';
+        const mj = !!DUEL_ART[f.kind], dash = mj && f.atk === 'dash';
         const x0 = L.sx(dash ? P.x - 420 : mj ? P.x + 40 : f.kind === 'kid' ? P.x - 80 : P.x + 160);
         const x1 = L.sx(dash ? P.x + 520 : mj ? P.x + 460 : f.kind === 'moto' ? P.x + 620 : f.kind === 'kid' ? P.x + 280 : f.x);
         ctx.fillStyle = 'rgba(255,50,50,' + a + ')'; ctx.fillRect(Math.min(x0, x1), y - hh, Math.abs(x1 - x0), hh);
@@ -955,5 +965,5 @@
     if (S.flashT > 0) { ctx.fillStyle = 'rgba(255,250,235,' + Math.min(0.6, S.flashT * 2.4) + ')'; ctx.fillRect(0, 0, L.W, L.H); }
   }
 
-  NS.ChaseRender = { init, draw, setOptions, urls, WHEELS: { MOTO_WHEELS, RIDER_WHEELS, MJEFE_WHEELS, MOTO } };
+  NS.ChaseRender = { init, draw, setOptions, urls, WHEELS: { MOTO_WHEELS, RIDER_WHEELS, MJEFE_WHEELS, SENORA_WHEELS, MOTO }, SENORA };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
