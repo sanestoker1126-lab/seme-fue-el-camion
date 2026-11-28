@@ -18,6 +18,8 @@
     SETS.marino = manifest.validate(manifest.MARINO || []);
     SETS.guadalajara = manifest.validate(manifest.GDL_TRANSITION || []);
     SETS.parafalls = manifest.validate(manifest.PARAFALLS || []);
+    SETS.calzada = manifest.validate(manifest.CALZADA || []);
+    SETS.calzada_fin = manifest.validate(manifest.CALZADA_FIN || []);
   } catch (err) { console.error('[Toxifamilia] Guion inválido', err); return; }
   if (!SETS.prologo.length) return;
 

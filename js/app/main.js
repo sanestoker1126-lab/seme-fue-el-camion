@@ -112,8 +112,8 @@
   const input = NS.Input.createInput({ onDebug: () => { const on = R.toggleDebug(); ui.toast(on ? 'DEPURACIÓN: SÓLIDOS ROJOS · SUPERFICIES VERDES · BAJABLES ROSAS' : 'DEPURACIÓN DESACTIVADA', 3); } });
   const ui = NS.UI.createUI({
     start: (mission, tramo) => startRun(mission, tramo),
-    retry: () => { audio.ensure(); input.releaseAll(); ui.clearOverlays(); G.retry(); afterStart(); },
-    retryFromCheckpoint: () => { audio.ensure(); input.releaseAll(); ui.clearOverlays(); G.retry(); afterStart(); },
+    retry: () => { audio.ensure(); input.releaseAll(); ui.clearOverlays(); if (chase) { retryChase(); return; } G.retry(); afterStart(); },
+    retryFromCheckpoint: () => { audio.ensure(); input.releaseAll(); ui.clearOverlays(); if (chase) { retryChase(); return; } G.retry(); afterStart(); },
     menu: () => toMenu(),
     togglePause: () => togglePause(),
     option: (k) => setOption(k),
@@ -123,10 +123,92 @@
     click: () => { audio.ensure(); audio.sfx('ui'); }
   });
 
+  /* V58.9 · MISIÓN ESPECIAL · LA CALZADA: persecución en el camión (js/core/chase.js + js/app/chase_render.js).
+     Mientras está activa, el bucle simula y dibuja la persecución en lugar del mundo de plataformas. */
+  const CR = NS.ChaseRender;
+  if (CR) CR.init(canvas);
+  let chase = null;
+  const CALZADA_CINE_KEY = 'camion-cinematic-calzada-seen';
+  const CTL_LABELS = { jump: ['↑', 'CARRIL ↑'], down: ['↓', 'CARRIL ↓'], kick: ['◒', 'EMBESTIR'], dash: ['✦', 'NITRO'], cats: ['🐾', 'GATAS'] };
+  const ctlSaved = new Map();
+  function relabelControls(on) {
+    for (const k of Object.keys(CTL_LABELS)) {
+      const b = document.querySelector('.ctl[data-key="' + k + '"]'); if (!b) continue;
+      const sm = b.querySelector('small'), sp = b.querySelector('span');
+      if (on) { if (!ctlSaved.has(k)) ctlSaved.set(k, [sp && sp.textContent, sm && sm.textContent, b.getAttribute('aria-label')]); if (sp) sp.textContent = CTL_LABELS[k][0]; if (sm) sm.textContent = CTL_LABELS[k][1]; b.setAttribute('aria-label', CTL_LABELS[k][1]); }
+      else if (ctlSaved.has(k)) { const [a, c, l] = ctlSaved.get(k); if (sp) sp.textContent = a; if (sm) sm.textContent = c; if (l) b.setAttribute('aria-label', l); }
+    }
+    const lbl = document.getElementById('stickLabel'); if (lbl) { if (on) { lbl.dataset.prev = lbl.dataset.prev || lbl.textContent; lbl.textContent = 'MANEJAR'; } else if (lbl.dataset.prev) lbl.textContent = lbl.dataset.prev; }
+    document.body.classList.toggle('chaseMode', !!on);
+  }
+  function startChase(section, skipIntro) {
+    audio.ensure();
+    const practice = !!opt.freeSelect;
+    const go = () => {
+      input.releaseAll(); ui.clearOverlays();
+      chase = NS.Chase.createChase({ difficulty: opt.difficulty, practice, seed: 6 });
+      chase.newRun({ section });
+      if (G.world) G.state = 'menu';
+      relabelControls(true);
+      ui.show(null);
+      R.preload(CR.urls()).catch(() => {});
+      audio.setTramo(0, false, 'guadalajara');
+      if (opt.music) audio.start();
+      audio.sfx('motor'); audio.sfx('honk');
+      acc = 0;
+      handleChaseEvents(chase.drainEvents());
+    };
+    if (!skipIntro && section === 0 && opt.cinematics && store.get(CALZADA_CINE_KEY, '0') !== '1' && NS.ToxiPlayer) {
+      const done = () => { if (!practice) store.set(CALZADA_CINE_KEY, '1'); refreshCineMenu(); go(); };
+      if (!NS.ToxiPlayer.play({ set: 'calzada', finishLabel: '¡ARRANCA!', onDone: done })) go();
+    } else go();
+  }
+  function exitChase() {
+    if (!chase) return;
+    chase = null; relabelControls(false);
+  }
+  function retryChase() { if (!chase) return; chase.retry(); ui.show(null); if (opt.music) audio.start(); audio.sfx('motor'); handleChaseEvents(chase.drainEvents()); }
+  function saveNow() { if (!(chase && chase.practice)) store.set(SAVE_KEY, JSON.stringify(G.save)); }
+  function handleChaseEvents(list) {
+    for (const e of list) {
+      switch (e.type) {
+        case 'message': ui.toast(e.text, e.priority, 2); break;
+        case 'chapter': ui.chapter(e.index, { title: e.section.title, line: e.section.line, driver: e.index === 4 ? 'Al fondo, la barranca. Del otro lado te espera Doña Tóxica.' : 'Sirenas a lo lejos. ¡No te detengas!' }, e.total, true); if (chase.t > 0.5) audio.sfx('chapter'); break;
+        case 'checkpoint': audio.sfx('checkpoint'); if (!chase.practice) { NS.Chase.applyCheckpoint(G.save, e.section); saveNow(); } ui.toast('PUNTO DE REAPARICIÓN · TRAMO ' + (e.section + 1), 2, 1.6); break;
+        case 'sfx': audio.sfx(e.name); break;
+        case 'hurt': audio.sfx('hurt'); ui.hurtFlash(); audio.vibrate && audio.vibrate(40); break;
+        case 'boost': audio.vibrate && audio.vibrate(20); break;
+        case 'cats': audio.sfx('cats'); audio.sfx('lunaAlert'); break;
+        case 'takedown': audio.sfx('otroGato'); break;
+        case 'foeWindup': if (e.foe.boss) audio.bossCue('drone', 'windup', 0); else audio.sfx('alert'); break;
+        case 'bossIntro': audio.bossCue('drone', 'intro', 0); ui.toast('JEFE: ' + e.foe.name, 4, 2.6); break;
+        case 'bossHit': audio.bossCue('drone', 'hit', 0); break;
+        case 'bossPhase': audio.bossCue('drone', 'windup', 0); break;
+        case 'bossDefeated': audio.bossCue('drone', 'defeat', 0); break;
+        case 'finale': ui.clearOverlays(); audio.stop(); audio.sfx('honk'); break;
+        case 'splash': audio.vibrate && audio.vibrate([40, 30, 60]); break;
+        case 'gameover':
+          audio.stop(); audio.sfx('lose');
+          ui.showChaseResult({ won: false, stats: e.stats, section: e.section, reason: e.reason });
+          break;
+        case 'victory': {
+          audio.sfx('win'); audio.sfx('luna'); audio.sfx('morita');
+          if (!chase.practice) { NS.Chase.applyVictory(G.save, e.stats); saveNow(); }
+          const show = () => ui.showChaseResult({ won: true, stats: e.stats, stars: e.stars, best: G.save.chase });
+          if (opt.cinematics && NS.ToxiPlayer && NS.ToxiPlayer.play({ set: 'calzada_fin', finishLabel: 'CONTINUAR', onDone: show })) break;
+          show();
+          break;
+        }
+        default: break;
+      }
+    }
+  }
+
   /** Aplica las opciones a cada módulo (se llama al arrancar y tras cada cambio). */
   function applyOptions() {
     G.assist.catsHelp = opt.catsHelp; G.assist.relaxed = opt.relaxed;
     R.setOptions({ shake: { normal: 1, suave: 0.45, no: 0 }[opt.shake], landingRing: opt.landingRing, ninaLook: opt.ninaLook });
+    if (CR) CR.setOptions({ shake: { normal: 1, suave: 0.45, no: 0 }[opt.shake] });
     if (NS.ToxiPlayer && NS.ToxiPlayer.setLook) NS.ToxiPlayer.setLook(opt.ninaLook);
     const zf = { cerca: 0.86, normal: 1, lejos: 1.2 }[opt.zoom] || 1;
     G.viewScale = zf;
@@ -167,7 +249,7 @@
   }
 
   function resetProgress() {
-    for (const key of [SAVE_KEY, 'camion-v35-save', 'camion-v34-save', 'camion-v33-save', 'camion-unlocked', 'camion-best-score', 'camion-descent-best', 'camion-cinematic-seen', MARINE_CINE_KEY, GDL_CINE_KEY, SPACE_CINE_KEY, PARAFALLS_CINE_KEY]) {
+    for (const key of [SAVE_KEY, 'camion-v35-save', 'camion-v34-save', 'camion-v33-save', 'camion-unlocked', 'camion-best-score', 'camion-descent-best', 'camion-cinematic-seen', MARINE_CINE_KEY, GDL_CINE_KEY, SPACE_CINE_KEY, 'camion-cinematic-calzada-seen', PARAFALLS_CINE_KEY]) {
       try { root.localStorage.removeItem(key); } catch (_) { /* sin almacenamiento */ }
     }
     for (let i = 0; i < 40; i++) { try { root.localStorage.removeItem('camion-boss-cinematic-v38-scene-' + i); } catch (_) { /* nada */ } }
@@ -181,6 +263,8 @@
 
   function startRun(mission, tramo, skipIntro) {
     audio.ensure();
+    if (mission === 'calzada') { startChase(tramo | 0, skipIntro); return; }
+    exitChase();
     mission = mission | 0; tramo = tramo | 0;
     const practice = !!opt.freeSelect; // acceder a cualquier tramo no falsifica el progreso ni fuerza práctica
     const go = () => {
@@ -239,11 +323,17 @@
   }
   function toMenu() {
     audio.stop(); input.releaseAll(); ui.clearOverlays();
+    exitChase();
     if (G.world) { G.state = 'menu'; }
     ui.paintMenu(G, opt); ui.show('menu');
   }
   const sceneTheme = (i) => { const sc = G.world && G.world.scenes[i]; return sc ? (sc.bg === 'metro' ? 'metro' : sc.theme) : 'guadalajara'; };
   function togglePause() {
+    if (chase) {
+      if (chase.state === 'paused') { chase.state = 'playing'; input.releaseAll(); ui.show(null); audio.resume(); }
+      else if (chase.state === 'playing') { chase.state = 'paused'; input.releaseAll(); audio.pause(); ui.show('pausePanel'); }
+      return;
+    }
     if (G.state === 'paused') { G.resume(); input.releaseAll(); ui.show(null); audio.resume(); }
     else if (G.state === 'playing' || G.state === 'transition') { G.pause(); input.releaseAll(); audio.pause(); ui.show('pausePanel'); }
   }
@@ -436,6 +526,21 @@
         return;
       }
       if (input.consumePause()) togglePause();
+      if (chase) {
+        if (!MANUAL) {
+          acc += real;
+          let n = 0;
+          while (acc >= DT && n < MAX_STEPS) { chase.step(DT, input.snapshot()); acc -= DT; n++; }
+          if (n === MAX_STEPS) acc = 0;
+        }
+        animT += real;
+        handleChaseEvents(chase.drainEvents());
+        ui.tick(real);
+        tickFps(real);
+        CR.draw(chase, animT);
+        root.requestAnimationFrame(frame);
+        return;
+      }
       if (!MANUAL) {
         acc += real;
         let n = 0;
@@ -481,7 +586,8 @@
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
       input.releaseAll();
-      if (G.state === 'playing' || G.state === 'transition') { G.pause(); ui.show('pausePanel'); }
+      if (chase && chase.state === 'playing') { chase.state = 'paused'; ui.show('pausePanel'); }
+      else if (!chase && (G.state === 'playing' || G.state === 'transition')) { G.pause(); ui.show('pausePanel'); }
       audio.suspend();
     } else { last = performance.now(); acc = 0; qAcc = 0; qN = 0; }
   });
@@ -520,7 +626,10 @@
       G, input, R, ui, opt,
       step(n, inp) { for (let i = 0; i < n; i++) G.step(DT, Object.assign({ left: false, right: false, jumpPressed: false, jumpHeld: false, dashPressed: false, downPressed: false, upHeld: false, downHeld: false }, typeof inp === 'function' ? inp(i) : inp || {})); handleEvents(G.drainEvents()); ui.hud(G); },
       draw() { R.draw(G, G.world ? G.world.t : 0); },
-      start: startRun, menu: toMenu, togglePause
+      start: startRun, menu: toMenu, togglePause,
+      get chase() { return chase; },
+      chaseStep(n, inp) { for (let i = 0; i < n; i++) chase.step(DT, Object.assign({}, typeof inp === 'function' ? inp(i) : inp || {})); handleChaseEvents(chase.drainEvents()); },
+      chaseDraw(t) { CR.draw(chase, t == null ? chase.t : t); }
     };
   }
   boot().catch((err) => { console.error(err); ui.setLoading('RECARGAR E INTENTAR', true); ui.toast('Error al iniciar: ' + (err.message || err), 9, 8); });

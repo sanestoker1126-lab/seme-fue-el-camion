@@ -223,6 +223,61 @@
       lines: [{ who: 'SOFÍA', tone: 'sofia', text: '¡Wow! ¡Estamos dentro del mundo de Roblox!' }] }
   ];
 
+  /* V58.9 · MISIÓN ESPECIAL · LA CALZADA. Une el final de Guadalajara (Plaza de las Jacarandas) con el mar: Sofía
+     alcanza por fin la Ruta 6, el chofer huye ante el retén de la Calzada Olímpica —la que Doña Tóxica describe en el
+     prólogo como «un hervidero de patrullas»— y Sofía toma el volante. Al final el camión salta la barranca y cae a
+     la presa: la corriente la lleva hasta la isla donde empieza la misión 3 («¿Dónde estoy?»).
+     Escenas nuevas para esta versión (no salen del guion fuente); usan fondos y sprites ya incluidos. */
+  const BUS_SIDE = 'assets/vehicles/camion_frame_02.png';
+  const CALZADA = [
+    { id: 'cz_alcance', tag: 'MISIÓN ESPECIAL · PLAZA DE LAS JACARANDAS', title: '¡POR FIN, LA RUTA 6!', layout: 'dialogo', text: '',
+      background: 'assets/scenes/generated/plaza_jacarandas_noche.webp',
+      cast: [
+        { name: 'RUTA 6', frames: [BUS_SIDE], label: false, x: -30, bottom: 2, scale: 1.7, entrance: 'enter-left', anim: [{ f: [0], ms: 2600, to: 60 }, { f: [0], ms: 60000 }] },
+        SOFIA({ sprite: ST + 'run_02.png', x: 18, bottom: 2, scale: 1.05, entrance: 'enter-left' }),
+        LUNA({ x: 8, bottom: 2, scale: 0.5 }), MORITA({ x: 28, bottom: 2, scale: 0.5, entrance: 'enter-left' })
+      ],
+      lines: [
+        { who: 'SOFÍA', tone: 'sofia', text: '¡Ahí está! ¡Espéreme, chofer! ¡Luna, Morita, súbanse!' },
+        { who: 'NARRADOR', tone: 'narra', text: 'Después de cruzar toda Guadalajara, Sofía alcanza la Ruta 6 en la Plaza de las Jacarandas.' }
+      ] },
+    { id: 'cz_reten', tag: 'MISIÓN ESPECIAL · CALZADA OLÍMPICA', title: 'EL RETÉN', layout: 'dialogo', text: '',
+      background: 'assets/scenes/guadalajara_pro_v2/transit_street.webp', backgroundMotion: 'travel',
+      cast: [Object.assign({}, TOXICA, { x: 80, bottom: 4, scale: 1.05, entrance: 'enter-right' })],
+      lines: [
+        { who: 'DOÑA TÓXICA', tone: 'toxica', text: 'Niña tóxica, te habla Doña Tóxica. La Calzada Olímpica está tomada: patrullas y la banda de Los Zopilotes.' },
+        { who: 'EL CHOFER', tone: 'narra', text: '¡Yo no me meto en eso! ¡Ahí te encargo el camión, niña!' },
+        { who: 'NARRADOR', tone: 'narra', text: 'El chofer abre la puerta y sale corriendo. El motor sigue encendido.' }
+      ] },
+    { id: 'cz_volante', tag: 'MISIÓN ESPECIAL · SOFÍA AL VOLANTE', title: 'PISA A FONDO', layout: 'dialogo', text: '',
+      background: 'assets/scenes/generated/guadalajara_colonia_noche.webp', fx: 'niebla',
+      cast: [
+        SOFIA({ sprite: ST + 'land_01.png', x: 46, bottom: 2, scale: 1.2 }),
+        LUNA({ x: 22, bottom: 2, scale: 0.55 }), MORITA({ x: 72, bottom: 2, scale: 0.55 })
+      ],
+      lines: [
+        { who: 'SOFÍA', tone: 'sofia', text: '¿Yo? ¿Manejar el camión? … Bueno. Luna, Morita: agárrense.' },
+        { who: 'DOÑA TÓXICA', tone: 'toxica', text: 'No te detengas y no dejes que te encierren. Te espero del otro lado de la barranca.' },
+        { who: 'CONTROLES', tone: 'narra', text: '↑ ↓ CAMBIAN DE CARRIL · → ACELERA · ← FRENA · ✦ NITRO · ◒ EMBESTIR · 🐾 GATAS' }
+      ] }
+  ];
+  const CALZADA_FIN = [
+    { id: 'czf_vuelo', tag: 'LA CALZADA · EL PUENTE DE LA BARRANCA', title: 'EL VUELO', layout: 'dialogo', text: '',
+      background: MAR + 'fondo_costa.webp', fx: 'niebla',
+      cast: [{ name: 'RUTA 6', frames: [BUS_SIDE], label: false, x: -20, bottom: 40, scale: 1.4, entrance: 'enter-left', anim: [{ f: [0], ms: 3400, to: 70, toB: 6 }, { f: [0], ms: 60000 }] }],
+      lines: [
+        { who: 'NARRADOR', tone: 'narra', text: 'El camión vuela sobre la barranca… y cae al agua de la presa.' },
+        { who: 'SOFÍA', tone: 'sofia', text: '¡Luna! ¡Morita! ¡No se suelten!' }
+      ] },
+    { id: 'czf_corriente', tag: 'LA CALZADA · RÍO ABAJO', title: 'LA CORRIENTE', layout: 'dialogo', text: '',
+      background: MAR + 'fondo_descenso.webp', fx: ['burbujas', 'recuerdo'],
+      cast: [],
+      lines: [
+        { who: 'NARRADOR', tone: 'narra', text: 'La corriente arrastra a Sofía y a sus gatitas río abajo, muy lejos, hasta el mar.' },
+        { who: 'NARRADOR', tone: 'narra', text: 'Cuando abre los ojos, está en una isla que le parece conocida…' }
+      ] }
+  ];
+
   const ESPACIO = [
     { id: 'orbita_estacion', tag: 'MISIÓN 4 · ÓRBITA LUNAR', title: 'LA ESTACIÓN SOBRE EL CRÁTER',
       layout: 'dialogo', text: '', background: ARR + 'estacion_lunar.webp', cast: [],
@@ -373,5 +428,5 @@
     }
     return [...out];
   }
-  NS.TOXIFAMILIA = { SOURCE, SCENES, EPILOGUE, MARINO, GDL_TRANSITION, ESPACIO, PARAFALLS, CONTACTS, validate, validAsset, assetsOf, lineMs, get ready() { return SCENES.length > 0; } };
+  NS.TOXIFAMILIA = { SOURCE, SCENES, EPILOGUE, MARINO, GDL_TRANSITION, CALZADA, CALZADA_FIN, ESPACIO, PARAFALLS, CONTACTS, validate, validAsset, assetsOf, lineMs, get ready() { return SCENES.length > 0; } };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

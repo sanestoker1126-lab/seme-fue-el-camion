@@ -15,6 +15,13 @@
     const TOTAL_LEVELS = MISSIONS.reduce((n, M) => n + M.levels.length, 0);
     let selMission = 0;
     const missionUnlocked = (save, id) => (save.missions && save.missions[id]) || 0;
+    /* V58.9 · Misión especial LA CALZADA (persecución en el camión) entre Guadalajara y el submarino.
+       En el menú es una tarjeta más; `start` es lo que recibe cb.start (índice de misión o 'calzada'). */
+    const CHASE = NS.Chase ? { id: 'calzada', label: 'MISIÓN ESPECIAL · LA CALZADA', special: true,
+      levels: NS.Chase.SECTIONS.map((q) => ({ label: q.title, isNew: true, storyIndex: -1 })) } : null;
+    const MENU = MISSIONS.map((M, i) => ({ M, start: i, num: 'M' + (i + 1) }));
+    if (CHASE) MENU.splice(2, 0, { M: CHASE, start: 'calzada', num: '★' });
+    const missionArg = (v) => (v === 'calzada' ? 'calzada' : Number(v));
     const CINEMATIC = [
       { tag: 'CAPÍTULO 01 · DESPUÉS DE LA POSADA', title: 'EL ÚLTIMO CAMIÓN SE FUE', text: 'Terminó tarde la posada de la escuela. Sofía llegó a la azotea justo para ver cómo la ruta 6 partía sin ella.', bg: 'assets/scenes/school_miguel_hidalgo/01_aulas_superiores.webp' },
       { tag: 'CAPÍTULO 02 · LUNA Y MORITA', title: 'HAY QUE BAJAR', text: 'Sus gatitas la acompañan por techos, patios y túneles. En el camino, seis cosas de su mochila quedaron atrás.', bg: 'assets/scenes/guadalajara_pro_v2/bg_centro_historico_pro_v2.webp' },
@@ -51,8 +58,8 @@
     let toastT = 0, toastPri = -1, bannerT = 0, bubbleT = 0, cardT = 0, introIndex = 0, introThen = null;
     let cinematicIndex = 0, cinematicThen = null, cinematicT = 0, bossCineData = null, bossCineThen = null, bossCineIndex = 0, bossCineT = 0, activePanel = null;
     const hudCache = {};
-    const worldNames = {escuela:'LA ESCUELA',guadalajara:'GUADALAJARA',submarino:'EL SUBMARINO',espacial:'EL ESPACIO',parafalls:'PARAFALLS'};
-    const worldDescriptions = {escuela:'La campana sonó. Alcanza la ruta 6.',guadalajara:'Azoteas, barrios y el corazón de la ciudad.',submarino:'Regresa a la isla, cruza el bosque de algas y desciende a la fosa de Poseidón.',espacial:'Salta entre cráteres y pasarelas lunares.',parafalls:'Desciende por las cascadas del cielo.'};
+    const worldNames = {escuela:'LA ESCUELA',guadalajara:'GUADALAJARA',calzada:'LA CALZADA',submarino:'EL SUBMARINO',espacial:'EL ESPACIO',parafalls:'PARAFALLS'};
+    const worldDescriptions = {escuela:'La campana sonó. Alcanza la ruta 6.',guadalajara:'Azoteas, barrios y el corazón de la ciudad.',calzada:'Misión especial: toma el volante de la Ruta 6, esquiva patrullas, vuela en las rampas y derriba el tráiler blindado.',submarino:'Regresa a la isla, cruza el bosque de algas y desciende a la fosa de Poseidón.',espacial:'Salta entre cráteres y pasarelas lunares.',parafalls:'Desciende por las cascadas del cielo.'};
 
     function show(id) {
       activePanel = id || null;
@@ -188,36 +195,36 @@
     function paintMenu(G, opt) {
       const save = G.save, free = true; // V58.8.20: acceso completo; progreso real independiente.
       // Si la misión elegida quedó bloqueada, salta a la primera abierta.
-      if (!(free || missionUnlocked(save, MISSIONS[selMission].id) >= 1)) {
-        const alt = MISSIONS.findIndex((M) => free || missionUnlocked(save, M.id) >= 1);
+      if (!(free || missionUnlocked(save, MENU[selMission].M.id) >= 1)) {
+        const alt = MENU.findIndex((E) => free || missionUnlocked(save, E.M.id) >= 1);
         selMission = alt < 0 ? 0 : alt;
       }
       // Barra de misiones.
       const mbox = $('missions');
       if (mbox) {
         mbox.innerHTML = '';
-        MISSIONS.forEach((M, mi) => {
+        MENU.forEach((E, mi) => {
+          const M = E.M;
           const open = free || missionUnlocked(save, M.id) >= 1;
           const isNewM = M.levels.some((d) => d.isNew);
           const b = document.createElement('button');
           b.type = 'button';
-          b.className = 'mission' + (mi === selMission ? ' sel' : '') + (open ? '' : ' locked') + (isNewM ? ' new' : '');
+          b.className = 'mission' + (mi === selMission ? ' sel' : '') + (open ? '' : ' locked') + (isNewM ? ' new' : '') + (M.special ? ' special' : '');
           b.dataset.m = M.id;
           const short = missionName(M);
           // V58.6: tarjeta con el arte de su mundo, número, nombre y avance (paradas abiertas / total).
-          const got = Math.min(M.levels.length, missionUnlocked(save, M.id));
-          const meta = open ? M.levels.length + (M.levels.length === 1 ? ' PARADA' : ' PARADAS') : 'BLOQUEADA';
-          b.innerHTML = '<span class="mNum">' + (open ? 'M' + (mi + 1) : '🔒') + '</span><span class="mName">' + esc(short) + '</span><span class="mMeta">' + meta + '</span>';
+          const meta = open ? (M.special ? 'PERSECUCIÓN · ' + M.levels.length + ' TRAMOS' : M.levels.length + (M.levels.length === 1 ? ' PARADA' : ' PARADAS')) : 'BLOQUEADA';
+          b.innerHTML = '<span class="mNum">' + (open ? E.num : '🔒') + '</span><span class="mName">' + esc(short) + '</span><span class="mMeta">' + meta + '</span>';
           b.disabled = !open;
           b.setAttribute('aria-pressed', String(mi === selMission));
-          b.setAttribute('aria-label', open ? 'Misión ' + (mi + 1) + ': ' + short + ', ' + meta.toLowerCase() : 'Misión ' + (mi + 1) + ' bloqueada');
+          b.setAttribute('aria-label', open ? (M.special ? 'Misión especial' : 'Misión ' + E.num.slice(1)) + ': ' + short + ', ' + meta.toLowerCase() : 'Misión bloqueada');
           b.onclick = () => { selMission = mi; cb.click(); paintMenu(G, opt); };
           mbox.appendChild(b);
         });
       }
-      const M = MISSIONS[selMission];
+      const E = MENU[selMission], M = E.M;
       $('menu').dataset.selection = M.id;
-      $('worldKicker').textContent = 'MUNDO ' + String(selMission+1).padStart(2,'0') + ' / 05';
+      $('worldKicker').textContent = M.special ? 'MISIÓN ESPECIAL' : 'MUNDO ' + String(E.start + 1).padStart(2, '0') + ' / 05';
       $('worldTitle').textContent = worldNames[M.id] || missionName(M);
       $('worldDesc').textContent = worldDescriptions[M.id] || '';
       const unlocked = free ? M.levels.length : missionUnlocked(save, M.id);
@@ -225,14 +232,14 @@
       box.innerHTML = '';
       M.levels.forEach((def, i) => {
         const ok = i < unlocked || free;
-        const ch = ST.CHAPTERS[def.storyIndex], title = (ch && ch.title) || def.label;
+        const ch = def.storyIndex >= 0 ? ST.CHAPTERS[def.storyIndex] : null, title = (ch && ch.title) || def.label;
         const b = document.createElement('button');
         b.className = 'tramo' + (ok ? '' : ' locked') + (def.isNew ? ' new' : '');
         b.textContent = ok ? String(i + 1) : '·';
         b.title = ok ? title + (def.isNew ? ' (NUEVO)' : '') : 'Bloqueado: llega a la parada de este tramo';
         b.setAttribute('aria-label', ok ? 'Empezar en la parada ' + (i + 1) + ': ' + title : 'Parada ' + (i + 1) + ' bloqueada');
         b.disabled = !ok;
-        b.onclick = () => cb.start(selMission, i);
+        b.onclick = () => cb.start(E.start, i);
         box.appendChild(b);
       });
       const tl = $('tramosLabel');
@@ -248,13 +255,15 @@
       if (save.wins) rec.push(save.wins + (save.wins === 1 ? ' llegada' : ' llegadas'));
       if ($('records')) $('records').textContent = rec.join(' · ') || 'Sin récords todavía.';
       paintStart();
-      const nNew = MISSIONS.reduce((n, M) => n + M.levels.filter((d) => d.isNew).length, 0);
+      const nNew = MENU.reduce((n, E) => n + E.M.levels.filter((d) => d.isNew).length, 0);
       if ($('levelsCount')) $('levelsCount').textContent = String(TOTAL_LEVELS);
+      const mLabel = $('missionsLabel'), avail = mLabel && mLabel.querySelector ? mLabel.querySelector('.worldAvailability') : null;
+      if (avail) avail.textContent = TOTAL_LEVELS + ' PARADAS' + (CHASE ? ' + LA CALZADA' : '');
       if ($('newLevels')) $('newLevels').textContent = nNew ? nNew + ' niveles nuevos marcados con ★' : '';
       paintOpts(opt);
     }
     /** Nombre corto de la misión («LA ESCUELA», «EL SUBMARINO»…). */
-    function missionName(M) { return M.label.replace(/^MISIÓN \d+ · /, ''); }
+    function missionName(M) { return M.label.replace(/^MISIÓN (\d+|ESPECIAL) · /, ''); }
     let playable = false;
     /** V58.6: el botón principal dice qué misión empieza (solo cuando el juego ya cargó). */
     function paintStart() {
@@ -392,13 +401,13 @@
     function showVictory(e) {
       const s = e.summary;
       const nextButton = $('nextSchoolMission');
-      const next = MISSIONS[e.nextMission];
+      const next = e.nextMission === 'calzada' ? CHASE : MISSIONS[e.nextMission];
       nextButton.hidden = !next;
       if (next) {
         nextButton.dataset.mission = String(e.nextMission);
         nextButton.textContent = 'CONTINUAR · ' + missionName(next);
       }
-      $('retry').dataset.mission=String(e.mission ?? selMission);
+      $('retry').dataset.mission=String(e.mission ?? MENU[selMission].start);
       $('resultTag').textContent = e.mission === 0 ? 'ESCUELA BENITO JUÁREZ · RUTA 6' : (MISSIONS[e.mission]?.label || 'TERMINAL ARCADAS · RUTA 6');
       $('resultTitle').innerHTML = e.mission===0?'¡ESCUELA<br><span>SUPERADA!</span>':e.ending.title;
       $('resultText').innerHTML = esc(e.mission===0?'Sofía, Luna y Morita cruzaron el portón y alcanzaron la Ruta 6. El viaje continúa por Guadalajara.':e.ending.text) + '<br><br>Tiempo ' + fmtTime(s.time) + (e.newTime ? ' (¡mejor tiempo!)' : '') + ' · ' + s.score + ' pts' + (e.newScore ? ' (¡récord!)' : '') + ' · ' + plural(s.gems, 'cristal', 'cristales') + ' · ' + plural(s.kills, 'enemigo', 'enemigos') + (s.totalBosses > 0 ? ' · jefes ' + s.bosses + '/' + s.totalBosses : '') + (s.totalSecrets ? ' · zona secreta ' + (s.secrets ? 'encontrada' : 'sin encontrar') : '') + (s.practice ? '<br><small>Práctica · el progreso y los récords de campaña se conservan.</small>' : s.relaxed ? '<br><small>Modo relajado activo: los récords cuentan igual, pero sin perder vidas.</small>' : '') + (e.fullRun ? '' : '<br><small>Empezaste en un tramo intermedio: el mejor tiempo solo cuenta desde el tramo 1.</small>');
@@ -416,6 +425,34 @@
       show('result');
     }
 
+    /** V58.9 · Resultado de LA CALZADA (perder: reintentar desde el tramo; ganar: continuar al submarino). */
+    function showChaseResult(e) {
+      const s = e.stats || {}, SEC = NS.Chase.SECTIONS;
+      const nextButton = $('nextSchoolMission');
+      const line = 'Tiempo ' + fmtTime(s.t || 0) + ' · ' + (s.score || 0) + ' pts · ' + plural(s.takedowns || 0, 'derribo', 'derribos') + ' · ' + plural(s.jumps || 0, 'salto', 'saltos') + ' · ' + plural(s.gems || 0, 'cristal', 'cristales');
+      if (e.won) {
+        nextButton.hidden = false; nextButton.dataset.mission = '2'; nextButton.textContent = 'CONTINUAR · EL SUBMARINO';
+        $('resultTag').textContent = 'MISIÓN ESPECIAL · LA CALZADA';
+        $('resultTitle').innerHTML = '¡CALZADA<br><span>SUPERADA!</span>';
+        $('resultText').innerHTML = esc('El tráiler de Los Zopilotes quedó atrás y la Ruta 6 voló sobre la barranca. La corriente de la presa llevó a Sofía, Luna y Morita hasta el mar.') + '<br><br>' + line +
+          (e.best && e.best.bestTime ? '<br><small>Mejor tiempo completo ' + fmtTime(e.best.bestTime) + ' · récord ' + (e.best.bestScore || 0) + ' pts</small>' : '') +
+          (s.practice ? '<br><small>Práctica · el progreso y los récords de campaña se conservan.</small>' : '');
+        $('resultStars').innerHTML = '<span class="on">★</span>'.repeat(e.stars || 1) + '<span>★</span>'.repeat(3 - (e.stars || 1));
+        $('retry').textContent = 'JUGAR OTRA VEZ'; $('retry').dataset.mode = 'again'; $('retry').dataset.mission = 'calzada';
+      } else {
+        nextButton.hidden = true;
+        const why = { traffic: 'Chocaste con el tráfico', barrier: 'Te estrellaste contra una valla', ram: 'Una patrulla te embistió', crash: 'Te cerraron el paso', gap: 'Caíste a la zanja', crate: 'Una caja del tráiler te detuvo', barrel: 'Un barril de Los Zopilotes te detuvo', spikes: 'Las tachuelas te poncharon', truck: 'Chocaste con el tráiler blindado' }[e.reason] || 'El camión ya no aguanta';
+        $('resultTag').textContent = 'LA CALZADA · TRAMO ' + ((s.section | 0) + 1) + ' · ' + (SEC[s.section | 0] ? SEC[s.section | 0].title : '');
+        $('resultTitle').innerHTML = '¡TE<br><span>DETUVIERON!</span>';
+        $('resultText').innerHTML = esc(why + '.') + '<br><br>' + line + '<br>Reaparecerás al inicio del tramo ' + ((e.section | 0) + 1) + ' con la carrocería reparada.';
+        $('resultStars').innerHTML = '';
+        $('retry').textContent = 'REINTENTAR DESDE EL TRAMO ' + ((e.section | 0) + 1); $('retry').dataset.mode = 'retry';
+      }
+      $('resultItems').innerHTML = '';
+      if ($('postCredits')) $('postCredits').hidden = true;
+      show('result');
+    }
+
     function setLoading(text, ready) {
       const b = $('start'); b.textContent = text; b.disabled = !ready;
       playable = !!ready && text === 'JUGAR HISTORIA';
@@ -424,12 +461,12 @@
 
     /* ---------- Cableado de botones ---------- */
     function bind() {
-      $('start').onclick = () => cb.start(selMission, 0);
+      $('start').onclick = () => cb.start(MENU[selMission].start, 0);
       // V58: VER CINEMÁTICA reproduce el prólogo ARCHIVO 01 (si no está disponible, la cinemática anterior).
       $('btnStory').onclick = () => { cb.click(); if (!(cb.story && cb.story())) showCinematic(null); };
       $('btnHowto').onclick = () => { cb.click(); show('guide'); };
       $('guideBack').onclick = () => { cb.click(); cb.menu(); };
-      $('guidePlay').onclick = () => { cb.click(); cb.start(selMission, 0); };
+      $('guidePlay').onclick = () => { cb.click(); cb.start(MENU[selMission].start, 0); };
       $('cineNext').onclick = () => { cb.click(); cinematicNext(); };
       $('cineSkip').onclick = () => { cb.click(); cinematicFinish(); };
       $('bossCineNext').onclick = () => { cb.click(); bossCinematicNext(); };
@@ -468,8 +505,8 @@
       $('resumeBtn').onclick = () => cb.togglePause();
       $('restartBtn').onclick = () => cb.retryFromCheckpoint();
       $('quitBtn').onclick = () => cb.menu();
-      $('nextSchoolMission').onclick = () => { cb.click(); cb.start(Number($('nextSchoolMission').dataset.mission), 0); };
-      $('retry').onclick = () => ($('retry').dataset.mode === 'again' ? cb.start(Number($('retry').dataset.mission ?? selMission), 0) : cb.retry());
+      $('nextSchoolMission').onclick = () => { cb.click(); cb.start(missionArg($('nextSchoolMission').dataset.mission), 0); };
+      $('retry').onclick = () => ($('retry').dataset.mode === 'again' ? cb.start(missionArg($('retry').dataset.mission ?? MENU[selMission].start), 0) : cb.retry());
       $('back').onclick = () => cb.menu();
     }
     bind();
@@ -509,7 +546,7 @@
       }, true);
     })();
 
-    return { show, toast, chapter, sign, itemCard, hurtFlash, tick, clearOverlays, hud, paintMenu, paintOpts, showIntro, showCinematic, showBossCinematic, bossCinematicIndex: kind => BOSS_CINEMATICS[kind]?.saveIndex, showOptions, bossCinematicActive: () => activePanel === 'bossCinematic', showGuide: () => show('guide'), showGameOver, showVictory, setLoading, setPlaying, fmtTime };
+    return { show, toast, chapter, sign, itemCard, hurtFlash, tick, clearOverlays, hud, paintMenu, paintOpts, showIntro, showCinematic, showBossCinematic, bossCinematicIndex: kind => BOSS_CINEMATICS[kind]?.saveIndex, showOptions, bossCinematicActive: () => activePanel === 'bossCinematic', showGuide: () => show('guide'), showGameOver, showVictory, showChaseResult, setLoading, setPlaying, fmtTime };
   }
 
   NS.UI = { createUI };

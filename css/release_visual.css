@@ -108,3 +108,20 @@ body.bannerOn #toast{top:calc(max(10px,env(safe-area-inset-top)) + 101px)}
 #poseidonMeter{position:fixed;z-index:5;top:clamp(72px,16vh,108px);left:50%;transform:translateX(-50%);width:min(52vw,420px);padding:7px 12px;background:#071c2aee;border:1px solid #6cc4d8;border-radius:10px;box-shadow:0 3px 18px #06142199;color:#d7f9ff;pointer-events:none;font-size:10px;letter-spacing:.06em}#poseidonMeter>div:first-child{display:flex;justify-content:space-between;gap:6px;margin-bottom:5px}.poseidonTrack{height:7px;border-radius:9px;overflow:hidden;background:#183648}.poseidonTrack i{display:block;height:100%;background:linear-gradient(90deg,#e3a748,#8cf4ed);transition:width .18s}body:not(.playing) #poseidonMeter{display:none}#poseidonCinePortrait:not([hidden]){position:absolute;top:15%;left:50%;transform:translateX(-50%);height:46%;max-width:70%;object-fit:contain;filter:drop-shadow(0 8px 18px #04131c);z-index:0}#bossCinematic[data-kind="poseidon"] .bossCineScene{--bossAccent:#62e3e8;--bossAccent2:#ffdd8e}#bossCinematic[data-kind="poseidon"] .bossCineImpact{opacity:.25} @media(max-width:560px){#poseidonMeter{width:66vw;top:100px;font-size:9px}}
 
 #poseidonCineBackdrop:not([hidden]){position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.52;z-index:-1}body.poseidonFight:not(.bannerOn) #toast{top:calc(max(8px,env(safe-area-inset-top)) + 132px)}body.poseidonFight #poseidonMeter{top:clamp(85px,15vh,110px);width:min(48vw,410px)}@media(orientation:portrait){body.poseidonFight #poseidonMeter{top:96px;width:min(78vw,420px)}}
+/* V58.9 · Misión especial LA CALZADA: tarjeta del menú (ancho completo, entre M2 y M3) y modo de manejo. */
+#menu[data-selection=calzada]{--accent:#ffcf4a;--worldArt:url('../assets/scenes/generated/plaza_jacarandas_noche.webp')}
+#menu #missions .mission[data-m=calzada]{--cardArt:url('../assets/scenes/guadalajara_pro_v2/transit_street.webp');--art:url('../assets/scenes/guadalajara_pro_v2/transit_street.webp');--cardAccent:#ffcf4a;grid-column:1/-1;width:100%;min-height:70px;background-position:center 60%}
+#menu #missions .mission.special .mNum{background:#ffcf4a;color:#1a1206}
+@media(orientation:landscape) and (max-height:550px){#menu #missions .mission[data-m=calzada]{min-height:45px}}
+@media(orientation:portrait){#menu #missions .mission[data-m=calzada]{min-height:52px}}
+body.chaseMode #hud>.pill,body.chaseMode #rightHud .pill{display:none}
+body.chaseMode #hud{justify-content:flex-end}
+body.chaseMode #bubble{display:none}
+/* V58.8.24 · Con la tarjeta especial hay 6 misiones: el arte, el color y el ancho van por misión (data-m), no por posición. */
+#menu #missions .mission:nth-child(n){grid-column:auto;width:auto;justify-self:stretch}
+#menu #missions .mission[data-m=calzada],#menu #missions .mission[data-m=parafalls]{grid-column:1/-1;width:100%}
+#missions .mission[data-m=escuela]{--mission-art:url('../assets/scenes/school_pro/01_aulas_superiores.webp');border-left:4px solid #c5ff77}
+#missions .mission[data-m=guadalajara]{--mission-art:url('../assets/scenes/guadalajara_pro_v2/bg_guadalajara_pro_v2.webp');border-left:4px solid #ffae78}
+#missions .mission[data-m=calzada]{--mission-art:url('../assets/scenes/guadalajara_pro_v2/transit_street.webp');border-left:4px solid #ffcf4a}
+#missions .mission[data-m=submarino]{--mission-art:url('../assets/parallax/marino/abyss_v7/02_marino_base_ciudad.webp');border-left:4px solid #76efdb}
+#missions .mission[data-m=espacial]{--mission-art:url('../assets/parallax/espacial/depth_v5/background/page_02.webp');border-left:4px solid #b89aff}

@@ -20,7 +20,7 @@ test('apertura escolar: fondo local, actores con pasos y franja de suelo',()=>{
  assert.equal(s.id,'esc_aula_inicio');assert.ok(s.cast.every(a=>a.anim&&a.anim.some(step=>step.to!=null)));
  const [w,h,x1,x2,y]=m.CONTACTS[s.id];assert.ok(x1>=0&&x2<=w&&x2>x1&&y>0&&y<h);
 });
-test('selector DOM: 5 mundos, 23 paradas habilitadas y partidas seleccionables desde guardado nuevo',()=>{
+test('selector DOM: 5 mundos + misión especial (28 paradas) habilitados y seleccionables desde guardado nuevo',()=>{
  const nodes=new Map(), calls=[];
  function element(){return {children:[],dataset:{},style:{},set innerHTML(v){this.children=[];this.html=v},get innerHTML(){return this.html},appendChild(x){this.children.push(x)},addEventListener(){},setAttribute(){}}}
  global.document={getElementById(id){if(!nodes.has(id))nodes.set(id,element());return nodes.get(id)},createElement:element,querySelectorAll(){return []},addEventListener(){}};
@@ -29,11 +29,14 @@ test('selector DOM: 5 mundos, 23 paradas habilitadas y partidas seleccionables d
   const ui=N.UI.createUI({click(){},start(m,t){calls.push([m,t])}}), G=N.Game.createGame({}), before=structuredClone(G.save);
   ui.paintMenu(G,{freeSelect:false,difficulty:'normal'});
   const counts=[];
-  for(let m=0;m<5;m++){
-   const button=nodes.get('missions').children[m];assert.equal(button.disabled,false);button.onclick();
+  // V58.8.24: la misión especial LA CALZADA va entre Guadalajara (M2) y el submarino (M3).
+  const starts=[0,1,'calzada',2,3,4];
+  assert.equal(nodes.get('missions').children.length,starts.length);
+  starts.forEach((m,c)=>{
+   const button=nodes.get('missions').children[c];assert.equal(button.disabled,false);button.onclick();
    const stops=nodes.get('tramos').children;counts.push(stops.length);
    stops.forEach((s,t)=>{assert.equal(s.disabled,false);s.onclick();assert.deepEqual(calls.at(-1),[m,t]);});
-  }
-  assert.deepEqual(counts,[3,13,3,1,3]);assert.equal(calls.length,23);assert.deepEqual(G.save,before);
+  });
+  assert.deepEqual(counts,[3,13,5,3,1,3]);assert.equal(calls.length,28);assert.deepEqual(G.save,before);
  }finally{delete global.document;}
 });

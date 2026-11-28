@@ -123,8 +123,10 @@ test('campaña: un perfil nuevo completa las cuatro misiones en modo relajado y 
     const G = NS.Game.createGame({ assist: { relaxed: true }, save: saved && JSON.parse(saved),
       onSave: s => { saved = JSON.stringify(s); } });
     const next = NS.LEVELS.MISSIONS[i + 1].id;
+    // V58.9: entre Guadalajara y el submarino va la misión especial LA CALZADA.
+    const unlocks = mission.id === 'guadalajara' ? 'calzada' : next;
     assert.equal(G.save.missions[mission.id], 1);
-    assert.equal(G.save.missions[next] || 0, 0);
+    assert.equal(G.save.missions[unlocks] || 0, 0);
     G.setView(1280, 720);
     G.newRun({ mission: i, difficulty: 'normal' });
     if(mission.id==='submarino'){
@@ -145,8 +147,18 @@ test('campaña: un perfil nuevo completa las cuatro misiones en modo relajado y 
     assert.equal(G.state, 'won');
     assert.equal(win.summary.practice, false);
     assert.equal(win.summary.relaxed, true);
-    assert.equal(win.nextMission, i + 1);
+    assert.equal(win.nextMission, mission.id === 'guadalajara' ? 'calzada' : i + 1);
     assert.equal(G.save.wins, i + 1);
-    assert.equal(JSON.parse(saved).missions[next], 1);
+    assert.equal(JSON.parse(saved).missions[unlocks], 1);
+    if (mission.id === 'guadalajara') {
+      // La Calzada se juega completa (bot) y su victoria abre el submarino.
+      assert.equal(JSON.parse(saved).missions.submarino || 0, 0, 'el submarino espera a la Calzada');
+      const { playChase } = require('./chase_bot.js');
+      const r = playChase(NS, { difficulty: 'normal', retries: 0 });
+      assert.equal(r.S.state, 'won');
+      saved = JSON.stringify(NS.Chase.applyVictory(JSON.parse(saved), r.S.summary()));
+      assert.equal(JSON.parse(saved).missions.submarino, 1);
+      assert.equal(JSON.parse(saved).missions.calzada, NS.Chase.SECTIONS.length);
+    }
   }
 });

@@ -485,7 +485,11 @@
       if (!runSave.missions) runSave.missions = {};
       runSave.missions[G.missionId] = Math.max(runSave.missions[G.missionId] || 0, G.world.scenes.length);
       const missions = NS.LEVELS.MISSIONS, next = missions && missions[G.mission + 1];
-      if (next) runSave.missions[next.id] = Math.max(runSave.missions[next.id] || 0, 1);
+      // V58.9 · Entre Guadalajara y el mar va la misión especial LA CALZADA (persecución en el camión, js/core/chase.js):
+      // al terminar Guadalajara se abre la Calzada; la Calzada abre el submarino.
+      const special = G.missionId === 'guadalajara' ? 'calzada' : null;
+      if (special) runSave.missions[special] = Math.max(runSave.missions[special] || 0, 1);
+      else if (next) runSave.missions[next.id] = Math.max(runSave.missions[next.id] || 0, 1);
       const depth = Math.floor(r.maxDepth / 10);
       if (depth > runSave.bestDepth) runSave.bestDepth = depth;
       // V58 · Escena post-créditos (nexo con Legend of Presos): al terminar la última misión con las 6 llaves.
@@ -495,7 +499,7 @@
       if (postCredits) runSave.epilogue = true;
       persist();
       emit('victory', { summary: summary(), stars, newTime, newScore, fullRun, ending: ST.ending(items, total, r.lives),
-        postCredits, keys, totalKeys: ST.ITEMS.length, lastMission, mission:G.mission, nextMission:next ? G.mission+1 : null });
+        postCredits, keys, totalKeys: ST.ITEMS.length, lastMission, mission:G.mission, nextMission: special || (next ? G.mission+1 : null) });
     }
 
     function summary() {

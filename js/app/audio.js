@@ -71,7 +71,7 @@
       } catch (_) { /* audio no disponible */ }
     }
     function vibrate(ms) { if (opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (_) {} }
-    const VIB = { hurt: 40, hard: 60, clank: 25, bossHit: 30, crumble: 15, splashBig: 25 };
+    const VIB = { hurt: 40, hard: 60, clank: 25, bossHit: 30, crumble: 15, splashBig: 25, explosionBig: 60, landing: 30, crash: 30 };
 
     function localAudio(src, loop = false, volume = 0.18) {
       try {
@@ -171,7 +171,16 @@
       // V58.3 · Corriente marina (rumor grave de agua) y asteroide (silbido de aviso; golpe y polvo al caer).
       current: () => { noise(0.9, 0.07, 380, 160, 0, 0.8); noise(0.6, 0.035, 900, 300, 0.15); },
       meteorWarn: () => { tone(1400, 0.5, 'sine', 0.025, -900); tone(700, 0.08, 'square', 0.02, 0, 0.02); },
-      meteorImpact: () => { noise(0.45, 0.12, 900, 120); tone(90, 0.3, 'sawtooth', 0.06, -40); }
+      meteorImpact: () => { noise(0.45, 0.12, 900, 120); tone(90, 0.3, 'sawtooth', 0.06, -40); },
+      // V58.9 · La Calzada: sirena, derrape, choques, explosiones, nitro y rampas.
+      siren: () => { for (let i = 0; i < 3; i++) { tone(760, 0.22, 'sawtooth', 0.025, 260, i * 0.44); tone(1020, 0.22, 'sawtooth', 0.025, -260, i * 0.44 + 0.22); } },
+      skid: () => noise(0.18, 0.035, 3200, 1400),
+      crash: () => { noise(0.3, 0.12, 1600, 200); tone(110, 0.18, 'square', 0.06, -50); },
+      explosion: () => { noise(0.6, 0.16, 900, 80); tone(70, 0.4, 'sawtooth', 0.07, -30); },
+      explosionBig: () => { noise(1.1, 0.2, 700, 50); noise(0.6, 0.1, 2400, 300, 0.1); tone(55, 0.8, 'sawtooth', 0.08, -25); },
+      nitro: () => { noise(0.7, 0.07, 600, 2600); tone(220, 0.5, 'sawtooth', 0.04, 440); },
+      ramp: () => { tone(300, 0.25, 'triangle', 0.05, 380); noise(0.25, 0.05, 1200, 2400); },
+      landing: () => { noise(0.25, 0.12, 500, 120); tone(80, 0.2, 'square', 0.06, -30); }
     };
     const FILE_SFX = {
       luna: [AUDIO.luna, 0.56], morita: [AUDIO.morita, 0.56],
