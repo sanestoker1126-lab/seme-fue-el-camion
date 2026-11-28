@@ -186,7 +186,7 @@
     for (const e of list) {
       switch (e.type) {
         case 'message': ui.toast(e.text, e.priority, 2); break;
-        case 'chapter': ui.chapter(e.index, { title: e.section.title, line: e.section.line, driver: e.index === 4 ? 'Al fondo, la barranca. Del otro lado te espera Doña Tóxica.' : 'Sirenas a lo lejos. ¡No te detengas!' }, e.total, true); if (chase.t > 0.5) audio.sfx('chapter'); break;
+        case 'chapter': ui.chapter(e.index, { title: e.section.title, line: e.section.line, driver: e.index === 4 ? 'Al fondo, la barranca. Del otro lado sigue el camino a Puente Grande.' : 'Sirenas a lo lejos. ¡No te detengas!' }, e.total, true); if (chase.t > 0.5) audio.sfx('chapter'); break;
         case 'checkpoint': audio.sfx('checkpoint'); if (!chase.practice) { NS.Chase.applyCheckpoint(G.save, e.section); saveNow(); } ui.toast('PUNTO DE REAPARICIÓN · TRAMO ' + (e.section + 1), 2, 1.6); break;
         case 'sfx': audio.sfx(e.name); break;
         case 'hurt': audio.sfx('hurt'); ui.hurtFlash(); audio.vibrate && audio.vibrate(40); break;

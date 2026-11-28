@@ -69,6 +69,13 @@ test('hilo de la historia: cada misión termina donde empieza la siguiente', () 
   assert.match(scene('PARAFALLS', 'pf_regreso').lines[0].text, /módulo de regreso/);
   assert.match(end('parafalls').text, /Puente Grande/);      // → el epílogo en Puente Grande
   assert.match(scene('EPILOGUE', 'pc_reja').tag, /PUENTE GRANDE/);
+  // Doña Tóxica promete esperar a Sofía donde de verdad aparece (Puente Grande), no «del otro lado de la barranca».
+  const promesas = [...M.validate(M.CALZADA), ...M.validate(M.CALZADA_FIN)].flatMap((sc) => sc.lines || []).filter((l) => l.who === 'DOÑA TÓXICA').map((l) => l.text);
+  assert.ok(promesas.some((t) => /Puente Grande: ahí te espero/.test(t)));
+  assert.ok(promesas.every((t) => !/otro lado de la barranca/.test(t)));
+  assert.doesNotMatch(read('js/app/main.js'), /te espera Doña Tóxica/);
+  // Parafalls con la Sofía Roblox oficial (la de la hoja de transformación) después de transformarse.
+  for (const id of ['pf_guardianes', 'pf_llegada']) assert.match(sofia(scene('PARAFALLS', id)).sprite, /sofia_roblox_12\.webp$/);
   // Guadalajara termina en la Ruta 6 y anuncia la Calzada (ya no «van a casa»).
   for (const n of [0, 2, 3]) {
     const e = NS.STORY.ending(n, 3, 3, 'guadalajara');

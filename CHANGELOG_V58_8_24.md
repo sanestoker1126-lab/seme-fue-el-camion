@@ -559,3 +559,35 @@ Capturé la zona del jefe o la salida de los 23 tramos. No encontré defectos nu
 
 Sigue lo mismo de V58.8.30: la Sofía Roblox oficial de Parafalls, la Calzada con la ropa rosa, el arte de Doña Tóxica y
 la imagen del tráiler. Tampoco medí en un teléfono real.
+
+# V58.8.32 · La Sofía Roblox oficial y una promesa que se cumple
+
+**Sofía Roblox oficial.** Decidiste que la oficial es la de tu hoja de transformación: pelo rizado, moño azul y ropa
+rosa.
+- La cinemática de Parafalls ya la muestra después de transformarse, también en «LA PRIMERA CASCADA». Antes esa escena
+  usaba el diseño del atlas jugable (cola de caballo, lentes y mochila).
+- Saqué esos tres cuadros del precache, porque ya no se usan. Los archivos siguen en el proyecto.
+- **Al jugar** se sigue usando el atlas anterior hasta que llegue la hoja de animaciones del diseño oficial. Tiene que
+  traer:
+  - reposo (3–4 cuadros);
+  - correr (6, en ciclo);
+  - saltar (2);
+  - caer (2);
+  - aterrizar (1–2);
+  - patada (3);
+  - golpe (1–2);
+  - derrota (2);
+  - celebrar (3);
+  - trepar (2, en ciclo);
+  - planear, que sirve para el dash, la tirolesa y el columpio (2).
+
+  Con fondo transparente, mirando a la derecha, a la misma escala y con los pies en la misma línea en todos los
+  cuadros.
+
+**Doña Tóxica.** Prometía «Te espero del otro lado de la barranca», pero Sofía cae a la presa y su mamá no vuelve a
+aparecer hasta Puente Grande. Ahora dice «Cruza la barranca y sigue hacia Puente Grande: ahí te espero», y lo cumple en
+el epílogo. La tarjeta del último tramo de la Calzada ya no repite la promesa. Cuando la moto cae al agua, se oye su
+llamada por radio, entrecortada: «¿Sofía…? ¡Sofíaaa…!».
+
+**QA.** Node 157/157. En Chromium: las escenas de Parafalls después de transformarse y los 23 tramos, sin errores ni
+archivos faltantes.

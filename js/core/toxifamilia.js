@@ -239,8 +239,8 @@
         { who: 'SOFÍA', tone: 'sofia', text: 'Voy a cruzar con Luna y Morita. Encontraremos a los niños, papá.' }] },
     { id: 'pf_llegada', tag: 'MISIÓN PARAFALLS · ROBLOX', title: 'LA PRIMERA CASCADA',
       layout: 'dialogo', text: '', background: PF + 'forest_approach.webp',
-      cast: [papi({ sprite: ARR + 'estoker_11.webp', x: 16 }), hija({ frames: [PF + 'sofia_00_front_idle.png',
-          PF + 'sofia_01_front_blink.png', PF + 'sofia_02_look_up.png'], fps: 2, x: 48, scale: 1.3, fitWidth: true }),
+      // V58.8.30: Sofía con el diseño oficial (el final de su hoja de transformación), no el del atlas jugable anterior.
+      cast: [papi({ sprite: ARR + 'estoker_11.webp', x: 16 }), hija({ sprite: SOFIA_ROBLOX[11], x: 48, scale: 1.12 }),
         { name: 'LUNA', frames: [PF + 'luna_idle_00.png', PF + 'luna_idle_01.png'], x: 72, scale: .55, fps: 3, label: false, entrance: 'enter-fade' },
         { name: 'MORITA', frames: [PF + 'morita_idle_00.png', PF + 'morita_idle_01.png'], x: 90, scale: .55, fps: 3, label: false, entrance: 'enter-fade' }],
       lines: [{ who: 'SOFÍA', tone: 'sofia', text: '¡Wow! ¡Estamos dentro del mundo de Roblox!' }] }
@@ -296,7 +296,8 @@
     { id: 'cz_moto_9', tag: 'MISIÓN ESPECIAL · LA CALZADA', title: '¡VÁMONOS!', layout: 'dialogo', text: '', background: panel(9), backgroundFit: 'contain', cast: [],
       lines: [
         { who: 'SOFÍA', tone: 'sofia', text: '¡Vámonos por la Calzada!' },
-        { who: 'DOÑA TÓXICA', tone: 'toxica', text: 'No te detengas y no dejes que te encierren. Te espero del otro lado de la barranca.' },
+        // V58.8.30: promesa que sí se cumple (Doña Tóxica la espera en Puente Grande, ver el epílogo).
+        { who: 'DOÑA TÓXICA', tone: 'toxica', text: 'No te detengas y no dejes que te encierren. Cruza la barranca y sigue hacia Puente Grande: ahí te espero.' },
         { who: 'CONTROLES', tone: 'narra', text: '↑ ↓ CAMBIAN DE CARRIL · → ACELERA · ← FRENA · ✦ NITRO · ◒ PATADA · 🐾 GATAS' }
       ] }
   ];
@@ -312,6 +313,7 @@
       background: MAR + 'fondo_descenso.webp', fx: ['burbujas', 'recuerdo'],
       cast: [],
       lines: [
+        { who: 'DOÑA TÓXICA', tone: 'toxica', text: '¿Niña tóxica? ¡Sofía! ¿Me escuchas…? ¡Sofíaaa…!' },
         { who: 'NARRADOR', tone: 'narra', text: 'La corriente arrastra a Sofía y a sus gatitas río abajo, muy lejos, hasta el mar.' },
         { who: 'NARRADOR', tone: 'narra', text: 'Cuando abre los ojos, está en una isla que le parece conocida…' }
       ] }

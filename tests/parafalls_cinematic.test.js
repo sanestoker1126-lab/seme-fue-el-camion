@@ -24,9 +24,10 @@ test('Parafalls: transformación y llegada al checkpoint valida solo recursos ex
   assert.equal(new Set(byId('pf_portal').cast.find(a => a.name === 'SOFÍA').frames).size, 12);   // V58.8.28: transformación en 12 cuadros
   assert.equal(byId('pf_repisa').arrival, 4);
   assert.equal(scenes[scenes.length - 1].arrival, 4);
+  // V58.8.30: la Sofía Roblox oficial es la de la hoja de transformación (decisión del autor): la llegada la usa.
   const sofia = byId('pf_llegada').cast.find((a) => a.name === 'SOFÍA');
-  assert.equal(sofia.fitWidth, true);
-  assert.equal(sofia.frames.length, 3, 'tres cuadros auténticos distintos de Sofía');
+  assert.equal(sofia.sprite, 'assets/cinematica/parafalls/sofia_roblox_12.webp');
+  assert.ok(!manifest.assetsOf(scenes).some((u) => /sofia_0[0-2]_/.test(u)), 'sin cuadros del diseño anterior en la cinemática');
   assert.ok(byId('pf_llegada').cast.some((a) => a.name === 'LUNA'));
   assert.ok(byId('pf_llegada').cast.some((a) => a.name === 'MORITA'));
   // El puente: Sofía llega con el traje espacial de la Luna y Papito Estoker le trae la ropa con la que entra al portal.
@@ -49,7 +50,7 @@ test('Parafalls: primer inicio y replay usan progreso persistente y assets cache
     assert.ok(sw.includes(asset), `Service Worker sin ${asset}`);
   }
   const html = read('Se_Me_Fue_El_Camion.html');
-  for (const route of ['js/core/toxifamilia.js?v=58.8.30', 'js/app/main.js?v=58.8.31', 'js/app/toxifamilia_cinematic.js?v=58.8.30', 'css/toxifamilia.css?v=58.8.25']) {
+  for (const route of ['js/core/toxifamilia.js?v=58.8.32', 'js/app/main.js?v=58.8.32', 'js/app/toxifamilia_cinematic.js?v=58.8.30', 'css/toxifamilia.css?v=58.8.25']) {
     assert.ok(html.includes(route), `HTML no versiona ${route}`);
   }
 });
