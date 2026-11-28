@@ -1,6 +1,6 @@
 # V58.8.24 · La Calzada y misiones por tramo
 
-Base: V58.8.23 · Santuario de Poseidón (importada sin cambios en `45a9047`).
+Base: V58.8.23 · Santuario de Poseidón (importada sin cambios en `90f2db7`).
 
 ## 1. Misión especial · La Calzada (persecución en vehículo)
 

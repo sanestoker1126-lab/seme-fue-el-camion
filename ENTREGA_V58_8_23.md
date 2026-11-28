@@ -34,4 +34,4 @@ La compilación incluye isla, bosque de algas, fosa oscura y santuario de Poseid
 ## Después de la importación
 
 - `CONFIG.version` quedó corregido en la V58.8.24 (`CHANGELOG_V58_8_24.md`), que se construye sobre esta compilación.
-- El commit de importación (`45a9047`) conserva el contenido original de los 680 archivos.
+- El commit de importación (`90f2db7`) conserva el contenido original de los 680 archivos.
