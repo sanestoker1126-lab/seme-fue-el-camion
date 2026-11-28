@@ -170,7 +170,9 @@
       S.projectiles = []; S.fx = []; S.debris = [];
       S.P = {
         x: x0, v: TUNE.cruise * 0.8, lane: 1, ly: 1, z: 0, vz: 0, air: false, airT: 0, airMax: 0, overGap: false,
-        hp: D().hp, maxHp: D().hp, nitro: start === 0 ? 30 : 60, boostT: 0, invT: 1.2, ramCD: 0, ramT: 0, ramDir: 0,
+        // V58.8.27: mejoras de la tienda (MOTO REFORZADA, TANQUE DE NITRO).
+        hp: D().hp + ((opts.upgrades && opts.upgrades.chaseHp) | 0), maxHp: D().hp + ((opts.upgrades && opts.upgrades.chaseHp) | 0),
+        nitro: Math.min(TUNE.nitroMax, (start === 0 ? 30 : 60) + ((opts.upgrades && opts.upgrades.chaseNitro) | 0)), boostT: 0, invT: 1.2, ramCD: 0, ramT: 0, ramDir: 0,
         wobbleT: 0, wobbleDir: 1, hurtT: 0, tilt: 0, laneCD: 0
       };
       S.section = start; S.checkpoint = start; S.boss = null; S.finale = null;
@@ -734,6 +736,15 @@
       if (stats.startSection === 0 && (!save.chase.bestTime || stats.t < save.chase.bestTime)) save.chase.bestTime = Math.round(stats.t);
     }
     save.chase.wins = (save.chase.wins || 0) + 1;
+    // V58.8.27: cristales al banco y calificación (resistencia que quedó, derribos y caídas).
+    const UP = NS.Upgrades;
+    if (UP && stats) {
+      UP.deposit(save, stats.gems | 0);
+      if (stats.startSection === 0) {
+        const g = UP.rank({ contracts: { total: 1, main: 1, bonus: (stats.takedowns | 0) >= 6 ? 1 : 0 }, lives: stats.hp, maxLives: stats.maxHp, deaths: stats.deaths });
+        save.chase.lastRank = g.rank; UP.recordRank(save, 'calzada', g.rank);
+      }
+    }
     return save;
   }
 

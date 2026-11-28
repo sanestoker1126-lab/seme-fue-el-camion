@@ -1143,6 +1143,13 @@
     }
   ];
 
+  /* V58.8.27 · Reparto protagonista por tramo (modo misiones): cada lugar de Guadalajara tiene 2–3 enemigos propios
+     —murciélagos y ratas en la colonia de noche, palomas y chiles en las azoteas, perros bravos en Zapopan y en el
+     parque, ratas en el metro…—; repetir un tipo le da más peso. La Plaza de las Jacarandas (final) reúne a todos.
+     `foes` se conserva como el reparto clásico (motor sin modo misiones). */
+  const CAST = {'gdl_noche': ['bat', 'rat', 'bat'], 'azoteas': ['pigeon', 'chile', 'pigeon'], 'centro_historico': ['pigeon', 'dog', 'pigeon'], 'portales': ['kid', 'pigeon', 'kid'], 'zapopan': ['bravo', 'bat', 'bravo'], 'arcadas': ['rat', 'chile', 'rat'], 'metro': ['rat', 'bat', 'rat'], 'mercado_tapatio': ['dog', 'rat', 'kid'], 'parque_metropolitano': ['bravo', 'dog', 'bravo'], 'tlaquepaque': ['chile', 'pigeon', 'chile'], 'anden_tren_ligero': ['pigeon', 'kid', 'bat']};
+  LEVEL_SEQUENCE.forEach((d) => { if (CAST[d.id]) d.cast = CAST[d.id]; });
+
   /* storyIndex: posición canónica de cada tramo (0..15) para que capítulos, letreros y objetos sigan al nivel
      aunque una misión lo juegue en otra posición (world.js y game.js usan def.storyIndex, no el índice local). */
   LEVEL_SEQUENCE.forEach((d, i) => { d.storyIndex = i; });

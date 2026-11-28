@@ -52,6 +52,22 @@
       emit('message', { text, priority, key });
     }
 
+    /* ---------- V58.8.27 · Progreso: banco de cristales y mejoras (js/core/upgrades.js) ---------- */
+    const UP = NS.Upgrades;
+    const upFx = () => (UP ? UP.effects(runSave) : null);
+    const catsCooldown = () => { const fx = upFx(); return fx ? fx.catsCooldown(C.cats.cooldown) : C.cats.cooldown; };
+    /** Deposita en el banco los cristales juntados desde la última parada. */
+    function bankGems(announce) {
+      if (!UP || !G.run) return 0;
+      const n = Math.max(0, (G.run.gems | 0) - (G.run.banked | 0));
+      G.run.banked = G.run.gems | 0;
+      if (!n) return 0;
+      UP.deposit(runSave, n);
+      if (announce) message('bank', '+' + n + ' CRISTALES AL BANCO · TOTAL ' + runSave.bank, 2, 1.5);
+      emit('bank', { n, total: runSave.bank });
+      return n;
+    }
+
     /* ---------- V58.8.24 · Contratos de tramo (js/core/contracts.js) ---------- */
     const CT = NS.Contracts;
     const contractsActive = () => !!CT && !!G.assist.contracts;
@@ -176,7 +192,8 @@
       const mi = hasMission ? U.clamp(o.mission | 0, 0, missions.length - 1) : 0;
       G.mission = mi; G.missionId = missions ? missions[mi].id : 'escuela';
       G.runMission = hasMission ? mi : null;   // V58: el reintento reconstruye la MISMA misión (antes armaba la secuencia completa)
-      const W = NS.World.buildWorld({ difficulty: G.difficulty, seed: o.seed, preservePopulation: G.assist.relaxed, levels: hasMission ? missions[mi].levels : undefined });
+      const W = NS.World.buildWorld({ difficulty: G.difficulty, seed: o.seed, preservePopulation: G.assist.relaxed, levels: hasMission ? missions[mi].levels : undefined,
+        cast: !!G.assist.contracts });   // V58.8.27: el modo misiones usa el reparto protagonista de cada tramo
       G.world = W;
       const startTramo = U.clamp(o.startTramo | 0, 0, W.scenes.length - 1);
       // V58: reintentar desde una parada intermedia reaparece ahí y no al inicio del nivel.
@@ -187,7 +204,7 @@
       if(cp.abyss){G.P.water=W.waters.find(z=>z.sea&&z.toStreet&&cp.y>z.y&&cp.y<z.y2);G.P.submerged=!!G.P.water;G.P.state='swimUnder';}
       G.P.invuln = startTramo > 0 || mid || cp.schoolFinal ? 1.2 : 0;
       G.run = {
-        practice, t: 0, score: 0, combo: 0, comboT: 0, gems: 0, lives: d.lives, maxLives: d.lives, items: [],
+        practice, t: 0, score: 0, combo: 0, comboT: 0, gems: 0, banked: 0, lives: d.lives + (UP ? upFx().lives : 0), maxLives: d.lives + (UP ? upFx().lives : 0), items: [],
         keys: new Set(), deaths: o.deaths || 0, startTramo, maxDepth: 0, kills: 0, bosses: 0, secretBosses: 0, secrets: 0, seenChapters: new Set(), busSeen: false, contracts: {}, contract: null,
         carriedItems: o.carriedItems ? o.carriedItems.slice() : [], schoolRooms: new Set(W.schoolMission ? (o.schoolRooms || []) : [])
       };
@@ -199,7 +216,9 @@
       G.region = 'main'; G.room = null; G.tramo = startTramo; G.transition = null;
       G.timers = { dying: 0, victory: 0 }; G.shakeT = 0; G.fx = []; G.waterFx = []; G.bubbleT = 0; G.msgCD = Object.create(null); G.events.length = 0;
       G.companions = { warningT: 0, meowCD: 0, senseCD: 0.8, assistCD: 4.2, warningCat: 'luna', warningKind: '', nextCat: 'luna', action: 'idle', actionT: 0, purrNext: 3.4, agents: createCompanionAgents(G.P),
-        cmdCD: 0, cmdMax: C.cats.cooldown, lastCmd: '' };
+        cmdCD: 0, cmdMax: catsCooldown(), lastCmd: '' };
+      // Mejora ESCUDO DE SALIDA: cada misión (y cada reintento) empieza con escudo.
+      if (UP && upFx().shield) G.P.shield = true;
       activateCheckpoint(cp, true);
       updateCamera(0, true);
       G.state = 'playing';
@@ -218,6 +237,7 @@
     }
 
     function activateCheckpoint(cp, silent) {
+      if (!silent) bankGems(true);   // V58.8.27: cada parada guarda los cristales en el banco
       for (const c of G.world.checkpoints) c.active = c === cp;
       for (const c of G.world.midpoints || []) c.active = c === cp;
       for(const c of G.world.abyssBeacons||[])c.active=c===cp;
@@ -430,7 +450,7 @@
       if (!c || !W || G.state !== 'playing' || P.dead || c.cmdCD > 0) { if (c && c.cmdCD > 0) message('catsCD', ST.MESSAGES.catsTired, 1.4, 0); return null; }
       const near = W.foes.filter((f) => !f.dead && f.region === G.region && onScreen(f.x, f.y, 10) && Math.hypot(f.x - P.x, f.y - P.y) < CC.range)
         .sort((a, b) => Math.hypot(a.x - P.x, a.y - P.y) - Math.hypot(b.x - P.x, b.y - P.y));
-      c.cmdCD = CC.cooldown; c.cmdMax = CC.cooldown;
+      c.cmdCD = catsCooldown(); c.cmdMax = c.cmdCD;
       if (near.length) {
         const f = near[0], agent = c.agents && c.agents.luna;
         // V58.2: Luna salta en arco hasta el enemigo y lo araña al caer (el golpe llega con ella, no antes).
@@ -564,9 +584,15 @@
       const lastMission = !missions || G.mission === missions.length - 1;
       const postCredits = !r.practice && lastMission && keys >= ST.ITEMS.length;
       if (postCredits) runSave.epilogue = true;
+      // V58.8.27: los cristales del último tramo al banco y calificación de la misión (solo cuenta desde la parada 1).
+      const banked = bankGems(false);
+      const sum = summary();
+      const grade = UP ? UP.rank({ contracts: sum.contracts, lives: r.lives, maxLives: r.maxLives, deaths: r.deaths }) : null;
+      const rankNew = !!(grade && fullRun && !r.practice && UP.recordRank(runSave, G.missionId, grade.rank));
       persist();
-      emit('victory', { summary: summary(), stars, newTime, newScore, fullRun, ending: ST.ending(items, total, r.lives),
-        postCredits, keys, totalKeys: ST.ITEMS.length, lastMission, mission:G.mission, nextMission: special || (next ? G.mission+1 : null) });
+      emit('victory', { summary: sum, stars, newTime, newScore, fullRun, ending: ST.ending(items, total, r.lives),
+        postCredits, keys, totalKeys: ST.ITEMS.length, lastMission, mission:G.mission, nextMission: special || (next ? G.mission+1 : null),
+        rank: grade && grade.rank, rankPoints: grade && grade.points, rankNew, banked, bank: runSave.bank | 0 });
     }
 
     function summary() {
@@ -689,7 +715,7 @@
         for (const g of near) {
           if (g.got || g.type !== 'gem') continue;
           const dx = P.x - g.x, dy = P.y - g.y, d = Math.hypot(dx, dy);
-          if (d < PW.magnetRadius && d > 1) { g.x += (dx / d) * PW.magnetSpeed * dt; g.y += (dy / d) * PW.magnetSpeed * dt; }
+          if (d < (UP ? upFx().magnetRadius(PW.magnetRadius) : PW.magnetRadius) && d > 1) { g.x += (dx / d) * PW.magnetSpeed * dt; g.y += (dy / d) * PW.magnetSpeed * dt; }
         }
       }
       // V58: cristales que Morita va trayendo hasta Sofía.
@@ -711,7 +737,7 @@
           contractEvent(G.run.contracts[pk.scene], { type: 'gem' });
         } else if (pk.type === 'power') {
           if (pk.power === 'shield') { P.shield = true; message('pw', '¡ESCUDO! AGUANTA UN GOLPE', 1.2); }
-          else if (pk.power === 'magnet') { P.magnetT = PW.magnetTime; message('pw', '¡IMÁN DE CRISTALES! ' + PW.magnetTime + ' s', 1.2); }
+          else if (pk.power === 'magnet') { const mt = UP ? upFx().magnetTime(PW.magnetTime) : PW.magnetTime; P.magnetT = mt; message('pw', '¡IMÁN DE CRISTALES! ' + mt + ' s', 1.2); }
           else if (G.run.lives < G.run.maxLives) { G.run.lives++; message('pw', '¡+1 CORAZÓN!', 1.2); }
           else { G.run.gems += 5; addScore(C.scoring.gem * 5); message('pw', '¡+5 CRISTALES!', 1.2); }
           emit('power', { power: pk.power }); burst(pk.x, pk.y, 0xffffff, 14);

@@ -123,6 +123,15 @@
     resetProgress: () => resetProgress(),
     story: () => playStory(),
     epilogue: () => playEpilogue(),
+    // V58.8.27 · Tienda de mejoras: compra con el banco de cristales y guarda al instante.
+    getSave: () => G.save,
+    buy: (id) => {
+      audio.ensure();
+      const r = NS.Upgrades ? NS.Upgrades.buy(G.save, id) : { ok: false };
+      if (r.ok) { store.set(SAVE_KEY, JSON.stringify(G.save)); audio.sfx('item'); } else audio.sfx('alert');
+      ui.paintMenu(G, opt);
+      return r;
+    },
     click: () => { audio.ensure(); audio.sfx('ui'); }
   });
 
@@ -149,7 +158,7 @@
     const practice = !!opt.freeSelect;
     const go = () => {
       input.releaseAll(); ui.clearOverlays();
-      chase = NS.Chase.createChase({ difficulty: opt.difficulty, practice, seed: 6 });
+      chase = NS.Chase.createChase({ difficulty: opt.difficulty, practice, seed: 6, upgrades: NS.Upgrades ? NS.Upgrades.effects(G.save) : null });
       chase.newRun({ section });
       if (G.world) G.state = 'menu';
       relabelControls(true);

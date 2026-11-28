@@ -550,17 +550,19 @@
         }
         addFoe(guard);
       }
-      const budget = def.foes.length ? Math.max(1, Math.round(def.foeBudget * diff.foeDensity)) : 0;
+      // V58.8.27: con el modo misiones (opts.cast) cada tramo usa su reparto protagonista (`def.cast`, ver levels.js).
+      const foeList = opts.cast && def.cast ? def.cast : def.foes;
+      const budget = foeList.length ? Math.max(1, Math.round(def.foeBudget * diff.foeDensity)) : 0;
       let walkersOn = new Set();
       for (let n = 0; n < budget; n++) {
-        const kind = def.foes[n % def.foes.length];
+        const kind = foeList[n % foeList.length];
         addFoe(placeFoe(kind, panel, rng, walkersOn, sc, scope, diff));
       }
       // Enemigos de los sectores laterales.
-      const sideBudget = def.sideFoes && def.foes.length ? Math.max(1, Math.round(def.sideFoes * diff.foeDensity)) : 0;
+      const sideBudget = def.sideFoes && foeList.length ? Math.max(1, Math.round(def.sideFoes * diff.foeDensity)) : 0;
       walkersOn = new Set();
       for (let n = 0; n < sideBudget; n++) {
-        const kind = def.foes[(n + 1) % def.foes.length];
+        const kind = foeList[(n + 1) % foeList.length];
         addFoe(placeFoe(kind, sides, rng, walkersOn, sc, scope, diff));
       }
       // Obstáculos: panel y sectores.

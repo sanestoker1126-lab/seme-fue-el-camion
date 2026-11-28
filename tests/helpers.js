@@ -1,6 +1,6 @@
 // Cargador común: ejecuta los módulos de js/core en el ámbito global de Node, igual que en el navegador.
 const path = require('path');
-const ORDER = ['util', 'config', 'parafalls_data', 'levels', 'story', 'physics', 'enemies', 'obstacles', 'contracts', 'world', 'game', 'chase'];
+const ORDER = ['util', 'config', 'parafalls_data', 'levels', 'story', 'physics', 'enemies', 'obstacles', 'contracts', 'upgrades', 'world', 'game', 'chase'];
 let loaded = false;
 function load() {
   if (!loaded) {

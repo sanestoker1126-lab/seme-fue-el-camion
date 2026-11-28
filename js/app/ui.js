@@ -9,7 +9,7 @@
 
   function createUI(cb) {
     const ST = NS.STORY, C = NS.CONFIG;
-    const panels = ['menu', 'intro', 'cinematic', 'bossCinematic', 'guide', 'pausePanel', 'result', 'optionsPanel'];
+    const panels = ['menu', 'intro', 'cinematic', 'bossCinematic', 'guide', 'pausePanel', 'result', 'optionsPanel', 'shopPanel'];
     const LV = NS.LEVELS.LEVEL_SEQUENCE;
     const MISSIONS = NS.LEVELS.MISSIONS || [{ id: 'escuela', label: 'MISIÓN 1', levels: LV }];
     const TOTAL_LEVELS = MISSIONS.reduce((n, M) => n + M.levels.length, 0);
@@ -220,7 +220,8 @@
           const short = missionName(M);
           // V58.6: tarjeta con el arte de su mundo, número, nombre y avance (paradas abiertas / total).
           const meta = open ? (M.special ? 'PERSECUCIÓN · ' + M.levels.length + ' TRAMOS' : M.levels.length + (M.levels.length === 1 ? ' PARADA' : ' PARADAS')) : 'BLOQUEADA';
-          b.innerHTML = '<span class="mNum">' + (open ? E.num : '🔒') + '</span><span class="mName">' + esc(short) + '</span><span class="mMeta">' + meta + '</span>';
+          const best = save.ranks && save.ranks[M.id];
+          b.innerHTML = '<span class="mNum">' + (open ? E.num : '🔒') + '</span><span class="mName">' + esc(short) + '</span><span class="mMeta">' + meta + '</span>' + (best ? '<span class="mRank r' + best + '" title="Mejor calificación">' + best + '</span>' : '');
           b.disabled = !open;
           b.setAttribute('aria-pressed', String(mi === selMission));
           b.setAttribute('aria-label', open ? (M.special ? 'Misión especial' : 'Misión ' + E.num.slice(1)) + ': ' + short + ', ' + meta.toLowerCase() : 'Misión bloqueada');
@@ -260,6 +261,7 @@
       if (save.bestTime) rec.push('Mejor tiempo ' + fmtTime(save.bestTime));
       if (save.bestScore) rec.push('Récord ' + save.bestScore + ' pts');
       if (save.wins) rec.push(save.wins + (save.wins === 1 ? ' llegada' : ' llegadas'));
+      rec.push('Banco ' + ((save.bank | 0)) + ' ◆');
       if ($('records')) $('records').textContent = rec.join(' · ') || 'Sin récords todavía.';
       paintStart();
       const nNew = MENU.reduce((n, E) => n + E.M.levels.filter((d) => d.isNew).length, 0);
@@ -302,6 +304,27 @@
         if (f) b.textContent = f(opt[k]);
         b.setAttribute('aria-label', (b.closest('.optRow')?.querySelector('span')?.textContent || k) + ': ' + b.textContent);
       }
+    }
+    /* ---------- V58.8.27 · Tienda de mejoras ---------- */
+    function showShop(msg) {
+      const UPG = NS.Upgrades, save = cb.getSave && cb.getSave();   // siempre el guardado vigente
+      if (!UPG || !save) return;
+      UPG.ensure(save);
+      $('shopBank').textContent = String(save.bank | 0);
+      const list = $('shopList'); list.innerHTML = '';
+      for (const u of UPG.CATALOG) {
+        const lvl = UPG.level(save, u.id), cost = UPG.nextCost(save, u.id), max = u.cost.length;
+        const row = document.createElement('div'); row.className = 'shopRow' + (cost == null ? ' maxed' : '');
+        row.innerHTML = '<span class="shopIcon">' + u.icon + '</span><span class="shopInfo"><b>' + esc(u.name) + '</b><small>' + esc(u.text) + '</small><i>NIVEL ' + lvl + ' / ' + max + '</i></span>';
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'opt shopBuy';
+        b.textContent = cost == null ? 'MÁXIMO' : cost + ' ◆';
+        b.disabled = cost == null || (save.bank | 0) < cost;
+        b.setAttribute('aria-label', cost == null ? u.name + ': nivel máximo' : 'Comprar ' + u.name + ' por ' + cost + ' cristales');
+        b.onclick = () => { const r = cb.buy && cb.buy(u.id); showShop(r && r.ok ? '¡' + u.name + ' NIVEL ' + r.level + '!' : r && r.reason === 'faltan' ? 'FALTAN ' + r.need + ' CRISTALES' : ''); };
+        row.appendChild(b); list.appendChild(row);
+      }
+      $('shopMsg').textContent = msg || '';
+      show('shopPanel');
     }
     let optReturn = 'menu', resetArmed = 0;
     function showOptions(from) { optReturn = from || 'menu'; resetArmed = 0; $('optReset').textContent = 'BORRAR PROGRESO'; show('optionsPanel'); }
@@ -436,7 +459,9 @@
       const keysLine = '<br><b>LLAVES USB RECUPERADAS: ' + (e.keys || 0) + ' / ' + (e.totalKeys || 6) + '</b>' +
         (e.postCredits ? ' · ¡ESCENA POST-CRÉDITOS DESBLOQUEADA!' : e.lastMission ? ' · Reúne las seis para ver la escena final.' : '');
       const cs = s.contracts, contractLine = cs && cs.total ? '<br><b>MISIONES CUMPLIDAS: ' + cs.main + ' / ' + cs.total + ' · OPCIONALES: ' + cs.bonus + ' / ' + cs.total + '</b>' : '';
-      $('resultText').innerHTML += (e.mission===0?'<br><b>INTERIORES EXPLORADOS: '+s.schoolRooms+'/'+s.schoolTotalRooms+' · OBJETOS: '+s.items.length+'/'+s.totalItems+'</b>':'')+keysLine+contractLine;
+      const rankLine = e.rank ? '<br><span class="rankBadge r' + e.rank + '">' + e.rank + '</span> <b>CALIFICACIÓN ' + e.rank + '</b>' + (e.rankNew ? ' · ¡NUEVO RÉCORD!' : e.fullRun ? '' : ' <small>(solo cuenta desde la parada 1)</small>') : '';
+      const bankLine = e.bank != null ? '<br><small>+' + (e.banked | 0) + ' cristales al banco · total ' + e.bank + ' ◆ (gástalos en 🛒 MEJORAS)</small>' : '';
+      $('resultText').innerHTML += (e.mission===0?'<br><b>INTERIORES EXPLORADOS: '+s.schoolRooms+'/'+s.schoolTotalRooms+' · OBJETOS: '+s.items.length+'/'+s.totalItems+'</b>':'')+keysLine+contractLine+rankLine+bankLine;
       $('resultItems').innerHTML = s.totalItems > 0 ? itemsList(s.items) : '';
       $('retry').textContent = 'JUGAR OTRA VEZ';
       $('retry').dataset.mode = 'again';
@@ -460,6 +485,7 @@
           (s.practice ? '<br><small>Práctica · el progreso y los récords de campaña se conservan.</small>' : '');
         $('resultStars').innerHTML = '<span class="on">★</span>'.repeat(e.stars || 1) + '<span>★</span>'.repeat(3 - (e.stars || 1));
         $('retry').textContent = 'JUGAR OTRA VEZ'; $('retry').dataset.mode = 'again'; $('retry').dataset.mission = 'calzada';
+        if (e.best && e.best.lastRank) $('resultText').innerHTML += '<br><span class="rankBadge r' + e.best.lastRank + '">' + e.best.lastRank + '</span> <b>CALIFICACIÓN ' + e.best.lastRank + '</b>';
       } else {
         nextButton.hidden = true;
         const why = { traffic: 'Chocaste con el tráfico', barrier: 'Te estrellaste contra una valla', ram: 'Una patrulla te embistió', crash: 'Te cerraron el paso', gap: 'Caíste a la zanja', crate: 'Una caja del tráiler te detuvo', barrel: 'Un barril de Los Zopilotes te detuvo', spikes: 'Las tachuelas te poncharon la llanta', truck: 'Chocaste con el tráiler blindado' }[e.reason] || 'La moto ya no aguanta';
@@ -509,6 +535,8 @@
       $('optDiff').onclick = () => cb.option('difficulty');
       // V50: panel de opciones completo (desde el menú y desde la pausa).
       $('btnOptions').onclick = () => { cb.click(); showOptions('menu'); };
+      if ($('btnShop')) $('btnShop').onclick = () => { cb.click(); showShop(); };
+      if ($('shopBack')) $('shopBack').onclick = () => { cb.click(); cb.menu(); };
       $('poptMore').onclick = () => { cb.click(); showOptions('pausePanel'); };
       $('optBack').onclick = () => { cb.click(); show(optReturn); };
       for (const b of document.querySelectorAll('#optionsPanel [data-opt]')) b.onclick = () => cb.option(b.dataset.opt);
@@ -567,7 +595,7 @@
       }, true);
     })();
 
-    return { show, toast, chapter, sign, itemCard, hurtFlash, tick, clearOverlays, hud, paintMenu, paintOpts, showIntro, showCinematic, showBossCinematic, bossCinematicIndex: kind => BOSS_CINEMATICS[kind]?.saveIndex, showOptions, bossCinematicActive: () => activePanel === 'bossCinematic', showGuide: () => show('guide'), showGameOver, showVictory, showChaseResult, setLoading, setPlaying, fmtTime };
+    return { show, toast, chapter, sign, itemCard, hurtFlash, tick, clearOverlays, hud, paintMenu, paintOpts, showIntro, showCinematic, showBossCinematic, bossCinematicIndex: kind => BOSS_CINEMATICS[kind]?.saveIndex, showOptions, bossCinematicActive: () => activePanel === 'bossCinematic', showGuide: () => show('guide'), showGameOver, showVictory, showChaseResult, showShop, setLoading, setPlaying, fmtTime };
   }
 
   NS.UI = { createUI };

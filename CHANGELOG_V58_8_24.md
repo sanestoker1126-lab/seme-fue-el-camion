@@ -200,3 +200,62 @@ Integro las dos hojas aportadas (3 × 4 cuadros cada una), recortadas y limpias 
   barriles y choques.
 - **Chromium (1280 × 720):** se ven los estados de manejo, aviso, ataque y persecución de los dos enemigos, sin
   errores.
+
+---
+
+# V58.8.27 · Progreso: banco, tienda de mejoras, calificación y enemigos por tramo
+
+Auditoría antes de cambiar (datos de los 23 tramos):
+- Los cristales (100+ por tramo) solo daban puntos.
+- Guadalajara repetía casi la misma mezcla de enemigos en los 13 tramos.
+- Ninguna misión se calificaba.
+
+Cambios (`js/core/upgrades.js`):
+- **Banco de cristales:**
+  - Los cristales se depositan al llegar a cada parada y al ganar.
+  - Si Sofía cae antes de la parada, se pierden los que traía.
+- **Tienda de Doña Tóxica** (botón 🛒 MEJORAS del menú). Mejoras permanentes:
+  - Corazón extra: hasta +2 vidas.
+  - Gatas entrenadas: −1,5 s de recarga por nivel.
+  - Imán de la mochila: +4 s y más alcance.
+  - Escudo de salida: cada misión y cada reintento empiezan con escudo.
+  - Moto reforzada: +1 de resistencia por nivel en La Calzada.
+  - Tanque de nitro: +25 de nitro inicial en La Calzada.
+  - El costo total de todo es de unos 3.150 cristales, lo que equivale a varias misiones.
+- **Calificación S/A/B/C por misión:**
+  - Peso de cada parte: misiones del tramo 55 %, opcionales 25 %, vidas 12 % y sin caídas 8 %.
+  - Solo cuenta una partida completa desde la parada 1.
+  - La mejor nota se guarda y se ve en la tarjeta del menú.
+  - La Calzada se califica por resistencia, derribos y caídas.
+- **Reparto protagonista por tramo en Guadalajara** (modo misiones, que es el del juego):
+  - Colonia de noche: murciélagos y ratas.
+  - Azoteas: palomas y chiles.
+  - Centro: palomas y perros.
+  - Portales: niños y palomas.
+  - Zapopan: perros bravos y murciélagos.
+  - Arcadas: ratas y chiles.
+  - Metro: ratas y murciélagos.
+  - Mercado: perros, ratas y niños.
+  - Parque: perros bravos y perros.
+  - Tlaquepaque: chiles y palomas.
+  - Andén: palomas, niños y murciélagos.
+  - El motor clásico conserva el reparto anterior. Las rutas grabadas de las pruebas de campaña dependen cuadro a
+    cuadro de dónde están los enemigos, y siguen verificando la campaña completa.
+
+QA:
+- **Node: 149/149.** 5 pruebas nuevas:
+  - compras y nivel máximo;
+  - la parada deposita y el reintento pierde lo no depositado;
+  - efectos de cada mejora, también en La Calzada;
+  - calificación y récord;
+  - al menos 80 % de los enemigos de cada tramo son sus protagonistas.
+  - Los contratos siguen siendo cumplibles en los 23 tramos con los repartos nuevos.
+- **Chromium (390 × 844 y 844 × 390):**
+  - Menú con el banco y las calificaciones.
+  - Compra real: el banco baja de 820 a 320, se guarda en el teléfono y la partida empieza con escudo.
+  - Sin errores.
+
+No verificado:
+- El equilibrio de precios y la dificultad con jugadores reales.
+- Parafalls sigue siendo el mundo más simple: 3 guardianes por tramo, sin jefe. Necesita arte de enemigos o de jefe
+  para crecer.

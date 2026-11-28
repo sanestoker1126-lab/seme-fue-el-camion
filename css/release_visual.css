@@ -132,3 +132,19 @@ body.chaseMode #bubble{display:none}
 #menu .tramo.medal::before{content:'✓';position:absolute;left:3px;bottom:1px;font-size:8px;color:#b6ff8a}
 #menu .tramo.medal2::before{content:'✓★';color:#ffcf4a}
 @media(prefers-reduced-motion:reduce){#hud .objective.urgent{animation:none}}
+/* V58.8.27 · Tienda de mejoras, banco y calificaciones. */
+#shopPanel{max-width:min(94vw,560px)}
+#shopPanel .shopBank{font-size:15px;margin:4px 0}#shopPanel .shopBank b{font-size:26px;color:#7ff0ff}
+#shopPanel .shopHelp{font-size:11px;opacity:.85;margin:0 0 8px}
+#shopPanel .shopList{display:grid;gap:7px;max-height:52dvh;overflow:auto;padding-right:2px}
+#shopPanel .shopRow{display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:9px;padding:8px 10px;border-radius:10px;background:#16273acc;border:1px solid #9bb4ca33}
+#shopPanel .shopRow.maxed{opacity:.7}
+#shopPanel .shopIcon{font-size:22px;text-align:center}
+#shopPanel .shopInfo{display:flex;flex-direction:column;gap:2px;text-align:left}
+#shopPanel .shopInfo b{font-size:12px;letter-spacing:.06em}#shopPanel .shopInfo small{font-size:10px;opacity:.85}#shopPanel .shopInfo i{font-style:normal;font-size:9px;color:#ffcf4a;letter-spacing:.08em}
+#shopPanel .shopBuy{min-width:86px;min-height:36px}
+#shopPanel .shopMsg{min-height:16px;font-size:12px;color:#b6ff8a;margin:6px 0}
+#menu #missions .mission .mRank,.rankBadge{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:6px;font-weight:950;font-size:13px;background:#334;color:#fff}
+#menu #missions .mission .mRank{position:absolute;top:6px;right:6px}
+.rS{background:linear-gradient(135deg,#ffe07a,#ff9d2e)!important;color:#2a1500!important}.rA{background:#55d38a!important;color:#062211!important}.rB{background:#5aa7ff!important;color:#061a33!important}.rC{background:#8a93a3!important}
+#menu #missions .mission{position:relative}
