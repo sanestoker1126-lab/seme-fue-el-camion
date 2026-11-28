@@ -31,7 +31,9 @@
       companions: { warningT: 0, meowCD: 0, senseCD: 0.8, assistCD: 4.2, warningCat: 'luna', warningKind: '', nextCat: 'luna', action: 'idle', actionT: 0, purrNext: 3.4, agents: null },
       onSave: opts.onSave || null, godMode: false,
       // V50: asistencias configurables desde el menú de opciones.
-      assist: Object.assign({ catsHelp: true, relaxed: false }, opts.assist || {})
+      // V58.8.24 · contracts: false = sin contratos (motor clásico); 'opcional' = contratos, efectos y medallas sin
+      // bloquear; true = obligatorios (el juego los activa desde OPCIONES → MISIONES).
+      assist: Object.assign({ catsHelp: true, relaxed: false, contracts: false }, opts.assist || {})
     };
     if (!G.save.items) G.save.items = {};
     // Compatibilidad: saves anteriores a V53 no traen progreso por misión.
@@ -48,6 +50,68 @@
       if (G.msgCD[key] && now < G.msgCD[key]) return;
       G.msgCD[key] = now + cd;
       emit('message', { text, priority, key });
+    }
+
+    /* ---------- V58.8.24 · Contratos de tramo (js/core/contracts.js) ---------- */
+    const CT = NS.Contracts;
+    const contractsActive = () => !!CT && !!G.assist.contracts;
+    const contractsOn = () => contractsActive() && G.assist.contracts === true;
+    function makeContract(i) {
+      if (!contractsActive()) return null;
+      const W = G.world, sc = W.scenes[i], P = G.P;
+      const fromY = P ? P.y : sc.startY, ahead = (yy) => yy > fromY - 60;
+      const boss = W.foes.find((f) => f.scene === i && f.isBoss && !f.secret && !f.dead);
+      const foes = W.foes.filter((f) => f.scene === i && !f.isBoss && !f.dead && ahead(f.y));
+      const gems = W.pickups.filter((p) => p.type === 'gem' && p.scene === i && !p.got && ahead(p.y));
+      const item = W.pickups.find((p) => p.type === 'item' && p.scene === i);
+      const door = item && W.doors.find((d) => d.region === 'main' && d.to && d.to.region === item.region);
+      const c = CT.create({
+        scene: i, levelId: sc.id, bossAlive: !!boss, bossName: boss ? boss.bossName : '',
+        foesAhead: foes.length, gemsAhead: gems.length, itemIndex: item ? item.itemIndex : null,
+        itemReachable: !!(door && door.y > fromY - 40), itemOwned: !!(item && (item.got || G.run.items.includes(item.itemIndex))),
+        hasSecret: W.doors.some((d) => d.kind === 'secreto' && d.scene === i),
+        startFrac: Math.max(0, Math.min(1, (fromY - sc.startY) / sc.drawH)), difficulty: G.difficulty
+      });
+      // Lluvia: los pisos del tramo mojan (ver Physics.stepPlayer).
+      if (c && c.mod === 'lluvia') for (const pl of W.platforms) if (pl.scene === i) pl.wet = true;
+      return c;
+    }
+    function recordContract(c) {
+      if (!c) return;
+      if (!runSave.contracts) runSave.contracts = {};
+      const r = runSave.contracts[c.levelId] || (runSave.contracts[c.levelId] = {});
+      let changed = false;
+      if (c.mainDone && !r.main) { r.main = true; changed = true; }
+      if (c.bonusDone && !r.bonus) { r.bonus = true; changed = true; }
+      if (changed) persist();
+    }
+    function contractEvent(c, ev) {
+      if (!CT || !c || G.state !== 'playing' && G.state !== 'transition') return;
+      for (const what of CT.update(c, ev)) {
+        if (what === 'main') { emit('contractMain', { contract: c }); message('contractMain', '¡MISIÓN CUMPLIDA! ' + (c.main.type === 'jefe' ? 'EL PASO ESTÁ LIBRE' : 'YA PUEDES SEGUIR BAJANDO'), 3, 4); recordContract(c); }
+        else if (what === 'bonus') { emit('contractBonus', { contract: c }); message('contractBonus', '★ OPCIONAL CUMPLIDO', 2, 3); recordContract(c); }
+        else if (what === 'fail') { if (contractsOn()) failContract(c); else message('contractLate', 'TIEMPO AGOTADO · MISIÓN NO CUMPLIDA', 3, 3); }
+      }
+    }
+    /** Al pasar al tramo siguiente se cierra el contrato del actual. Devuelve false si la misión falla. */
+    function leaveTramo(i) {
+      const c = G.run.contracts && G.run.contracts[i];
+      if (!CT || !c) return true;
+      const r = CT.finish(c);
+      recordContract(c);
+      if (r.ok) return true;
+      if (!contractsOn()) { message('contractSkip', 'MISIÓN NO CUMPLIDA · SIGUES DE TODOS MODOS', 3, 3); return true; }
+      failContract(c);
+      return false;
+    }
+    function failContract(c) {
+      c.failed = c.failed || 'incompleto';
+      const P = G.P;
+      P.vx = 0; P.vy = 0;
+      G.state = 'gameover';
+      emit('contractFail', { contract: c });
+      emit('gameover', { summary: summary(), newScore: false, checkpointScene: G.checkpoint ? G.checkpoint.scene : 0,
+        contract: { reason: CT.failText(c), goal: CT.briefText(c), why: c.why, level: c.levelId } });
     }
 
     /* ---------- Vista y cámara ---------- */
@@ -124,7 +188,7 @@
       G.P.invuln = startTramo > 0 || mid || cp.schoolFinal ? 1.2 : 0;
       G.run = {
         practice, t: 0, score: 0, combo: 0, comboT: 0, gems: 0, lives: d.lives, maxLives: d.lives, items: [],
-        keys: new Set(), deaths: o.deaths || 0, startTramo, maxDepth: 0, kills: 0, bosses: 0, secretBosses: 0, secrets: 0, seenChapters: new Set(), busSeen: false,
+        keys: new Set(), deaths: o.deaths || 0, startTramo, maxDepth: 0, kills: 0, bosses: 0, secretBosses: 0, secrets: 0, seenChapters: new Set(), busSeen: false, contracts: {}, contract: null,
         carriedItems: o.carriedItems ? o.carriedItems.slice() : [], schoolRooms: new Set(W.schoolMission ? (o.schoolRooms || []) : [])
       };
       for (const it of G.run.carriedItems) {
@@ -172,9 +236,11 @@
 
     function enterTramo(i) {
       G.tramo = i;
+      if (contractsActive() && !G.run.contracts[i]) G.run.contracts[i] = makeContract(i);
+      G.run.contract = G.run.contracts[i] || null;
       if (G.run.seenChapters.has(i)) return;
       G.run.seenChapters.add(i);
-      emit('chapter', { index: i, chapter: G.world.scenes[i].chapter, scene: G.world.scenes[i] });
+      emit('chapter', { index: i, chapter: G.world.scenes[i].chapter, scene: G.world.scenes[i], contract: G.run.contract });
     }
 
     function pause() { if (G.state === 'playing' || G.state === 'transition') { G.prevState = G.state; G.state = 'paused'; emit('paused'); } }
@@ -431,6 +497,7 @@
       if (kind !== 'fall') { P.vx = dir * CB.knockX; P.vy = CB.knockY; P.noCut = true; P.ground = null; }
       G.shakeT = Math.max(G.shakeT, 0.3);
       emit('hurt', { kind, lives: G.run.lives, x: P.x, y: P.y });
+      if (G.run.contract && CT) CT.update(G.run.contract, { type: 'hit' });
       if (G.companions && G.companions.agents && kind !== 'fall') {
         for (const name of COMPANION_NAMES) { const a = G.companions.agents[name]; if (a && a.mode !== 'pounce' && a.mode !== 'fetch') { a.mode = 'alert'; a.modeT = 0.8; } }
         G.companions.hissT = 0.8;
@@ -505,7 +572,8 @@
     function summary() {
       const r = G.run;
       return { practice: r.practice, time: r.t, score: r.score, gems: r.gems, lives: r.lives, maxLives: r.maxLives, items: r.items.slice(), totalItems: G.world.totalItems, depth: Math.floor(r.maxDepth / 10), kills: r.kills, bosses: r.bosses, totalBosses: G.world.foes.filter((f) => f.isBoss && !f.secret).length, secrets: r.secrets || 0,
-        schoolRooms:G.world.schoolMission?G.run.schoolRooms.size:0, schoolTotalRooms:G.world.schoolMission?G.world.rooms.filter(q=>q.schoolArt).length:0, totalSecrets: G.world.rooms.filter((q) => q.secret).length, secretBosses: r.secretBosses || 0, deaths: r.deaths, tramo: G.tramo, relaxed: !!G.assist.relaxed };
+        schoolRooms:G.world.schoolMission?G.run.schoolRooms.size:0, schoolTotalRooms:G.world.schoolMission?G.world.rooms.filter(q=>q.schoolArt).length:0, totalSecrets: G.world.rooms.filter((q) => q.secret).length, secretBosses: r.secretBosses || 0, deaths: r.deaths, tramo: G.tramo, relaxed: !!G.assist.relaxed,
+        contracts: Object.values(r.contracts || {}).filter(Boolean).reduce((a, c) => { a.total++; if (c.mainDone) a.main++; if (c.bonusDone) a.bonus++; return a; }, { total: 0, main: 0, bonus: 0 }) };
     }
 
     /* ---------- Puntuación y efectos ---------- */
@@ -576,6 +644,7 @@
           runSave.secrets = Object.assign({}, runSave.secrets, { [room.secret]: true }); persist();
           addScore(C.scoring.secret);
           emit('secretFound', { room, first });
+          contractEvent(G.run.contract, { type: 'secret' });
         }
         if (room && !room.visited) { room.visited = true; }
         if (room?.schoolArt) G.run.schoolRooms.add(room.id);
@@ -639,6 +708,7 @@
         if (pk.type === 'gem') {
           G.run.gems++; addScore(C.scoring.gem);
           emit('gem', { x: pk.x, y: pk.y }); burst(pk.x, pk.y, 0xd9ff65, 12);
+          contractEvent(G.run.contracts[pk.scene], { type: 'gem' });
         } else if (pk.type === 'power') {
           if (pk.power === 'shield') { P.shield = true; message('pw', '¡ESCUDO! AGUANTA UN GOLPE', 1.2); }
           else if (pk.power === 'magnet') { P.magnetT = PW.magnetTime; message('pw', '¡IMÁN DE CRISTALES! ' + PW.magnetTime + ' s', 1.2); }
@@ -654,6 +724,7 @@
           runSave.items[pk.itemId] = true; persist();
           addScore(C.scoring.item);
           emit('item', { item: ST.ITEMS[pk.itemIndex], index: pk.itemIndex, first, count: G.run.items.length, total: W.totalItems });
+          contractEvent(G.run.contracts[pk.scene], { type: 'item', itemIndex: pk.itemIndex });
           burst(pk.x, pk.y, 0xffe27a, 26);
         }
       }
@@ -742,13 +813,28 @@
           if (d) { startTransition(d); input = Object.assign({}, inp, { downPressed: false }); }
         }
         if (G.state === 'playing' && inp.catsPressed) catCommand();
+        if (G.state === 'playing' && G.run.contract) {
+          const cc = G.run.contract;
+          contractEvent(cc, { type: 'time', dt });
+          // Viento: ráfagas anunciadas que empujan de lado (no en el agua ni en las zonas interiores).
+          if (G.state === 'playing' && cc.mod === 'viento' && cc.scene === G.tramo && !G.room && !P.water && !P.rope && !P.zip) {
+            const w = CT.wind(cc, dt, !!P.ground);
+            if (w.warn) { emit('windWarn', { dir: cc.gust.dir }); message('wind', cc.gust.dir > 0 ? 'VIENTO · ¡RÁFAGA HACIA LA DERECHA! →' : '← ¡RÁFAGA HACIA LA IZQUIERDA! · VIENTO', 2, 3); }
+            if (w.accel && P.dashT <= 0) P.vx += w.accel * dt;
+          }
+        }
         if (G.state === 'playing') {
           const evs = PHY.stepPlayer(P, W, input, dt, []);
           for (const e of evs) handlePhysicsEvent(e);
           updateRegion();
           if (!G.room) {
             const sc = W.sceneAt(P.y);
-            if (sc !== G.tramo && P.y < W.bounds.streetY) enterTramo(sc);
+            if (sc !== G.tramo && P.y < W.bounds.streetY) {
+              // V58.8.24: bajar al tramo siguiente cierra el contrato del actual (si falla, se reintenta el tramo).
+              if (sc < G.tramo || leaveTramo(G.tramo)) enterTramo(sc);
+              // Misión fallida: se corta el paso aquí (si no, se activaría la parada del tramo siguiente).
+              if (G.state !== 'playing') return;
+            }
             G.run.maxDepth = Math.max(G.run.maxDepth, P.y - W.checkpoints[0].y + P.h / 2);
           }
           // Paradas: solo hacia adelante. La intermedia de un tramo va después de su parada inicial.
@@ -788,7 +874,12 @@
             const seaGuard=W.poseidonArena&&W.foes.find(f=>f.id===W.poseidonArena.bossId&&!f.dead);
             if(seaGuard)message('poseidonLocked','ESCOTILLA SELLADA · VENCE A POSEIDÓN',4,3);
             else if(guard)message('schoolBusLocked','EL MAESTRO CUSTODIA EL CAMIÓN · VÉNCELO PARA SUBIR',4,3);
-            else startVictory();
+            else {
+              // V58.8.24: el último tramo también es una misión: hay que cumplirla antes de subir.
+              const lc = G.run.contracts[G.tramo];
+              if (lc && CT && contractsOn() && !CT.finish(lc).ok) message('contractGoal', CT.goalText(lc) + ' · ANTES DE TERMINAR', 4, 3);
+              else { if (lc && CT) { CT.finish(lc); recordContract(lc); } startVictory(); }
+            }
           }
           // Red de seguridad: posición inválida o fuera de todo volumen jugable.
           const lost = !Number.isFinite(P.x) || !Number.isFinite(P.y) || P.y > W.bounds.y2 + 300 ||
@@ -916,6 +1007,7 @@
           }
           if(G.world.schoolFinal?.bossId===e.foe?.id)message('schoolBusOpen','¡SALIDA LIBRE! SUBE AL CAMIÓN DE LA RUTA 6',7,4);
           emit('foeKilled', { foe: e.foe, how: e.how });
+          if (e.foe && !e.foe.secret) contractEvent(G.run.contracts[e.foe.scene], { type: 'kill', how: e.how, boss: !!e.foe.isBoss });
           burst(e.foe.x, e.foe.y - 10, 0xff9a5a, 16);
           burst(e.foe.x, e.foe.y - 14, 0xffffff, 6);                 // chispa blanca de impacto
           G.shakeT = Math.max(G.shakeT, e.foe?.isBoss ? 0.22 : 0.16); // el golpe se siente

@@ -40,7 +40,8 @@
     vib: [true, false], shake: ['normal', 'suave', 'no'], zoom: ['cerca', 'normal', 'lejos'],
     ctlSize: ['chico', 'normal', 'grande'], lefty: [false, true], landingRing: [true, false],
     catsHelp: [true, false], relaxed: [false, true], freeSelect: [false, true], cinematics: [true, false], fps: [false, true],
-    ninaLook: ['original', 'rosa']   // V58.6: ropa de calle (Guadalajara y la isla); el uniforme, el buzo y el astronauta van por nivel
+    ninaLook: ['original', 'rosa'],   // V58.6: ropa de calle (Guadalajara y la isla); el uniforme, el buzo y el astronauta van por nivel
+    misiones: ['obligatorias', 'opcionales']   // V58.8.24: contratos de tramo (js/core/contracts.js)
   };
   const readOpt = (k, def) => {
     const raw = store.get('camion-opt-' + k, null);
@@ -58,8 +59,10 @@
     ctlSize: readOpt('ctlSize', 'normal'), lefty: readOpt('lefty', false), landingRing: readOpt('landingRing', true),
     catsHelp: readOpt('catsHelp', true), relaxed: readOpt('relaxed', false), freeSelect: readOpt('freeSelect', false),
     cinematics: readOpt('cinematics', true), fps: readOpt('fps', false),
-    ninaLook: readOpt('ninaLook', 'original')
+    ninaLook: readOpt('ninaLook', 'original'),
+    misiones: readOpt('misiones', 'obligatorias')
   };
+  const contractMode = () => (opt.misiones === 'opcionales' ? 'opcional' : true);
   if (!C.difficulty[opt.difficulty]) opt.difficulty = 'normal';
   Object.defineProperty(opt, 'music', { get: () => opt.musicVol > 0, enumerable: false });
   Object.defineProperty(opt, 'sfx', { get: () => opt.sfxVol > 0, enumerable: false });
@@ -108,7 +111,7 @@
   R.init(canvas);
   const audio = NS.Audio.createAudio(opt);
   const G = NS.Game.createGame({ save: loadSave(), difficulty: opt.difficulty, onSave: (s) => store.set(SAVE_KEY, JSON.stringify(s)),
-    assist: { catsHelp: opt.catsHelp, relaxed: opt.relaxed } });
+    assist: { catsHelp: opt.catsHelp, relaxed: opt.relaxed, contracts: contractMode() } });
   const input = NS.Input.createInput({ onDebug: () => { const on = R.toggleDebug(); ui.toast(on ? 'DEPURACIÓN: SÓLIDOS ROJOS · SUPERFICIES VERDES · BAJABLES ROSAS' : 'DEPURACIÓN DESACTIVADA', 3); } });
   const ui = NS.UI.createUI({
     start: (mission, tramo) => startRun(mission, tramo),
@@ -206,7 +209,7 @@
 
   /** Aplica las opciones a cada módulo (se llama al arrancar y tras cada cambio). */
   function applyOptions() {
-    G.assist.catsHelp = opt.catsHelp; G.assist.relaxed = opt.relaxed;
+    G.assist.catsHelp = opt.catsHelp; G.assist.relaxed = opt.relaxed; G.assist.contracts = contractMode();
     R.setOptions({ shake: { normal: 1, suave: 0.45, no: 0 }[opt.shake], landingRing: opt.landingRing, ninaLook: opt.ninaLook });
     if (CR) CR.setOptions({ shake: { normal: 1, suave: 0.45, no: 0 }[opt.shake] });
     if (NS.ToxiPlayer && NS.ToxiPlayer.setLook) NS.ToxiPlayer.setLook(opt.ninaLook);
@@ -352,7 +355,12 @@
     for (const e of list) {
       switch (e.type) {
         case 'message': ui.toast(e.text, e.priority); break;
-        case 'chapter': ui.chapter(e.index, e.chapter, G.world.scenes.length, e.scene && e.scene.def && e.scene.def.isNew); audio.setTramo(e.index, false, sceneTheme(e.index)); if (G.run && G.run.t > 0.5) audio.sfx('chapter'); break;
+        case 'chapter': {
+          // V58.8.24: el cartel del tramo presenta su misión (por qué, objetivo, efecto y opcional).
+          const CTS = NS.Contracts, c = e.contract;
+          const ch = c && CTS ? { title: e.chapter.title, line: c.why, driver: CTS.briefText(c) + (c.bonus ? ' · ' + CTS.bonusText(c).replace(/^✓ /, '') : '') } : e.chapter;
+          ui.chapter(e.index, ch, G.world.scenes.length, e.scene && e.scene.def && e.scene.def.isNew);
+        } audio.setTramo(e.index, false, sceneTheme(e.index)); if (G.run && G.run.t > 0.5) audio.sfx('chapter'); break;
         case 'sfx': audio.sfx(e.name); break;
         case 'bossWindup':
           e.foe.bossWindupStart = animT;
@@ -458,6 +466,10 @@
           } else { audio.sfx('stomp'); audio.sfx('otroGato'); }
           break;
         case 'sign': ui.sign(e.sign.text); break;
+        case 'contractMain': audio.sfx('item'); audio.vibrate && audio.vibrate([30, 40, 30]); break;
+        case 'contractBonus': audio.sfx('key'); break;
+        case 'contractFail': audio.stop(); audio.sfx('lose'); break;
+        case 'windWarn': audio.sfx('alert'); break;
         case 'busSeen': {
           const goals = { submarino: 'LA ESCOTILLA ESTÁ CERCA', espacial: 'EL MÓDULO ESPERA EN LA BASE', parafalls: 'EL PORTAL ESTÁ EN LA REPISA CIRCULAR' };
           ui.toast(goals[G.missionId] || ST.MESSAGES.busWaiting, 3, 3.2);

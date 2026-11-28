@@ -3593,6 +3593,7 @@
     drawParticles(G, V);
     drawAbyssMatter(G,V,T,true);
     drawSchoolAtmosphere(G,V,T);
+    drawContractFx(G, T, k, ox, oy);
     if (debug) drawDebug(G);
     if (G.transition) {
       const tr = G.transition, a = 1 - Math.abs(tr.t / tr.dur - 0.45) / 0.45;
@@ -3600,6 +3601,77 @@
       fillRect(0, 0, cw, ch, '#050a10', Math.max(0, Math.min(1, a * 1.15)));
     }
     drawCinematic(G, T);
+  }
+
+  /* V58.8.24 · Efectos del contrato del tramo (pantalla completa, sobre el mundo):
+     noche → oscuridad con la linterna de Sofía; lluvia → gotas diagonales y velo frío;
+     viento → rachas de hojas y polvo en la dirección de la ráfaga (y su aviso). */
+  function drawContractFx(G, T, k, ox, oy) {
+    const c = G.run && G.run.contract;
+    if (!c || !c.mod || c.scene !== G.tramo || G.room || G.state === 'menu') return;
+    const P = G.P, px = P.x * k + ox, py = (P.y - 10) * k + oy;
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    if (c.mod === 'noche') {
+      const r = Math.max(cw, ch) * 0.07 + 150 * k;
+      const g = ctx.createRadialGradient(px, py, r * 0.25, px, py, r * 1.55);
+      g.addColorStop(0, 'rgba(4,6,18,0)'); g.addColorStop(0.55, 'rgba(4,6,18,0.45)'); g.addColorStop(1, 'rgba(3,4,14,0.88)');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, cw, ch);
+      // Ojos de Luna y Morita brillan en la oscuridad.
+      const ag = G.companions && G.companions.agents;
+      if (ag) for (const name of ['luna', 'morita']) {
+        const a = ag[name]; if (!a) continue;
+        const ex = a.x * k + ox, ey = (a.y - 20) * k + oy, blink = Math.sin(T * 1.7 + (name === 'luna' ? 0 : 2)) > -0.95;
+        if (!blink) continue;
+        ctx.fillStyle = name === 'luna' ? 'rgba(170,255,140,0.9)' : 'rgba(255,220,110,0.9)';
+        for (const d of [-3, 3]) { ctx.beginPath(); ctx.arc(ex + d * k, ey, 1.8 * k, 0, 7); ctx.fill(); }
+      }
+    } else if (c.mod === 'lluvia') {
+      ctx.fillStyle = 'rgba(30,50,85,0.24)'; ctx.fillRect(0, 0, cw, ch);
+      // Gotas en dos tonos: claras sobre fondos oscuros y azul profundo sobre fondos claros.
+      ctx.lineWidth = Math.max(1.2, k * 1.8);
+      ctx.strokeStyle = 'rgba(40,70,120,0.45)'; ctx.beginPath();
+      for (let i = 0; i < 70; i++) {
+        const sx = ((i * 131.9 + T * 160) % (cw + 200)) - 100, sy = ((i * 77.1 + T * 980 * (0.8 + (i % 5) * 0.08)) % (ch + 120)) - 60;
+        ctx.moveTo(sx, sy); ctx.lineTo(sx - 7 * k, sy + 26 * k);
+      }
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(215,235,255,0.6)';
+      ctx.beginPath();
+      for (let i = 0; i < 90; i++) {
+        const sx = ((i * 97.3 + T * 140) % (cw + 200)) - 100, sy = ((i * 53.7 + T * 900 * (0.8 + (i % 5) * 0.08)) % (ch + 120)) - 60;
+        ctx.moveTo(sx, sy); ctx.lineTo(sx - 7 * k, sy + 26 * k);
+      }
+      ctx.stroke();
+    } else if (c.mod === 'viento') {
+      const g = c.gust || {}, on = g.phase === 'gust', warn = g.phase === 'warn';
+      if (on || warn) {
+        const dir = g.dir || 1, a = on ? 0.42 : 0.18 + 0.12 * Math.sin(T * 20);
+        ctx.strokeStyle = 'rgba(245,248,235,' + Math.min(0.75, a * 1.6) + ')'; ctx.lineWidth = Math.max(1.5, k * 2.2);
+        ctx.beginPath();
+        for (let i = 0; i < (on ? 34 : 12); i++) {
+          const sy = (i * 71.3) % ch, len = (40 + (i % 4) * 22) * k, sp = on ? 1500 : 500;
+          const sx = dir > 0 ? ((i * 131 + T * sp) % (cw + 300)) - 150 : cw - (((i * 131 + T * sp) % (cw + 300)) - 150);
+          ctx.moveTo(sx, sy); ctx.lineTo(sx - dir * len, sy + 3 * k);
+        }
+        ctx.stroke();
+        // Flechas grandes de dirección: avisan (parpadeando) y marcan la ráfaga.
+        const ax = dir > 0 ? cw * 0.86 : cw * 0.14, ay = ch * 0.5, sz = Math.min(cw, ch) * 0.05;   // al borde hacia donde sopla: no tapa a Sofía
+        ctx.fillStyle = on ? 'rgba(255,240,200,0.55)' : 'rgba(255,220,120,' + (0.35 + 0.35 * Math.sin(T * 14)) + ')';
+        for (let i = -1; i <= 1; i++) {
+          const x = ax + i * sz * 1.6 * dir + (on ? ((T * 6) % 1) * sz * dir : 0);
+          ctx.beginPath(); ctx.moveTo(x - dir * sz * 0.6, ay - sz); ctx.lineTo(x + dir * sz * 0.5, ay); ctx.lineTo(x - dir * sz * 0.6, ay + sz); ctx.lineTo(x - dir * sz * 0.2, ay); ctx.closePath(); ctx.fill();
+        }
+        if (on) {
+          ctx.fillStyle = 'rgba(190,140,70,0.85)';
+          for (let i = 0; i < 10; i++) {
+            const sy = (i * 113.7 + Math.sin(T * 3 + i) * 30) % ch, sx = dir > 0 ? ((i * 211 + T * 1100) % (cw + 100)) - 50 : cw - (((i * 211 + T * 1100) % (cw + 100)) - 50);
+            ctx.save(); ctx.translate(sx, sy); ctx.rotate(T * 8 + i); ctx.fillRect(-4 * k, -2 * k, 8 * k, 4 * k); ctx.restore();
+          }
+        }
+      }
+    }
+    ctx.restore();
   }
 
   NS.Render = { init, resize, draw, preload, entryArt, enterWorld, setQuality, setOptions, image, ready, outfitFor, NINA, NINA_DIR, NINA_VARIANT_DIR, COMPANIONS, COMPANIONS_SUB, PAINTERS,

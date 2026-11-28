@@ -125,3 +125,10 @@ body.chaseMode #bubble{display:none}
 #missions .mission[data-m=calzada]{--mission-art:url('../assets/scenes/guadalajara_pro_v2/transit_street.webp');border-left:4px solid #ffcf4a}
 #missions .mission[data-m=submarino]{--mission-art:url('../assets/parallax/marino/abyss_v7/02_marino_base_ciudad.webp');border-left:4px solid #76efdb}
 #missions .mission[data-m=espacial]{--mission-art:url('../assets/parallax/espacial/depth_v5/background/page_02.webp');border-left:4px solid #b89aff}
+/* V58.8.24 · Contratos de tramo: reloj urgente y medallas en las paradas del menú. */
+#hud .objective.urgent{color:#ff8a7a;animation:objUrgent .6s ease-in-out infinite alternate}
+@keyframes objUrgent{from{opacity:1}to{opacity:.45}}
+#menu .tramo.medal{position:relative}
+#menu .tramo.medal::before{content:'✓';position:absolute;left:3px;bottom:1px;font-size:8px;color:#b6ff8a}
+#menu .tramo.medal2::before{content:'✓★';color:#ffcf4a}
+@media(prefers-reduced-motion:reduce){#hud .objective.urgent{animation:none}}

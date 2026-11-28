@@ -508,6 +508,8 @@
     if (onGround) { P.coyote = PH.coyote; P.airDashes = PH.airDashes; }
     const slip = onGround && isSlippery(P, W);
     P.onSlip = slip;
+    // V58.8.24: lluvia (contrato del tramo): piso mojado, menos agarre que el seco pero más que un charco.
+    const wet = onGround && !slip && !!prevGround.wet;
     const stunned = P.stunT > 0;
     const dir = (inp.right ? 1 : 0) - (inp.left ? 1 : 0);
     if (inp.jumpPressed) P.jumpBuffer = PH.jumpBuffer;
@@ -516,14 +518,14 @@
     if (P.dashT <= 0) {
       if (dir !== 0) {
         let accel = PH.move * (onGround ? PH.groundAccel : PH.airAccel);
-        if (slip) accel *= PH.slipAccel;
+        if (slip) accel *= PH.slipAccel; else if (wet) accel *= 0.65;
         if (P.wade) accel *= NS.CONFIG.water.wadeMul;   // V52: el tope de velocidad es blando; frena la aceleración
         if (stunned) accel *= 0.3;
         const turning = Math.sign(P.vx) === -dir && Math.abs(P.vx) > 40;
         P.vx += dir * accel * (turning ? PH.turnBoost : 1) * dt;
         if (!stunned) P.face = dir;
       } else {
-        P.vx *= Math.pow(onGround ? (slip ? PH.slipFriction : PH.groundFriction) : PH.airFriction, dt);
+        P.vx *= Math.pow(onGround ? (slip ? PH.slipFriction : wet ? 0.04 : PH.groundFriction) : PH.airFriction, dt);
         if (Math.abs(P.vx) < 2) P.vx = 0;
       }
       const cap = PH.move * (stunned ? 0.4 : 1) * (P.wade ? NS.CONFIG.water.wadeMul : 1);

@@ -173,6 +173,12 @@
         const masterHint=boss?.kind==='maestro'?({windup:'¡SALTA! · EMBESTIDA',charge:'ESQUIVA LA REGLA',dizzy:'¡AHORA! · USA DASH',aim:boss.throwKind==='libro'?'ESQUIVA EL LIBRO':'ESQUIVA EL BORRADOR',shout:'¡SALTA! · ONDA EN EL SUELO'}[boss.state]||'VENCE AL MAESTRO · RUTA 6'): 'VENCE AL MAESTRO · RUTA 6';
         set('objective',atExit?(boss?masterHint:'SUBE AL CAMIÓN'):G.tramo===0&&wall&&P.x<wall.x2&&P.y<wall.y2+40?'CRUZA CON EL COLUMPIO':nearBoss?'DESAFÍO: '+boss.bossName:['BAJA POR LOS BALCONES','CRUZA EL PATIO Y LAS CANCHAS','ENCUENTRA EL PORTÓN'][G.tramo]);
       } else set('objective', boss ? 'JEFE: ' + boss.bossName : G.tramo === total - 1 ? goalLabel : 'META: SIGUE BAJANDO');
+      // V58.8.24 · Contrato del tramo: mientras no se cumple, su objetivo manda en el HUD (con contador o reloj).
+      const cc = r.contract, CTS = NS.Contracts;
+      if (cc && CTS && !G.room && !cc.mainDone) set('objective', CTS.goalText(cc));
+      else if (cc && CTS && !G.room && cc.bonus && !cc.bonusDone && !(G.world.schoolMission && P.y > G.world.bounds.streetY - 210)) set('objective', CTS.bonusText(cc));
+      const urgent = !!(cc && !cc.mainDone && cc.main.type === 'contrarreloj' && cc.main.t - cc.t < 10);
+      if ($('objective').classList) $('objective').classList.toggle('urgent', urgent);
       set('hudTime', fmtTime(r.t));
       set('score', String(r.score));
       set('combo', r.combo >= 2 ? '  ×' + G.mult() + ' COMBO ' + r.combo : '');
@@ -234,9 +240,10 @@
         const ok = i < unlocked || free;
         const ch = def.storyIndex >= 0 ? ST.CHAPTERS[def.storyIndex] : null, title = (ch && ch.title) || def.label;
         const b = document.createElement('button');
-        b.className = 'tramo' + (ok ? '' : ' locked') + (def.isNew ? ' new' : '');
+        const medal = (save.contracts && save.contracts[def.id]) || {};
+        b.className = 'tramo' + (ok ? '' : ' locked') + (def.isNew ? ' new' : '') + (medal.main ? ' medal' : '') + (medal.bonus ? ' medal2' : '');
         b.textContent = ok ? String(i + 1) : '·';
-        b.title = ok ? title + (def.isNew ? ' (NUEVO)' : '') : 'Bloqueado: llega a la parada de este tramo';
+        b.title = ok ? title + (def.isNew ? ' (NUEVO)' : '') + (medal.main ? ' · misión cumplida' : '') + (medal.bonus ? ' · opcional cumplido' : '') : 'Bloqueado: llega a la parada de este tramo';
         b.setAttribute('aria-label', ok ? 'Empezar en la parada ' + (i + 1) + ': ' + title : 'Parada ' + (i + 1) + ' bloqueada');
         b.disabled = !ok;
         b.onclick = () => cb.start(E.start, i);
@@ -277,7 +284,8 @@
       lefty: (v) => (v ? 'SÍ' : 'NO'), landingRing: (v) => (v ? 'SÍ' : 'NO'), catsHelp: (v) => (v ? 'SÍ' : 'NO'),
       relaxed: (v) => (v ? 'SÍ' : 'NO'), freeSelect: (v) => (v ? 'SÍ' : 'NO'), cinematics: (v) => (v ? 'VER' : 'SALTAR'), fps: (v) => (v ? 'SÍ' : 'NO'),
       difficulty: (v) => (C.difficulty[v] || C.difficulty.normal).label,
-      ninaLook: (v) => ({ original: 'ORIGINAL', rosa: 'ROSA' }[v] || 'ORIGINAL')
+      ninaLook: (v) => ({ original: 'ORIGINAL', rosa: 'ROSA' }[v] || 'ORIGINAL'),
+      misiones: (v) => (v === 'opcionales' ? 'OPCIONALES' : 'OBLIGATORIAS')
     };
     function paintOpts(opt) {
       for (const pre of ['', 'p']) {
@@ -387,6 +395,18 @@
     function showGameOver(e, G) {
       const s = e.summary, tr = e.checkpointScene + 1;
       $('nextSchoolMission').hidden=true;
+      if (e.contract) {
+        // V58.8.24: misión del tramo sin cumplir. No cuesta vidas: se reintenta desde la última parada.
+        $('resultTag').textContent = 'TRAMO ' + (s.tramo + 1) + ' · MISIÓN DEL TRAMO';
+        $('resultTitle').innerHTML = 'MISIÓN<br><span>FALLIDA</span>';
+        $('resultText').innerHTML = esc(e.contract.reason) + '<br><br><b>' + esc(e.contract.goal) + '</b><br><small>' + esc(e.contract.why) + '</small><br><br>Reintentas desde la última parada sin perder vidas.' +
+          (s.practice ? '<br><small>Práctica · el progreso y los récords de campaña se conservan.</small>' : '');
+        $('resultStars').innerHTML = ''; $('resultItems').innerHTML = '';
+        $('retry').textContent = 'REINTENTAR LA MISIÓN'; $('retry').dataset.mode = 'retry';
+        if ($('postCredits')) $('postCredits').hidden = true;
+        show('result');
+        return;
+      }
       $('resultTag').textContent = 'TE QUEDASTE EN EL TRAMO ' + (s.tramo + 1);
       $('resultTitle').innerHTML = 'SE FUE<br><span>OTRA VEZ…</span>';
       $('resultText').innerHTML = 'Tiempo ' + fmtTime(s.time) + ' · ' + s.score + ' pts' + (e.newScore ? ' (¡récord!)' : '') + ' · ' + plural(s.gems, 'cristal', 'cristales') + ' · ' + s.depth + ' m<br>' + (G.checkpoint?.abyss ? 'Reaparecerás en la baliza de rescate ' + (G.checkpoint.index + 1) + '.' : 'La ruta sigue abierta. Reaparecerás en la parada del tramo ' + tr + '.');
@@ -415,7 +435,8 @@
       // V58 · Llaves USB (los seis objetos) y escena post-créditos.
       const keysLine = '<br><b>LLAVES USB RECUPERADAS: ' + (e.keys || 0) + ' / ' + (e.totalKeys || 6) + '</b>' +
         (e.postCredits ? ' · ¡ESCENA POST-CRÉDITOS DESBLOQUEADA!' : e.lastMission ? ' · Reúne las seis para ver la escena final.' : '');
-      $('resultText').innerHTML += (e.mission===0?'<br><b>INTERIORES EXPLORADOS: '+s.schoolRooms+'/'+s.schoolTotalRooms+' · OBJETOS: '+s.items.length+'/'+s.totalItems+'</b>':'')+keysLine;
+      const cs = s.contracts, contractLine = cs && cs.total ? '<br><b>MISIONES CUMPLIDAS: ' + cs.main + ' / ' + cs.total + ' · OPCIONALES: ' + cs.bonus + ' / ' + cs.total + '</b>' : '';
+      $('resultText').innerHTML += (e.mission===0?'<br><b>INTERIORES EXPLORADOS: '+s.schoolRooms+'/'+s.schoolTotalRooms+' · OBJETOS: '+s.items.length+'/'+s.totalItems+'</b>':'')+keysLine+contractLine;
       $('resultItems').innerHTML = s.totalItems > 0 ? itemsList(s.items) : '';
       $('retry').textContent = 'JUGAR OTRA VEZ';
       $('retry').dataset.mode = 'again';
