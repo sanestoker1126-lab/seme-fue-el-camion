@@ -381,6 +381,8 @@
     overlay.classList.toggle('toxi-live-overlay', live);
     document.body.classList.toggle('world-arrival', live);
     stage.classList.toggle('toxi-travel', s.backgroundMotion === 'travel');
+    // V58.8.25: arte de cuadro completo (paneles ilustrados): se ve entero, sin recortar, bajo el cuadro de diálogo.
+    stage.classList.toggle('toxi-contain', s.backgroundFit === 'contain');
     stage.style.backgroundImage = s.backgrounds.length
       ? s.backgrounds.map((b) => 'url("' + b + '")').join(',')
       : 'linear-gradient(130deg,#102945,#070e22 60%,#202c46)';

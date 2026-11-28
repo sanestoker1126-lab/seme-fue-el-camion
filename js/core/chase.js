@@ -1,5 +1,6 @@
 /* ¡Se me fue el camión! — MISIÓN ESPECIAL · LA CALZADA (persecución en vehículo).
-   Sofía toma el volante del camión de la Ruta 6 y cruza la Calzada Olímpica perseguida por patrullas y por la banda
+   Sofía arranca la moto de su mamá (Doña Tóxica) junto al Parque Agua Azul y cruza la Calzada Olímpica perseguida
+   por patrullas y por la banda
    de Los Zopilotes. Tres carriles vistos de lado; el camino avanza en x (unidades de mundo ≈ px con zoom 1).
    Lógica pura y determinista (sin DOM): la misma semilla y las mismas entradas dan la misma partida, por lo que
    las pruebas de Node pueden recorrerla completa con un bot.
@@ -10,7 +11,7 @@
      downPressed         carril de abajo (más cercano)     · flecha ↓, S, stick abajo, botón ↓
      upHeld / downHeld   también cambian de carril (stick en diagonal)
      dashPressed         NITRO (gasta 35 de la barra; rompe vallas y embiste con fuerza)
-     kickPressed         EMBESTIDA lateral contra el vehículo que va junto al camión
+     kickPressed         PATADA lateral de Sofía contra el vehículo que va junto a la moto
      catsPressed         GATAS: Luna salta al enemigo más cercano (en el jefe, solo con las puertas abiertas)
 
    TRAMOS (cada uno es un punto de reaparición):
@@ -29,7 +30,7 @@
     ramTime: 0.32, ramCooldown: 0.75, ramReach: 150,
     catsCooldown: 7, catsRange: 1100,
     invuln: 1.25, slowmo: 0.42,
-    busLen: 236, busH: 110
+    busLen: 170, busH: 110   // V58.8.24: la moto de Doña Tóxica (antes, el camión de 236 u)
   });
   const KIND = Object.freeze({
     sedan: { len: 128, h: 52, hp: 0 }, taxi: { len: 128, h: 52, hp: 0 }, vocho: { len: 104, h: 50, hp: 0 },
@@ -38,7 +39,7 @@
   });
   const SECTIONS = Object.freeze([
     { id: 'arranque', x: 0, title: 'ARRANQUE · AVENIDA ALCALDE',
-      line: 'Sofía toma el volante de la Ruta 6. Esquiva el tráfico, junta nitro y llega a la Calzada.' },
+      line: 'Sofía arranca la moto de su mamá. Esquiva el tráfico, junta nitro y llega a la Calzada.' },
     { id: 'patrullas', x: 9000, title: 'LAS PATRULLAS',
       line: 'Las patrullas intentan cerrarle el paso. Cuando una se empareje, EMBÍSTELA antes de que se te eche encima.' },
     { id: 'rampas', x: 24000, title: 'LAS RAMPAS DE LA OBRA',
@@ -247,7 +248,7 @@
         return;
       }
       if (f.civil) {
-        // Tráfico: avanza en su carril; frena un poco si el camión lo alcanza (no cambia de carril).
+        // Tráfico: avanza en su carril; frena un poco si la moto lo alcanza (no cambia de carril).
         f.x += f.v * dt;
         if (f.bumpT > 0) { f.bumpT -= dt; f.ly += (f.bumpLane - f.ly) * Math.min(1, dt * 6); } else f.ly += (f.lane - f.ly) * Math.min(1, dt * 6);
         return;
@@ -260,14 +261,14 @@
         return;
       }
       if (f.kind === 'patrol' || f.kind === 'moto') {
-        // Alcanzar al camión por un carril vecino, avisar (sirena/luces) y cerrarse sobre él.
+        // Alcanzar a la moto por un carril vecino, avisar (sirena/luces) y cerrarse sobre él.
         f.cd -= dt;
         const side = P.lane === 0 ? 1 : P.lane === 2 ? 1 * -1 : (f.lane < P.lane ? -1 : 1);
         if (f.state === 'approach') {
           const want = f.kind === 'moto' ? 120 : 10;
           f.v = P.v + clamp((want - dx) * 1.6, -260, 420 * aggr);
           const want2 = clamp(P.lane + side, 0, LANES - 1);
-          // No cruza a través del camión: si para llegar a su carril tendría que atravesarlo, se queda atrás.
+          // No cruza a través de la moto: si para llegar a su carril tendría que atravesarlo, se queda atrás.
           if (Math.abs(dx) < 260 && (f.ly - P.ly) * (want2 - P.ly) < 0) f.v = P.v - 220;
           else f.targetLane = want2;
           if (Math.abs(dx - want) < 90 && f.cd <= 0) {
@@ -280,7 +281,7 @@
           f.tele -= dt;
           if (f.tele <= 0) {
             if (f.kind === 'moto') {
-              // La moto suelta tachuelas en el carril marcado, delante del camión.
+              // La moto de Los Zopilotes suelta tachuelas en el carril marcado, delante de Sofía.
               S.projectiles.push({ kind: 'spikes', x: P.x + 520, lane: f.dropLane, ly: f.dropLane, v: 0, t: 0 });
               f.state = 'recover'; f.cd = 2.6 / aggr; f.targetLane = (f.lane + 1) % LANES;
             } else { f.state = 'ram'; f.ramT = 0.38; f.targetLane = P.lane; }
@@ -299,7 +300,7 @@
         // Una patrulla que queda muy atrás se rinde y sale de escena.
         if (dx < -1500) { f.dead = true; f.gone = true; }
       } else if (f.kind === 'suv') {
-        // Va delante del camión y lanza barriles hacia atrás por un carril marcado.
+        // Va delante de la moto y lanza barriles hacia atrás por un carril marcado.
         f.cd -= dt;
         const want = 560;
         f.v = P.v + clamp((want - dx) * 1.2, -300, 300);
@@ -341,7 +342,7 @@
           for (const l of b.dropLanes) S.projectiles.push({ kind: 'crate', x: b.x - TUNE.busLen * 0.6, lane: l, ly: l, v: P.v - (enraged ? 520 : 430), t: 0, spin: 0 });
           b.dropN++;
           emit('sfx', { name: 'clank' });
-          // Tras la última ráfaga espera a que las cajas pasen al camión antes de abrir: nunca hay que alinearse
+          // Tras la última ráfaga espera a que las cajas pasen a la moto antes de abrir: nunca hay que alinearse
           // con el tráiler mientras sus cajas siguen cayendo en ese carril.
           if (b.dropN >= (enraged ? 3 : 2)) { b.state = 'cool'; b.coolT = 1.5; b.dropN = 0; }
           else { b.state = 'drive'; b.cd = (enraged ? 0.9 : 1.3) / aggr; }
@@ -354,7 +355,7 @@
           message('doors', '¡PUERTAS ABIERTAS! EMBÍSTELO POR DETRÁS (NITRO = DOBLE)', 4, 3); emit('sfx', { name: 'alert' });
         }
       } else if (b.state === 'doors') {
-        // Frena para que el camión lo alcance.
+        // Frena para que la moto lo alcance.
         b.doors = Math.min(1, b.doors + dt * 3);
         b.v = P.v - 120;
         b.doorsT -= dt;
@@ -549,7 +550,7 @@
       message('gap', '¡A LA ZANJA! TOMA LA RAMPA CON VELOCIDAD', 3, 1.5);
       P.invT = 0; hurt('gap');
       if (S.state !== 'playing') return;
-      // El camión reaparece del otro lado (la grúa de la obra lo saca), más lento.
+      // La moto reaparece del otro lado (la grúa de la obra lo saca), más lento.
       P.x = g.x2 + 120; P.v = TUNE.cruise * 0.7; P.invT = TUNE.invuln * 1.4;
       S.cam.x = P.x - 160;
     }
@@ -563,7 +564,7 @@
         const zok = (s.z || 0) === 0 ? P.z < 40 : Math.abs(P.z - s.z) < 90;
         if (!zok) continue;
         if (s.kind === 'nitro') { s.got = true; P_nitro(30); S.stats.score += 100; emit('sfx', { name: 'power' }); message('nitro', '+NITRO ⚡', 1, 0.6); }
-        else if (s.kind === 'repair') { s.got = true; P.hp = Math.min(P.maxHp, P.hp + 1); emit('sfx', { name: 'item' }); message('repair', '¡REPARACIÓN! +1 CARROCERÍA', 2, 0.6); }
+        else if (s.kind === 'repair') { s.got = true; P.hp = Math.min(P.maxHp, P.hp + 1); emit('sfx', { name: 'item' }); message('repair', '¡REPARACIÓN! +1 A LA MOTO', 2, 0.6); }
         else if (s.kind === 'gem') { s.got = true; S.stats.gems++; S.stats.score += 150; emit('sfx', { name: 'gem' }); }
         else if (s.kind === 'cone') { s.got = true; s.flyT = 0; S.stats.score += 25; P.v *= 0.95; emit('sfx', { name: 'stomp' }); debrisAt(s, '#ff7a2f', 5); }
         else if (s.kind === 'oil') { s.got = true; P.wobbleT = 0.9; P.wobbleDir = P.lane === 2 ? -1 : 1; message('oil', '¡ACEITE! SUELTA EL ACELERADOR', 2, 1.5); emit('sfx', { name: 'skid' }); }
@@ -594,7 +595,7 @@
           }
           continue;
         }
-        const behind = f.x > P.x;   // el vehículo va delante: lo golpeamos con el frente del camión
+        const behind = f.x > P.x;   // el vehículo va delante: lo golpeamos con el frente de la moto
         if (f.civil) {
           if (P.boostT > 0 && behind) { f.bumpT = 0.6; f.bumpLane = f.lane === 0 ? -0.6 : f.lane === 2 ? 2.6 : (f.lane + (rnd() < 0.5 ? -1 : 1) * 0.8); f.x += 60; f.v += 300; S.stats.score += 120; emit('sfx', { name: 'crash' }); S.shakeT = Math.max(S.shakeT, 0.15); }
           else if (hurt('traffic')) { if (behind) { f.x = P.x + busLen / 2 + k.len / 2 + 8; f.v = Math.max(f.v, P.v + 60); } }
@@ -610,7 +611,7 @@
           continue;
         }
         if (behind && P.boostT > 0) { damageFoe(f, 2, 'boost'); P.x -= 10; continue; }
-        // Patrulla o moto encima del camión: la embestida de ellos (o un choque frontal) quita carrocería.
+        // Patrulla o moto de la banda encima de Sofía: la embestida de ellos (o un choque frontal) quita carrocería.
         if (hurt(f.kind === 'patrol' && f.state === 'ram' ? 'ram' : 'crash', Math.sign(P.ly - f.ly) || 1)) {
           if (!f.dead) { f.state = 'recover'; f.cd = 1.6; f.targetLane = clamp(f.lane + (Math.sign(f.ly - P.ly) || 1), 0, LANES - 1); }
           if (behind) { f.x = P.x + busLen / 2 + k.len / 2 + 10; }
@@ -634,7 +635,7 @@
       S.slowT = 0; S.timeScale = 1;
       emit('finale'); emit('sfx', { name: 'ramp' });
     }
-    /* El camión vuela sobre la barranca en cámara lenta y cae al agua de la presa (WATER_Z bajo la calzada). */
+    /* La moto vuela sobre la barranca en cámara lenta y cae al agua de la presa (WATER_Z bajo la calzada). */
     const WATER_Z = -260;
     function finaleStep(dt) {
       const P = S.P, F = S.finale;

@@ -15,7 +15,7 @@
     const TOTAL_LEVELS = MISSIONS.reduce((n, M) => n + M.levels.length, 0);
     let selMission = 0;
     const missionUnlocked = (save, id) => (save.missions && save.missions[id]) || 0;
-    /* V58.9 · Misión especial LA CALZADA (persecución en el camión) entre Guadalajara y el submarino.
+    /* V58.8.24 · Misión especial LA CALZADA (persecución en la moto de Doña Tóxica) entre Guadalajara y el submarino.
        En el menú es una tarjeta más; `start` es lo que recibe cb.start (índice de misión o 'calzada'). */
     const CHASE = NS.Chase ? { id: 'calzada', label: 'MISIÓN ESPECIAL · LA CALZADA', special: true,
       levels: NS.Chase.SECTIONS.map((q) => ({ label: q.title, isNew: true, storyIndex: -1 })) } : null;
@@ -59,7 +59,7 @@
     let cinematicIndex = 0, cinematicThen = null, cinematicT = 0, bossCineData = null, bossCineThen = null, bossCineIndex = 0, bossCineT = 0, activePanel = null;
     const hudCache = {};
     const worldNames = {escuela:'LA ESCUELA',guadalajara:'GUADALAJARA',calzada:'LA CALZADA',submarino:'EL SUBMARINO',espacial:'EL ESPACIO',parafalls:'PARAFALLS'};
-    const worldDescriptions = {escuela:'La campana sonó. Alcanza la ruta 6.',guadalajara:'Azoteas, barrios y el corazón de la ciudad.',calzada:'Misión especial: toma el volante de la Ruta 6, esquiva patrullas, vuela en las rampas y derriba el tráiler blindado.',submarino:'Regresa a la isla, cruza el bosque de algas y desciende a la fosa de Poseidón.',espacial:'Salta entre cráteres y pasarelas lunares.',parafalls:'Desciende por las cascadas del cielo.'};
+    const worldDescriptions = {escuela:'La campana sonó. Alcanza la ruta 6.',guadalajara:'Azoteas, barrios y el corazón de la ciudad.',calzada:'Misión especial: Sofía arranca la moto de su mamá en el Parque Agua Azul, esquiva patrullas, vuela en las rampas y derriba el tráiler blindado.',submarino:'Regresa a la isla, cruza el bosque de algas y desciende a la fosa de Poseidón.',espacial:'Salta entre cráteres y pasarelas lunares.',parafalls:'Desciende por las cascadas del cielo.'};
 
     function show(id) {
       activePanel = id || null;
@@ -455,17 +455,17 @@
         nextButton.hidden = false; nextButton.dataset.mission = '2'; nextButton.textContent = 'CONTINUAR · EL SUBMARINO';
         $('resultTag').textContent = 'MISIÓN ESPECIAL · LA CALZADA';
         $('resultTitle').innerHTML = '¡CALZADA<br><span>SUPERADA!</span>';
-        $('resultText').innerHTML = esc('El tráiler de Los Zopilotes quedó atrás y la Ruta 6 voló sobre la barranca. La corriente de la presa llevó a Sofía, Luna y Morita hasta el mar.') + '<br><br>' + line +
+        $('resultText').innerHTML = esc('El tráiler de Los Zopilotes quedó atrás y la moto de mamá voló sobre la barranca. La corriente de la presa llevó a Sofía, Luna y Morita hasta el mar.') + '<br><br>' + line +
           (e.best && e.best.bestTime ? '<br><small>Mejor tiempo completo ' + fmtTime(e.best.bestTime) + ' · récord ' + (e.best.bestScore || 0) + ' pts</small>' : '') +
           (s.practice ? '<br><small>Práctica · el progreso y los récords de campaña se conservan.</small>' : '');
         $('resultStars').innerHTML = '<span class="on">★</span>'.repeat(e.stars || 1) + '<span>★</span>'.repeat(3 - (e.stars || 1));
         $('retry').textContent = 'JUGAR OTRA VEZ'; $('retry').dataset.mode = 'again'; $('retry').dataset.mission = 'calzada';
       } else {
         nextButton.hidden = true;
-        const why = { traffic: 'Chocaste con el tráfico', barrier: 'Te estrellaste contra una valla', ram: 'Una patrulla te embistió', crash: 'Te cerraron el paso', gap: 'Caíste a la zanja', crate: 'Una caja del tráiler te detuvo', barrel: 'Un barril de Los Zopilotes te detuvo', spikes: 'Las tachuelas te poncharon', truck: 'Chocaste con el tráiler blindado' }[e.reason] || 'El camión ya no aguanta';
+        const why = { traffic: 'Chocaste con el tráfico', barrier: 'Te estrellaste contra una valla', ram: 'Una patrulla te embistió', crash: 'Te cerraron el paso', gap: 'Caíste a la zanja', crate: 'Una caja del tráiler te detuvo', barrel: 'Un barril de Los Zopilotes te detuvo', spikes: 'Las tachuelas te poncharon la llanta', truck: 'Chocaste con el tráiler blindado' }[e.reason] || 'La moto ya no aguanta';
         $('resultTag').textContent = 'LA CALZADA · TRAMO ' + ((s.section | 0) + 1) + ' · ' + (SEC[s.section | 0] ? SEC[s.section | 0].title : '');
         $('resultTitle').innerHTML = '¡TE<br><span>DETUVIERON!</span>';
-        $('resultText').innerHTML = esc(why + '.') + '<br><br>' + line + '<br>Reaparecerás al inicio del tramo ' + ((e.section | 0) + 1) + ' con la carrocería reparada.';
+        $('resultText').innerHTML = esc(why + '.') + '<br><br>' + line + '<br>Reaparecerás al inicio del tramo ' + ((e.section | 0) + 1) + ' con la moto reparada.';
         $('resultStars').innerHTML = '';
         $('retry').textContent = 'REINTENTAR DESDE EL TRAMO ' + ((e.section | 0) + 1); $('retry').dataset.mode = 'retry';
       }

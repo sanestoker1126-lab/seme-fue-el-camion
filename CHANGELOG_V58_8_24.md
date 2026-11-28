@@ -121,3 +121,43 @@ uno, cayendo directo y sin vencer a un solo jefe.
 - **Arte:** no se crearon sprites nuevos. Los vehículos enemigos y los objetos de la Calzada son dibujos de código.
 - **Escenas nuevas:** las de la Calzada y el puente mar → Luna no vienen del guion fuente de la Toxifamilia. Son
   adaptaciones de esta versión.
+
+---
+
+# V58.8.25 · La Calzada en la moto de mamá
+
+Arte aportado para esta misión, integrado igual que la cinemática de Parafalls (escenas ilustradas con diálogo):
+
+- **Cinemática «la moto de mi mamá»:** son 9 cuadros, del GIF de 507 × 336, en `assets/calzada/cine/`. La Ruta 6
+  queda detenida en el retén de Mi Macro Calzada y Doña Tóxica avisa por radio. Junto al Parque Agua Azul, Sofía
+  reconoce «la moto de mi mamá… Doña Tóxica… la Viridiana», se sube con Luna y Morita y gira la llave.
+  - Los cuadros se muestran completos (`backgroundFit: 'contain'`, opción nueva del reproductor), sin recorte y
+    bajo el cuadro de diálogo.
+- **Vehículo:** Sofía maneja la moto de su mamá. Uso los cuadros 10–12 de la hoja de 4 × 3, recortados en
+  `assets/calzada/moto/`.
+  - La moto mide 170 u (el camión medía 236 u). El botón EMBESTIR pasa a llamarse PATADA.
+  - Luna y Morita viajan en el portabultos. Al final la que vuela a la presa es la moto.
+- **Fondos:** los 4 panoramas de la Calzada (Parque Agua Azul, Mi Macro Calzada con la Minerva, Mercado San Juan de
+  Dios y Morelos) en `assets/calzada/fondos/`.
+  - Se suceden en paralaje y se funden en las uniones.
+  - Su guarnición (fila 624 de 821) queda alineada con el borde del camino, y la calle del panorama no se dibuja.
+  - La persecución pasa a ser de día.
+- **Precarga y versión:** todo en la precarga; caché y archivos cambiados en 58.8.25.
+
+## QA 58.8.25
+
+- **Node:** 143/143. El bot gana la persecución con la moto en Fácil, Normal y Difícil.
+- **Chromium:**
+  - Cinemática completa (11 escenas) con cada cuadro visible entero.
+  - Persecución hasta «¡CALZADA SUPERADA!» en 844 × 390 y 390 × 844, y flujo real con teclado.
+  - Sin errores de JS ni archivos faltantes.
+
+### Limitaciones del arte
+
+- **Recorte de la moto:** el fondo blanco se quitó por relleno desde los bordes. En los huecos de las llantas queda
+  un claro que a tamaño de juego se ve como rin. No se podía quitar sin borrar también la blusa y las medias
+  blancas de Sofía.
+- **Modelos distintos:** el GIF muestra una moto deportiva y la hoja de cuadros una Italika 150. En la cinemática se
+  ve la del GIF y en el juego la de la hoja.
+- **Resolución:** los cuadros del GIF son de baja resolución (507 × 336, 256 colores) y en pantallas grandes se
+  ven suaves.

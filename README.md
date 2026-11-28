@@ -36,6 +36,8 @@ el juego y un `LEEME.txt` con instrucciones. En GitHub: Actions → «Empaquetar
 - **Historia unida**: Guadalajara → la Ruta 6 en la Plaza de las Jacarandas → el retén de la Calzada → la presa →
   la isla → la escotilla de Poseidón (una cápsula de la Toxifamilia) → la Luna. Los Zopilotes aparecen en los
   contratos de Guadalajara antes de perseguir a Sofía en la Calzada.
+- **V58.8.25:** la persecución es en la moto de Doña Tóxica (mamá de Sofía), con la cinemática «la moto de mi mamá»
+  en el Parque Agua Azul y los panoramas de la Calzada (Agua Azul, Mi Macro Calzada, San Juan de Dios, Morelos).
 - Detalle y QA: `CHANGELOG_V58_8_24.md`.
 
 ## Novedades V58.9 · Limpieza (rama `main`)

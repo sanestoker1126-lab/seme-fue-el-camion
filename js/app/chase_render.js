@@ -1,25 +1,24 @@
 /* ¡Se me fue el camión! — dibujo de la MISIÓN ESPECIAL · LA CALZADA.
-   Vista lateral 2.5D de tres carriles sobre el mismo <canvas> del juego. El camión es el arte real de la Ruta 6
-   (assets/vehicles); los fondos, las capas nocturnas de Guadalajara (assets/parallax/guadalajara). Patrullas,
-   camionetas, motos, el tráiler y los objetos del camino se dibujan con primitivas: no dependen de arte nuevo.
+   Vista lateral 2.5D de tres carriles sobre el mismo <canvas> del juego. Sofía va en la moto de su mamá
+   (assets/calzada/moto, cuadros aportados); de fondo pasan los panoramas de la Calzada aportados para esta misión
+   —Parque Agua Azul, Mi Macro Calzada, Mercado San Juan de Dios y Morelos— (assets/calzada/fondos), con su
+   guarnición alineada al borde del camino. Patrullas, camionetas, motos de la banda, el tráiler y los objetos del
+   camino se dibujan con primitivas.
    Efectos de película: cámara lenta con franjas de cine, explosiones, chispas, humo, nitro, líneas de velocidad,
    destellos y temblor de cámara (respeta la opción TEMBLOR). */
 (function (root) {
   'use strict';
   const NS = root.CAMION = root.CAMION || {};
-  const BUS = 'assets/vehicles/camion_frame_02.png';
-  const BUS_BOX = { x: 44, y: 72, w: 458, h: 194 };   // píxeles opacos del camión (sin la nube de escape ni la sombra suave)
+  const MOTO_DIR = 'assets/calzada/moto/';
+  const MOTO = { ride: MOTO_DIR + 'moto_12.webp', boost: MOTO_DIR + 'moto_11.webp', air: MOTO_DIR + 'moto_10.webp' };
+  const MOTO_BOX = { x: 77, y: 0, w: 277, h: 241 };   // píxeles opacos de Sofía en la moto dentro del cuadro de 354 × 251
   const LUNA = 'assets/companions/luna.png', MORITA = 'assets/companions/morita.png';
   const SOFIA = 'assets/player/sofia/idle_01.png';
-  const PAR = 'assets/parallax/guadalajara/';
-  const SETS = { barrios: 'barrios_inferiores', mercado: 'mercado_parque', azoteas: 'azoteas' };
-  const LAYERS = [['00_cielo_degradado', 0.02], ['01_nubes_reales', 0.05], ['02_arquitectura_anclada', 0.16], ['03_reflejos_luces', 0.22], ['04_bruma_frontal', 0.34]];
-  const SECTION_SET = ['barrios', 'barrios', 'mercado', 'azoteas', 'azoteas'];
-  const urls = () => {
-    const out = [BUS, LUNA, MORITA, SOFIA];
-    for (const k of Object.values(SETS)) for (const [f] of LAYERS) out.push(PAR + k + '/' + f + '.webp');
-    return out;
-  };
+  /* Panoramas de 1916 × 821: la guarnición amarilla termina en la fila 624; de ahí para abajo es su propia calle,
+     que no se dibuja (la calle es la del juego). Se suceden en este orden y se funden en las uniones. */
+  const FONDOS = ['agua_azul', 'macro_calzada', 'mercado_san_juan', 'morelos'].map((n) => 'assets/calzada/fondos/' + n + '.webp');
+  const PANO = { w: 1916, curb: 624, overlap: 0.1, parallax: 0.35 };
+  const urls = () => [MOTO.ride, MOTO.boost, MOTO.air, LUNA, MORITA, SOFIA, ...FONDOS];
 
   let canvas = null, ctx = null, shakeMul = 1, camY = 0, lastT = 0;
   const R = () => NS.Render;
@@ -46,41 +45,37 @@
     return { W, H, dpr, portrait, k, far, near, laneY, laneS, sx, x1: S.cam.x + 150 - anchor / k - 300, x2: S.cam.x + 150 + (W - anchor) / k + 300 };
   }
 
-  /* ---------- Fondo ---------- */
-  function drawLayerSet(set, L, camx, alpha) {
-    if (alpha <= 0.01) return;
-    const hB = L.far + 24;
-    ctx.globalAlpha = alpha;
-    for (const [f, par] of LAYERS) {
-      const im = img(PAR + SETS[set] + '/' + f + '.webp');
-      if (!ok(im)) continue;
-      const sc = hB / im.naturalHeight, tw = im.naturalWidth * sc;
-      let off = -((camx * L.k * par) % tw); if (off > 0) off -= tw;
-      for (let x = off; x < L.W; x += tw) ctx.drawImage(im, x, 0, tw + 1, hB);
-    }
-    ctx.globalAlpha = 1;
-  }
+  /* ---------- Fondo: panoramas de la Calzada ---------- */
   function backdrop(S, L) {
-    const g = ctx.createLinearGradient(0, 0, 0, L.far);
-    g.addColorStop(0, '#0b1230'); g.addColorStop(1, '#3a2346');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, L.W, L.far + 30);
-    const sec = S.section, SEC = NS.Chase.SECTIONS;
-    const cur = SECTION_SET[sec], prev = SECTION_SET[Math.max(0, sec - 1)];
-    const into = sec > 0 ? (S.P.x - SEC[sec].x) / 900 : 1;
-    if (prev !== cur && into < 1) drawLayerSet(prev, L, S.cam.x, 1);
-    drawLayerSet(cur, L, S.cam.x, prev !== cur ? Math.max(0, Math.min(1, into)) : 1);
-    // Velo nocturno para que el camino y los vehículos resalten.
-    ctx.fillStyle = 'rgba(8,10,28,0.28)'; ctx.fillRect(0, 0, L.W, L.far + 30);
+    const sky = ctx.createLinearGradient(0, -L.H, 0, L.far);
+    sky.addColorStop(0, '#2f7fe0'); sky.addColorStop(1, '#8cc8ff');
+    ctx.fillStyle = sky; ctx.fillRect(0, -L.H, L.W, L.far + L.H + 30);
+    const sc = L.far / PANO.curb, tw = PANO.w * sc, step = tw * (1 - PANO.overlap), ov = tw * PANO.overlap;
+    const pos = (S.cam.x + 150) * L.k * PANO.parallax;
+    const first = Math.floor(pos / step) - 1;
+    for (let n = first; n * step - pos < L.W + tw; n++) {
+      const im = img(FONDOS[((n % 4) + 4) % 4]);
+      if (!ok(im)) continue;
+      const x = n * step - pos;
+      if (x + tw < 0) continue;
+      // Unión suave: el borde izquierdo de cada panorama entra en franjas con opacidad creciente.
+      const slices = 8, sw = ov / slices, srcW = im.naturalWidth * (sw / tw), srcH = PANO.curb * (im.naturalHeight / 821);
+      for (let i = 0; i < slices; i++) {
+        ctx.globalAlpha = (i + 1) / (slices + 1);
+        ctx.drawImage(im, i * srcW, 0, srcW, srcH, x + i * sw, 0, sw + 0.5, L.far);
+      }
+      ctx.globalAlpha = 1;
+      const sx = im.naturalWidth * (ov / tw);
+      ctx.drawImage(im, sx, 0, im.naturalWidth - sx, srcH, x + ov, 0, tw - ov + 0.5, L.far);
+    }
   }
 
   /* ---------- Calzada ---------- */
   function road(S, L, T) {
     const { W, H, far, near, k } = L;
-    // Banqueta lejana con barda baja y postes de luz.
-    ctx.fillStyle = '#4a4a56'; ctx.fillRect(0, far - 16 * k, W, 16 * k);
-    ctx.fillStyle = '#6d6d7a'; ctx.fillRect(0, far - 3 * k, W, 3 * k);
+    // La banqueta lejana y su guarnición vienen en el panorama; aquí empieza el asfalto.
     const asphalt = ctx.createLinearGradient(0, far, 0, near);
-    asphalt.addColorStop(0, '#23242c'); asphalt.addColorStop(1, '#30313b');
+    asphalt.addColorStop(0, '#44434f'); asphalt.addColorStop(1, '#55545f');
     ctx.fillStyle = asphalt; ctx.fillRect(0, far, W, near - far);
     // Banqueta cercana y lo que queda de pantalla abajo.
     ctx.fillStyle = '#5b5b66'; ctx.fillRect(0, near, W, 14 * k);
@@ -106,17 +101,6 @@
       const y = far + (near - far) * b;
       const start = Math.floor(L.x1 / per) * per;
       for (let x = start; x < L.x2; x += per) ctx.fillRect(L.sx(x), y - 1.5 * k, dash * k, 3 * k);
-    }
-    // Postes de luz con su cono.
-    const pole = 620, s0 = Math.floor(L.x1 / pole) * pole;
-    for (let x = s0; x < L.x2; x += pole) {
-      const px = L.sx(x), top = far - 150 * k;
-      ctx.fillStyle = '#2c2c36'; ctx.fillRect(px - 2.5 * k, top, 5 * k, 150 * k);
-      ctx.fillRect(px, top, 26 * k, 4 * k);
-      const cone = ctx.createRadialGradient(px + 24 * k, top + 6 * k, 2, px + 24 * k, far + 40 * k, 120 * k);
-      cone.addColorStop(0, 'rgba(255,214,140,0.42)'); cone.addColorStop(1, 'rgba(255,214,140,0)');
-      ctx.fillStyle = cone; ctx.beginPath(); ctx.moveTo(px + 18 * k, top + 6 * k); ctx.lineTo(px + 30 * k, top + 6 * k); ctx.lineTo(px + 110 * k, near); ctx.lineTo(px - 60 * k, near); ctx.closePath(); ctx.fill();
-      ctx.fillStyle = '#ffe3a8'; ctx.beginPath(); ctx.arc(px + 24 * k, top + 6 * k, 4 * k, 0, 7); ctx.fill();
     }
     // Zanjas de la obra y la barranca final.
     for (const g of S.course.gaps) {
@@ -359,39 +343,37 @@
   }
   function shadow(x, y, rx, ry) { ctx.fillStyle = 'rgba(0,0,0,0.42)'; ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, 7); ctx.fill(); }
 
-  function bus(S, L, T) {
+  function bus(S, L, T) {   // Sofía en la moto de su mamá
     const P = S.P, sc = L.laneS(P.ly), k = L.k * sc;
-    const len = NS.Chase.TUNE.busLen * k, im = img(BUS);
-    const h = len * BUS_BOX.h / BUS_BOX.w;
+    const len = NS.Chase.TUNE.busLen * k, im = img(P.air ? MOTO.air : P.boostT > 0 ? MOTO.boost : MOTO.ride);
+    const h = len * MOTO_BOX.h / MOTO_BOX.w;
     const x = L.sx(P.x), ground = L.laneY(P.ly) + 26 * L.k * sc;
     const y = ground - P.z * L.k * 0.55;
-    shadow(x, ground, len * (0.5 - Math.min(0.25, P.z / 1600)), 10 * k * (1 - Math.min(0.6, P.z / 800)));
+    shadow(x, ground, len * (0.45 - Math.min(0.22, P.z / 1600)), 8 * k * (1 - Math.min(0.6, P.z / 800)));
     // Nitro: llamarada por el escape trasero y estela.
     if (P.boostT > 0) {
       for (let i = 0; i < 3; i++) {
-        const fl = 40 + Math.sin(T * 40 + i) * 12;
+        const fl = 34 + Math.sin(T * 40 + i) * 10;
         const g = ctx.createLinearGradient(x - len / 2, 0, x - len / 2 - fl * k * 2, 0);
         g.addColorStop(0, 'rgba(120,220,255,0.95)'); g.addColorStop(0.4, 'rgba(255,170,60,0.8)'); g.addColorStop(1, 'rgba(255,60,0,0)');
-        ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x - len / 2 - fl * k, y - h * 0.2 - i * 6 * k, fl * k, (9 - i * 2) * k, 0, 0, 7); ctx.fill();
+        ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x - len * 0.42 - fl * k, y - h * 0.24 - i * 4 * k, fl * k, (7 - i * 2) * k, 0, 0, 7); ctx.fill();
       }
     }
     const blink = P.invT > 0 && Math.floor(T * 14) % 2 === 0;
     ctx.save();
     ctx.translate(x, y);
-    const pitch = P.air ? Math.max(-0.22, Math.min(0.28, -P.vz / 2600)) : 0;
-    ctx.rotate(pitch + P.tilt * 0.5);
-    const bob = P.air ? 0 : Math.sin(T * 22) * 0.8 * k;
+    const pitch = P.air ? Math.max(-0.3, Math.min(0.32, -P.vz / 2200)) : 0;
+    ctx.rotate(pitch + P.tilt * 0.6 - (P.boostT > 0 ? 0.04 : 0));
+    const bob = P.air ? 0 : Math.sin(T * 26) * 0.7 * k;
     if (blink) ctx.globalAlpha = 0.45;
-    if (ok(im)) ctx.drawImage(im, BUS_BOX.x, BUS_BOX.y, BUS_BOX.w, BUS_BOX.h, -len / 2, -h + bob, len, h);
-    else { ctx.fillStyle = '#f2b51f'; rr(-len / 2, -h, len, h * 0.9, 10 * k); ctx.fill(); }
-    // Luna y Morita asomadas por las ventanas.
-    const lu = img(LUNA), mo = img(MORITA);
-    // Luna y Morita van sentadas en el techo, agarradas del portaequipaje.
-    const cs = 38 * k;
-    if (ok(lu) && !(S.cats.t > 0)) ctx.drawImage(lu, -len * 0.08, -h - cs * 0.86 + bob, cs, cs);
-    if (ok(mo)) ctx.drawImage(mo, -len * 0.3, -h - cs * 0.86 + bob, cs, cs);
+    if (ok(im)) ctx.drawImage(im, MOTO_BOX.x, MOTO_BOX.y, MOTO_BOX.w, MOTO_BOX.h, -len / 2, -h + bob, len, h);
+    else { ctx.fillStyle = '#2140c8'; rr(-len / 2, -h * 0.5, len, h * 0.4, 8 * k); ctx.fill(); }
+    // Luna y Morita viajan en el portabultos, sobre la llanta trasera (encima del sprite para que se vean).
+    const lu = img(LUNA), mo = img(MORITA), cs = 28 * k;
+    if (ok(mo)) ctx.drawImage(mo, -len * 0.56, -h * 0.5 - cs * 0.72 + bob, cs, cs);
+    if (ok(lu) && !(S.cats.t > 0)) ctx.drawImage(lu, -len * 0.44, -h * 0.46 - cs * 0.72 + bob, cs, cs);
     ctx.globalAlpha = 1;
-    if (P.hurtT > 0) { ctx.fillStyle = 'rgba(255,40,40,' + (P.hurtT * 0.8) + ')'; rr(-len / 2, -h, len, h * 0.92, 8 * k); ctx.fill(); }
+    if (P.hurtT > 0) { ctx.fillStyle = 'rgba(255,40,40,' + (P.hurtT * 0.6) + ')'; ctx.beginPath(); ctx.ellipse(0, -h * 0.5, len * 0.5, h * 0.5, 0, 0, 7); ctx.fill(); }
     ctx.restore();
     // Embestida: ondas de choque al costado.
     if (P.ramT > 0) {
@@ -503,7 +485,7 @@
     const so = img(SOFIA);
     if (ok(so)) { ctx.save(); rr(pad + 6 * k, top + 6 * k, 40 * k, 40 * k, 8 * k); ctx.clip(); ctx.fillStyle = '#284a5e'; ctx.fillRect(pad + 6 * k, top + 6 * k, 40 * k, 40 * k); ctx.drawImage(so, 50, 14, 92, 92, pad + 6 * k, top + 6 * k, 40 * k, 40 * k); ctx.restore(); }
     ctx.fillStyle = '#ffe0a3'; ctx.font = '900 ' + Math.round(10 * k) + 'px system-ui,sans-serif';
-    ctx.fillText('CARROCERÍA', pad + 54 * k, top + 17 * k);
+    ctx.fillText('MOTO', pad + 54 * k, top + 17 * k);
     for (let i = 0; i < P.maxHp; i++) {
       ctx.fillStyle = i < P.hp ? (P.hp <= 2 ? '#ff5a5a' : '#ffcf4a') : 'rgba(255,255,255,0.15)';
       rr(pad + 54 * k + i * (124 * k / P.maxHp), top + 22 * k, 124 * k / P.maxHp - 3 * k, 10 * k, 3 * k); ctx.fill();

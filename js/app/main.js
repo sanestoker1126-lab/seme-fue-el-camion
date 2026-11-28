@@ -126,13 +126,13 @@
     click: () => { audio.ensure(); audio.sfx('ui'); }
   });
 
-  /* V58.9 · MISIÓN ESPECIAL · LA CALZADA: persecución en el camión (js/core/chase.js + js/app/chase_render.js).
+  /* V58.8.24 · MISIÓN ESPECIAL · LA CALZADA: persecución en la moto de Doña Tóxica (js/core/chase.js + js/app/chase_render.js).
      Mientras está activa, el bucle simula y dibuja la persecución en lugar del mundo de plataformas. */
   const CR = NS.ChaseRender;
   if (CR) CR.init(canvas);
   let chase = null;
   const CALZADA_CINE_KEY = 'camion-cinematic-calzada-seen';
-  const CTL_LABELS = { jump: ['↑', 'CARRIL ↑'], down: ['↓', 'CARRIL ↓'], kick: ['◒', 'EMBESTIR'], dash: ['✦', 'NITRO'], cats: ['🐾', 'GATAS'] };
+  const CTL_LABELS = { jump: ['↑', 'CARRIL ↑'], down: ['↓', 'CARRIL ↓'], kick: ['◒', 'PATADA'], dash: ['✦', 'NITRO'], cats: ['🐾', 'GATAS'] };
   const ctlSaved = new Map();
   function relabelControls(on) {
     for (const k of Object.keys(CTL_LABELS)) {

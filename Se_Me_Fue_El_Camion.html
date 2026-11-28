@@ -7,7 +7,7 @@
 <title>¡Se me fue el camión! | Plataformas 2.5D</title>
 <link rel="stylesheet" href="css/game.css?v=58.8.1">
 <link rel="stylesheet" href="css/toxifamilia_style.css?v=58.8.17">
-<link rel="stylesheet" href="css/toxifamilia.css?v=58.8.19">
+<link rel="stylesheet" href="css/toxifamilia.css?v=58.8.25">
 <link rel="stylesheet" href="css/release_visual.css?v=58.8.24">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
@@ -91,7 +91,7 @@
  <h1>¿QUÉ<br><span>HAGO?</span></h1>
  <p><b>Tu misión:</b> baja desde la escuela hasta la parada de la ruta 6 al final del recorrido. <b>Cada tramo es una misión</b>: el cartel del inicio y la línea MISIÓN del marcador dicen qué hacer (vencer al jefe, derrotar enemigos, juntar cristales, recuperar un objeto en la zona oculta o llegar antes de que se acabe el tiempo). Si bajas al tramo siguiente sin cumplirla, la misión falla y la repites desde la última parada, sin perder vidas. Cada tramo tiene además un objetivo <b>opcional</b> que deja una medalla ✓★ en el menú.</p>
  <p class="guideControls"><b>Efectos de tramo:</b> <b>NOCHE</b> solo ilumina alrededor de Sofía; con <b>LLUVIA</b> el piso moja y cuesta frenar; con <b>VIENTO</b> llegan ráfagas anunciadas con flechas que te empujan de lado: espera en suelo firme o sáltalas a favor.</p>
- <p class="guideControls"><b>Misión especial · La Calzada:</b> entre Guadalajara y el mar, Sofía maneja la Ruta 6. <b>→</b> acelera, <b>←</b> frena, <b>↑ ↓</b> cambian de carril, <b>✦ NITRO</b> rompe vallas y embiste con fuerza, <b>◒ EMBESTIR</b> golpea al vehículo de al lado y <b>🐾 GATAS</b> lanza a Luna contra un perseguidor. Toma las rampas con velocidad y, contra el tráiler, embístelo cuando abra las puertas.</p>
+ <p class="guideControls"><b>Misión especial · La Calzada:</b> entre Guadalajara y el mar, el retén detiene a la Ruta 6 y Sofía toma la moto de su mamá en el Parque Agua Azul. <b>→</b> acelera, <b>←</b> frena, <b>↑ ↓</b> cambian de carril, <b>✦ NITRO</b> rompe vallas y embiste con fuerza, <b>◒ PATADA</b> golpea al vehículo de al lado y <b>🐾 GATAS</b> lanza a Luna contra un perseguidor. Toma las rampas con velocidad y, contra el tráiler, embístelo cuando abra las puertas.</p>
  <div class="guideSteps"><div><b>1 · AVANZA</b><span>Salta entre techos, balcones y plataformas. Sigue bajando por la ruta.</span></div><div><b>2 · DEFIÉNDETE</b><span>Patea o cae sobre enemigos. Usa DASH; espera a que el jefe se maree si resiste.</span></div><div><b>3 · EXPLORA</b><span>Pulsa BAJAR en una trampilla para encontrar llaves, poderes y objetos opcionales.</span></div><div><b>4 · LLEGA</b><span>Derrota al jefe y alcanza el camión. Recuperar los seis objetos mejora el final.</span></div></div>
  <p class="guideControls"><b>Nuevo:</b> las <b>tejas flojas</b> se caen medio segundo después de pisarlas, las <b>bandas eléctricas</b> te arrastran y las <b>sombrillas</b> te hacen rebotar. Los jefes retroceden y contraatacan tras cada golpe: esquiva y vuelve a golpear. Vencerlos te da un corazón.</p>
  <p class="guideControls"><b>Agua:</b> caer al lago no hace daño. Sofía flota y nada: <b>↓</b> bucea, <b>↑</b> sube, <b>SALTAR</b> en la superficie sale del agua y bajo el agua da una brazada, <b>DASH</b> es un impulso. Sumergida, los enemigos no la alcanzan. Nadando contra una orilla baja, sube sola.</p>
@@ -171,19 +171,19 @@
 
 <!-- Núcleo sin DOM (probado con node --test) -->
 <script src="js/core/util.js?v=58.8.1"></script>
-<script src="js/core/config.js?v=58.8.24"></script>
+<script src="js/core/config.js?v=58.8.25"></script>
 <script src="js/core/parafalls_data.js?v=58.8.13"></script>
 <script src="js/core/levels.js?v=58.8.23"></script>
 <script src="js/core/story.js?v=58.8.23"></script>
 <script src="js/core/toxifamilia_style.js?v=58.8.1"></script>
-<script src="js/core/toxifamilia.js?v=58.8.24"></script>
+<script src="js/core/toxifamilia.js?v=58.8.25"></script>
 <script src="js/core/physics.js?v=58.8.24"></script>
 <script src="js/core/enemies.js?v=58.8.23"></script>
 <script src="js/core/obstacles.js?v=58.8.1"></script>
 <script src="js/core/contracts.js?v=58.8.24"></script>
 <script src="js/core/world.js?v=58.8.23"></script>
 <script src="js/core/game.js?v=58.8.24"></script>
-<script src="js/core/chase.js?v=58.8.24"></script>
+<script src="js/core/chase.js?v=58.8.25"></script>
 <!-- Capa de navegador -->
 <script src="js/app/art_data.js?v=58.8.1"></script>
 <script src="js/app/art_secretos.js?v=58.8.6"></script>
@@ -192,11 +192,11 @@
 <script src="assets/player/sofia_roblox/sofia_parafalls_adapter.js?v=58.8.14"></script>
 <script src="js/app/parafalls_roblox_atlases.js?v=58.8.14"></script>
 <script src="js/app/render.js?v=58.8.24"></script>
-<script src="js/app/chase_render.js?v=58.8.24"></script>
+<script src="js/app/chase_render.js?v=58.8.25"></script>
 <script src="js/app/input.js?v=58.8.1"></script>
 <script src="js/app/audio.js?v=58.8.24"></script>
-<script src="js/app/ui.js?v=58.8.24"></script>
-<script src="js/app/main.js?v=58.8.24"></script>
-<script src="js/app/toxifamilia_cinematic.js?v=58.8.24"></script>
+<script src="js/app/ui.js?v=58.8.25"></script>
+<script src="js/app/main.js?v=58.8.25"></script>
+<script src="js/app/toxifamilia_cinematic.js?v=58.8.25"></script>
 </body>
 </html>

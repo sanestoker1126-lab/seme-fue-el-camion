@@ -223,12 +223,16 @@
       lines: [{ who: 'SOFÍA', tone: 'sofia', text: '¡Wow! ¡Estamos dentro del mundo de Roblox!' }] }
   ];
 
-  /* V58.9 · MISIÓN ESPECIAL · LA CALZADA. Une el final de Guadalajara (Plaza de las Jacarandas) con el mar: Sofía
-     alcanza por fin la Ruta 6, el chofer huye ante el retén de la Calzada Olímpica —la que Doña Tóxica describe en el
-     prólogo como «un hervidero de patrullas»— y Sofía toma el volante. Al final el camión salta la barranca y cae a
-     la presa: la corriente la lleva hasta la isla donde empieza la misión 3 («¿Dónde estoy?»).
-     Escenas nuevas para esta versión (no salen del guion fuente); usan fondos y sprites ya incluidos. */
+  /* V58.8.24 · MISIÓN ESPECIAL · LA CALZADA. Une el final de Guadalajara (Plaza de las Jacarandas) con el mar: Sofía
+     alcanza por fin la Ruta 6, pero el retén de la Calzada Olímpica —«un hervidero de patrullas», como dice Doña
+     Tóxica en el prólogo— la detiene. Doña Tóxica le avisa por radio que le dejó algo junto al Parque Agua Azul: su
+     moto. Los nueve cuadros de esa escena son el arte aportado para esta misión (assets/calzada/cine, animación
+     «la moto de mi mamá»); el retén usa el panorama de Mi Macro Calzada (assets/calzada/fondos). Al final la moto
+     salta la barranca y cae a la presa: la corriente la lleva a la isla donde empieza la misión 3 («¿Dónde estoy?»). */
   const BUS_SIDE = 'assets/vehicles/camion_frame_02.png';
+  const CZ = 'assets/calzada/', MOTO_RIDE = CZ + 'moto/moto_12.webp';
+  const panel = (n) => CZ + 'cine/moto_mama_' + String(n).padStart(2, '0') + '.webp';
+  // Cada cuadro de la animación aportada se muestra completo (backgroundFit: 'contain').
   const CALZADA = [
     { id: 'cz_alcance', tag: 'MISIÓN ESPECIAL · PLAZA DE LAS JACARANDAS', title: '¡POR FIN, LA RUTA 6!', layout: 'dialogo', text: '',
       background: 'assets/scenes/generated/plaza_jacarandas_noche.webp',
@@ -241,32 +245,43 @@
         { who: 'SOFÍA', tone: 'sofia', text: '¡Ahí está! ¡Espéreme, chofer! ¡Luna, Morita, súbanse!' },
         { who: 'NARRADOR', tone: 'narra', text: 'Después de cruzar toda Guadalajara, Sofía alcanza la Ruta 6 en la Plaza de las Jacarandas.' }
       ] },
-    { id: 'cz_reten', tag: 'MISIÓN ESPECIAL · CALZADA OLÍMPICA', title: 'EL RETÉN', layout: 'dialogo', text: '',
-      background: 'assets/scenes/guadalajara_pro_v2/transit_street.webp', backgroundMotion: 'travel',
-      cast: [Object.assign({}, TOXICA, { x: 80, bottom: 4, scale: 1.05, entrance: 'enter-right' })],
+    { id: 'cz_reten', tag: 'MISIÓN ESPECIAL · MI MACRO CALZADA', title: 'EL RETÉN', layout: 'dialogo', text: '',
+      background: CZ + 'fondos/macro_calzada.webp', backgroundMotion: 'travel',
+      cast: [],   // Doña Tóxica habla por radio: no aparece en cuadro
       lines: [
-        { who: 'DOÑA TÓXICA', tone: 'toxica', text: 'Niña tóxica, te habla Doña Tóxica. La Calzada Olímpica está tomada: patrullas y la banda de Los Zopilotes.' },
-        { who: 'EL CHOFER', tone: 'narra', text: '¡Yo no me meto en eso! ¡Ahí te encargo el camión, niña!' },
-        { who: 'NARRADOR', tone: 'narra', text: 'El chofer abre la puerta y sale corriendo. El motor sigue encendido.' }
+        { who: 'EL CHOFER', tone: 'narra', text: '¡Hasta aquí llego! Con ese retén la Ruta 6 no pasa. ¡Bájense!' },
+        { who: 'DOÑA TÓXICA', tone: 'toxica', text: 'Niña tóxica, te habla Doña Tóxica. La Calzada está tomada: patrullas y la banda de Los Zopilotes.' },
+        { who: 'DOÑA TÓXICA', tone: 'toxica', text: 'Camina hasta el Parque Agua Azul. Ahí te dejé algo.' }
       ] },
-    { id: 'cz_volante', tag: 'MISIÓN ESPECIAL · SOFÍA AL VOLANTE', title: 'PISA A FONDO', layout: 'dialogo', text: '',
-      background: 'assets/scenes/generated/guadalajara_colonia_noche.webp', fx: 'niebla',
-      cast: [
-        SOFIA({ sprite: ST + 'land_01.png', x: 46, bottom: 2, scale: 1.2 }),
-        LUNA({ x: 22, bottom: 2, scale: 0.55 }), MORITA({ x: 72, bottom: 2, scale: 0.55 })
-      ],
+    { id: 'cz_moto_1', tag: 'MISIÓN ESPECIAL · PARQUE AGUA AZUL', title: 'JUNTO AL PARQUE', layout: 'dialogo', text: '', background: panel(1), backgroundFit: 'contain', cast: [],
+      lines: [{ who: 'NARRADOR', tone: 'narra', text: 'Sofía camina con su mochila frente al Parque Agua Azul. Junto a la reja hay una moto azul estacionada.' }] },
+    { id: 'cz_moto_2', tag: 'MISIÓN ESPECIAL · PARQUE AGUA AZUL', title: '¿ESA MOTO…?', layout: 'dialogo', text: '', background: panel(2), backgroundFit: 'contain', cast: [],
+      lines: [{ who: 'SOFÍA', tone: 'sofia', text: '¡Esa moto…!' }] },
+    { id: 'cz_moto_3', tag: 'MISIÓN ESPECIAL · UN RECUERDO', title: 'YO CONOZCO ESA MOTO', layout: 'dialogo', text: '', background: panel(3), backgroundFit: 'contain', cast: [],
+      lines: [{ who: 'SOFÍA', tone: 'sofia', text: 'Yo conozco esa moto…' }] },
+    { id: 'cz_moto_4', tag: 'MISIÓN ESPECIAL · UN RECUERDO', title: 'LA MOTO DE MI MAMÁ', layout: 'dialogo', text: '', background: panel(4), backgroundFit: 'contain', fx: 'recuerdo', cast: [],
+      lines: [{ who: 'SOFÍA', tone: 'sofia', text: 'La moto de mi mamá… Doña Tóxica… la Viridiana…' }] },
+    { id: 'cz_moto_5', tag: 'MISIÓN ESPECIAL · PARQUE AGUA AZUL', title: 'ME LA DEJÓ A MÍ', layout: 'dialogo', text: '', background: panel(5), backgroundFit: 'contain', cast: [],
+      lines: [{ who: 'SOFÍA', tone: 'sofia', text: 'Mamá me la dejó aquí… para que llegue a tiempo.' }] },
+    { id: 'cz_moto_6', tag: 'MISIÓN ESPECIAL · PARQUE AGUA AZUL', title: 'DE UN SALTO', layout: 'dialogo', text: '', background: panel(6), backgroundFit: 'contain', cast: [],
+      lines: [{ who: 'NARRADOR', tone: 'narra', text: 'Sofía se sube de un salto. Luna y Morita se acomodan en el asiento de atrás.' }] },
+    { id: 'cz_moto_7', tag: 'MISIÓN ESPECIAL · PARQUE AGUA AZUL', title: 'AGÁRRENSE', layout: 'dialogo', text: '', background: panel(7), backgroundFit: 'contain', cast: [],
+      lines: [{ who: 'SOFÍA', tone: 'sofia', text: 'Luna, Morita: agárrense fuerte.' }] },
+    { id: 'cz_moto_8', tag: 'MISIÓN ESPECIAL · PARQUE AGUA AZUL', title: 'LA LLAVE', layout: 'dialogo', text: '', background: panel(8), backgroundFit: 'contain', cast: [],
+      lines: [{ who: 'NARRADOR', tone: 'narra', text: 'Gira la llave. El motor ruge.' }] },
+    { id: 'cz_moto_9', tag: 'MISIÓN ESPECIAL · LA CALZADA', title: '¡VÁMONOS!', layout: 'dialogo', text: '', background: panel(9), backgroundFit: 'contain', cast: [],
       lines: [
-        { who: 'SOFÍA', tone: 'sofia', text: '¿Yo? ¿Manejar el camión? … Bueno. Luna, Morita: agárrense.' },
+        { who: 'SOFÍA', tone: 'sofia', text: '¡Vámonos por la Calzada!' },
         { who: 'DOÑA TÓXICA', tone: 'toxica', text: 'No te detengas y no dejes que te encierren. Te espero del otro lado de la barranca.' },
-        { who: 'CONTROLES', tone: 'narra', text: '↑ ↓ CAMBIAN DE CARRIL · → ACELERA · ← FRENA · ✦ NITRO · ◒ EMBESTIR · 🐾 GATAS' }
+        { who: 'CONTROLES', tone: 'narra', text: '↑ ↓ CAMBIAN DE CARRIL · → ACELERA · ← FRENA · ✦ NITRO · ◒ PATADA · 🐾 GATAS' }
       ] }
   ];
   const CALZADA_FIN = [
     { id: 'czf_vuelo', tag: 'LA CALZADA · EL PUENTE DE LA BARRANCA', title: 'EL VUELO', layout: 'dialogo', text: '',
       background: MAR + 'fondo_costa.webp', fx: 'niebla',
-      cast: [{ name: 'RUTA 6', frames: [BUS_SIDE], label: false, x: -20, bottom: 40, scale: 1.4, entrance: 'enter-left', anim: [{ f: [0], ms: 3400, to: 70, toB: 6 }, { f: [0], ms: 60000 }] }],
+      cast: [{ name: 'SOFÍA EN LA MOTO', frames: [MOTO_RIDE], label: false, x: -20, bottom: 40, scale: 1.1, entrance: 'enter-left', anim: [{ f: [0], ms: 3400, to: 70, toB: 6 }, { f: [0], ms: 60000 }] }],
       lines: [
-        { who: 'NARRADOR', tone: 'narra', text: 'El camión vuela sobre la barranca… y cae al agua de la presa.' },
+        { who: 'NARRADOR', tone: 'narra', text: 'La moto de mamá vuela sobre la barranca… y cae al agua de la presa.' },
         { who: 'SOFÍA', tone: 'sofia', text: '¡Luna! ¡Morita! ¡No se suelten!' }
       ] },
     { id: 'czf_corriente', tag: 'LA CALZADA · RÍO ABAJO', title: 'LA CORRIENTE', layout: 'dialogo', text: '',
@@ -393,6 +408,7 @@
       const bgs = s.background == null ? [] : Array.isArray(s.background) ? s.background : [s.background];
       if (bgs.length > 4 || !bgs.every(validAsset)) throw new Error('fondo invalido: ' + s.id);
       if (s.backgroundMotion != null && !BACKGROUND_MOTIONS.has(s.backgroundMotion)) throw new Error('movimiento de fondo invalido: ' + s.id);
+      if (s.backgroundFit != null && s.backgroundFit !== 'contain') throw new Error('ajuste de fondo invalido: ' + s.id);
       if (s.arrival != null && (!Number.isInteger(s.arrival) || s.arrival < 0 || s.arrival > 4)) throw new Error('mundo de llegada inválido');
       const fxs = s.fx == null ? [] : Array.isArray(s.fx) ? s.fx : [s.fx];
       if (fxs.length > 3 || !fxs.every((f) => FX.has(f))) throw new Error('efecto invalido: ' + s.id);

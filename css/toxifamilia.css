@@ -199,3 +199,7 @@ body.world-arrival > :not(#wrap):not(.toxi-overlay){visibility:hidden!important}
 .toxi-contact .toxi-actor.toxi-perched{bottom:var(--stall-height)!important}
 .toxi-market-stall{position:absolute;bottom:0;width:22%;max-width:165px;height:var(--stall-height);transform:translateX(-50%);border-left:5px solid #72503c;border-right:5px solid #72503c;box-sizing:border-box}
 .toxi-market-stall::before{content:"";position:absolute;top:0;left:-7px;right:-7px;height:12px;background:#98583f url('../assets/platforms/tiles_a.png') center top/auto 100%;border-radius:3px}
+/* V58.8.25 · Paneles ilustrados completos (cinemática «la moto de mi mamá»): sin recorte, abajo y centrados, con aire
+   arriba para el cuadro de diálogo. */
+.toxi-stage.toxi-contain{background-color:#0b1322;background-size:contain!important;background-position:center bottom!important;background-origin:content-box;padding-top:clamp(84px,18vh,170px);box-sizing:border-box;animation:none}
+.toxi-stage.toxi-contain::before{background:linear-gradient(180deg,rgba(5,7,18,.85),rgba(5,7,18,.2) 22%,transparent 40%)}
