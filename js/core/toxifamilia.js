@@ -251,6 +251,7 @@
       lines: [
         { who: 'EL CHOFER', tone: 'narra', text: '¡Hasta aquí llego! Con ese retén la Ruta 6 no pasa. ¡Bájense!' },
         { who: 'DOÑA TÓXICA', tone: 'toxica', text: 'Niña tóxica, te habla Doña Tóxica. La Calzada está tomada: patrullas y la banda de Los Zopilotes.' },
+        { who: 'DOÑA TÓXICA', tone: 'toxica', text: 'Y cuidado: El Maestro Enojón y el niño de las piedras se unieron a la banda. Andan en moto.' },
         { who: 'DOÑA TÓXICA', tone: 'toxica', text: 'Camina hasta el Parque Agua Azul. Ahí te dejé algo.' }
       ] },
     { id: 'cz_moto_1', tag: 'MISIÓN ESPECIAL · PARQUE AGUA AZUL', title: 'JUNTO AL PARQUE', layout: 'dialogo', text: '', background: panel(1), backgroundFit: 'contain', cast: [],

@@ -35,17 +35,19 @@
   const KIND = Object.freeze({
     sedan: { len: 128, h: 52, hp: 0 }, taxi: { len: 128, h: 52, hp: 0 }, vocho: { len: 104, h: 50, hp: 0 },
     patrol: { len: 136, h: 54, hp: 2 }, suv: { len: 150, h: 66, hp: 2 }, moto: { len: 70, h: 52, hp: 1 },
+    // V58.8.26 · Perseguidores en moto (arte aportado): el niño de las piedras y El Maestro Enojón.
+    kid: { len: 150, h: 120, hp: 2 }, maestro: { len: 160, h: 128, hp: 3 },
     truck: { len: 330, h: 128, hp: 6 }
   });
   const SECTIONS = Object.freeze([
     { id: 'arranque', x: 0, title: 'ARRANQUE · AVENIDA ALCALDE',
       line: 'Sofía arranca la moto de su mamá. Esquiva el tráfico, junta nitro y llega a la Calzada.' },
-    { id: 'patrullas', x: 9000, title: 'LAS PATRULLAS',
-      line: 'Las patrullas intentan cerrarle el paso. Cuando una se empareje, EMBÍSTELA antes de que se te eche encima.' },
+    { id: 'patrullas', x: 9000, title: 'LAS PATRULLAS Y EL MAESTRO',
+      line: 'Patrullas y El Maestro Enojón en moto. Cuando levante la regla, aléjate un carril o dale una PATADA antes.' },
     { id: 'rampas', x: 24000, title: 'LAS RAMPAS DE LA OBRA',
       line: 'El puente está a medio construir: toma las rampas con velocidad para volar sobre las zanjas.' },
-    { id: 'zopilotes', x: 38500, title: 'LOS ZOPILOTES',
-      line: 'La banda de Los Zopilotes lanza barriles y tachuelas. Mira el carril marcado y cámbiate a tiempo.' },
+    { id: 'zopilotes', x: 38500, title: 'LOS ZOPILOTES Y EL NIÑO',
+      line: 'Los Zopilotes lanzan barriles y el niño de las piedras te apunta desde su moto. Mira el carril marcado y cámbiate.' },
     { id: 'trailer', x: 53000, title: 'EL TRÁILER BLINDADO',
       line: 'El tráiler de Los Zopilotes bloquea la Calzada. Cuando abra las puertas, embístelo por detrás.' }
   ]);
@@ -84,8 +86,11 @@
     add({ kind: 'repair', x: 7600, lane: 1 });
 
     // Tramo 1 · patrullas: tres oleadas que salen por detrás + tráfico que estorba.
-    const waves = hard ? [9800, 13200, 16600, 20200] : easy ? [10400, 15600] : [9800, 14200, 18800];
-    waves.forEach((x, i) => triggers.push({ x, kind: 'patrol', count: i === 0 ? 1 : (easy ? 1 : 2), done: false }));
+    // Tramo 1: patrullas y El Maestro Enojón se alternan (el maestro llega después de la primera patrulla).
+    const waves = hard ? [[9800, 'patrol', 1], [12400, 'maestro', 1], [15200, 'patrol', 2], [18000, 'maestro', 1], [20600, 'patrol', 2]]
+      : easy ? [[10400, 'patrol', 1], [14200, 'maestro', 1], [18400, 'patrol', 1]]
+      : [[9800, 'patrol', 1], [12600, 'maestro', 1], [16000, 'patrol', 2], [19600, 'maestro', 1]];
+    waves.forEach(([x, kind, count]) => triggers.push({ x, kind, count, done: false }));
     for (let x = 9600; x < 23400; x += 1100 + Math.round(R() * 400)) {
       if (R() < 0.55) traffic.push({ kind: civilian(), x, lane: Math.floor(R() * LANES), v: 280 + R() * 90 });
       else if (R() < 0.5) row(x, 'cone', oneLane());
@@ -106,13 +111,14 @@
     });
     add({ kind: 'oil', x: 27900, lane: 1 }); add({ kind: 'oil', x: 33500, lane: 0 });
     add({ kind: 'repair', x: 36500, lane: 2 });
-    triggers.push({ x: 30400, kind: 'patrol', count: 1, done: false });
+    triggers.push({ x: 30400, kind: 'kid', count: 1, done: false });   // el niño de las piedras entre las rampas
 
     // Tramo 3 · Los Zopilotes: camionetas que lanzan barriles y motos que tiran tachuelas.
     triggers.push({ x: 39200, kind: 'suv', count: 1, done: false });
-    triggers.push({ x: 43600, kind: 'moto', count: hard ? 2 : 1, done: false });
+    triggers.push({ x: 43600, kind: 'kid', count: 1, done: false });
     triggers.push({ x: 47200, kind: 'suv', count: easy ? 1 : 2, done: false });
     triggers.push({ x: 50200, kind: 'moto', count: 1, done: false });
+    triggers.push({ x: 51200, kind: 'maestro', count: easy ? 0 : 1, done: false });
     for (let x = 39000; x < 52500; x += 1300 + Math.round(R() * 400)) {
       if (R() < 0.45) traffic.push({ kind: civilian(), x, lane: Math.floor(R() * LANES), v: 300 + R() * 80 });
       else row(x, R() < 0.5 ? 'barrier' : 'cone', R() < 0.35 ? twoLanes() : oneLane());
@@ -223,8 +229,11 @@
         if (tr.kind === 'patrol') spawn('patrol', P.x - 700 - i * 260, lane);
         else if (tr.kind === 'suv') spawn('suv', P.x + 900 + i * 380, lane, { state: 'lead' });
         else if (tr.kind === 'moto') spawn('moto', P.x - 500 - i * 200, lane);
+        else if (tr.kind === 'kid' || tr.kind === 'maestro') spawn(tr.kind, P.x - 650 - i * 300, lane);
       }
-      const say = { patrol: '¡PATRULLAS! NO DEJES QUE SE TE EMPAREJEN', suv: '¡LOS ZOPILOTES! VIGILA LOS BARRILES', moto: '¡MOTOS! TIRAN TACHUELAS EN EL CARRIL MARCADO' };
+      if (!tr.count) return;
+      const say = { patrol: '¡PATRULLAS! NO DEJES QUE SE TE EMPAREJEN', suv: '¡LOS ZOPILOTES! VIGILA LOS BARRILES', moto: '¡MOTOS! TIRAN TACHUELAS EN EL CARRIL MARCADO',
+        kid: '¡EL NIÑO DE LAS PIEDRAS! CUANDO MARQUE TU CARRIL, CÁMBIATE', maestro: '¡EL MAESTRO ENOJÓN! SI LEVANTA LA REGLA, ALÉJATE UN CARRIL O PATÉALO' };
       message('spawn' + tr.kind, say[tr.kind], 3, 6);
       emit('sfx', { name: tr.kind === 'patrol' ? 'siren' : 'alert' });
     }
@@ -260,32 +269,55 @@
         if (dx < -1200) { f.dead = true; f.gone = true; }
         return;
       }
-      if (f.kind === 'patrol' || f.kind === 'moto') {
+      if (f.kind === 'patrol' || f.kind === 'moto' || f.kind === 'kid' || f.kind === 'maestro') {
         // Alcanzar a la moto por un carril vecino, avisar (sirena/luces) y cerrarse sobre él.
         f.cd -= dt;
         const side = P.lane === 0 ? 1 : P.lane === 2 ? 1 * -1 : (f.lane < P.lane ? -1 : 1);
         if (f.state === 'approach') {
-          const want = f.kind === 'moto' ? 120 : 10;
+          const want = f.kind === 'moto' ? 120 : f.kind === 'kid' ? -70 : 10;
           f.v = P.v + clamp((want - dx) * 1.6, -260, 420 * aggr);
-          const want2 = clamp(P.lane + side, 0, LANES - 1);
+          // El niño lanza desde lejos: si Sofía va por una orilla, él va por la otra, para que siempre le quede un
+          // carril libre al lado (si no, la piedra la dejaría sin salida).
+          const want2 = f.kind === 'kid' && P.lane !== 1 ? 2 - P.lane : clamp(P.lane + side, 0, LANES - 1);
           // No cruza a través de la moto: si para llegar a su carril tendría que atravesarlo, se queda atrás.
           if (Math.abs(dx) < 260 && (f.ly - P.ly) * (want2 - P.ly) < 0) f.v = P.v - 220;
           else f.targetLane = want2;
           if (Math.abs(dx - want) < 90 && f.cd <= 0) {
-            f.state = 'tele'; f.tele = 0.75 / aggr;
-            if (f.kind === 'moto') f.dropLane = P.lane;
+            f.state = 'tele'; f.tele = (f.kind === 'kid' || f.kind === 'maestro' ? 0.85 : 0.75) / aggr; f.teleMax = f.tele;
+            if (f.kind === 'moto' || f.kind === 'kid') f.dropLane = P.lane;
             emit('foeWindup', { foe: f });
           }
         } else if (f.state === 'tele') {
-          f.v = P.v + clamp((10 - dx) * 1.6, -200, 300);
+          f.v = P.v + clamp(((f.kind === 'kid' ? -70 : 10) - dx) * 1.6, -200, 300);
           f.tele -= dt;
           if (f.tele <= 0) {
-            if (f.kind === 'moto') {
+            if (f.kind === 'kid') {
+              // Lanza la piedra en arco hacia el carril marcado: cae justo donde va a estar Sofía si no se mueve.
+              S.projectiles.push({ kind: 'rock', x: f.x + 50, lane: f.dropLane, ly: f.dropLane, fromLy: f.ly, v: P.v + 140, z: 60, vz: 420, t: 0 });
+              f.state = 'throw'; f.throwT = 0.4;
+              emit('sfx', { name: 'dash' });
+            } else if (f.kind === 'maestro') {
+              f.state = 'swing'; f.swingT = 0.42; f.swingHit = false;
+              emit('sfx', { name: 'kick' });
+            } else if (f.kind === 'moto') {
               // La moto de Los Zopilotes suelta tachuelas en el carril marcado, delante de Sofía.
               S.projectiles.push({ kind: 'spikes', x: P.x + 520, lane: f.dropLane, ly: f.dropLane, v: 0, t: 0 });
               f.state = 'recover'; f.cd = 2.6 / aggr; f.targetLane = (f.lane + 1) % LANES;
             } else { f.state = 'ram'; f.ramT = 0.38; f.targetLane = P.lane; }
           }
+        } else if (f.state === 'throw') {
+          f.v = P.v + clamp((-70 - dx) * 1.6, -200, 300);
+          f.throwT -= dt;
+          if (f.throwT <= 0) { f.state = 'recover'; f.cd = 2.6 / aggr; }
+        } else if (f.state === 'swing') {
+          // El reglazo alcanza el carril de al lado (no solo el suyo).
+          f.v = P.v + clamp((10 - dx) * 1.6, -200, 300);
+          f.swingT -= dt;
+          if (!f.swingHit && Math.abs(f.ly - P.ly) < 1.3 && Math.abs(f.x - P.x) < 150 && P.z < 60) {
+            f.swingHit = true;
+            if (hurt('regla', Math.sign(P.ly - f.ly) || 1)) message('regla', '¡REGLAZO! ALÉJATE UN CARRIL CUANDO LEVANTE LA REGLA', 3, 2);
+          }
+          if (f.swingT <= 0) { f.state = 'recover'; f.cd = 2.0 / aggr; }
         } else if (f.state === 'ram') {
           f.v = P.v + clamp((10 - dx) * 2, -200, 300);
           f.ramT -= dt;
@@ -388,7 +420,7 @@
         f.dead = true; f.deadT = 0; S.stats.takedowns++; S.stats.score += f.kind === 'suv' ? 900 : 600;
         explode(f.x, f.ly, false);
         emit('takedown', { foe: f, total: S.stats.takedowns });
-        message('td', '¡DERRIBO! ' + ({ patrol: 'PATRULLA', suv: 'CAMIONETA', moto: 'MOTO' }[f.kind] || '') + ' FUERA', 3, 0.6);
+        message('td', '¡DERRIBO! ' + ({ patrol: 'PATRULLA', suv: 'CAMIONETA', moto: 'MOTO', kid: 'EL NIÑO DE LAS PIEDRAS', maestro: 'EL MAESTRO ENOJÓN' }[f.kind] || '') + ' FUERA', 3, 0.6);
         P_nitro(15);
       } else { f.state = 'stunned'; f.stunT = 1.1; }
       return true;
@@ -515,7 +547,24 @@
       for (const tr of S.course.triggers) if (!tr.done && P.x >= tr.x) { tr.done = true; fireTrigger(tr); }
       for (const f of S.foes) foeAI(f, dt);
       S.foes = S.foes.filter((f) => !(f.dead && ((f.deadT || 0) > 2.5 || f.gone)) && f.x > P.x - 2600 && f.x < P.x + 9000);
-      for (const q of S.projectiles) { q.x += q.v * dt; q.t += dt; q.spin = (q.spin || 0) + dt * 8; }
+      for (const q of S.projectiles) {
+        q.x += q.v * dt; q.t += dt; q.spin = (q.spin || 0) + dt * 8;
+        if (q.kind === 'rock' && !q.hit) {
+          q.z += q.vz * dt; q.vz -= 1200 * dt;
+          q.ly += (q.lane - q.ly) * Math.min(1, dt * 4);
+          if (q.z <= 0) {
+            // Cae en el carril marcado y se queda ahí como obstáculo: o cae encima de Sofía o ella choca con
+            // ella después si no se cambia de carril.
+            q.z = 0; q.vz = 0; q.v = 0; q.landed = true; q.ly = q.lane;
+            emit('sfx', { name: 'stomp' });
+            if (laneOverlap(q.lane, P.ly, 0.45) && xOverlap(P.x, TUNE.busLen * 0.9, q.x, 50) && P.z < 60) {
+              q.hit = true;
+              S.fx.push({ kind: 'boom', x: q.x, ly: q.lane, t: 0, life: 0.4, r: 50 });
+              if (P.boostT > 0) S.stats.score += 100; else hurt('piedra');
+            }
+          }
+        }
+      }
       S.projectiles = S.projectiles.filter((q) => q.x > P.x - 600 && !q.hit && q.t < 12);
       // Tramos y puntos de reaparición.
       const sec = sectionAt(P.x);
@@ -576,12 +625,12 @@
       }
       // Proyectiles.
       for (const q of S.projectiles) {
-        if (q.hit || !laneOverlap(q.lane, P.ly, 0.42) || P.z > 60) continue;
+        if (q.hit || (q.kind === 'rock' && !q.landed) || !laneOverlap(q.lane, P.ly, 0.42) || P.z > 60) continue;
         const len = q.kind === 'spikes' ? 90 : 60;
         if (!xOverlap(P.x, busLen * 0.9, q.x, len)) continue;
         q.hit = true;
         if (q.kind === 'spikes') { if (P.boostT > 0) { S.stats.score += 100; } else { hurt('spikes'); P.wobbleT = 0.6; } }
-        else { explodeSmall(q); if (P.boostT > 0 && q.kind === 'barrel') S.stats.score += 150; else hurt(q.kind); }
+        else { explodeSmall(q); if (P.boostT > 0 && (q.kind === 'barrel' || q.kind === 'rock')) S.stats.score += 150; else hurt(q.kind === 'rock' ? 'piedra' : q.kind); }
       }
       // Vehículos.
       for (const f of S.foes) {

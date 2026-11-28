@@ -161,3 +161,42 @@ Arte aportado para esta misión, integrado igual que la cinemática de Parafalls
   ve la del GIF y en el juego la de la hoja.
 - **Resolución:** los cuadros del GIF son de baja resolución (507 × 336, 256 colores) y en pantallas grandes se
   ven suaves.
+
+---
+
+# V58.8.26 · Los perseguidores en moto
+
+Integro las dos hojas aportadas (3 × 4 cuadros cada una), recortadas y limpias en `assets/calzada/enemigos/`:
+
+- **Limpieza de las hojas:** casi todos los píxeles tenían alfa parcial y había restos tenues. Corté el alfa en 90,
+  eliminé las motas de menos de 30 px y recorté todos los cuadros con la misma caja para que no salten.
+- **El niño de las piedras** (`kid`, 2 golpes para derribarlo). Llega por detrás a un carril de distancia.
+  - Marca el carril de Sofía (franja roja) y levanta la piedra: fila 2 de la hoja.
+  - La lanza en arco (fila 3). La piedra cae y se queda en ese carril como obstáculo.
+  - Se esquiva cambiando de carril. Si Sofía va por una orilla, el niño lanza desde la orilla contraria, para que
+    siempre quede un carril libre. Una prueba encontró ese caso: antes Sofía podía quedar sin salida.
+- **El Maestro Enojón** (`maestro`, 3 golpes). Se empareja con Sofía y levanta la regla: fila 2, con una franja
+  naranja que marca su alcance.
+  - El reglazo (fila 3) alcanza su carril y los dos vecinos.
+  - Se esquiva alejándose dos carriles, o dándole una PATADA durante el aviso, que le quita un golpe y lo aturde.
+- **Fila 4 de cada hoja:** persecución, cuando el enemigo se queda atrás o se recupera.
+- **Dónde aparecen:**
+  - Tramo 2: alternan con las patrullas («LAS PATRULLAS Y EL MAESTRO»).
+  - Rampas: el niño.
+  - Tramo 4 («LOS ZOPILOTES Y EL NIÑO»): sustituye a una de las motos de tachuelas, y el maestro aparece al final
+    (no en Fácil).
+- **Historia:** en el retén, Doña Tóxica avisa que El Maestro Enojón y el niño de las piedras se unieron a la banda.
+- **Versión:** caché y archivos cambiados en 58.8.26.
+
+## QA 58.8.26
+
+- **Node: 144/144.** La prueba nueva confirma que:
+  - la piedra pega si Sofía no reacciona;
+  - cambiarse a un carril libre en cada aviso esquiva todas las piedras;
+  - el reglazo alcanza el carril vecino;
+  - la PATADA durante el aviso lo detiene.
+  - Verificación: al desactivar el reglazo a propósito, la prueba falla.
+- **Bot:** gana en Fácil y Normal con 4 semillas sin reintentos. En Difícil hay a veces 1–2 reintentos, que vienen de
+  barriles y choques.
+- **Chromium (1280 × 720):** se ven los estados de manejo, aviso, ataque y persecución de los dos enemigos, sin
+  errores.

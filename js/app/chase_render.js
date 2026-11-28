@@ -18,7 +18,15 @@
      que no se dibuja (la calle es la del juego). Se suceden en este orden y se funden en las uniones. */
   const FONDOS = ['agua_azul', 'macro_calzada', 'mercado_san_juan', 'morelos'].map((n) => 'assets/calzada/fondos/' + n + '.webp');
   const PANO = { w: 1916, curb: 624, overlap: 0.1, parallax: 0.35 };
-  const urls = () => [MOTO.ride, MOTO.boost, MOTO.air, LUNA, MORITA, SOFIA, ...FONDOS];
+  /* V58.8.26 · Perseguidores en moto (hojas aportadas, 3 × 4): fila 1 maneja, 2 prepara el ataque, 3 ataca, 4 acelera.
+     box: caja del cuadro; moto: x de la llanta trasera y delantera y la fila del piso (para escalar y apoyar). */
+  const RIDERS = {
+    kid: { name: 'nino', box: { w: 409, h: 261 }, moto: [72, 328], ground: 257 },
+    maestro: { name: 'maestro', box: { w: 346, h: 271 }, moto: [22, 308], ground: 262 }
+  };
+  const riderFrame = (kind, row, col) => 'assets/calzada/enemigos/' + RIDERS[kind].name + '_' + row + col + '.webp';
+  const RIDER_URLS = Object.keys(RIDERS).flatMap((kd) => [1, 2, 3, 4].flatMap((r) => [1, 2, 3].map((c) => riderFrame(kd, r, c))));
+  const urls = () => [MOTO.ride, MOTO.boost, MOTO.air, LUNA, MORITA, SOFIA, ...FONDOS, ...RIDER_URLS];
 
   let canvas = null, ctx = null, shakeMul = 1, camY = 0, lastT = 0;
   const R = () => NS.Render;
@@ -233,6 +241,7 @@
     ctx.translate(x, ground);
     if (f.dead) { ctx.rotate(Math.sin(f.spin) * 0.35); }
     if (f.kind === 'moto') { moto(f, k, T); ctx.restore(); return; }
+    if (RIDERS[f.kind]) { rider(f, k, T, S); ctx.restore(); if (!f.dead && f.state === 'stunned') stars(x, ground - K.h * k - 10 * k, k, T); if (!f.dead) telegraph(f, L, T, x, ground - K.h * k - 6 * k, k); return; }
     if (f.kind === 'truck') { truck(f, k, len, h, T, S); ctx.restore(); return; }
     const civilColor = CIVIL_COLORS[hash(String(f.id)) % CIVIL_COLORS.length];
     const body = f.kind === 'patrol' ? '#f1f3f7' : f.kind === 'suv' ? '#15161b' : f.kind === 'taxi' ? '#f4d23a' : f.kind === 'vocho' ? '#7fc243' : civilColor;
@@ -272,6 +281,23 @@
     if (!f.dead && !f.civil) telegraph(f, L, T, x, ground - h - 10 * k, k);
     if (!f.dead && f.state === 'stunned') stars(x, ground - h - 14 * k, k, T);
   }
+  /** Niño de las piedras o Maestro Enojón en su moto: el cuadro sale del estado (aviso, ataque, persecución). */
+  function rider(f, k, T, S) {
+    const R = RIDERS[f.kind], len = NS.Chase.KIND[f.kind].len * k;
+    const sc = len / (R.moto[1] - R.moto[0]), cx = (R.moto[0] + R.moto[1]) / 2;
+    let row = 1, col = 1 + (Math.floor(T * 8 + (f.x % 7)) % 3);
+    const dx = S ? f.x - S.P.x : 0;
+    if (f.state === 'tele') { row = 2; col = 1 + Math.min(2, Math.floor(3 * (1 - Math.max(0, f.tele) / (f.teleMax || 0.85)))); }
+    else if (f.state === 'throw') { row = 3; col = f.throwT > 0.2 ? 1 : f.throwT > 0.08 ? 2 : 3; }
+    else if (f.state === 'swing') { row = 3; col = f.swingT > 0.3 ? 1 : f.swingT > 0.15 ? 2 : 3; }
+    else if (f.state === 'recover' || (f.state === 'approach' && dx < -260)) { row = 4; col = 1 + (Math.floor(T * 10) % 3); }
+    const im = img(riderFrame(f.kind, row, col));
+    const bob = f.dead ? 0 : Math.sin(T * 24 + f.x) * 0.8 * k;
+    if (ok(im)) ctx.drawImage(im, -cx * sc, -R.ground * sc + bob, R.box.w * sc, R.box.h * sc);
+    else { ctx.fillStyle = f.kind === 'kid' ? '#2f7d3a' : '#e8e8ee'; rr(-len / 2, -len * 0.6, len, len * 0.5, 6 * k); ctx.fill(); }
+    if (f.dead) smoke(0, -len * 0.5, k, T, f.x);
+  }
+
   function moto(f, k, T) {
     wheel(-24 * k, -11 * k, 11 * k, T, f.v); wheel(24 * k, -11 * k, 11 * k, T, f.v);
     ctx.fillStyle = '#2d2d33'; ctx.beginPath(); ctx.moveTo(-26 * k, -14 * k); ctx.lineTo(20 * k, -14 * k); ctx.lineTo(28 * k, -26 * k); ctx.lineTo(-10 * k, -26 * k); ctx.closePath(); ctx.fill();
@@ -396,12 +422,22 @@
     const P = S.P;
     for (const f of S.foes) {
       if (f.dead || f.state !== 'tele') continue;
+      const a = 0.25 + 0.25 * Math.sin(T * 16);
+      if (f.kind === 'maestro') {
+        // Alcance de la regla: su carril y los dos vecinos, a su altura.
+        for (const l of [f.lane - 1, f.lane, f.lane + 1]) {
+          if (l < 0 || l > 2) continue;
+          const y = L.laneY(l) + 26 * L.k * L.laneS(l), hh = 30 * L.k;
+          ctx.fillStyle = 'rgba(255,150,40,' + a + ')'; ctx.fillRect(L.sx(f.x - 150), y - hh, 300 * L.k, hh);
+        }
+        continue;
+      }
       const lanes = f.dropLanes || (f.dropLane != null ? [f.dropLane] : null);
       if (!lanes) continue;
-      const a = 0.25 + 0.25 * Math.sin(T * 16);
       for (const l of lanes) {
         const y = L.laneY(l) + 26 * L.k * L.laneS(l), hh = 30 * L.k;
-        const x0 = L.sx(P.x + 160), x1 = L.sx(f.kind === 'moto' ? P.x + 620 : f.x);
+        // La piedra del niño cae alrededor de donde va Sofía; tachuelas y cajas, delante.
+        const x0 = L.sx(f.kind === 'kid' ? P.x - 80 : P.x + 160), x1 = L.sx(f.kind === 'moto' ? P.x + 620 : f.kind === 'kid' ? P.x + 280 : f.x);
         ctx.fillStyle = 'rgba(255,50,50,' + a + ')'; ctx.fillRect(Math.min(x0, x1), y - hh, Math.abs(x1 - x0), hh);
         ctx.fillStyle = 'rgba(255,230,120,' + (0.6 + a) + ')'; ctx.font = '900 ' + Math.round(18 * L.k) + 'px system-ui,sans-serif';
         ctx.fillText('⚠', x0 + 8, y - 8 * L.k);
@@ -410,6 +446,18 @@
   }
   function projectile(q, L, T) {
     const sc = L.laneS(q.ly), k = L.k * sc, x = L.sx(q.x), y = L.laneY(q.ly) + 26 * L.k * sc;
+    if (q.kind === 'rock') {
+      // Sombra en el carril donde va a caer (crece al bajar) y la piedra en arco.
+      const gy = L.laneY(q.lane) + 26 * L.k * L.laneS(q.lane), near = Math.max(0, Math.min(1, 1 - q.z / 260));
+      ctx.fillStyle = 'rgba(0,0,0,' + (0.2 + 0.35 * near) + ')'; ctx.beginPath(); ctx.ellipse(x, gy, (8 + 10 * near) * k, (3 + 3 * near) * k, 0, 0, 7); ctx.fill();
+      const ry = y - q.z * L.k * 0.55;
+      ctx.save(); ctx.translate(x, ry); ctx.rotate(q.spin || 0);
+      ctx.fillStyle = '#8b8a86'; ctx.beginPath(); ctx.ellipse(0, 0, 11 * k, 9 * k, 0.3, 0, 7); ctx.fill();
+      ctx.fillStyle = '#b4b2ac'; ctx.beginPath(); ctx.ellipse(-3 * k, -3 * k, 4 * k, 3 * k, 0, 0, 7); ctx.fill();
+      ctx.restore();
+      ctx.strokeStyle = 'rgba(220,220,220,0.5)'; ctx.lineWidth = 2 * k; ctx.beginPath(); ctx.moveTo(x - 30 * k, ry + 2 * k); ctx.lineTo(x - 14 * k, ry); ctx.stroke();
+      return;
+    }
     if (q.kind === 'spikes') {
       ctx.fillStyle = '#3a3d44'; ctx.fillRect(x - 45 * k, y - 4 * k, 90 * k, 4 * k);
       ctx.fillStyle = '#c9ced8'; for (let i = 0; i < 9; i++) { const sx = x - 42 * k + i * 10 * k; ctx.beginPath(); ctx.moveTo(sx, y - 4 * k); ctx.lineTo(sx + 4 * k, y - 13 * k); ctx.lineTo(sx + 8 * k, y - 4 * k); ctx.fill(); }

@@ -46,7 +46,7 @@ test('Calzada: el bot completa la misión en las tres dificultades (jefe, salto 
     assert.deepEqual([...new Set(chapters)], [0, 1, 2, 3, 4]);
     const hits = r.log.filter((e) => e.type === 'bossHit').length;
     assert.ok(hits >= 3 && hits <= 7, 'golpes al jefe: ' + hits);
-    assert.ok(r.S.stats.takedowns >= 2, 'hubo derribos');
+    assert.ok(r.log.filter((e) => e.type === 'takedown').length >= 2, 'hubo derribos (en todos los intentos)');
     assert.ok(r.S.stats.t > 60 && r.S.stats.t < 240, 'duración razonable: ' + r.S.stats.t);
   }
 });
@@ -129,4 +129,58 @@ test('Calzada: cinemáticas válidas, archivos presentes, en precache y conectad
   assert.match(main, /if \(mission === 'calzada'\) \{ startChase/);
   assert.match(main, /set: 'calzada_fin'/);
   for (const f of NS.ChaseRender ? [] : ['assets/vehicles/camion_frame_02.png', 'assets/companions/luna.png']) assert.ok(sw.includes(f));
+});
+
+test('Calzada: el niño de las piedras y El Maestro Enojón pegan si no reaccionas', () => {
+  // Piedra: marca el carril de Sofía y cae donde ella va si no cambia de carril ni de velocidad.
+  const S = CH.createChase({ difficulty: 'normal' });
+  S.newRun({ section: 1 });
+  S.course.triggers.forEach((t) => { t.done = true; });
+  S.foes = []; S.course.statics = [];
+  const kid = S.spawn('kid', S.P.x - 70, 0); kid.ly = 0; kid.cd = 0;
+  S.P.invT = 0;
+  let hurt = null;
+  for (let i = 0; i < 60 * 5 && !hurt; i++) { S.step(1 / 60, { right: false }); for (const e of S.drainEvents()) if (e.type === 'hurt') hurt = e; }
+  assert.ok(hurt && hurt.reason === 'piedra', 'la piedra pegó: ' + (hurt && hurt.reason));
+  // Si Sofía cambia de carril durante el aviso, la piedra cae en el carril vacío.
+  const S2 = CH.createChase({ difficulty: 'normal' });
+  S2.newRun({ section: 1 });
+  S2.course.triggers.forEach((t) => { t.done = true; }); S2.foes = []; S2.course.statics = [];
+  const kid2 = S2.spawn('kid', S2.P.x - 70, 0); kid2.ly = 0; kid2.cd = 0;
+  let moved = 0, hurt2 = null, wasTele = false;
+  for (let i = 0; i < 60 * 5; i++) {
+    // En cada aviso, Sofía se cambia de carril (alterna entre el 1 y el 2).
+    const tele = kid2.state === 'tele', dodge = tele && !wasTele;
+    wasTele = tele;
+    if (dodge) moved++;
+    // Se cambia a un carril libre: ni el marcado ni el del niño.
+    const free = [0, 1, 2].find((l) => Math.abs(l - S2.P.lane) === 1 && l !== kid2.dropLane && l !== kid2.lane);
+    S2.step(1 / 60, dodge && free != null ? (free > S2.P.lane ? { downPressed: true } : { jumpPressed: true }) : {});
+    for (const e of S2.drainEvents()) if (e.type === 'hurt') hurt2 = e;
+  }
+  assert.ok(moved >= 2, 'hubo al menos dos lanzamientos: ' + moved);
+  assert.equal(hurt2, null, 'cambiar a un carril libre en cada aviso esquiva todas las piedras');
+  // Reglazo: alcanza el carril de al lado; una PATADA durante el aviso lo detiene.
+  const S3 = CH.createChase({ difficulty: 'normal' });
+  S3.newRun({ section: 1 });
+  S3.course.triggers.forEach((t) => { t.done = true; }); S3.foes = []; S3.course.statics = [];
+  const m = S3.spawn('maestro', S3.P.x + 10, 0); m.ly = 0; m.cd = 0;
+  S3.P.invT = 0;
+  let hurt3 = null;
+  for (let i = 0; i < 60 * 4 && !hurt3; i++) { S3.step(1 / 60, {}); for (const e of S3.drainEvents()) if (e.type === 'hurt') hurt3 = e; }
+  assert.ok(hurt3 && hurt3.reason === 'regla', 'el reglazo pegó desde el carril vecino');
+  const S4 = CH.createChase({ difficulty: 'normal' });
+  S4.newRun({ section: 1 });
+  S4.course.triggers.forEach((t) => { t.done = true; }); S4.foes = []; S4.course.statics = [];
+  const m2 = S4.spawn('maestro', S4.P.x + 10, 0); m2.ly = 0; m2.cd = 0;
+  S4.P.invT = 0;
+  let kicked = false, hurt4 = null;
+  for (let i = 0; i < 60 * 1.5; i++) {
+    const kick = m2.state === 'tele' && !kicked;
+    if (kick) kicked = true;
+    S4.step(1 / 60, { kickPressed: kick });
+    for (const e of S4.drainEvents()) if (e.type === 'hurt') hurt4 = e;
+  }
+  assert.ok(kicked && !hurt4, 'la PATADA durante el aviso lo detiene');
+  assert.equal(m2.hp, m2.maxHp - 1);
 });
