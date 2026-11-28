@@ -1,0 +1,811 @@
+{
+  "format": "RGBA8",
+  "image": "assets/fx/water_energy_hd.png",
+  "size": [
+    1440,
+    1440
+  ],
+  "cell": [
+    240,
+    240
+  ],
+  "padding_min": 15,
+  "source_cell": 209,
+  "source": "generated FX art, alpha cleaned and repacked without upscaling",
+  "frames": {
+    "splash_small_00": {
+      "rect": [
+        0,
+        0,
+        240,
+        240
+      ],
+      "pivot": [
+        120,
+        181
+      ],
+      "duration_ms": 75,
+      "content_bbox": [
+        34,
+        169,
+        205,
+        205
+      ]
+    },
+    "splash_small_01": {
+      "rect": [
+        240,
+        0,
+        240,
+        240
+      ],
+      "pivot": [
+        120,
+        181
+      ],
+      "duration_ms": 75,
+      "content_bbox": [
+        36,
+        110,
+        206,
+        210
+      ]
+    },
+    "splash_small_02": {
+      "rect": [
+        480,
+        0,
+        240,
+        240
+      ],
+      "pivot": [
+        120,
+        181
+      ],
+      "duration_ms": 75,
+      "content_bbox": [
+        35,
+        85,
+        207,
+        209
+      ]
+    },
+    "splash_small_03": {
+      "rect": [
+        720,
+        0,
+        240,
+        240
+      ],
+      "pivot": [
+        120,
+        181
+      ],
+      "duration_ms": 75,
+      "content_bbox": [
+        32,
+        47,
+        208,
+        211
+      ]
+    },
+    "splash_small_04": {
+      "rect": [
+        960,
+        0,
+        240,
+        240
+      ],
+      "pivot": [
+        120,
+        181
+      ],
+      "duration_ms": 75,
+      "content_bbox": [
+        32,
+        55,
+        209,
+        210
+      ]
+    },
+    "splash_small_05": {
+      "rect": [
+        1200,
+        0,
+        240,
+        240
+      ],
+      "pivot": [
+        120,
+        181
+      ],
+      "duration_ms": 75,
+      "content_bbox": [
+        31,
+        120,
+        209,
+        209
+      ]
+    },
+    "splash_large_00": {
+      "rect": [
+        0,
+        240,
+        240,
+        240
+      ],
+      "pivot": [
+        120,
+        190
+      ],
+      "duration_ms": 90,
+      "content_bbox": [
+        22,
+        149,
+        223,
+        217
+      ]
+    },
+    "splash_large_01": {
+      "rect": [
+        240,
+        240,
+        240,
+        240
+      ],
+      "pivot": [
+        120,
+        190
+      ],
+      "duration_ms": 90,
+      "content_bbox": [
+        20,
+        104,
+        222,
+        222
+      ]
+    },
+    "splash_large_02": {
+      "rect": [
+        480,
+        240,
+        240,
+        240
+      ],
+      "pivot": [
+        120,
+        190
+      ],
+      "duration_ms": 90,
+      "content_bbox": [
+        17,
+        65,
+        223,
+        223
+      ]
+    },
+    "splash_large_03": {
+      "rect": [
+        720,
+        240,
+        240,
+        240
+      ],
+      "pivot": [
+        120,
+        190
+      ],
+      "duration_ms": 90,
+      "content_bbox": [
+        16,
+        19,
+        223,
+        223
+      ]
+    },
+    "splash_large_04": {
+      "rect": [
+        960,
+        240,
+        240,
+        240
+      ],
+      "pivot": [
+        120,
+        190
+      ],
+      "duration_ms": 90,
+      "content_bbox": [
+        16,
+        33,
+        223,
+        223
+      ]
+    },
+    "splash_large_05": {
+      "rect": [
+        1200,
+        240,
+        240,
+        240
+      ],
+      "pivot": [
+        120,
+        190
+      ],
+      "duration_ms": 90,
+      "content_bbox": [
+        16,
+        108,
+        223,
+        223
+      ]
+    },
+    "bubbles_00": {
+      "rect": [
+        0,
+        480,
+        240,
+        240
+      ],
+      "pivot": [
+        120,
+        120
+      ],
+      "duration_ms": 90,
+      "content_bbox": [
+        85,
+        127,
+        144,
+        207
+      ]
+    },
+    "bubbles_01": {
+      "rect": [
+        240,
+        480,
+        240,
+        240
+      ],
+      "pivot": [
+        120,
+        120
+      ],
+      "duration_ms": 90,
+      "content_bbox": [
+        72,
+        95,
+        160,
+        208
+      ]
+    },
+    "bubbles_02": {
+      "rect": [
+        480,
+        480,
+        240,
+        240
+      ],
+      "pivot": [
+        120,
+        120
+      ],
+      "duration_ms": 90,
+      "content_bbox": [
+        50,
+        59,
+        179,
+        208
+      ]
+    },
+    "bubbles_03": {
+      "rect": [
+        720,
+        480,
+        240,
+        240
+      ],
+      "pivot": [
+        120,
+        120
+      ],
+      "duration_ms": 90,
+      "content_bbox": [
+        37,
+        16,
+        187,
+        211
+      ]
+    },
+    "bubbles_04": {
+      "rect": [
+        960,
+        480,
+        240,
+        240
+      ],
+      "pivot": [
+        120,
+        120
+      ],
+      "duration_ms": 90,
+      "content_bbox": [
+        46,
+        16,
+        192,
+        204
+      ]
+    },
+    "bubbles_05": {
+      "rect": [
+        1200,
+        480,
+        240,
+        240
+      ],
+      "pivot": [
+        120,
+        120
+      ],
+      "duration_ms": 90,
+      "content_bbox": [
+        65,
+        16,
+        172,
+        204
+      ]
+    },
+    "propulsion_00": {
+      "rect": [
+        0,
+        720,
+        240,
+        240
+      ],
+      "pivot": [
+        120,
+        120
+      ],
+      "duration_ms": 55,
+      "content_bbox": [
+        60,
+        96,
+        174,
+        153
+      ]
+    },
+    "propulsion_01": {
+      "rect": [
+        240,
+        720,
+        240,
+        240
+      ],
+      "pivot": [
+        120,
+        120
+      ],
+      "duration_ms": 55,
+      "content_bbox": [
+        32,
+        90,
+        223,
+        160
+      ]
+    },
+    "propulsion_02": {
+      "rect": [
+        480,
+        720,
+        240,
+        240
+      ],
+      "pivot": [
+        120,
+        120
+      ],
+      "duration_ms": 55,
+      "content_bbox": [
+        16,
+        72,
+        223,
+        168
+      ]
+    },
+    "propulsion_03": {
+      "rect": [
+        720,
+        720,
+        240,
+        240
+      ],
+      "pivot": [
+        120,
+        120
+      ],
+      "duration_ms": 55,
+      "content_bbox": [
+        16,
+        58,
+        223,
+        182
+      ]
+    },
+    "propulsion_04": {
+      "rect": [
+        960,
+        720,
+        240,
+        240
+      ],
+      "pivot": [
+        120,
+        120
+      ],
+      "duration_ms": 55,
+      "content_bbox": [
+        16,
+        63,
+        223,
+        223
+      ]
+    },
+    "propulsion_05": {
+      "rect": [
+        1200,
+        720,
+        240,
+        240
+      ],
+      "pivot": [
+        120,
+        120
+      ],
+      "duration_ms": 55,
+      "content_bbox": [
+        16,
+        81,
+        216,
+        222
+      ]
+    },
+    "charge_00": {
+      "rect": [
+        0,
+        960,
+        240,
+        240
+      ],
+      "pivot": [
+        120,
+        120
+      ],
+      "duration_ms": 65,
+      "content_bbox": [
+        78,
+        79,
+        171,
+        165
+      ]
+    },
+    "charge_01": {
+      "rect": [
+        240,
+        960,
+        240,
+        240
+      ],
+      "pivot": [
+        120,
+        120
+      ],
+      "duration_ms": 65,
+      "content_bbox": [
+        52,
+        60,
+        193,
+        190
+      ]
+    },
+    "charge_02": {
+      "rect": [
+        480,
+        960,
+        240,
+        240
+      ],
+      "pivot": [
+        120,
+        120
+      ],
+      "duration_ms": 65,
+      "content_bbox": [
+        36,
+        43,
+        223,
+        195
+      ]
+    },
+    "charge_03": {
+      "rect": [
+        720,
+        960,
+        240,
+        240
+      ],
+      "pivot": [
+        120,
+        120
+      ],
+      "duration_ms": 65,
+      "content_bbox": [
+        16,
+        18,
+        223,
+        223
+      ]
+    },
+    "charge_04": {
+      "rect": [
+        960,
+        960,
+        240,
+        240
+      ],
+      "pivot": [
+        120,
+        120
+      ],
+      "duration_ms": 65,
+      "content_bbox": [
+        16,
+        16,
+        223,
+        223
+      ]
+    },
+    "charge_05": {
+      "rect": [
+        1200,
+        960,
+        240,
+        240
+      ],
+      "pivot": [
+        120,
+        120
+      ],
+      "duration_ms": 65,
+      "content_bbox": [
+        16,
+        16,
+        223,
+        223
+      ]
+    },
+    "energy_burst_00": {
+      "rect": [
+        0,
+        1200,
+        240,
+        240
+      ],
+      "pivot": [
+        120,
+        120
+      ],
+      "duration_ms": 65,
+      "content_bbox": [
+        80,
+        73,
+        163,
+        152
+      ]
+    },
+    "energy_burst_01": {
+      "rect": [
+        240,
+        1200,
+        240,
+        240
+      ],
+      "pivot": [
+        120,
+        120
+      ],
+      "duration_ms": 65,
+      "content_bbox": [
+        38,
+        46,
+        199,
+        180
+      ]
+    },
+    "energy_burst_02": {
+      "rect": [
+        480,
+        1200,
+        240,
+        240
+      ],
+      "pivot": [
+        120,
+        120
+      ],
+      "duration_ms": 65,
+      "content_bbox": [
+        17,
+        18,
+        223,
+        207
+      ]
+    },
+    "energy_burst_03": {
+      "rect": [
+        720,
+        1200,
+        240,
+        240
+      ],
+      "pivot": [
+        120,
+        120
+      ],
+      "duration_ms": 65,
+      "content_bbox": [
+        16,
+        16,
+        223,
+        223
+      ]
+    },
+    "energy_burst_04": {
+      "rect": [
+        960,
+        1200,
+        240,
+        240
+      ],
+      "pivot": [
+        120,
+        120
+      ],
+      "duration_ms": 65,
+      "content_bbox": [
+        16,
+        16,
+        223,
+        223
+      ]
+    },
+    "energy_burst_05": {
+      "rect": [
+        1200,
+        1200,
+        240,
+        240
+      ],
+      "pivot": [
+        120,
+        120
+      ],
+      "duration_ms": 65,
+      "content_bbox": [
+        16,
+        16,
+        223,
+        205
+      ]
+    }
+  },
+  "animations": {
+    "splash_small": {
+      "row": 0,
+      "frames": [
+        "splash_small_00",
+        "splash_small_01",
+        "splash_small_02",
+        "splash_small_03",
+        "splash_small_04",
+        "splash_small_05"
+      ],
+      "duration_ms": 75,
+      "loop": false,
+      "draw_size": 78,
+      "pivot": [
+        120,
+        181
+      ]
+    },
+    "splash_large": {
+      "row": 1,
+      "frames": [
+        "splash_large_00",
+        "splash_large_01",
+        "splash_large_02",
+        "splash_large_03",
+        "splash_large_04",
+        "splash_large_05"
+      ],
+      "duration_ms": 90,
+      "loop": false,
+      "draw_size": 112,
+      "pivot": [
+        120,
+        190
+      ]
+    },
+    "bubbles": {
+      "row": 2,
+      "frames": [
+        "bubbles_00",
+        "bubbles_01",
+        "bubbles_02",
+        "bubbles_03",
+        "bubbles_04",
+        "bubbles_05"
+      ],
+      "duration_ms": 90,
+      "loop": false,
+      "draw_size": 64,
+      "pivot": [
+        120,
+        120
+      ]
+    },
+    "propulsion": {
+      "row": 3,
+      "frames": [
+        "propulsion_00",
+        "propulsion_01",
+        "propulsion_02",
+        "propulsion_03",
+        "propulsion_04",
+        "propulsion_05"
+      ],
+      "duration_ms": 55,
+      "loop": false,
+      "draw_size": 100,
+      "pivot": [
+        120,
+        120
+      ]
+    },
+    "charge": {
+      "row": 4,
+      "frames": [
+        "charge_00",
+        "charge_01",
+        "charge_02",
+        "charge_03",
+        "charge_04",
+        "charge_05"
+      ],
+      "duration_ms": 65,
+      "loop": false,
+      "draw_size": 90,
+      "pivot": [
+        120,
+        120
+      ]
+    },
+    "energy_burst": {
+      "row": 5,
+      "frames": [
+        "energy_burst_00",
+        "energy_burst_01",
+        "energy_burst_02",
+        "energy_burst_03",
+        "energy_burst_04",
+        "energy_burst_05"
+      ],
+      "duration_ms": 65,
+      "loop": false,
+      "draw_size": 128,
+      "pivot": [
+        120,
+        120
+      ]
+    }
+  }
+}

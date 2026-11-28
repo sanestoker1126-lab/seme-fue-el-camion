@@ -1,0 +1,395 @@
+{
+  "schema": "camion.production.atlas.v1",
+  "id": "marciano_espacial",
+  "image": "assets/production/marciano_espacial/atlas.png",
+  "size": [
+    2048,
+    432
+  ],
+  "format": "RGBA8888",
+  "padding_px": 8,
+  "extrusion_px": 2,
+  "anchor": "feet",
+  "uniform_scale": true,
+  "source": "ENEMIGOS_SECRETOS_MARINO_ESPACIAL_V1.zip",
+  "notes": "Candidate repack of previously accepted indices only. Original branch atlas may have additional local cleanup. Do not auto-replace until visual recheck.",
+  "frame_count": 15,
+  "unique_pixel_frames": 15,
+  "animations": {
+    "caminar": {
+      "frames": [
+        "caminar_00",
+        "caminar_01",
+        "caminar_02",
+        "caminar_03"
+      ],
+      "duration_ms": 150,
+      "loop": true,
+      "anchor": "feet"
+    },
+    "disparo": {
+      "frames": [
+        "disparo_04",
+        "disparo_05",
+        "disparo_07"
+      ],
+      "duration_ms": 150,
+      "loop": false,
+      "anchor": "feet"
+    },
+    "recibir_dano": {
+      "frames": [
+        "recibir_dano_08",
+        "recibir_dano_09",
+        "recibir_dano_10",
+        "recibir_dano_11"
+      ],
+      "duration_ms": 150,
+      "loop": false,
+      "anchor": "feet"
+    },
+    "morir": {
+      "frames": [
+        "morir_12",
+        "morir_13",
+        "morir_14",
+        "morir_15"
+      ],
+      "duration_ms": 150,
+      "loop": false,
+      "anchor": "feet"
+    }
+  },
+  "frames": {
+    "caminar_00": {
+      "rect": [
+        10,
+        10,
+        165,
+        207
+      ],
+      "pivot": [
+        83.0,
+        207.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "11a8cfc5b6cee710b3f92399d6128bf0ff4e86770766e05024c839553aea91c0",
+      "source": "assets/enemies/marciano_espacial/marciano_espacial_atlas_rgba.png:0",
+      "source_bbox": [
+        77,
+        105,
+        242,
+        312
+      ],
+      "notes": ""
+    },
+    "caminar_01": {
+      "rect": [
+        195,
+        10,
+        174,
+        206
+      ],
+      "pivot": [
+        87.0,
+        206.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "c2ae2d6d3d7bf9dd82a45c34fb9fa6abb1985a1924bc89d4f49b9b5d080a78da",
+      "source": "assets/enemies/marciano_espacial/marciano_espacial_atlas_rgba.png:1",
+      "source_bbox": [
+        73,
+        106,
+        247,
+        312
+      ],
+      "notes": ""
+    },
+    "caminar_02": {
+      "rect": [
+        389,
+        10,
+        164,
+        205
+      ],
+      "pivot": [
+        82.0,
+        205.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "d1ab6074d1d0a17c231d4615cbd2fa570b0dcd27b2aba3d3e3324acbfa73825a",
+      "source": "assets/enemies/marciano_espacial/marciano_espacial_atlas_rgba.png:2",
+      "source_bbox": [
+        78,
+        107,
+        242,
+        312
+      ],
+      "notes": ""
+    },
+    "caminar_03": {
+      "rect": [
+        1169,
+        10,
+        171,
+        203
+      ],
+      "pivot": [
+        86.0,
+        203.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "b96f6bc464de18aefbc42df0871820d256e0cd23231dcbab29efd86e75f2de9f",
+      "source": "assets/enemies/marciano_espacial/marciano_espacial_atlas_rgba.png:3",
+      "source_bbox": [
+        74,
+        109,
+        245,
+        312
+      ],
+      "notes": ""
+    },
+    "disparo_04": {
+      "rect": [
+        769,
+        10,
+        154,
+        204
+      ],
+      "pivot": [
+        77.0,
+        204.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "72c7c069f19b4870f3388264f55707924b5ef48705c667687750d20e998de76c",
+      "source": "assets/enemies/marciano_espacial/marciano_espacial_atlas_rgba.png:4",
+      "source_bbox": [
+        83,
+        108,
+        237,
+        312
+      ],
+      "notes": ""
+    },
+    "disparo_05": {
+      "rect": [
+        943,
+        10,
+        206,
+        203
+      ],
+      "pivot": [
+        103.0,
+        203.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "e2410033df2bbc70c03b1888f9dce297513e8ac96efe40f879156c782b4e3c92",
+      "source": "assets/enemies/marciano_espacial/marciano_espacial_atlas_rgba.png:5",
+      "source_bbox": [
+        57,
+        109,
+        263,
+        312
+      ],
+      "notes": ""
+    },
+    "disparo_07": {
+      "rect": [
+        1360,
+        10,
+        221,
+        201
+      ],
+      "pivot": [
+        111.0,
+        201.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "4c67e2685b13b8c16c6854624d5279a7307bdd75bf9e2f9dfe42995cea7c787f",
+      "source": "assets/enemies/marciano_espacial/marciano_espacial_atlas_rgba.png:7",
+      "source_bbox": [
+        49,
+        111,
+        270,
+        312
+      ],
+      "notes": ""
+    },
+    "recibir_dano_08": {
+      "rect": [
+        573,
+        10,
+        176,
+        204
+      ],
+      "pivot": [
+        88.0,
+        204.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "c50c7311506b57bfc17d3fd7d3edb82899bf6d635d8a5ab0b46b88859a1c170d",
+      "source": "assets/enemies/marciano_espacial/marciano_espacial_atlas_rgba.png:8",
+      "source_bbox": [
+        72,
+        108,
+        248,
+        312
+      ],
+      "notes": ""
+    },
+    "recibir_dano_09": {
+      "rect": [
+        1601,
+        10,
+        184,
+        199
+      ],
+      "pivot": [
+        92.0,
+        199.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "ecbf8befa33cba71f9b059f3b85a2fe1a7867f0e0ef17f4b965f651ff7415b94",
+      "source": "assets/enemies/marciano_espacial/marciano_espacial_atlas_rgba.png:9",
+      "source_bbox": [
+        68,
+        113,
+        252,
+        312
+      ],
+      "notes": ""
+    },
+    "recibir_dano_10": {
+      "rect": [
+        10,
+        237,
+        176,
+        177
+      ],
+      "pivot": [
+        88.0,
+        177.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "a4598debc6e161f6d1c04835f4ac3815b4bffbc61b268959b92bc27cc83ab6ee",
+      "source": "assets/enemies/marciano_espacial/marciano_espacial_atlas_rgba.png:10",
+      "source_bbox": [
+        72,
+        135,
+        248,
+        312
+      ],
+      "notes": ""
+    },
+    "recibir_dano_11": {
+      "rect": [
+        1805,
+        10,
+        168,
+        186
+      ],
+      "pivot": [
+        84.0,
+        186.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "60c110c997137444c1ca71cc16ec2eec9c17f4eb578a330aa72ed30686f52f11",
+      "source": "assets/enemies/marciano_espacial/marciano_espacial_atlas_rgba.png:11",
+      "source_bbox": [
+        76,
+        126,
+        244,
+        312
+      ],
+      "notes": ""
+    },
+    "morir_12": {
+      "rect": [
+        206,
+        237,
+        235,
+        166
+      ],
+      "pivot": [
+        118.0,
+        166.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "b5e10b426d3bc2db5a4079c5900a1863f60856b43e4f6e929345cd9209a38e01",
+      "source": "assets/enemies/marciano_espacial/marciano_espacial_atlas_rgba.png:12",
+      "source_bbox": [
+        42,
+        146,
+        277,
+        312
+      ],
+      "notes": ""
+    },
+    "morir_13": {
+      "rect": [
+        461,
+        237,
+        247,
+        139
+      ],
+      "pivot": [
+        124.0,
+        139.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "b89c7093ae828415380a7f22942b4483a9a17bd8ea3703ec6746a80989672227",
+      "source": "assets/enemies/marciano_espacial/marciano_espacial_atlas_rgba.png:13",
+      "source_bbox": [
+        36,
+        173,
+        283,
+        312
+      ],
+      "notes": ""
+    },
+    "morir_14": {
+      "rect": [
+        728,
+        237,
+        203,
+        118
+      ],
+      "pivot": [
+        102.0,
+        118.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "42f0390992a14141f59e87073840b017938634d6680ef21b3a568ffa4ab97b32",
+      "source": "assets/enemies/marciano_espacial/marciano_espacial_atlas_rgba.png:14",
+      "source_bbox": [
+        58,
+        194,
+        261,
+        312
+      ],
+      "notes": ""
+    },
+    "morir_15": {
+      "rect": [
+        951,
+        237,
+        239,
+        89
+      ],
+      "pivot": [
+        120.0,
+        89.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "1649003b7ae703ec3b2034daa0233f51f4e067dceb25effbd603efabae7927aa",
+      "source": "assets/enemies/marciano_espacial/marciano_espacial_atlas_rgba.png:15",
+      "source_bbox": [
+        40,
+        223,
+        279,
+        312
+      ],
+      "notes": ""
+    }
+  }
+}

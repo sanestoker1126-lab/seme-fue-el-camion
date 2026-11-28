@@ -43,6 +43,10 @@
       walk: Array.from({ length: 4 }, (_, i) => `assets/companions/morita_walk_v38_0${i + 1}.png`),
       shoulder: 'assets/companions/morita_shoulder.png', scale: 0.066, tint: '#d7d9df' }
   };
+  const PARAFALLS_ROBLOX_SOFIA = 'assets/player/sofia_roblox/sofia_atlas.png';
+  const PARAFALLS_ROBLOX_CAT_DIR = 'assets/companions/roblox_parafalls/';
+  const PARAFALLS_ROBLOX_PLAYER_STATE = { fastRun: 'run', dash: 'glide', kick: 'attack', swimKick: 'attack', dead: 'knockdown', cheer: 'victory', zip: 'glide', swing: 'glide', waterLeap: 'jump', diveIn: 'jump' };
+  const PARAFALLS_ROBLOX_URLS = [PARAFALLS_ROBLOX_SOFIA, ...['luna','morita'].map((id) => PARAFALLS_ROBLOX_CAT_DIR + id + '/atlas.png')];
   // V53 · Variante submarina de las gatitas (casco, tanque): se usa en el mundo submarino. Mismos tamaños (224 px)
   // que los frames de tierra, así que comparten escala. Los frames vienen del kit Luna/Morita submarinas.
   const subFrames = (cat, base, n) => Array.from({ length: n }, (_, i) => `assets/companions/sub/${cat}_${base}_0${i + 1}.png`);
@@ -83,39 +87,26 @@
 
   const hex = (n) => '#' + (n >>> 0).toString(16).padStart(6, '0').slice(-6);
   const images = new Map();
+  let frameNumber = 0;
   function image(src) {
     if (!images.has(src)) {
       const im = new Image();
       im.decoding = 'async';
+      im.loaded = new Promise(resolve => {
+        im.addEventListener('load', () => resolve(im.naturalWidth > 0), { once: true });
+        im.addEventListener('error', () => resolve(false), { once: true });
+      });
+      im.scenery = /^assets\/(scenes|parallax|backgrounds)\//.test(src);
       im.src = src;
       images.set(src, im);
     }
-    return images.get(src);
+    const im = images.get(src);
+    if (im.scenery) im.usedAt = frameNumber;
+    return im;
   }
   const ready = (im) => !!(im && im.complete && im.naturalWidth > 0);
   function whenLoaded(im) {
-    if (ready(im)) return Promise.resolve(true);
-    // V56 · Una imagen que ya falló puede tener complete=true y naturalWidth=0:
-    // sus eventos ya se dispararon; esperar nuevos 'load/error' bloquea el boot.
-    if (im.complete) return Promise.resolve(false);
-    return new Promise((res) => {
-      let settled = false;
-      const finish = (ok) => {
-        if (settled) return;
-        settled = true;
-        root.clearTimeout(timer);
-        im.removeEventListener('load', onLoad);
-        im.removeEventListener('error', onError);
-        res(ok);
-      };
-      const onLoad = () => finish(ready(im));
-      const onError = () => finish(false);
-      const timer = root.setTimeout(() => finish(ready(im)), 9000);
-      im.addEventListener('load', onLoad);
-      im.addEventListener('error', onError);
-      // Cierra la carrera si el recurso terminó de descargarse al enlazar eventos.
-      if (im.complete) finish(ready(im));
-    });
+    return ready(im) ? Promise.resolve(true) : im.loaded;
   }
 
   /* Fondo teñido cacheado (una vez por par archivo+tinte). */
@@ -129,7 +120,9 @@
     const k = maxW && im.naturalWidth > maxW ? maxW / im.naturalWidth : 1;
     if (tint === 0xffffff && k === 1) return im;
     const key = src + '|' + tint + '|' + k.toFixed(4);
-    if (tinted.has(key)) return tinted.get(key);
+    if (tinted.has(key)) {
+      const cached = tinted.get(key); tinted.delete(key); tinted.set(key, cached); return cached;
+    }
     const c = document.createElement('canvas');
     c.width = Math.round(im.naturalWidth * k); c.height = Math.round(im.naturalHeight * k);
     const x = c.getContext('2d');
@@ -142,6 +135,7 @@
       x.globalCompositeOperation = 'destination-in';
       x.drawImage(im, 0, 0, c.width, c.height);
     }
+    if (tinted.size >= 4) tinted.delete(tinted.keys().next().value);
     tinted.set(key, c);
     return c;
   }
@@ -173,22 +167,45 @@
   function init(el) {
     canvas = el;
     ctx = canvas.getContext('2d', { alpha: false });
-    for (const g of Object.keys(NINA)) for (const f of NINA[g]) for (const dir of Object.values(NINA_VARIANT_DIR)) image(dir + f + '.png');
-    for (const c of [...Object.values(COMPANIONS), ...Object.values(COMPANIONS_SUB)]) { image(c.src); for (const s of c.idle) image(s); for (const s of c.walk) image(s); image(c.shoulder); }
-    image(BUS_FRAMES[0]);
-    image(DIVE_SHEET);
     resize();
   }
   function resize() {
-    dpr = Math.min(root.devicePixelRatio || 1, 2) * qScale;
+    const touch = (root.navigator.maxTouchPoints || 0) > 0 || root.matchMedia('(pointer: coarse)').matches;
+    const pixels = (root.navigator.deviceMemory || 4) > 4 ? 2000000 : 1000000;
+    const density = (touch && root.innerWidth && root.innerHeight) ?
+      Math.min(2, Math.sqrt(pixels / (root.innerWidth * root.innerHeight))) : 2.5;
+    dpr = Math.max(touch ? .65 : 1, Math.min(root.devicePixelRatio || 1, density) * qScale);
     cw = Math.max(1, Math.round(root.innerWidth * dpr));
     ch = Math.max(1, Math.round(root.innerHeight * dpr));
     canvas.width = cw; canvas.height = ch;
     canvas.style.width = '100%'; canvas.style.height = '100%';
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = touch && qScale < .9 ? 'medium' : 'high';
   }
-  function preload(srcs) { return Promise.all(srcs.map((s) => { const im = image(s); return whenLoaded(im).then((ok) => (ok && im.decode ? im.decode().catch(() => {}) : null)); })); }
+  // Las imágenes se solicitan al dibujarse. Solo se adelantan la primera página y los protagonistas.
+  let loadedWorld = null;
+  function enterWorld(id) {
+    if (loadedWorld === id) return;
+    if (loadedWorld !== null) { images.clear(); tinted.clear(); sils.clear(); depthFxCache.clear(); fused.clear(); bgCache.clear(); }
+    loadedWorld = id;
+  }
+  function entryArt(G) {
+    const sc = G.world.scenes[G.tramo], art = sc.map.worldArt;
+    const first = sc.index === 0 && G.world.shore ? G.world.shore.file : art ? art.dir + art.pages[0] : sc.file;
+    const main = G.missionId === 'parafalls' ? PARAFALLS_ROBLOX_URLS :
+      G.missionId === 'espacial' ? ['assets/production/sofia_astronauta/atlas.png','assets/production/luna_space/atlas.png','assets/production/morita_space/atlas.png'] :
+      [ninaSrc('idle_01', outfitFor(sc.theme)), COMPANIONS.luna.idle[0], COMPANIONS.morita.idle[0]];
+    return [...new Set([first, ...main].filter(Boolean))];
+  }
+  async function preload(srcs) {
+    const urls = [...new Set(srcs)], results = [];
+    for (let i = 0; i < urls.length; i += 3) {
+      const readyBatch = await Promise.all(urls.slice(i, i + 3).map(src => whenLoaded(image(src))));
+      results.push(...readyBatch);
+    }
+    return results;
+  }
   // Resolución adaptativa: el bucle baja la calidad si el dispositivo va lento y la sube si va sobrado.
-  function setQuality(q) { q = Math.max(0.5, Math.min(1, q)); if (Math.abs(q - qScale) < 0.02) return false; qScale = q; resize(); return true; }
+  function setQuality(q) { q = Math.max(0.55, Math.min(1, q)); if (Math.abs(q - qScale) < 0.02) return false; qScale = q; resize(); return true; }
 
   /* ---------- Primitivas ---------- */
   function rr(x, y, w, h, r) {
@@ -283,11 +300,14 @@
      se repiten en mosaico espejo (las uniones coinciden). Cada capa se desplaza a su propia velocidad.
      `top` es la mitad alta (trazado original), `bottom` la mitad nueva; null = el fondo propio del nivel. */
   const PXD = 'assets/parallax/';
-  // Dos planos por franja (rendimiento en Android): uno lejano y la arquitectura, cada uno a su velocidad. Si un plano
-  // lista varias capas, se funden UNA vez en un lienzo (cielo + nubes) y se dibujan como una sola imagen.
-  const GDL = (sec) => [[[PXD + 'guadalajara/' + sec + '/00_cielo_degradado.webp', PXD + 'guadalajara/' + sec + '/01_nubes_reales.webp'], 0.1], [[PXD + 'guadalajara/' + sec + '/02_arquitectura_anclada.webp'], 0.55]];
+  // Guadalajara V58.4.1: capas independientes del paquete adaptadas a la escala del renderer vigente.
+  // Se usan solo cielo y ciudad lejana; los primeros planos incluyen repisas de otra versión y no coinciden con las colisiones V58.8.1.
+  const GDL_V584 = PXD + 'guadalajara_v584/';
+  const GDL = () => [[[GDL_V584 + '00_cielo_atardecer.webp'], 0.16], [[GDL_V584 + '01_ciudad_lejana.webp'], 0.08]];
+  // El primer Guadalajara ya trae ciudad/plataformas en su arte central; conservar solo el cielo fuera del panel.
+  const GDL_SKY = () => [[[GDL_V584 + '00_cielo_atardecer.webp'], 0.16]];
   const BACKDROPS = {
-    guadalajara: { bottom: GDL('barrios_inferiores') },
+    guadalajara: { bottom: GDL_SKY('barrios_inferiores') },
     gdl_noche: { bottom: GDL('barrios_inferiores') },
     azoteas: { top: GDL('azoteas'), bottom: GDL('azoteas') },
     centro_historico: { bottom: GDL('mercado_parque') },
@@ -298,20 +318,27 @@
     anden_tren_ligero: { bottom: GDL('barrios_inferiores') },
     plaza_jacarandas: { bottom: GDL('azoteas') }
   };
-  /* ---------- V58.1 · Mundos pintados de una pieza ----------
-     El mar es UNA ilustración vertical (páginas apiladas) fija al mundo: el nivel está trazado sobre ella, así que
-     no hay paralaje en la arquitectura (las repisas dibujadas son las plataformas). Encima, las capas de ambiente
-     del paquete (luz, niebla, ruinas, corales, plancton, burbujas, arrecife) con paralaje real, fundidas UNA vez a
-     media resolución en dos planos (lejano y cercano): 2 dibujos por cuadro en vez de 7. Medido con la CPU frenada,
-     cada capa a pantalla completa cuesta 1,5–2 ms por software; en modo ligero (equipo lento) no se dibujan.
+  const WATERFALL_DIR = 'assets/scenes/waterfalls/parafalls_v2/';
+  const waterfallDepth = (page) => ({
+    dir: WATERFALL_DIR,
+    // Cada página conserva sus dos planos RGBA originales: atmósfera lenta y vegetación frontal ligeramente cercana.
+    fx: [
+      { f: 0.18, zone: [0, 1], layers: [[`depth/atmosphere_0${page}.webp`, 0.65]] },
+      { f: 1.08, near: true, zone: [0, 1], layers: [[`depth/foreground_0${page}.webp`, 0.82]] }
+    ],
+    above: '#2684d3', below: '#10384b'
+  });
+  /* ---------- V59 · Mundo submarino de tres láminas ----------
+     Canal inundado, bosque de algas y fosa azul son páginas completas fijas al mundo. La geometría se traza sobre
+     el arte; las repisas visibles son la ruta física. Solo se reutilizan partículas transparentes V4, sin arquitectura.
      La geometría (ancho, alto, px por unidad de mapa) viene del mapa (worldArt). */
   const DEPTH_ART = {
     submarino: {
+      // Solo ambiente transparente (sin duplicar ruinas/corales ya pintados en V59); ambos efectos se limitan al canal.
       dir: PXD + 'marino/depth_v4/',
       fx: [
-        { f: 0.22, layers: [['layers/01_caudales_superficie.png', 0.48], ['layers/02_neblina_distante.png', 0.36], ['layers/03_ruinas_lejanas.png', 0.34],
-          ['layers/04_corales_medios.png', 0.4], ['layers/05_plancton_flotante.png', 0.48]] },
-        { f: 0.62, near: true, layers: [['layers/06_burbujas_ligeras.png', 0.43], ['layers/07_arrecife_cercano.png', 0.3]] }
+        { f: 0.24, zone: [0, 1 / 3], tile: 520, layers: [['layers/05_plancton_flotante.png', 0.5]] },
+        { f: 0.76, zone: [0, 1 / 3], tile: 680, layers: [['layers/06_burbujas_ligeras.png', 0.42]] }
       ],
       above: '#438efa', below: '#093d7c'
     },
@@ -328,9 +355,10 @@
       ],
       above: '#1c2141', below: '#32455c'
     },
-    // Escuela Miguel Hidalgo (misión 1): tres láminas apiladas, sin capas de ambiente (sus capas de árboles
+    cascadas_01: waterfallDepth(1), cascadas_02: waterfallDepth(2), cascadas_03: waterfallDepth(3),
+    // Escuela Benito Juárez (misión 1): tres láminas apiladas, sin capas de ambiente (sus capas de árboles
     // translúcidos se encimaban sobre la fachada y no aportaban).
-    escuela: { dir: '', fx: [], above: '#4b8fd8', below: '#575b66' }
+    escuela: { dir: '', fx: [], above: '#2181c7', below: '#353c42' }
   };
   // Sprites recortados de las capas V5 (px de la capa): OVNI de 04_naves_satelites.
   const UFO = { src: PXD + 'espacial/depth_v5/layers/04_naves_satelites.png', box: [590, 72, 289, 106], rim: 0.42 };
@@ -339,7 +367,8 @@
   // Páginas de todos los mundos pintados (de los mapas) y capas de ambiente (de DEPTH_ART).
   function depthUrls() {
     const out = new Set(), L = NS.LEVELS || {};
-    const maps = [L.SUBMARINO_MAP, L.ESPACIAL_MAP, ...(L.LEVEL_SEQUENCE || []).map((d) => d.map)];
+    const maps = [L.SUBMARINO_MAP, L.ESPACIAL_MAP, ...(L.LEVEL_SEQUENCE || []).map((d) => d.map),
+      ...(L.MISSIONS || []).flatMap((m) => m.levels.map((d) => d.map))];
     for (const m of maps) if (m && m.worldArt) for (const p of m.worldArt.pages) out.add(m.worldArt.dir + p);
     for (const c of Object.values(DEPTH_ART)) for (const g of c.fx) for (const [src] of g.layers) out.add(c.dir + src);
     return [...out];
@@ -412,34 +441,45 @@
     const first = W.scenes[0], last = W.scenes[W.scenes.length - 1], B = W.bounds;
     const c0 = depthCfg(first), c1 = depthCfg(last);
     // Arriba y abajo de las láminas: su propio color de borde (la cámara puede asomarse por encima del inicio).
-    if (c0 && V.y1 < first.startY) fillRect(V.x1, V.y1, V.x2 - V.x1, first.startY - V.y1 + 1, c0.above);
+    if (c0 && V.y1 < first.startY) {
+      const sky=ctx.createLinearGradient(0,first.startY-350,0,first.startY);sky.addColorStop(0,first.theme==='escuela'?'#22538a':c0.above);sky.addColorStop(1,c0.above);ctx.fillStyle=sky;ctx.fillRect(V.x1,V.y1,V.x2-V.x1,first.startY-V.y1+1);
+      if(W.schoolMission){const A=first.map.worldArt,im=image(A.dir+A.pages[0]),k=first.scale*A.px,dx=first.x0-(A.x0||0)*k;if(ready(im))ctx.drawImage(im,0,0,im.naturalWidth,Math.max(1,im.naturalHeight/A.pageH),dx,V.y1,A.width*k,first.startY-V.y1+1);}
+    }
     if (c1 && V.y2 > last.endY) fillRect(V.x1, last.endY - 1, V.x2 - V.x1, V.y2 - last.endY + 1, c1.below);
     for (const sc of list) {
       if (sc.endY < V.y1 - 2 || sc.startY > V.y2 + 2) continue;
       const cfg = depthCfg(sc), A = sc.map.worldArt, k = sc.scale * A.px;
-      const pages = A.pages.map((p) => image(A.dir + p));
-      sc.missingArt = !pages.every(ready);   // sin arte, las repisas trazadas se dibujan (respaldo)
-      if (sc.missingArt) {
-        const y1 = Math.max(V.y1, sc.startY), y2 = Math.min(V.y2, sc.endY);
-        if (y2 > y1) { const g = ctx.createLinearGradient(0, sc.startY, 0, sc.endY); g.addColorStop(0, cfg.above); g.addColorStop(1, cfg.below); ctx.fillStyle = g; ctx.fillRect(V.x1, y1, V.x2 - V.x1, y2 - y1); }
-        continue;
-      }
-      if (ropt.depthPages !== false) pages.forEach((im, i) => {
+      const dhPage = A.pageH * k;
+      const pageAt = (y) => Math.max(0, Math.min(A.pages.length - 1, Math.floor((y - sc.startY) / dhPage)));
+      const from = pageAt(V.y1), to = pageAt(V.y2), preloadTo = pageAt(V.y2 + 140);
+      if (preloadTo > to) image(A.dir + A.pages[preloadTo]);
+      sc.missingArt = false;
+      if (ropt.depthPages !== false) for (let i = from; i <= to; i++) {
+        const im = image(A.dir + A.pages[i]);
+        if (!ready(im)) {
+          sc.missingArt = true;
+          const top = Math.max(V.y1, sc.startY + i * dhPage);
+          const bottom = Math.min(V.y2, sc.startY + (i + 1) * dhPage);
+          if (bottom > top) fillRect(V.x1, top, V.x2 - V.x1, bottom - top, cfg.above);
+          continue;
+        }
         const dy = sc.startY + i * A.pageH * k, dh = A.pageH * k, dx = sc.x0 - (A.x0 || 0) * k, dw = A.width * k;
         const x1 = Math.max(V.x1, dx), x2 = Math.min(V.x2, dx + dw), y1 = Math.max(V.y1, dy), y2 = Math.min(V.y2, dy + dh);
-        if (x2 <= x1 || y2 <= y1) return;
+        if (x2 <= x1 || y2 <= y1) continue;
         // Medio px de solape con la página siguiente (sin costura por redondeo), sin salirse de la imagen.
         const sy = (y1 - dy) / k, sh = Math.min(A.pageH - sy, (y2 - y1) / k + 0.5);
-        if (sh > 0) ctx.drawImage(im, (x1 - dx) / k, sy, (x2 - x1) / k, sh, x1, y1, x2 - x1, sh * k);
-      });
+        const sourceScaleX = im.naturalWidth / A.width, sourceScaleY = im.naturalHeight / A.pageH;
+        if (sh > 0) ctx.drawImage(im, (x1 - dx) / k * sourceScaleX, sy * sourceScaleY,
+          (x2 - x1) / k * sourceScaleX, sh * sourceScaleY, x1, y1, x2 - x1, sh * k);
+      }
       // Fundido del pie de la última lámina hacia su color de borde (sin corte recto sobre la salida).
-      if (sc === last && V.y2 > sc.endY - 90) {
+      if (sc === last && !W.schoolMission && V.y2 > sc.endY - 90) {
         const g = ctx.createLinearGradient(0, sc.endY - 90, 0, sc.endY);
         g.addColorStop(0, hexA(cfg.below, 0)); g.addColorStop(1, hexA(cfg.below, 1));
         ctx.fillStyle = g; ctx.fillRect(V.x1, sc.endY - 90, V.x2 - V.x1, 90);
       }
       const groups = ropt.depthFx === false || !cfg.fx.length ? null : depthFx(sc.theme, cfg);
-      if (groups && groups.length && qScale >= 0.7) {   // modo ligero: el arte solo (las capas de ambiente cuestan dibujo)
+      if (groups && groups.length && qScale >= 0.78) {   // modo ligero: el arte solo (las capas de ambiente cuestan dibujo)
         const v = G.view, xx1 = Math.max(V.x1, B.x1), xx2 = Math.min(V.x2, B.x2), yy1 = Math.max(V.y1, sc.startY), yy2 = Math.min(V.y2, sc.endY);
         const width = B.x2 - B.x1, vw = Math.min(width, v.w), vh = Math.min(sc.drawH, v.h);
         const xTravel = Math.max(0, width - vw), yTravel = Math.max(0, sc.drawH - vh);
@@ -509,14 +549,20 @@
     const bw = band.x2 - band.x1, bh = band.y2 - band.y1;
     const iw = im.naturalWidth || im.width, ih = im.naturalHeight || im.height;
     if (!iw || !ih) return;
-    // V58.9: una sola copia que cubre el ancho de la banda. Antes, si el dibujo era más angosto, se repetía y cada
-    // segunda copia salía en espejo (el grafiti «GUADALAJARA» se leía al revés).
-    const s = Math.max((bh / ih) * 1.08, (bw / iw) * 1.02), tw = iw * s, th = ih * s, k = 1 - speed;
+    const s = (bh / ih) * 1.08, tw = iw * s, th = ih * s, k = 1 - speed;
     const oy = Math.max(-0.035 * th, Math.min(0.035 * th, -(camCy - (band.y1 + band.y2) / 2) * k * 0.08));
     const top = band.y1 + (bh - th) / 2 + oy;
     const ox = -(camCx - (band.x1 + band.x2) / 2) * k * 0.3;
-    const slack = (tw - bw) / 2;   // tw ≥ bw: una sola copia, con un poco de paralaje dentro de lo que sobra
-    blitCrop(im, (band.x1 + band.x2) / 2 - tw / 2 + Math.max(-slack, Math.min(slack, ox)), top, tw, th, false, clip);
+    if (tw >= bw) {
+      const slack = (tw - bw) / 2;
+      blitCrop(im, (band.x1 + band.x2) / 2 - tw / 2 + Math.max(-slack, Math.min(slack, ox)), top, tw, th, false, clip);
+      return;
+    }
+    const period = 2 * tw, start = band.x1 + (((ox % period) + period) % period) - period;
+    for (let j = 0, x = start; x < band.x2; j++, x += tw) {
+      if (x + tw < clip.x1 || x > clip.x2) continue;
+      blitCrop(im, x, top, tw + 0.5, th, j % 2 === 1, clip);
+    }
   }
 
   function drawSceneBands(G, V) {
@@ -548,7 +594,9 @@
           const planes = lite ? [[planeImage(layers.flatMap(([srcs]) => srcs)), layers[layers.length - 1][1]]] : layers.map(([srcs, sp]) => [planeImage(srcs), sp]);
           if (planes[0][0]) { for (const [im, sp] of planes) if (im) for (const c of clips) drawBandLayer(im, band, sp, camCx, camCy, c); drawn = true; }
         }
-        if (!drawn && own) { for (const c of clips) drawBandLayer(own, band, 0.12, camCx, camCy, c); drawn = true; }
+        // Un arte pintado con regiones `map.art` cubre el panel central. Si falla su capa parallax externa, no repetir
+        // la ilustración panorámica como arquitectura lateral: se deja el relleno neutro de abajo como respaldo.
+        if (!drawn && own && !(sc.artPainted && sc.map.art && sc.map.art.length)) { for (const c of clips) drawBandLayer(own, band, 0.12, camCx, camCy, c); drawn = true; }
         if (!drawn) for (const c of clips) fillRect(c.x1, c.y1, c.x2 - c.x1, c.y2 - c.y1, sc.theme === 'escuela' ? '#233b4a' : '#342f36');
         // Velo del tramo: separa la acción del fondo sin apagar el arte.
         for (const c of clips) fillRect(c.x1, c.y1, c.x2 - c.x1, c.y2 - c.y1, hex(sc.wash), Math.min(0.42, sc.shade * 0.9 + 0.1));
@@ -799,7 +847,15 @@
     }
   }
 
-  function drawBackdrop(G, V) { drawSceneBands(G, V); }
+  function drawBackdrop(G, V) {
+    const top = G.world.scenes[0];
+    if (top.theme === 'guadalajara' && V.y1 < top.startY) {
+      const sky = image('assets/parallax/guadalajara_v584/00_cielo_atardecer.webp');
+      const h = top.startY - V.y1;
+      if (ready(sky)) ctx.drawImage(sky, V.x1, V.y1, V.x2 - V.x1, h);
+    }
+    drawSceneBands(G, V);
+  }
 
   /* V56 · Capa de atmósfera urbana. Decoración determinista sin colisiones y
      recortada al área visible; mantiene intactos fondos, parallax y plataformas. */
@@ -818,11 +874,11 @@
       // Velo muy tenue, sin oscurecer siluetas ni perder contraste del nivel. V58.1: en los mundos pintados de una pieza
       // (mar V4) no hay velo ni motivos: el arte trae su propio ambiente; solo queda el letrero del tramo.
       const paintedWorld = !!depthCfg(sc);
-      if (!paintedWorld) fillRect(x1, y1, iw, ih, p.haze, p.intensity * 0.105);
+      if (!paintedWorld) fillRect(x1, y1, iw, ih, p.haze, p.intensity * 0.035);
       const left = sc.x0 + 17, right = sc.x0 + sc.drawW - 17;
       const first = Math.max(0, Math.floor((y1 - sc.startY) / 136));
       const last = Math.min(Math.ceil((sc.endY - sc.startY) / 136), Math.ceil((y2 - sc.startY) / 136));
-      for (let n = first; n <= (paintedWorld ? first - 1 : last); n++) {
+      for (let n = first; n <= (paintedWorld ? first - 1 : last); n += 2) {
         const yy = sc.startY + 52 + n * 136;
         const h = hash(n + 37, (sc.index + 1) * 53) / 997;
         const drift = Math.sin(T * (p.motif === 'bubbles' ? 1.1 : 0.45) + n * 2.4) * (p.motif === 'bubbles' ? 9 : 3);
@@ -856,7 +912,7 @@
         const x = sc.x0 + 12, w = Math.min(218, sc.drawW - 24);
         fillRR(x, plaqueY - 15, w, 30, 6, '#09111d', 0.64);
         fillRect(x + 2, plaqueY - 11, 3, 22, p.accent, 0.9);
-        text('TOXI / ' + p.tag, x + 12, plaqueY, 9, p.accent, 'left', 850);
+        text(p.tag, x + 12, plaqueY, 9, p.accent, 'left', 850);
         line(x + 12, plaqueY + 9, x + w - 9, plaqueY + 9, p.edge, 0.58, 1);
       }
       ctx.restore();
@@ -1318,8 +1374,129 @@
     }
   }
 
+  const ABYSS_OBJECTS = 'assets/parallax/marino/abyss_v7/marine_objects.png';
+  function drawAbyssObject(frame,x,y,size,base=false) {
+    const im=image(ABYSS_OBJECTS); if(!ready(im)) return false;
+    ctx.drawImage(im,frame*256,0,256,256,x-size/2,y-size*(base?224/256:0.5),size,size);
+    return true;
+  }
+  function seaZone(G){return (G.world.waters||[]).find(z=>z.sea&&z.toStreet&&!G.room);}
+  // Navigation beacons are attached to actual mapped ledges, not arbitrary floating arrows.
+  function drawAbyssRoute(G,V,T){
+    const z=seaZone(G); if(!z)return;
+    const sc=G.world.scenes[G.tramo];if(!sc||sc.theme!=='submarino')return;
+    for(const b of G.world.abyssBeacons||[]){
+      const {x,y,index:i}=b;
+      if(x<V.x1-50||x>V.x2+50||y<V.y1-40||y>V.y2+80)continue;
+      const pulse=.5+.5*Math.sin(T*2.2+i*.9),size=50;
+      const gl=ctx.createRadialGradient(x,y-26,1,x,y-26,28);
+      gl.addColorStop(0,`rgba(152,240,219,${.18+.12*pulse})`);gl.addColorStop(1,'rgba(49,183,190,0)');ctx.fillStyle=gl;ctx.fillRect(x-28,y-54,56,56);
+      drawAbyssObject(1,x,y,size,true);
+      if(Math.hypot(G.P.x-x,G.P.y-y)<120)text(b.active?'RESCATE ACTIVO':'BALIZA '+String(i+1).padStart(2,'0'),x,y-50,9,'#d9f2e8','center',800);
+    }
+  }
+  // Sparse suspended matter travels in world space; no full-screen strip overlay.
+  function drawAbyssMatter(G,V,T,front){
+    const z=seaZone(G);if(!z)return;
+    const x1=Math.max(V.x1,z.x1),x2=Math.min(V.x2,z.x2),y1=Math.max(V.y1,z.y+4),y2=Math.min(V.y2,z.y2);
+    if(x1>=x2||y1>=y2)return;
+    ctx.save();ctx.beginPath();ctx.rect(x1,y1,x2-x1,y2-y1);ctx.clip();
+    const step=front?96:62;
+    for(let iy=Math.floor(y1/step)-1;iy<=Math.ceil(y2/step)+1;iy++)for(let ix=Math.floor(x1/step)-1;ix<=Math.ceil(x2/step)+1;ix++){
+      const q=(Math.sin(ix*127.1+iy*311.7)*43758.5453)%1,seed=q<0?q+1:q;
+      if(seed<(front?.76:.22))continue;
+      const x=ix*step+seed*step+Math.sin(T*.47+seed*31)*9,y=iy*step+((seed*step-T*(front?6:3))%step+step)%step;
+      if(front){circle(x,y,1.5+seed*1.7,'#85bcca',.09+seed*.08);}else circle(x,y,.6+seed*.7,'#b7dcd9',.15+seed*.12);
+    }
+    ctx.restore();
+  }
+  const SCHOOL_FURNITURE = 'assets/scenes/school_pro/school_furniture.png';
+  const SCHOOL_FURNITURE_RECTS = {"wood_shelf":[12,112,232,32],"lab_top":[268,112,232,32],"locker_top":[524,112,232,32],"wood_upright":[882,12,28,232],"steel_upright":[114,268,28,232],"hatch":[268,339,232,90],"exit_door":[562,268,156,232],"crate":[792,280,208,208],"archive_books":[12,590,232,100],"lab_bottles":[268,590,232,100],"locker_panel":[524,524,232,232],"supply_boxes":[780,595,232,90]};
+  function schoolMaterial(name,x,y,w,h){const im=image(SCHOOL_FURNITURE),r=SCHOOL_FURNITURE_RECTS[name];if(!ready(im)||!r)return false;ctx.drawImage(im,...r,x,y,w,h);return true;}
+  const SCHOOL_FURNITURE_LOWER_CACHE = new WeakMap();
+  function schoolFurnitureLowerByPlatform(room){
+    let lookup=SCHOOL_FURNITURE_LOWER_CACHE.get(room);if(lookup)return lookup;
+    const ps=room.schoolFurniture||[];lookup=new Map();
+    for(const p of ps){let lower=null;const minOverlap=(p.x2-p.x1)*.45;
+      for(const q of ps){if(q.y<=p.y+30)continue;if(Math.min(q.x2,p.x2)-Math.max(q.x1,p.x1)<=minOverlap)continue;if(!lower||q.y<lower.y)lower=q;}
+      lookup.set(p,lower);
+    }
+    SCHOOL_FURNITURE_LOWER_CACHE.set(room,lookup);return lookup;
+  }
+  function drawSchoolFurniture(room,V){
+    const ps=room.schoolFurniture||[];if(!ps.length)return;
+    const lowerByPlatform=schoolFurnitureLowerByPlatform(room);
+    const wood=room.schoolArt==='archivo', upright=wood?'wood_upright':'steel_upright';
+    for(const p of ps){if(!inView(V,p.x1,p.y,p.x2,room.y2))continue;
+      // Decorative supports are behind the actors; collision remains the exact existing shelf.
+      const h=room.y2-p.y; if(h<12)continue;
+      fillRect(p.x1+5,p.y+12,p.x2-p.x1-10,h-12,wood?'#40392e':'#263d40',.22);
+      // Decoración de fondo dentro del mueble: no es una superficie ni una caja de colisión.
+      const lower=lowerByPlatform.get(p);
+      const base=lower?lower.y:room.y2, span=base-p.y-18, inside=p.x2-p.x1-28;
+      if(span>35){const label=wood?'archive_books':room.schoolArt==='laboratorio'?'lab_bottles':span>115?'locker_panel':'supply_boxes';const hh=label==='locker_panel'?Math.min(span-6,135):Math.min(span-6,38);if(hh>0)schoolMaterial(label,p.x1+14,base-hh-3,inside,hh);}
+
+      for(const x of [p.x1+3,p.x2-12])schoolMaterial(upright,x,p.y+10,9,h-10);
+      if(p.x2-p.x1>140)schoolMaterial(upright,(p.x1+p.x2)/2-3,p.y+10,6,h-10);
+      // Single cross-brace below the usable surface, intentionally not a standable ledge.
+      line(p.x1+12,p.y+20,p.x2-12,Math.min(room.y2-8,p.y+58),'#293b3b',.38,3);
+      line(p.x2-12,p.y+20,p.x1+12,Math.min(room.y2-8,p.y+58),'#293b3b',.38,3);
+    }
+  }
+  const SCHOOL_SIGNS='assets/scenes/school_pro/school_signs.png';
+  function schoolSign(i,x,y,size=92){const im=image(SCHOOL_SIGNS);if(!ready(im))return false;ctx.drawImage(im,i%4*256,Math.floor(i/4)*256,256,256,x-size/2,y-size*238/256,size,size);return true;}
+  function drawSchoolStreet(G,V,T){
+    const W=G.world,y=W.street.y1;
+    if(V.y2<y-390||V.y1>y+260)return;
+    const sc=W.scenes[2],facade=image('assets/scenes/school_pro/school_exit_facade.webp'),im=image('assets/scenes/school_pro/street_material.webp');
+    if(ready(facade))ctx.drawImage(facade,sc.x0,y-390,sc.drawW,390);
+    fillRect(V.x1,y-12,V.x2-V.x1,12,'#b2a69b');
+    if(ready(im)){for(let x=Math.floor(V.x1/384)*384;x<V.x2;x+=384)ctx.drawImage(im,x,y,384,220);}else fillRect(V.x1,y,V.x2-V.x1,220,'#353c42');
+    const bus=W.bus,b=image('assets/scenes/school_pro/school_bus.png'),off=bus.state==='boarding'?Math.max(0,G.timers.victory-1)**2*260:0;
+    if(ready(b)){const bw=bus.x2-bus.x1,bh=bw*b.naturalHeight/b.naturalWidth;ellipse(bus.x1+bw/2+off,y+2,bw*.46,7,'#141c22',.42);ctx.drawImage(b,bus.x1+off,y-bh,bw,bh);}else drawBus(G,bus,T);
+    if(W.schoolFinal){const lock=W.foes.some(f=>f.id===W.schoolFinal.bossId&&!f.dead);schoolSign(lock?5:4,bus.x2+36,y,98);const cp=W.schoolFinalCheckpoint;if(cp)schoolSign(cp.active?1:0,cp.x,y,98);}
+  }
+  function drawSchoolAtmosphere(G,V,T){
+    if(!G.world.schoolMission||G.room)return;
+    const sc=G.world.scenes[G.tramo];if(!sc)return;
+    if(sc.index===2){ // light rain, capped budget, not a gameplay hazard
+      ctx.save();ctx.strokeStyle='#d6e7fa';ctx.globalAlpha=.22;ctx.lineWidth=.85;ctx.beginPath();
+      for(let i=0;i<48;i++){const x=V.x1+((i*93.71+T*36)%(V.x2-V.x1)),y=V.y1+((i*73.41+T*275)%(V.y2-V.y1));ctx.moveTo(x,y);ctx.lineTo(x-5,y+18);}ctx.stroke();ctx.restore();
+    }
+    // A low-contrast near edge at the exact feet baseline on the currently occupied painted ledge.
+    const p=G.P.ground;if(p&&p.hidden&&p.scene===sc.index&&p.kind==='floor'){
+      const x1=Math.max(p.x1,V.x1),x2=Math.min(p.x2,V.x2);if(x2>x1){const g=ctx.createLinearGradient(0,p.y,0,p.y+12);g.addColorStop(0,'rgba(45,28,25,.26)');g.addColorStop(1,'rgba(45,28,25,0)');ctx.fillStyle=g;ctx.fillRect(x1,p.y+1,x2-x1,12);}
+    }
+  }
   function drawStreet(G, V, T) {
     const W = G.world, s = W.street, y = s.y1;
+    if (W.portal) {
+      const gate = W.portal;
+      if (inView(V, gate.x - 75, gate.y - 160, gate.x + 75, gate.y + 10)) {
+        const pulse = .55 + .18 * Math.sin(T * 3);
+        fillRR(gate.x - 45, gate.y - 105, 90, 104, 15, '#243653', .85);
+        fillRR(gate.x - 34, gate.y - 95, 68, 92, 12, '#473b82', .86);
+        for (let i = 0; i < 3; i++) ring(gate.x, gate.y - 47, 26 - i * 5, 38 - i * 7, i === 1 ? '#f6b8ff' : '#76f6ff', pulse - i * .09, 2.5);
+        fillRect(gate.x - 48, gate.y - 5, 96, 5, '#99f7e8');
+      }
+      if (V.y2 >= y - 28) {
+        fillRect(V.x1, y, V.x2 - V.x1, 200, '#186c7a');
+        line(V.x1, y, V.x2, y, '#8effef', .85, 3);
+      }
+      return;
+    }
+    if(W.poseidonArena){
+      const a=W.poseidonArena,locked=W.foes.some(f=>f.id===a.bossId&&!f.dead),gx=a.x,gy=a.bottom;
+      if(inView(V,gx-90,gy-170,gx+90,gy+10)){
+        drawAbyssObject(2,gx,gy,154,true);
+        const c=locked?'#ffbd75':'#79f5d0',pulse=.65+.2*Math.sin(T*3);
+        ring(gx,gy-70,42,42,c,pulse,3);if(locked){line(gx-28,gy-70,gx+28,gy-70,c,.85,4);line(gx,gy-98,gx,gy-42,c,.85,4);}
+        text(locked?'ESCOTILLA SELLADA':'ESCOTILLA ABIERTA',gx,gy-146,12,c,'center',900);
+      }
+      if(V.y2>=y)fillRect(V.x1,y,V.x2-V.x1,Math.max(200,V.y2-y),'#0a1a2b');
+      return;
+    }
+    if(W.schoolMission){drawSchoolStreet(G,V,T);return;}
     if (y > V.y2 || y + 260 < V.y1) return;
     const special = W.scenes.length === 1 ? W.scenes[0].theme : null;
     if (special === 'submarino' || special === 'espacial') {
@@ -1327,6 +1504,7 @@
       const gx = (gate.doorX1 + gate.doorX2) * 0.5;
       fillRect(V.x1, y, V.x2 - V.x1, 18, marine ? '#41737a' : '#7f899d');
       fillRect(V.x1, y + 18, V.x2 - V.x1, 220, marine ? '#153644' : '#171a37');
+      if(marine && drawAbyssObject(2,gx,y,144,true)){text('ESCOTILLA DE RESCATE',gx,y-132,11,'#e1f5ff');return;}
       fillRR(gx - 58, y - 99, 116, 93, 12, marine ? '#174b5d' : '#455371', 0.96);
       fillRR(gx - 41, y - 82, 82, 73, 9, marine ? '#2a808c' : '#263c64');
       fillRR(gx - 27, y - 65, 54, 56, 7, marine ? '#0a2f46' : '#09102b');
@@ -1392,24 +1570,14 @@
      el color de su borde para que la cámara nunca muestre un hueco; en el santuario, la roca del techo de la cueva
      (sobre el borde de arriba del dibujo) y burbujas que suben; en la estación, estrellas que titilan. */
   function drawSecretRoom(r, V, T) {
-    const BG = (NS.ART && NS.ART.SECRET_BG) || {}, bg = BG[r.art];
-    const marine = r.art === 'marino_oculto', ay1 = r.artY1 ?? r.y1, ay2 = r.artY2 ?? r.y2, w = r.x2 - r.x1;
-    // V58.8: varias ilustraciones seguidas (las aulas): cada una en su tramo. Alrededor, el color del borde del dibujo.
-    const panels = r.panels && r.panels.length ? r.panels : [{ art: r.art, x1: r.x1, x2: r.x2 }];
-    const aulas = panels.some((p) => p.art && p.art.startsWith('aula_'));
-    const base = marine ? '#041b2c' : aulas ? ((bg && bg.top) || '#5b4a68') : '#0b0a24';
-    fillRect(r.x1 - 900, r.y1 - 900, w + 1800, ay2 - r.y1 + 1800, base);
-    if (aulas) {
-      const L = BG[panels[0].art], R = BG[panels[panels.length - 1].art];
-      fillRect(r.x1 - 900, ay1, 900, ay2 - ay1, (L && L.left) || base);
-      fillRect(r.x2, ay1, 900, ay2 - ay1, (R && R.right) || base);
-    }
-    for (const p of panels) {
-      if (p.x2 < V.x1 - 10 || p.x1 > V.x2 + 10) continue;
-      const pb = BG[p.art], im = pb && image(pb.src);
-      if (ready(im)) ctx.drawImage(im, p.x1, ay1, p.x2 - p.x1 + 0.5, ay2 - ay1);
-      else fillRect(p.x1, ay1, p.x2 - p.x1, ay2 - ay1, marine ? '#0d4a6b' : aulas ? '#d9c7b4' : '#1b1650');
-    }
+    const bg = NS.ART && NS.ART.SECRET_BG && NS.ART.SECRET_BG[r.art], im = bg && image(bg.src);
+    const marine = r.art === 'marino_oculto', school = r.art === 'aula_escolar_oculta', space = r.art === 'espacial_oculto';
+    const ay1 = r.artY1 ?? r.y1, ay2 = r.artY2 ?? r.y2, w = r.x2 - r.x1;
+    const edge = marine ? '#041b2c' : school ? '#18201f' : '#0b0a24';
+    const fallback = marine ? '#0d4a6b' : school ? '#343c36' : '#1b1650';
+    fillRect(r.x1 - 900, r.y1 - 900, w + 1800, ay2 - r.y1 + 1800, edge);
+    if (ready(im)) ctx.drawImage(im, r.x1, ay1, w, ay2 - ay1);
+    else fillRect(r.x1, ay1, w, ay2 - ay1, fallback);
     if (marine) {
       // Techo de la cueva: roca oscura que baja hasta el borde del dibujo (donde ya empieza su propia roca).
       const g = ctx.createLinearGradient(0, ay1 - 220, 0, ay1 + 14);
@@ -1425,11 +1593,20 @@
         if (by < V.y1 - 10 || by > V.y2 + 10) continue;
         ring(bx + Math.sin(T * 2 + k) * 4, by, 2.2 + (k % 3), 2.2 + (k % 3), '#c9f6ff', 0.45, 1);
       }
-    } else {
+    } else if (space) {
       for (let k = 0; k < 26; k++) {
         const sx = r.x1 + (hash(k, 11) / 997) * w, sy = ay1 + (hash(k, 29) / 997) * (r.y2 - ay1) * 0.8;
         const tw = 0.5 + 0.5 * Math.sin(T * (1.5 + (k % 4) * 0.6) + k);
         circle(sx, sy, 1 + (k % 2) * 0.6, '#ffffff', 0.25 + 0.55 * tw);
+      }
+    } else if (school) {
+      const span = Math.max(1, r.y2 - ay1 - 16);
+      for (let k = 0; k < 8; k++) {
+        const sx = r.x1 + (hash(k, 41) / 997) * w;
+        const sy = ay1 + ((hash(k, 83) / 997 * span + T * (2 + (k % 3))) % span);
+        if (sx < V.x1 - 4 || sx > V.x2 + 4 || sy < V.y1 - 4 || sy > V.y2 + 4) continue;
+        const tw = 0.5 + 0.5 * Math.sin(T * 0.7 + k);
+        circle(sx, sy, 0.8 + (k % 2) * 0.5, '#efe5c3', 0.12 + 0.12 * tw);
       }
     }
   }
@@ -1437,6 +1614,14 @@
   function drawRoomBackground(r, V, T) {
     if (!inView(V, r.x1 - 60, r.y1 - 60, r.x2 + 60, r.y2 + 60)) return;
     if (r.secret) { drawSecretRoom(r, V, T); return; }
+    if(r.schoolArt){const im=image('assets/scenes/school_pro/room_'+r.schoolArt+'.webp');if(ready(im)){fillRect(r.x1-60,r.y1-60,r.x2-r.x1+120,r.y2-r.y1+120,'#263039');ctx.drawImage(im,r.x1,r.y1,r.x2-r.x1,r.y2-r.y1);drawSchoolFurniture(r,V);return;}}
+    if (r.theme === 'gruta') {
+      const im = image('assets/cinematica/llegadas/gruta_cascada.webp');
+      fillRect(r.x1, r.y1, r.x2 - r.x1, r.y2 - r.y1, '#1d4046');
+      if (ready(im)) ctx.drawImage(im, r.x1, r.y1, r.x2-r.x1, r.y2-r.y1);
+      fillRect(r.x1, r.y1, r.x2 - r.x1, r.y2 - r.y1, '#102b38', .48);
+      return;
+    }
     const sewer = r.theme === 'alcantarilla';
     fillRect(r.x1, r.y1, r.x2 - r.x1, r.y2 - r.y1, sewer ? '#1d2b28' : '#2a2a35');
     for (let by = r.y1 + 6; by < r.y2; by += 22) {
@@ -1567,11 +1752,28 @@
       if (p.y < V.y1 - 30 || p.y > V.y2 + 30 || p.x2 < V.x1 || p.x1 > V.x2) continue;
       const sc = p.scene >= 0 ? G.world.scenes[p.scene] : null;
       if (debug && (p.painted || p.hidden)) { line(p.x1, p.y, p.x2, p.y, p.drop ? '#ff44ed' : '#45ff9a', 0.95, 2); if (p.hidden) continue; }
-      // Cornisa pintada en el propio fondo. V58.9: salvo en los niveles marcados `ledgeSkin` (Guadalajara PRO V2): ahí
-      // la capa de cornisas trae vigas de 2–7 u de grueso que sobre el cielo de la panorámica no se ven, y Sofía
-      // parecía caminar sobre el aire.
-      if (p.hidden && !(sc && (sc.missingArt || sc.def.ledgeSkin))) continue;
+      if(G.world.schoolMission && p.hidden && p.scene===2 && p.y>G.world.street.y1-390 && p.region==='main'){if(!drawSkinned('concrete',p.x1,p.x2,p.y,20))fillRect(p.x1,p.y,p.x2-p.x1,15,'#817b73');continue;}
+      if (p.shore) {
+        if (!drawSkinned('plank', p.x1, p.x2, p.y, 11)) fillRect(p.x1,p.y,p.w,9,'#957147');
+        for (let x = p.x1 + 28; x < p.x2; x += 76) {
+          fillRect(x, p.y + 9, 7, 32, '#735438'); line(x+3,p.y+30,x+24,p.y+9,'#856a46',.95,4);
+        }
+        continue;
+      }
+      if (p.hidden && sc && sc.theme === 'guadalajara' && !sc.missingArt) {
+        for (const br of p.brackets || []) {
+          if (br.x < V.x1 - 25 || br.x > V.x2) continue;
+          fillRect(br.x, p.y + 7, 6, br.low - p.y - 7, '#795f52', .94);
+          fillRect(br.x, p.y + 7, 2, br.low - p.y - 7, '#d7b48a', .9);
+          line(br.x + 4, Math.min(br.low - 2,p.y + 29), br.x + 24, p.y + 7,'#8c715b',.94,3);
+        }
+        const tile = sc.id === 'portales' ? 'stone_slim' : 'tiles_a';
+        if (!drawSkinned(tile, p.x1, p.x2, p.y, p.kind === 'stair' ? 6 : 10)) fillRect(p.x1,p.y,p.w,7,'#ad7757');
+        continue;
+      }
+      if (p.hidden && !(sc && sc.missingArt)) continue; // cornisa pintada en el propio fondo
       const x = p.x1, y = p.y, w = p.x2 - p.x1, h = p.h || 12;
+      if(p.schoolFurniture&&schoolMaterial(p.schoolFurniture==='archivo'?'wood_shelf':p.schoolFurniture==='laboratorio'?'lab_top':'locker_top',x,y,w,p.drop?9:15)){if(p.drop){line(x+3,y+2,x+w-3,y+2,'#f0d8a0',.6,1);}continue;}
       if (p.kind === 'bounce') { if (p.artPainted) drawPaintedBounce(p, G); else if (p.umbrella) drawUmbrella(p, T, G); else drawAwning(p, T); continue; }
       if (p.kind === 'pigeon') { if (p.look) drawLookPlatform(p, T, G); else drawPigeon(p, T); continue; }
       if (p.kind === 'crumble') { drawCrumble(p, T); continue; }
@@ -1666,6 +1868,7 @@
       } else if (s.kind === 'crate') {
         if (s.broken) continue;
         const w = s.x2 - s.x1, h = s.y2 - s.y1;
+        if(G.world.schoolMission&&schoolMaterial('crate',s.x1,s.y1,w,h))continue;
         fillRR(s.x1, s.y1, w, h, 3, '#9b6a3f');
         ctx.strokeStyle = '#5a3a20'; ctx.lineWidth = 3; ctx.beginPath(); ctx.rect(s.x1 + 2, s.y1 + 2, w - 4, h - 4);
         ctx.moveTo(s.x1 + 3, s.y1 + 3); ctx.lineTo(s.x2 - 3, s.y2 - 3); ctx.moveTo(s.x2 - 3, s.y1 + 3); ctx.lineTo(s.x1 + 3, s.y2 - 3); ctx.stroke();
@@ -1709,12 +1912,11 @@
       if (d.x < V.x1 - 40 || d.x > V.x2 + 40 || d.y < V.y1 - 60 || d.y > V.y2 + 30) continue;
       const pulse = 0.72 + 0.28 * Math.sin(T * 4 + d.phase);
       if (d.kind === 'secreto') { drawSecretDoor(d, G, T); continue; }
-      if (d.kind === 'portal') {   // V58.8: el portal ya está pintado en el arte de las aulas
-        ellipse(d.x, d.y - 40, 34, 46, '#c58bff', 0.08 + 0.06 * pulse);
-        fillRR(d.x - 26, d.y - 104, 52, 14, 4, '#1b1030', 0.85);
-        text('SALIDA', d.x, d.y - 97, 8, '#e5c8ff');
-        tri(d.x - 7, d.y - 84 - pulse * 3, d.x + 7, d.y - 84 - pulse * 3, d.x, d.y - 74 - pulse * 3, '#e5c8ff', 0.9 * pulse);
-        continue;
+      if(G.world.schoolMission&&(d.schoolEntrance||d.kind==='salida'&&G.room?.schoolArt)){
+        const near=G.region===d.region&&Math.abs(G.P.x-d.x)<80&&Math.abs(G.P.y+G.P.h/2-d.y)<65;
+        if(schoolMaterial(d.schoolEntrance?'hatch':'exit_door',d.x-(d.schoolEntrance?34:29),d.y-(d.schoolEntrance?22:86),d.schoolEntrance?68:58,d.schoolEntrance?25:87)){
+          if(near){const y=d.y-(d.schoolEntrance?48:104);fillRR(d.x-42,y-12,84,21,6,'#192b32',.94);text(d.schoolEntrance?'↓ ENTRAR':'↓ SALIR',d.x,y+3,10,'#f5dfac');}continue;
+        }
       }
       if (d.kind === 'trampilla') {
         fillRR(d.x - 22, d.y - 5, 44, 7, 2, '#6b4a2e');
@@ -1738,15 +1940,9 @@
   function drawSecretDoor(d, G, T) {
     const P = G.P, near = P ? Math.max(0, 1 - Math.hypot(P.x - d.x, P.y - d.y) / 200) : 0;
     const k = 0.22 + 0.78 * near, glow = 0.5 + 0.5 * Math.sin(T * 2.4 + d.phase);
-    const sea = d.look === 'submarino', school = d.look === 'escuela', col = sea ? '#7ff6ff' : '#c48bff';
+    const sea = d.look === 'submarino', col = sea ? '#7ff6ff' : '#c48bff';
     ellipse(d.x, d.y - 2, 26, 6, col, (0.08 + 0.1 * glow) * k);
-    if (school) {
-      // V58.8: un remolino violeta, como el portal que se ve dentro de las aulas.
-      ctx.globalAlpha = (0.4 + 0.45 * glow) * k; ctx.strokeStyle = '#d6a8ff'; ctx.lineWidth = 1.8; ctx.beginPath();
-      for (let a = 0; a < Math.PI * 4; a += 0.25) { const rr = 2 + a * 1.6, px = d.x + Math.cos(a + T * 2) * rr, py = d.y - 16 + Math.sin(a + T * 2) * rr * 1.2; if (a === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py); }
-      ctx.stroke(); ctx.globalAlpha = 1;
-      for (let i = 0; i < 3; i++) { const q = (T * 0.7 + i / 3) % 1; circle(d.x - 10 + i * 10, d.y - 4 - q * 30, 1.5, '#f0dcff', (1 - q) * 0.9 * k); }
-    } else if (sea) {
+    if (sea) {
       // Grieta en zigzag con luz de adentro.
       ctx.globalAlpha = (0.45 + 0.45 * glow) * k; ctx.strokeStyle = col; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(d.x - 16, d.y - 1); ctx.lineTo(d.x - 7, d.y - 4); ctx.lineTo(d.x, d.y); ctx.lineTo(d.x + 8, d.y - 4); ctx.lineTo(d.x + 17, d.y - 1); ctx.stroke();
@@ -1769,8 +1965,9 @@
 
   function drawCheckpoints(G, V, T) {
     for (const cp of G.world.checkpoints) {
-      const x = cp.x + 30, y = cp.y;
+      const x = cp.x + (G.world.schoolMission?-32:30), y = cp.y;
       if (x < V.x1 - 30 || x > V.x2 + 30 || y < V.y1 - 80 || y > V.y2 + 10) continue;
+      if(G.world.schoolMission&&schoolSign(cp.active?1:0,x,y,78))continue;
       line(x, y, x, y - 56, '#9aa5a8', 1, 3);
       const c = cp.active ? '#d9ff65' : '#5d7f8c';
       if (cp.active) circle(x, y - 60, 18, '#d9ff65', 0.15 + 0.1 * Math.sin(T * 4));
@@ -1784,6 +1981,7 @@
     for (const cp of G.world.midpoints || []) {
       const x = cp.x, y = cp.y;
       if (x < V.x1 - 30 || x > V.x2 + 30 || y < V.y1 - 90 || y > V.y2 + 10) continue;
+      if(G.world.schoolMission&&schoolSign(cp.active?1:0,x,y,96))continue;
       line(x, y, x, y - 62, '#cfd8dc', 1, 3);
       const wave = Math.sin(T * 4 + x) * 3, c = cp.active ? '#69d7d2' : '#5d7f8c';
       ctx.fillStyle = c; ctx.beginPath(); ctx.moveTo(x + 1, y - 62); ctx.lineTo(x + 30, y - 55 + wave); ctx.lineTo(x + 1, y - 46); ctx.closePath(); ctx.fill();
@@ -1795,6 +1993,8 @@
   function drawSigns(G, V) {
     for (const s of G.world.signs) {
       if (s.x < V.x1 - 30 || s.x > V.x2 + 30 || s.y < V.y1 - 60 || s.y > V.y2 + 10) continue;
+      if(G.world.schoolMission && (s.busStop||s.id==='school:final:hint'))continue;
+      if(G.world.schoolMission && Number.isInteger(s.schoolSign) && schoolSign(s.schoolSign,s.x,s.y,102))continue;
       if (s.busStop) {
         line(s.x, s.y, s.x, s.y - 90, '#9aa5a8', 1, 4);
         fillRR(s.x - 26, s.y - 118, 52, 32, 6, '#1d8a6b');
@@ -1809,34 +2009,25 @@
 
   /* V58.3 · Corriente marina: en calma casi no se nota; en aviso parpadean flechas en el sentido del arrastre; fuerte,
      estelas blancas veloces y burbujas arrastradas. */
-  function drawCurrent(h, V, T) {
-    const x1 = Math.max(h.x1, V.x1 - 20), x2 = Math.min(h.x2, V.x2 + 20);
-    if (x2 <= x1 || h.y2 < V.y1 || h.y1 > V.y2) return;
-    const d = h.dir, k = h.k, warn = h.state === 'warn', H = h.y2 - h.y1;
-    fillRect(x1, h.y1, x2 - x1, H, '#7fe3ff', 0.05 + 0.1 * k);
-    // Bordes de la franja: se ve dónde empieza y acaba el arrastre.
-    for (const y of [h.y1, h.y2]) for (let x = x1 - ((x1 % 40) + 40) % 40; x < x2; x += 40) line(x, y, x + 22, y, '#c8f6ff', 0.12 + 0.3 * k, 2);
-    const sp = 118, rows = 6;
-    ctx.lineCap = 'round';
-    for (let j = 0; j < rows; j++) {
-      const y = h.y1 + H * (j + 0.5) / rows + Math.sin(T * 2 + j * 1.3) * 4;
-      const v = 40 + h.speed * (0.25 + 0.95 * k), off = (((T * v * d + j * 47) % sp) + sp) % sp;
-      const len = 18 + 50 * k, a = 0.1 + 0.6 * k;
-      for (let x = h.x1 + Math.floor((x1 - h.x1) / sp) * sp + off - sp; x < x2 + sp; x += sp) {
-        if (x < x1 || x > x2) continue;
-        line(x, y, x - d * len, y, '#0b4f6e', a * 0.5, 5);
-        line(x, y, x - d * len, y, '#ffffff', a, 2.6);
-        if (k > 0.4 && (j + Math.floor(x / sp)) % 3 === 0) circle(x + d * 8, y - 5, 2.3, '#ffffff', 0.45 * k);
-      }
+  function drawCurrent(h,V,T){
+    const x1=Math.max(h.x1,V.x1),x2=Math.min(h.x2,V.x2),y1=Math.max(h.y1,V.y1),y2=Math.min(h.y2,V.y2);
+    if(x2<=x1||y2<=y1)return;
+    const k=Math.max(0,h.k||0),warn=h.state==='warn',dir=h.dir||1;
+    if(!warn&&k<.06)return;
+    ctx.save();ctx.beginPath();ctx.rect(x1,y1,x2-x1,y2-y1);ctx.clip();
+    // Advected bubbles at different elevations make the flow direction legible.
+    const span=h.x2-h.x1,band=h.y2-h.y1;
+    for(let i=0;i<32;i++){
+      const seed=(i*.61803398875)%1,offset=(T*(25+(h.speed||0)*k)*dir+i*span/32);
+      const x=h.x1+((offset%span)+span)%span,y=h.y1+band*(.12+.76*seed)+Math.sin(T*2+i)*4;
+      if(x<x1-15||x>x2+15||y<y1-10||y>y2+10)continue;
+      const alpha=(warn?.36:.14+.48*k)*Math.sin(Math.PI*(y-h.y1)/band),r=1.4+seed*2.2;
+      ring(x,y,r,r,'#b4edf2',alpha,1);circle(x-r*.35,y-r*.35,.6,'#fff',alpha);
+      if(k>.35){const len=7+11*k;line(x-dir*len,y+1,x-dir*4,y,'#a3dfe8',alpha*.5,1);}
     }
-    ctx.lineCap = 'butt';
-    if ((warn && Math.floor(T * 6) % 2 === 0) || k > 0.5) {
-      const cy = (h.y1 + h.y2) / 2, ca = warn ? 1 : 0.55 * k;
-      for (let x = h.x1 + 90; x < h.x2 - 60; x += 260) {
-        if (x < x1 - 30 || x > x2 + 30) continue;
-        for (let m = 0; m < 2; m++) { const ax = x + m * 22 * d + (warn ? 0 : ((T * 140 * d) % 260)); tri(ax - d * 10, cy - 13, ax + d * 9, cy, ax - d * 10, cy + 13, warn ? '#ffe14a' : '#e6fbff', ca); }
-      }
-    }
+    ctx.restore();
+    if(warn||k>.65){const cx=Math.max(x1+18,Math.min(x2-18,(h.x1+h.x2)/2)),cy=(h.y1+h.y2)/2;
+      if(cy>=y1&&cy<=y2){ctx.save();ctx.globalAlpha=warn?.88:.52;ctx.fillStyle=warn?'#f5d68b':'#c1f3ef';ctx.beginPath();ctx.moveTo(cx+dir*10,cy);ctx.lineTo(cx-dir*5,cy-6);ctx.lineTo(cx-dir*5,cy+6);ctx.closePath();ctx.fill();ctx.restore();}}
   }
   /* V58.3 · Asteroide: mira roja de aviso con su trayectoria, roca encendida que cae en diagonal y polvo al chocar. */
   function drawAsteroid(h, V, T) {
@@ -1946,7 +2137,14 @@
   }
 
   const ITEM_COLORS = ['#69d7d2', '#ffb547', '#ff7ad9', '#d9ff65', '#ff6b69', '#ffd35a'];
+  const PICKUP_SHEET = 'assets/ui/pickups_pro.png';
+  const PICKUP_PRO = {"gem":[0,0,96,96],"shield":[96,0,96,96],"magnet":[192,0,96,96],"heart":[288,0,96,96],"key":[0,96,96,96],"credencial":[96,96,96,96],"bus_card":[192,96,96,96],"notebook":[288,96,96,96],"headphones":[0,192,96,96],"sweater":[96,192,96,96],"keyring":[192,192,96,96]};
+  function drawPickupPro(name,x,y,size) {
+    const r=PICKUP_PRO[name],im=image(PICKUP_SHEET);if(!r||!ready(im))return false;
+    ctx.drawImage(im,...r,x-size/2,y-size/2,size,size);return true;
+  }
   function drawItemIcon(i, x, y) {
+    if(drawPickupPro(['credencial','bus_card','notebook','headphones','sweater','keyring'][i],x,y,34))return;
     const c = ITEM_COLORS[i % ITEM_COLORS.length];
     if (i === 0 || i === 1) { fillRR(x - 9, y - 6, 18, 12, 2, c); fillRect(x - 6, y - 2, 6, 6, '#0d2230', 0.7); }
     else if (i === 2) { fillRR(x - 7, y - 9, 14, 18, 2, c); line(x - 4, y - 5, x + 4, y - 5, '#0d2230', 0.7, 1.5); }
@@ -1960,17 +2158,22 @@
       if (p.got || p.x < V.x1 - 30 || p.x > V.x2 + 30 || p.y < V.y1 - 30 || p.y > V.y2 + 30) continue;
       if (p.type === 'gem') {
         const k = 1 + Math.sin(T * 5 + p.phase) * 0.13;
+        const marine=G.world.scenes[G.tramo]?.theme==='submarino' && G.world.waters.some(z=>z.sea&&p.y>z.y&&p.y<z.y2&&p.x>=z.x1&&p.x<=z.x2);
+        if(marine&&drawAbyssObject(0,p.x,p.y,27*k))continue;
+        if(drawPickupPro('gem',p.x,p.y,29*k))continue;
         circle(p.x, p.y, 18 * k, '#d9ff65', 0.12);
         ctx.fillStyle = '#d9ff65'; ctx.strokeStyle = '#f4ffd0'; ctx.lineWidth = 2; ctx.beginPath();
         ctx.moveTo(p.x, p.y - 11 * k); ctx.lineTo(p.x + 8 * k, p.y); ctx.lineTo(p.x, p.y + 11 * k); ctx.lineTo(p.x - 8 * k, p.y); ctx.closePath(); ctx.fill(); ctx.stroke();
       } else if (p.type === 'power') {
         const c = p.power === 'shield' ? '#69d7d2' : p.power === 'magnet' ? '#ff7ad9' : '#ff6b69', bob = Math.sin(T * 3 + p.phase) * 3, y = p.y + bob;
+        if(drawPickupPro(p.power==='shield'?'shield':p.power==='magnet'?'magnet':'heart',p.x,y,31))continue;
         circle(p.x, y, 22, c, 0.2); circle(p.x, y, 12, c); ring(p.x, y, 12, 12, '#ffffff', 1, 2);
         if (p.power === 'shield') fillRect(p.x - 4, y - 6, 8, 12, '#ffffff');
         else if (p.power === 'magnet') { fillRect(p.x - 6, y - 5, 4, 10, '#ffffff'); fillRect(p.x + 2, y - 5, 4, 10, '#ffffff'); }
         else { fillRect(p.x - 6, y - 2, 12, 4, '#ffffff'); fillRect(p.x - 2, y - 6, 4, 12, '#ffffff'); }
       } else if (p.type === 'key') {
         const bob = Math.sin(T * 3 + p.x) * 3, y = p.y + bob;
+        if(drawPickupPro('key',p.x,y,32))continue;
         circle(p.x, y, 20, '#ffd35a', 0.16);
         ring(p.x - 5, y, 6, 6, '#ffd35a', 1, 3.5);
         fillRect(p.x, y - 2, 13, 4, '#ffd35a'); fillRect(p.x + 8, y + 1, 3, 5, '#ffd35a'); fillRect(p.x + 12, y + 1, 2, 4, '#ffd35a');
@@ -2026,10 +2229,12 @@
     const hit = T - (f.bossHitStart ?? -999);
     if (hit >= 0 && hit < 0.34) {
       const p = hit / 0.34, r = f.w * 0.45 + p * 44;
+      drawHdFx('energy_burst', cx, cy, p, Math.min(128, f.w + 70), 1, 0.66 * (1 - p));
       ring(cx, cy, r, r * 0.7, '#fff8c9', 1 - p, 3 - p * 2);
     }
     if (f.dead && f.deadT <= 0.45) {
       const p = Math.max(0, f.deadT / 0.45), r = 16 + p * 88;
+      drawHdFx('shockwave', cx, cy, p, Math.min(150, f.w + 100), 1, 0.75 * (1 - p));
       ring(cx, cy, r, r * 0.72, color, 1 - p, 3 - p * 2);
       for (let i = 0; i < 9; i++) {
         const a = i * Math.PI * 2 / 9 + T * 1.8, rr = 12 + p * 56;
@@ -2153,9 +2358,38 @@
     if (k === 'shark') return st === 'windup' ? ['bite', f.stateT] : st === 'charge' ? ['dash_bite', f.stateT] : st === 'dizzy' ? ['hurt', f.stateT % 0.8] : ['swim', null];
     return st === 'windup' || st === 'charge' ? ['bite', f.stateT] : st === 'dizzy' ? ['stun', null] : ['swim', null];   // piraña
   }
+  function productionFrame(id, clipName, t, loop = false, ms = 0, progress = null) {
+    const a = NS.ART && NS.ART.PRODUCTION && NS.ART.PRODUCTION[id];
+    const c = a && a.clips[clipName];
+    if (!c) return null;
+    const im = image(a.sheet);
+    if (!ready(im)) return null;
+    const n = c.frames.length;
+    const i = progress === null ? waterFrameIndex(t, ms || c.ms, n, loop) : Math.min(n-1,Math.floor(Math.max(0,Math.min(1,progress))*n));
+    const f = c.frames[i];
+    if (!f || f[0]+f[2]>im.naturalWidth || f[1]+f[3]>im.naturalHeight) return null;
+    return {im, f, ref:a.ref};
+  }
+  function drawProductionFrame(p, x, y, sc, face, alpha = 1, rot = 0) {
+    const [sx,sy,sw,sh,ax,ay,direction] = p.f;
+    ctx.save(); ctx.globalAlpha *= alpha; ctx.translate(x,y); if(rot)ctx.rotate(rot);
+    ctx.scale(((face<0)!==(direction==='left')?-1:1)*sc,sc);
+    ctx.drawImage(p.im,sx,sy,sw,sh,-ax,-ay,sw,sh); ctx.restore();
+  }
   function drawMarineFoe(f, T) {
     const A = MARINE_ART[f.kind], im = image(MARINE_DIR + A.src + '.webp');
     const [name, t] = marineAnim(f), an = A.anims[name] || A.anims.swim || A.anims.idle_swim;
+    if (f.kind==='shark') {
+      const clip = name==='swim'?'nadar_lento':name==='death'?'morir':name==='bite'||name==='dash_bite'?'morder':null;
+      const q = clip && productionFrame('tiburon_feroz',clip,t===null?T:t,t===null,0,name==='death'?f.deadT/0.45:null);
+      if(q){
+        // Target body height matches the existing shark's painted swim silhouette.
+        const scale=(f.w*1.25)/MARINE_BODY.shark * 143/q.ref;
+        drawProductionFrame(q,f.x,f.y+(f.dead?0:Math.sin(T*2.2+f.phase)*1.5),scale,f.dir);
+        if(f.state==='windup'&&!f.dead)bang(f.x,f.y-44,T);
+        return;
+      }
+    }
     const [list, ms, loop] = an;
     const i = t === null || loop ? Math.floor((T * 1000 + f.phase * 400) / ms) % list.length : Math.min(list.length - 1, Math.floor(Math.max(0, t) * 1000 / ms));
     const fr = A.frames[list[i]], s = (f.w * 1.25) / MARINE_BODY[f.kind];
@@ -2237,6 +2471,14 @@
       default: return ['idle', null, fx];
     }
   }
+  const PRODUCTION_FOE = {
+    pulpito:['pulpo_marino',{idle:'idle',swim:'nadar',tentacle:'tentaculo',death:'morir'}],
+    buzito:['nino_marino',{idle:'idle',swim:'nadar',throw:'arrojar_piedra',hurt:'recibir_dano',death:'morir'}],
+    marciano:['marciano_espacial',{walk:'caminar',shoot:'disparo',hurt:'recibir_dano',death:'morir'}],
+    astronino:['nino_espacial',{idle:'idle',walk:'caminar',throw:'arrojar_piedra',hurt:'recibir_dano',death:'morir'}],
+    maestro:['maestro_enojon',{idle:'idle',walk:'walk',run:'run',ruler:'ruler_attack',fall:'fall',getup:'getup',ko:'ko'}],
+    pulpo_abismo:['pulpo_abismo',{idle:'idle',swim:'swim',windup:'tentacle_strike',ko:'ko',hurt:'hurt',dizzy:'stunned',strike:'tentacle_strike',recover:'recover'}]
+  };
   function drawAtlasFoe(f, T) {
     const A = ATLAS_FOES()[f.kind], im = image(A.src);
     const [name, t, fx] = atlasPick(f);
@@ -2244,12 +2486,25 @@
     const [list, ms, loop] = an;
     const speed = fx.fast || 1;
     const i = t === null || loop ? Math.floor((T * 1000 * speed + f.phase * 400) / ms) % list.length : Math.min(list.length - 1, Math.floor(Math.max(0, t) * 1000 / ms));
-    const fr = A.frames[list[i]];
-    const s = f.h * (ATLAS_VIS[f.kind] || 1.2) / A.ref * (fx.scale || 1);
+    let fr = A.frames[list[i]], bodyIm = im, bodyRef = A.ref;
+    const prod = PRODUCTION_FOE[f.kind];
+    if (prod) {
+      let clip = prod[1][name], time = t === null ? T*speed + (f.phase||0)*0.4 : t, cycle = t===null || !!loop, progress = null;
+      if (f.kind==='pulpo_abismo' && !f.dead) {
+        if(f.flash>0){clip='hurt';time=Math.max(0,0.2-f.flash);cycle=false;}
+        else if(f.state==='charge'){clip='tentacle_strike';time=f.stateT;cycle=false;}
+        else if(f.state==='windup'){clip='tentacle_strike';time=0;cycle=false;}
+        else if(f.state==='dizzy'){clip='stunned';time=f.stateT;cycle=true;fx.stars=false;}
+      }
+      if(f.dead){progress=Math.min(1,f.deadT/Math.max(0.15,atlasLife(f)*0.65));if(f.kind==='maestro')progress=Math.min(1,t/(name==='fall'?0.42:1));}
+      const q = clip && productionFrame(prod[0],clip,time,cycle,0,progress);
+      if(q){const [x,y,w,h,ax,ay]=q.f;fr=[x,y,w,h,-ax,-ay];bodyIm=q.im;bodyRef=q.ref;}
+    }
+    const s = f.h * (ATLAS_VIS[f.kind] || 1.2) / bodyRef * (fx.scale || 1);
     const flyer = !!NS.Enemies.TYPES[f.kind].flyer;
     const bob = flyer && !f.dead ? Math.sin(T * 2.2 + f.phase) * 1.5 : 0;
     const jit = fx.shake ? Math.sin(T * 55 + f.phase) * fx.shake : 0;
-    const bodyH = A.ref * s, d = f.dir || 1;
+    const bodyH = bodyRef * s, d = f.dir || 1;
     const cy = flyer ? f.y : f.y - bodyH * 0.5;
     if (!flyer && !f.dead) ellipse(f.x, f.y + 1, Math.min(f.w * 0.8, 42), 4, '#06111b', 0.4);
     if (fx.glow) {   // carga de tinta / chorro / tentáculo: un resplandor que crece frente a la boca
@@ -2261,9 +2516,9 @@
     ctx.save();
     ctx.translate(f.x + jit, f.y + bob + (fx.dy || 0));
     if (d < 0) ctx.scale(-1, 1);
-    ctx.drawImage(im, fr[0], fr[1], fr[2], fr[3], fr[4] * s, fr[5] * s, fr[2] * s, fr[3] * s);
+    ctx.drawImage(bodyIm, fr[0], fr[1], fr[2], fr[3], fr[4] * s, fr[5] * s, fr[2] * s, fr[3] * s);
     if (f.flash > 0 && !f.dead) {
-      const sil = silhouette(im, '#ffffff');
+      const sil = silhouette(bodyIm, '#ffffff');
       if (sil) { ctx.globalAlpha = Math.min(1, f.flash / 0.2) * 0.75; ctx.drawImage(sil, fr[0], fr[1], fr[2], fr[3], fr[4] * s, fr[5] * s, fr[2] * s, fr[3] * s); ctx.globalAlpha = 1; }
     }
     if (fx.charge) {   // marciano: el orbe crece en su puño
@@ -2315,17 +2570,75 @@
     return [...Object.values(ATLAS_FOES()).map((a) => a.src), ...Object.values(B).map((b) => b.src)];
   }
 
+  function drawSchoolBossWarning(G,V,T){
+    if(!G.world.schoolFinal||G.room)return;
+    const f=G.world.foes.find(q=>q.id===G.world.schoolFinal.bossId&&!q.dead);
+    if(!f||f.y<V.y1||f.y>V.y2+50)return;
+    const cfg=NS.Enemies.TYPES.maestro, d=f.dir||1;
+    if(f.state==='windup'){
+      // Ground marker predicts the actual maximum charge travel, limited by patrol edges.
+      const end=Math.max(f.minX,Math.min(f.maxX,f.x+d*f.spd*cfg.chargeMul*cfg.charge));
+      const x1=Math.min(f.x,end)-f.w/2,x2=Math.max(f.x,end)+f.w/2;
+      const opacity=.28+.35*Math.min(1,f.stateT/(cfg.windup*f.reaction));
+      fillRect(x1,f.y+2,x2-x1,5,'#f2aa66',opacity);
+      for(let x=x1+9;x<x2-5;x+=16)line(x-4,f.y+7,x+3,f.y+2,'#ffe3aa',opacity,1.4);
+    }else if(f.state==='shout'){
+      const width=Math.min(145,35+110*f.stateT/(cfg.shoutWindup*f.reaction));
+      line(f.x-width,f.y+3,f.x+width,f.y+3,'#f3b47e',.55,3);
+    }else if(f.state==='dizzy'){
+      const remain=Math.max(0,1-f.stateT/cfg.recover);
+      fillRR(f.x-25,f.y+9,50,5,2,'#142927',.9);fillRR(f.x-24,f.y+10,48*remain,3,1,'#a9e3c2',.95);
+    }
+  }
+  // Guardián de bloques. Cada extremidad gira en su articulación y la bota de apoyo queda en y=0.
+  function drawGuardian(f, T) {
+    const tell = f.state === 'windup', charge = f.state === 'charge', dazed = f.state === 'dizzy';
+    const step = (f.state === 'patrol' || charge) && !f.dead ? Math.sin(T * (charge ? 13 : 5) + f.phase) : 0;
+    const coat = ['#318e92', '#716ab5', '#3776a5'][f.scene % 3] || '#318e92';
+    const skin = '#c98e65', light = '#e5ae87', hair = '#342b36';
+    ctx.save(); ctx.translate(f.x, f.y); ctx.scale(f.dir, 1);
+    if (f.dead) { ctx.rotate(Math.min(1.4, f.deadT * 5)); ctx.globalAlpha *= Math.max(0, 1 - f.deadT / .45); }
+    else if (f.flash > 0) ctx.globalAlpha *= .65;
+    ellipse(0, 0, 16, 3, '#182c39', .36);
+    function leg(x, swing) {
+      const lift = Math.max(0, swing) * 3;
+      fillRect(x + swing * 3, -17 - lift, 9, 14, '#3b4765');
+      fillRR(x + swing * 3 - 1, -5 - lift, 12, 5, 1, '#273248');
+      fillRect(x + swing * 3, -2 - lift, 11, 2, '#eddfbb');
+    }
+    leg(-10, step); leg(2, -step);
+    const lean = charge ? 2 : tell ? -2 : 0;
+    ctx.translate(lean, dazed ? 2 : 0);
+    fillRR(-12, -34, 25, 18, 2, coat);
+    fillRect(-12, -34, 5, 18, '#304b64'); fillRect(-3, -34, 13, 3, '#dfc988');
+    fillRect(-2, -30, 3, 11, '#a8ded1'); fillRect(5, -27, 5, 3, '#f1d56d');
+    fillRect(-13, -32, 6, 13, coat); fillRR(-13, -21, 7, 7, 1, skin);
+    ctx.save(); ctx.translate(11, -31);
+    ctx.rotate(tell ? -1.95 : charge ? -1.45 : step * .38);
+    fillRect(-3, 0, 7, 10, coat); fillRR(-3, 9, 7, 7, 1, light); ctx.restore();
+    fillRR(-9, -52, 22, 18, 2, light);
+    fillRect(-9, -49, 5, 14, skin); fillRect(-10,-53,22,5,hair);
+    fillRect(-10,-50,5,10,hair); fillRect(4,-50,8,3,hair);
+    fillRect(4,-45,3,dazed ? 1 : 3,'#322b38'); fillRect(10,-45,2,dazed ? 1 : 3,'#322b38');
+    fillRect(6,-38,4,1.5,'#874e4c');
+    if (tell) bang(0,-62,T);
+    if (dazed) { for (let i = 0; i < 3; i++) circle(Math.cos(T * 7 + i * 2.1) * 13,-59 + Math.sin(T * 7 + i * 2.1) * 3,2,'#ffe68b'); }
+    ctx.restore();
+  }
+
   function drawFoes(G, V, T) {
     const t9 = T * 9;
     for (const f of G.world.foes) {
       if (f.x < V.x1 - 50 || f.x > V.x2 + 50 || f.y < V.y1 - 60 || f.y > V.y2 + 50) continue;
       // V58.7: los del atlas nuevo terminan su animación de derrota (el maestro cae y queda noqueado) antes de esfumarse.
+      if (f.region !== G.region) continue;
+      if (f.kind === 'guardian') { if (!f.dead || f.deadT <= .45) drawGuardian(f, T); continue; }
       const atlas = atlasReady(f.kind), life = atlas ? atlasLife(f) : 0.45;
       if (f.dead && f.deadT > life) continue;
       const a = f.dead ? (atlas ? Math.min(1, (life - f.deadT) / (life * 0.35)) : 1 - f.deadT / 0.45) : 1;
       // V58.1: en el mar y en la Luna el niño lleva traje de buzo o de astronauta (si sus cuadros cargaron).
       const fTheme = f.kind === 'kid' && f.scene >= 0 && G.world.scenes[f.scene] ? G.world.scenes[f.scene].theme : null;
-      const suit = fTheme === 'submarino' ? 'kid_buzo' : fTheme === 'espacial' ? 'kid_astronauta' : null;
+      const suit = fTheme === 'submarino' && f.plat && f.plat.underwater ? 'kid_buzo' : fTheme === 'espacial' ? 'kid_astronauta' : null;
       const sk = f.kind === 'bravo' ? 'dog' : suit && enemyReady(suit) ? suit : f.kind;
       const useSprite = !atlas && !!ESPR[sk] && enemyReady(sk);
       const marine = !atlas && !useSprite && marineReady(f.kind);   // V58.2: piraña, tiburón, pulpo y Poseidón con su atlas
@@ -2597,7 +2910,47 @@
     return best ? top : null;
   }
 
-  function drawCompanion(c, x, foot, T, bob, flip, shoulder = false, action = 'idle', phase = 0, moving = false, behavior = 'follow') {
+  // Fila de contacto opaca medida en cada cuadro de tierra. El PNG original conserva su encuadre.
+  const ROBLOX_SOLES = {"luna": {"idle_00": 235, "idle_01": 235, "idle_02": 235, "idle_03": 225, "idle_04": 221, "idle_05": 222, "walk_00": 234, "walk_01": 230, "walk_02": 240, "walk_03": 230, "run_00": 237, "run_01": 239, "run_02": 228, "run_03": 229, "crouch_00": 224, "crouch_01": 222, "jump_00": 199, "jump_01": 228, "jump_02": 213, "fall_00": 232, "fall_01": 224, "fall_02": 212, "land_00": 227, "land_01": 225, "climb_00": 224, "climb_01": 216, "climb_02": 228, "glide_00": 214, "glide_01": 220, "glide_02": 232, "hurt_00": 229, "hurt_01": 205, "hurt_02": 232, "ko_00": 206, "ko_01": 212, "ko_02": 214, "getup_00": 245, "getup_01": 226, "getup_02": 230, "celebrate_00": 233, "celebrate_01": 230, "celebrate_02": 234, "interact_00": 222, "interact_01": 233}, "morita": {"idle_00": 239, "idle_01": 240, "idle_02": 239, "idle_03": 231, "idle_04": 233, "idle_05": 228, "walk_00": 245, "walk_01": 222, "walk_02": 245, "walk_03": 228, "run_00": 235, "run_01": 245, "run_02": 234, "run_03": 237, "crouch_00": 235, "crouch_01": 234, "jump_00": 209, "jump_01": 233, "jump_02": 217, "fall_00": 234, "fall_01": 233, "fall_02": 233, "land_00": 236, "land_01": 231, "climb_00": 220, "climb_01": 218, "climb_02": 228, "glide_00": 226, "glide_01": 227, "glide_02": 215, "hurt_00": 234, "hurt_01": 233, "hurt_02": 233, "ko_00": 226, "ko_01": 245, "ko_02": 244, "getup_00": 224, "getup_01": 236, "getup_02": 237, "celebrate_00": 238, "celebrate_01": 236, "celebrate_02": 239, "interact_00": 233, "interact_01": 244}};
+  const CAT_SOLES = {"luna_idle_v38_01.png": 211, "luna_idle_v38_02.png": 211, "luna_idle_v38_03.png": 211, "luna_idle_v38_04.png": 196, "luna_idle_v38_05.png": 195, "luna_idle_v38_06.png": 196, "luna_walk_v38_01.png": 214, "luna_walk_v38_02.png": 214, "luna_walk_v38_03.png": 203, "luna_walk_v38_04.png": 204, "morita_idle_v38_01.png": 216, "morita_idle_v38_02.png": 216, "morita_idle_v38_03.png": 216, "morita_idle_v38_04.png": 205, "morita_idle_v38_05.png": 204, "morita_idle_v38_06.png": 204, "morita_walk_v38_01.png": 213, "morita_walk_v38_02.png": 214, "morita_walk_v38_03.png": 212, "morita_walk_v38_04.png": 214};
+  function drawParafallsRobloxCat(c, x, foot, T, bob, flip, shoulder, action, phase, moving, behavior, schoolMode, grounded) {
+    const id = c.name.toLowerCase(), atlas = root.PARAFALLS_ROBLOX_COMPANIONS && root.PARAFALLS_ROBLOX_COMPANIONS[id];
+    if (!atlas) return false;
+    const clip = atlas.animation[moving ? 'walk' : 'idle'];
+    const frames = clip && clip.frames;
+    if (!frames || !frames.length) return false;
+    const im = image(PARAFALLS_ROBLOX_CAT_DIR + id + '/atlas.png');
+    if (!ready(im)) return false;
+    const time = Math.max(0, T + (phase || 0) * 0.18), ix = clip.loop ? Math.floor(time * clip.fps) % frames.length : Math.min(frames.length - 1, Math.floor(time * clip.fps));
+    const f = atlas.frames[frames[ix]], r = f && f.frame, s = f && f.spriteSourceSize, p = f && f.pivot;
+    if (!f || !r || !s || !p || r.x + r.w > im.naturalWidth || r.y + r.h > im.naturalHeight) return false;
+    const breath = shoulder ? Math.sin(T * 4.2 + phase) * 0.025 : Math.sin(T * (moving ? 5 : 2.2) + phase) * 0.01;
+    const scale = c.scale * (schoolMode ? 1.45 : 1) * (shoulder ? 0.72 : 1) * (1 + breath);
+    const idleBob = grounded ? 0 : moving ? Math.sin(T * 12 + phase) * 1.45 : Math.sin(T * 2.5 + phase) * 0.55;
+    const hop = shoulder && (action === 'excited' || action === 'assist') ? -Math.abs(Math.sin(T * 11 + phase)) * (action === 'assist' ? 8 : 4) :
+      !shoulder && behavior === 'assist' ? -Math.abs(Math.sin(T * 11 + phase)) * 2.5 : 0;
+    ctx.save(); ctx.translate(x, foot + bob + idleBob + (shoulder ? -48 : 0) + hop); ctx.scale((flip ? -1 : 1) * scale, scale); ctx.globalAlpha = 0.98;
+    ctx.drawImage(im, r.x, r.y, r.w, r.h, s.x - p.x * f.sourceSize.w, grounded ? -ROBLOX_SOLES[id][frames[ix]] : s.y - p.y * f.sourceSize.h, r.w, r.h);
+    ctx.restore();
+    if (!shoulder && (action === 'alert' || behavior === 'assist' || behavior === 'pounce')) text(c.name, x, foot - 24 + bob, 7, c.name === 'LUNA' ? '#ffffff' : '#e6e9f0', 'center', 900);
+    return true;
+  }
+
+  function drawCompanion(c, x, foot, T, bob, flip, shoulder = false, action = 'idle', phase = 0, moving = false, behavior = 'follow', schoolMode=false, robloxMode=false, grounded=false) {
+    const catId = c.name.toLowerCase() + (c===COMPANIONS_SUB.luna||c===COMPANIONS_SUB.morita?'_sub':c===COMPANIONS_SPACE.luna||c===COMPANIONS_SPACE.morita?'_space':'');
+    if (robloxMode && !catId.includes('_') && drawParafallsRobloxCat(c, x, foot, T, bob, flip, shoulder, action, phase, moving, behavior, schoolMode, grounded)) return;
+    if (catId.includes('_')) {
+      const sub=catId.endsWith('_sub');
+      const clip=shoulder?(sub?'shoulder':'idle'):behavior==='pounce'&&!sub?'jump':moving?'walk':sub&&(behavior==='sniff'||behavior==='groom')?'sniff':sub&&(behavior==='alert'||behavior==='look'||action==='alert')?'alert':'idle';
+      const q=productionFrame(catId,clip,T+(phase||0)*0.04,true);
+      if(q){
+        const hop=behavior==='pounce'?-Math.abs(Math.sin(T*11+phase))*2.5:0;
+        const scale = 22 / Math.max(1,q.ref) * (shoulder?0.72:1);
+        drawProductionFrame(q,x,foot+bob+(shoulder?-48:0)+hop,scale,flip?-1:1,0.98);
+        if(!shoulder && (action==='alert'||behavior==='assist'||behavior==='pounce')) text(c.name,x,foot-29+bob,7,c.tint,'center',900);
+        return;
+      }
+    }
     const frames = moving ? c.walk : c.idle;
     // V50: reposo = poses de pie (01–03); olfatear = cabeza abajo (05); mirar/alerta = cabeza alzada (04, 06).
     // Antes el reposo normal ciclaba también la pose de olfatear y "asearse" mostraba esa misma pose.
@@ -2607,7 +2960,7 @@
     const framePos = (T * fps + phase * 0.42) % frameCount;
     const frameBase = Math.floor(framePos), frameIx = frameStart + frameBase;
     const nextIx = frameStart + (frameBase + 1) % frameCount;
-    const frameMix = shoulder ? 0 : Math.max(0, Math.min(1, (framePos - frameBase - 0.68) / 0.32));
+    const frameMix = shoulder || grounded ? 0 : Math.max(0, Math.min(1, (framePos - frameBase - 0.68) / 0.32));
     const im = image(shoulder ? c.shoulder : frames[frameIx]);
     const imNext = image(shoulder ? c.shoulder : frames[nextIx]);
     const breath = shoulder ? Math.sin(T * 4.2 + phase) * 0.025 : Math.sin(T * (moving ? 5 : 2.2) + phase) * 0.01;
@@ -2616,18 +2969,19 @@
       !shoulder && behavior === 'assist' ? -Math.abs(Math.sin(T * 11 + phase)) * 2.5 : 0;
     const sway = shoulder ? Math.sin(T * 2.7 + phase) * (action === 'alert' || action === 'assist' ? 0.08 : 0.035) :
       Math.sin(T * (moving ? 8 : 1.8) + phase) * (moving ? 0.025 : 0.01);
-    const idleBob = moving ? Math.sin(T * 12 + phase) * 1.45 : Math.sin(T * 2.5 + phase) * 0.55;
+    const idleBob = grounded ? 0 : moving ? Math.sin(T * 12 + phase) * 1.45 : Math.sin(T * 2.5 + phase) * 0.55;
     ctx.save();
     ctx.translate(x, foot + bob + idleBob + (shoulder ? -48 : 0) + hop);
     ctx.rotate(sway);
     ctx.globalAlpha = 0.98;
     if (ready(im) || ready(imNext)) {
       const base = ready(im) ? im : imNext;
-      const scale = shoulder ? c.scale * 0.72 * pulse : c.scale * pulse;
+      const scale = (schoolMode?1.45:1)*(shoulder ? c.scale * 0.72 * pulse : c.scale * pulse);
       ctx.scale((flip ? -1 : 1) * scale, scale * (action === 'cuddle' ? 1.04 : 1));
       if (ready(im)) {
         ctx.globalAlpha = 0.98 * (1 - frameMix);
-        ctx.drawImage(im, -base.naturalWidth / 2, -base.naturalHeight * 0.92);
+        const sole = grounded && CAT_SOLES[frames[frameIx].split('/').pop()];
+        ctx.drawImage(im, -im.naturalWidth / 2, -(sole || im.naturalHeight * .92));
       }
       if (frameMix > 0 && ready(imNext)) {
         ctx.globalAlpha = 0.98 * frameMix;
@@ -2652,7 +3006,7 @@
     }
     ctx.restore();
     // Nombre justo encima de la gatita (antes flotaba 58 u arriba, a la altura de la cabeza de Sofía).
-    // V58.9: sin el nombre escrito bajo cada gata (era texto encimado sobre el dibujo).
+    if (!shoulder && (action === 'alert' || behavior === 'assist' || behavior === 'pounce')) text(c.name, x, foot - 24 + bob, 7, c.name === 'LUNA' ? '#ffffff' : '#e6e9f0', 'center', 900);
   }
 
   function drawCompanions(G, T) {
@@ -2669,12 +3023,14 @@
     const moritaX = moritaShoulder ? P.x + 12 : morita?.x ?? P.x + (playerMoving ? 56 : 46);
     const lunaY = luna?.y ?? foot, moritaY = morita?.y ?? foot;
     const lunaMoving = luna ? luna.moving : playerMoving, moritaMoving = morita ? morita.moving : playerMoving;
-    const scNow = G.world && G.world.scenes[G.tramo];
-    const SET = scNow && scNow.theme === 'submarino' ? COMPANIONS_SUB : scNow && scNow.theme === 'espacial' && ready(image(COMPANIONS_SPACE.luna.src)) ? COMPANIONS_SPACE : COMPANIONS;
-    drawCompanion(SET.luna, lunaX, lunaY, T, -2 + stride, luna ? luna.face < 0 : P.face < 0, lunaShoulder,
-      lunaWarn ? 'alert' : action, luna?.phase ?? 0, lunaMoving, luna?.mode ?? 'follow');
-    drawCompanion(SET.morita, moritaX, moritaY, T, -1 - stride * 0.7, morita ? morita.face < 0 : P.face > 0, moritaShoulder,
-      moritaWarn ? 'alert' : action, morita?.phase ?? 2.4, moritaMoving, morita?.mode ?? 'follow');
+    const scNow = G.world && G.world.scenes[G.tramo], robloxCats = G.missionId === 'parafalls' && !!root.PARAFALLS_ROBLOX_COMPANIONS;
+    const SET = scNow && scNow.theme === 'submarino' && (P.water || P.wade) ? COMPANIONS_SUB : scNow && scNow.theme === 'espacial' && ready(image(COMPANIONS_SPACE.luna.src)) ? COMPANIONS_SPACE : COMPANIONS;
+    const onFeet = (a, riding) => !!P.ground && !P.water && !riding && !(a && ['pounce','fetch','assist'].includes(a.mode));
+    const lunaGround = onFeet(luna, lunaShoulder), moritaGround = onFeet(morita, moritaShoulder);
+    drawCompanion(SET.luna, lunaX, lunaY, T, lunaGround ? 0 : -2 + stride, luna ? luna.face < 0 : P.face < 0, lunaShoulder,
+      lunaWarn ? 'alert' : action, luna?.phase ?? 0, lunaMoving, luna?.mode ?? 'follow',G.world.schoolMission,robloxCats,lunaGround);
+    drawCompanion(SET.morita, moritaX, moritaY, T, moritaGround ? 0 : -1 - stride * 0.7, morita ? morita.face < 0 : P.face > 0, moritaShoulder,
+      moritaWarn ? 'alert' : action, morita?.phase ?? 2.4, moritaMoving, morita?.mode ?? 'follow',G.world.schoolMission,robloxCats,moritaGround);
     // V58.2: animaciones de ayuda. Salto de Luna (estela y arañazo) y carrera de Morita por los cristales.
     for (const [a, c] of [[luna, SET.luna], [morita, SET.morita]]) {
       if (!a) continue;
@@ -2705,7 +3061,8 @@
     if (lunaWarn || moritaWarn) {
       const a = lunaWarn ? luna : morita, shoulder = lunaWarn ? lunaShoulder : moritaShoulder;
       const cx = a ? a.x : lunaWarn ? lunaX : moritaX, cy = (a ? a.y : foot) - (shoulder ? 86 : 58);
-      bang(cx, cy, T);   // V58.9: solo el signo de aviso, sin el rótulo «¡CUIDADO!» encima
+      bang(cx, cy, T);
+      text('¡CUIDADO!', cx, cy - 13, 8, '#ffe27a', 'center', 900);
     }
   }
 
@@ -2853,6 +3210,8 @@
     for (const f of G.waterFx) {
       if (f.x < V.x1 - 60 || f.x > V.x2 + 60 || f.y < V.y1 - 80 || f.y > V.y2 + 40) continue;
       const k = Math.min(1, f.t / f.life);
+      const hd = HD_WATER[f.kind];
+      if (hd && drawHdFx(hd[0], f.x, f.y, f.kind === 'ripple' ? 0 : k, hd[1] * (f.kind === 'ripple' ? 0.65 + k * 0.7 : 1), 1, 1 - Math.pow(k, 3) * 0.95, f.kind === 'ripple' ? 0.72 : 1)) continue;
       if (f.kind === 'bubble') {
         const bx = f.x + Math.sin(f.t * 9 + f.seed * 6) * 3, r = 2 + f.seed * 1.6;
         circle(bx, f.y, r, '#d8f6ff', 0.55 * (1 - k)); ring(bx, f.y, r + 0.6, r + 0.6, '#ffffff', 0.6 * (1 - k), 0.8);
@@ -2895,7 +3254,32 @@
     return loop ? i % count : Math.min(count - 1, i);
   }
   const inSeaWater = (P) => !!(P.water || P.wade);
+  function drawProductionDive(G, alpha) {
+    const A = NS.ART && NS.ART.PRODUCTION_DIVE, P = G.P;
+    if (!A) return false;
+    const im = image(A.sheet); if (!ready(im)) return false;
+    const state = P.dead ? 'dead' : P.state;
+    let name = A.states[state]; if (!name) return false;
+    if(state==='swimFloat')name='idle';
+    if(state==='swimUnder'&&Math.abs(P.vx)<20&&Math.abs(P.vy)<25)name='estabilizar_agua';
+    if (name==='nadar_derecha' && P.face < 0) name = 'nadar_izquierda';
+    const clip = A.clips[name]; if (!clip) return false;
+    const count = clip.frames.length;
+    const t = state === 'dead' ? G.timers.dying : P.stateT;
+    const ix = state === 'swimKick' ? Math.min(count-1,Math.floor(Math.max(0,0.22-P.kickT)/0.22*count)) : waterFrameIndex(t,clip.ms,count,clip.loop && state !== 'dead');
+    const [sx,sy,sw,sh,ax,ay]=clip.frames[ix];
+    if (sx+sw>im.naturalWidth || sy+sh>im.naturalHeight) return false;
+    const flip = (P.face<0) !== (clip.direction === 'left');
+    const y = clip.anchor === 'feet' ? P.y+P.h/2 : P.y;
+    ctx.save(); ctx.globalAlpha=alpha; ctx.translate(P.x,y+(state==='dead'?Math.min(70,G.timers.dying*55):0));
+    ctx.scale((flip?-1:1)*A.scale,A.scale);ctx.drawImage(im,sx,sy,sw,sh,-ax,-ay,sw,sh);ctx.restore();
+    if (state==='swimHurt' && P.hurtT>0.25) ring(P.x,P.y,26,30,'#ff4040',0.55,2.5);
+    if (state==='swimKick') drawHdFx('slash',P.x+P.face*26,P.y,1-P.kickT/0.22,60,P.face,0.7);
+    if (state==='swimDash') drawHdFx('propulsion',P.x-P.face*22,P.y,Math.min(0.99,P.stateT/0.28),65,P.face,0.65);
+    return true;
+  }
   function drawDiveWater(G, alpha) {
+    if (drawProductionDive(G, alpha)) return true;
     const P = G.P, im = image(DIVE_SHEET);
     if (!ready(im)) return false;
     const state = P.dead ? 'dead' : DIVE_WATER[P.state] ? P.state : P.wade ? 'wadeIdle' : 'swimFloat';
@@ -2941,7 +3325,8 @@
     const top = landingBelow(G);
     if (top !== null && !P.dead && !P.water) {
       const dist = Math.max(0, top - foot), k = Math.max(0.3, Math.min(1, 1 - dist / 520));
-      ellipse(P.x, top + 2, 20 * k, 5.5 * k, '#000000', 0.12 + 0.18 * k);
+      ellipse(P.x, top + 2, 22 * k, 5.5 * k, '#071421', 0.16 + 0.22 * k);
+      if (P.ground) ellipse(P.x, top + 1, 13, 2.7, '#071421', .30);
       if (dist > 60 && !P.ground && ropt.landingRing) {
         const fall = top - P.airTopFoot, D = NS.CONFIG.difficulty[G.difficulty] || NS.CONFIG.difficulty.normal;
         const c = fall >= D.fallDamage ? '#ff5a4a' : fall >= NS.CONFIG.fall.hard ? '#ffb547' : '#d9ff65';
@@ -2973,45 +3358,55 @@
     else if (state === 'dead') ix = 0;
     else ix = Math.floor(P.animT * 1000 / (FRAME_MS[state] || 100)) % list.length;
     const name = list[Math.max(0, Math.min(list.length - 1, ix))];
-    const im = image(astro ? ASTRO_DIR + name + '.webp' : ninaSrc(name, outfit));
+    const astroClip = {idle:'idle',run:'walk',fastRun:'walk',jump:'jump',fall:'fall',land:'land',climb:'walk',dash:'dash',kick:'kick',hurt:'hurt',dead:'ko',cheer:'victory'}[state];
+    const prodAstro = outfit==='astronauta' && astroClip ? productionFrame('sofia_astronauta',astroClip,P.dead?G.timers.dying:P.stateT,['idle','run','fastRun','climb'].includes(state),state==='fastRun'?64:0,state==='kick'?1-P.kickT/0.22:null) : null;
+    const im = prodAstro ? prodAstro.im : image(astro ? ASTRO_DIR + name + '.webp' : ninaSrc(name, outfit));
     const meta = astro ? ASTRO_META : (NS.ART && NS.ART.SOFIA[name]) || [1, 96, 218];
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    const swingA = state === 'swing' && P.rope ? P.ropeA : null;
-    if (swingA !== null) {
-      // V58.2: gira alrededor de la mano (en la cuerda): los pies siguen el ángulo del columpio.
-      const hang = NS.CONFIG.rope.hang, hy = P.y - P.h / 2 - hang;
-      ctx.translate(P.x, hy); ctx.rotate(-swingA); ctx.translate(0, P.h + hang);
-    } else ctx.translate(P.x, foot + yOff);
-    let rot;
-    if (P.dead) rot = (P.face || 1) * Math.min(1.35, G.timers.dying * 1.9);
-    else if (state === 'dash') rot = 0;
-    else if (state === 'hurt') rot = -(P.face || 1) * 0.22;
-    else if (state === 'jump') rot = -(P.face || 1) * 0.06;
-    else if (state === 'fall') rot = (P.face || 1) * Math.min(0.12, Math.max(0, P.vy) / 4000);
-    else if (state === 'kick') rot = (P.face || 1) * -0.03;
-    else if (state === 'zip') rot = Math.sin(T * 3.2) * 0.06 + (P.face || 1) * 0.08;
-    else if (state === 'swing') rot = 0;
-    else rot = Math.max(-1, Math.min(1, P.vx / NS.CONFIG.phys.move)) * 0.05;
-    ctx.rotate(rot);
-    if (ready(im)) {
-      const sc = SOFIA_BASE / meta[0];
-      // Respiración sutil en reposo y aplastado breve al aterrizar.
-      const breathe = state === 'idle' ? Math.sin(T * 2.6) * 0.012 : 0;
-      const land = state === 'land' ? 0.05 * Math.max(0, 1 - P.stateT / 0.16) : 0;
-      ctx.scale((P.face < 0 ? -1 : 1) * sc * (1 + land - breathe * 0.4), sc * (1 - land + breathe));
-      ctx.drawImage(im, -meta[1], -meta[2]);
-      if (state === 'hurt' && P.hurtT > 0.25) {
-        // Destello rojo al recibir daño: solo la silueta de Sofía.
-        const sil = silhouette(im, '#ff4040');
-        if (sil) { ctx.globalAlpha = alpha * 0.5; ctx.drawImage(sil, -meta[1], -meta[2]); }
+    const useRobloxSofia = G.missionId === 'parafalls' && !astro && root.SOFIA_ROBLOX_ATLAS && root.SofiaRobloxAtlas;
+    const robloxImg = useRobloxSofia ? image(PARAFALLS_ROBLOX_SOFIA) : null;
+    const robloxState = PARAFALLS_ROBLOX_PLAYER_STATE[state] || state;
+    const robloxTime = ['idle','run','fastRun','climb','zip','swing'].includes(state) ? P.animT : (P.dead ? G.timers.dying : P.stateT);
+    const robloxDrawn = !!(ready(robloxImg) && root.SofiaRobloxAtlas && root.SofiaRobloxAtlas.draw(ctx, robloxImg, root.SOFIA_ROBLOX_ATLAS, robloxState, robloxTime, P.x, foot + yOff, { scale: 0.29, facing: P.face || 1, opacity: alpha }));
+    if (!robloxDrawn) {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      const swingA = state === 'swing' && P.rope ? P.ropeA : null;
+      if (swingA !== null) {
+        // V58.2: gira alrededor de la mano (en la cuerda): los pies siguen el ángulo del columpio.
+        const hang = NS.CONFIG.rope.hang, hy = P.y - P.h / 2 - hang;
+        ctx.translate(P.x, hy); ctx.rotate(-swingA); ctx.translate(0, P.h + hang);
+      } else ctx.translate(P.x, foot + yOff);
+      let rot;
+      if (P.dead) rot = (P.face || 1) * Math.min(1.35, G.timers.dying * 1.9);
+      else if (state === 'dash') rot = 0;
+      else if (state === 'hurt') rot = -(P.face || 1) * 0.22;
+      else if (state === 'jump') rot = -(P.face || 1) * 0.06;
+      else if (state === 'fall') rot = (P.face || 1) * Math.min(0.12, Math.max(0, P.vy) / 4000);
+      else if (state === 'kick') rot = (P.face || 1) * -0.03;
+      else if (state === 'zip') rot = Math.sin(T * 3.2) * 0.06 + (P.face || 1) * 0.08;
+      else if (state === 'swing') rot = 0;
+      else rot = Math.max(-1, Math.min(1, P.vx / NS.CONFIG.phys.move)) * 0.05;
+      ctx.rotate(rot);
+      if (ready(im)) {
+        const sc = SOFIA_BASE / meta[0];
+        // Respiración sutil en reposo y aplastado breve al aterrizar.
+        const breathe = state === 'idle' ? Math.sin(T * 2.6) * 0.012 : 0;
+        const land = state === 'land' ? 0.05 * Math.max(0, 1 - P.stateT / 0.16) : 0;
+        ctx.scale((P.face < 0 ? -1 : 1) * sc * (1 + land - breathe * 0.4), sc * (1 - land + breathe));
+        if (prodAstro) {const [x,y,w,h,ax,ay]=prodAstro.f;ctx.drawImage(im,x,y,w,h,-ax,-ay,w,h);}
+        else ctx.drawImage(im, -meta[1], -meta[2]);
+        if (state === 'hurt' && P.hurtT > 0.25) {
+          // Destello rojo al recibir daño: solo la silueta de Sofía.
+          const sil = silhouette(im, '#ff4040');
+          if (sil) { ctx.globalAlpha = alpha * 0.5; if(prodAstro){const [x,y,w,h,ax,ay]=prodAstro.f;ctx.drawImage(sil,x,y,w,h,-ax,-ay,w,h);}else ctx.drawImage(sil, -meta[1], -meta[2]); }
+        }
+      } else {
+        fillRR(-8, -39, 16, 23, 5, '#2aa6ae'); circle(0, -51, 7, '#e9b98d');
+        fillRR(-7, -17, 5, 16, 2, '#172432'); fillRR(2, -17, 5, 16, 2, '#172432'); fillRect(-7, -35, 14, 3, '#d9ff65');
       }
-    } else {
-      fillRR(-8, -39, 16, 23, 5, '#2aa6ae'); circle(0, -51, 7, '#e9b98d');
-      fillRR(-7, -17, 5, 16, 2, '#172432'); fillRR(2, -17, 5, 16, 2, '#172432'); fillRect(-7, -35, 14, 3, '#d9ff65');
+      ctx.restore();
     }
-    ctx.restore();
-    if (outfit === 'astronauta' && !astro) drawAstronautGear(P, alpha);
+    if (outfit === 'astronauta' && !astro && !prodAstro) drawAstronautGear(P, alpha);
     if (P.zip) {
       const hy = P.y - P.h / 2 - NS.CONFIG.zip.hang;
       fillRR(P.x - 8, hy - 10, 16, 8, 3, '#2c3138'); circle(P.x - 3, hy - 1, 2.6, '#c9d2d8'); circle(P.x + 4, hy - 1, 2.6, '#c9d2d8');
@@ -3019,7 +3414,7 @@
       for (let i = 1; i <= 3; i++) line(P.x - P.zip.ux * (10 + i * 8), P.y - 8 + i * 6, P.x - P.zip.ux * (24 + i * 8), P.y - 8 + i * 6, '#cfe8ff', 0.35, 1.5);
     }
     if (P.dashT > 0) for (let i = 1; i <= 3; i++) line(P.x - P.face * (14 + i * 9), P.y - 10 + i * 6, P.x - P.face * (30 + i * 9), P.y - 10 + i * 6, '#4ce7ee', 0.5, 2);
-    if (P.kickT > 0) { const k = P.kickT / 0.22; line(P.x + P.face * 16, P.y - 9, P.x + P.face * 58, P.y - 9, '#ffd35a', 0.35 * k, 3); ring(P.x + P.face * 58, P.y - 9, 9, 9, '#ffe9a8', 0.5 * k, 2); }
+    if (P.kickT > 0 && !drawHdFx('slash', P.x + P.face * 29, P.y - 9, 1 - P.kickT / 0.22, 85, P.face, 0.88)) { const k = P.kickT / 0.22; line(P.x + P.face * 16, P.y - 9, P.x + P.face * 58, P.y - 9, '#ffd35a', 0.35 * k, 3); ring(P.x + P.face * 58, P.y - 9, 9, 9, '#ffe9a8', 0.5 * k, 2); }
   }
 
   function drawCinematic(G, T) {
@@ -3028,10 +3423,54 @@
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     fillRect(0, 0, cw, Math.max(28, ch * 0.09), '#050a10', 0.92);
     fillRect(0, ch - Math.max(28, ch * 0.09), cw, Math.max(28, ch * 0.09), '#050a10', 0.92);
-    text(p < 0.38 ? '¡LUNA, MORITA, SUBAN!' : p < 0.72 ? 'EL MOTOR ARRANCA…' : 'RUTA 6 · A CASA', cw / 2, ch * 0.14, Math.max(12, Math.min(22, cw * 0.035)), '#ffe9a8');
+    const phrases = G.world.portal ? ['¡VENGAN, GATAS!', 'EL PORTAL SE ABRE…', 'LAS CASCADAS QUEDAN ATRÁS'] :
+      G.missionId === 'submarino' ? ['¡A LA ESCOTILLA!', 'LA CÁMARA SE SELLA…', 'RUMBO A LA SUPERFICIE'] :
+      G.missionId === 'espacial' ? ['¡TODAS AL MÓDULO!', 'DESPEGUE LUNAR…', 'REGRESO DE LA ÓRBITA'] :
+      ['¡LUNA, MORITA, SUBAN!', 'EL MOTOR ARRANCA…', 'RUTA 6 · A CASA'];
+    text(phrases[p < .38 ? 0 : p < .72 ? 1 : 2], cw / 2, ch * 0.14, Math.max(12, Math.min(22, cw * 0.035)), '#ffe9a8');
   }
 
+  // Atlas RGBA original; un destello por evento, nunca un sprite por cada partícula.
+  const RELEASE_FX_SHEET = 'assets/fx/release_fx_rgba.png';
+  const RELEASE_FX_ROWS = {"impact":[0,62],"damage":[1,58],"collect":[2,52],"dash":[3,66],"dust":[4,52],"boss":[5,86]};
+  const RELEASE_FX_COLOR = {
+    0xff6b69:'damage',0xff755c:'boss',0xfff3c4:'impact',0xff9a5a:'impact',0xffd35a:'impact',
+    0xff7a5a:'impact',0xffb07a:'impact',0xffa25a:'impact',0xffe27a:'collect',0xd9ff65:'collect',
+    0xc9ff72:'collect',0x69d7d2:'dash',0x4ce7ee:'dash',0xbfe6ff:'dash',0xcfe8ff:'dash',
+    0xc9774f:'dust',0xc89a62:'dust',0xcfd8dc:'dust',0xc0704a:'dust',0xffd38a:'dust'
+  };
+  // V58.7.3: HD atlases; fixed pivot, no per-frame resize, and original FX fallback.
+  const HD_FX = {"impact":["assets/fx/combat_hd.png",0,40,76,120,120],"heavy":["assets/fx/combat_hd.png",1,48,98,120,120],"explosion":["assets/fx/combat_hd.png",2,75,130,120,120],"slash":["assets/fx/combat_hd.png",3,37,100,120,120],"dust":["assets/fx/combat_hd.png",4,65,100,120,187],"shockwave":["assets/fx/combat_hd.png",5,55,130,120,120],"splash_small":["assets/fx/water_energy_hd.png",0,75,78,120,181],"splash_large":["assets/fx/water_energy_hd.png",1,90,112,120,190],"bubbles":["assets/fx/water_energy_hd.png",2,90,64,120,120],"propulsion":["assets/fx/water_energy_hd.png",3,55,100,120,120],"charge":["assets/fx/water_energy_hd.png",4,65,90,120,120],"energy_burst":["assets/fx/water_energy_hd.png",5,65,128,120,120]};
+  function drawHdFx(clip, x, y, progress, size, face = 1, opacity = 1, height = 1) {
+    const m = HD_FX[clip];
+    if (!m || !Number.isFinite(progress)) return false;
+    const im = image(m[0]); if (!ready(im)) return false;
+    const t = Math.max(0, Math.min(0.999999, progress));
+    const k = Math.floor(t * 6), sc = (size || m[3]) / 240;
+    ctx.save(); ctx.globalAlpha = Math.max(0, Math.min(1, opacity));
+    ctx.translate(x, y); ctx.scale(face < 0 ? -1 : 1, height);
+    ctx.drawImage(im, k * 240, m[1] * 240, 240, 240, -m[4] * sc, -m[5] * sc, 240 * sc, 240 * sc);
+    ctx.restore(); return true;
+  }
+  const HD_WATER = { splashS:['splash_small',58], splashM:['splash_large',82], splashL:['splash_large',112], ripple:['splash_small',74], bubble:['bubbles',21], bubbles:['bubbles',55], column:['splash_large',88], whirl:['propulsion',82] };
+  const HD_EVENT = { impact:'impact', damage:'heavy', collect:'charge', dash:'propulsion', dust:'dust', boss:'explosion' };
+  function drawReleaseFx(G, V) {
+    const im = image(RELEASE_FX_SHEET);
+    let count = 0;
+    for (const f of G.fx) {
+      const cue = f.cue, kind = RELEASE_FX_COLOR[f.color];
+      if (!cue || !kind || count >= 24) continue;
+      const age = Math.max(0, cue.life - f.life);
+      if (age >= 0.24 || cue.x < V.x1-50 || cue.x > V.x2+50 || cue.y < V.y1-50 || cue.y > V.y2+50) continue;
+      const [row, size] = RELEASE_FX_ROWS[kind], frame = Math.min(5, Math.floor(age / 0.04));
+      const clip = HD_EVENT[kind];
+      if (!drawHdFx(clip, cue.x, cue.y, age / 0.24, size * 1.3, kind === 'dash' ? (G.P.face || 1) : 1, 1 - Math.pow(age / 0.24, 3) * 0.8) && ready(im))
+        ctx.drawImage(im, frame*96,row*96,96,96,cue.x-size/2,cue.y-size/2,size,size);
+      count++;
+    }
+  }
   function drawParticles(G, V) {
+    drawReleaseFx(G, V);
     for (const f of G.fx) {
       if (f.x < V.x1 || f.x > V.x2 || f.y < V.y1 || f.y > V.y2) continue;
       circle(f.x, f.y, 2.5, hex(f.color), Math.max(0, Math.min(1, f.life / f.max)));
@@ -3049,7 +3488,57 @@
   }
 
   /** Dibuja un fotograma. T = tiempo de animación (s). */
+  // V58.8.21: material identity, collection readability and depth. Pure render; no collision changes.
+  const WORLD_FINISH = {
+    escuela: ['#ffe7ad','#233b4c','#ffdf9e'], guadalajara: ['#ffd38d','#4f3032','#ffd38d'],
+    submarino: ['#75e4e1','#123d52','#8cecff'], espacial: ['#c6cbff','#252946','#d6c5ff'],
+    parafalls: ['#aef7c9','#16494c','#c8ffed']
+  };
+  function finishPalette(G) { return WORLD_FINISH[G.missionId] || WORLD_FINISH.escuela; }
+  function drawWorldFinish(G,V) {
+    // Single world-space tint, behind all collidable geometry and actors.
+    if (G.room) return;
+    const a=finishPalette(G), h=V.y2-V.y1, w=V.x2-V.x1;
+    if (qScale < .70) return;
+    const g=ctx.createLinearGradient(0,V.y1,0,V.y2);
+    g.addColorStop(0,a[0]+'10'); g.addColorStop(.5,'#00000000'); g.addColorStop(1,a[1]+'30');
+    ctx.fillStyle=g; ctx.fillRect(V.x1,V.y1,w,h);
+  }
+  function drawPlatformFinish(G,V) {
+    // Only surfaces actually rendered, never hidden background ledges or moving/unstable props.
+    const a=finishPalette(G); let n=0;
+    for(const p of G.world.platforms){
+      if(n>=48)break;
+      if(p.region!==(G.room?G.room.id:'main')||p.hidden||p.painted||p.artPainted||p.shore||p.schoolFurniture||p.look||!['normal','solid','floor','thin','stair'].includes(p.kind))continue;
+      if(p.y<V.y1||p.y>V.y2||p.x2<V.x1||p.x1>V.x2)continue;
+      const x=Math.max(p.x1,V.x1), e=Math.min(p.x2,V.x2), w=e-x;
+      if(w<12)continue;
+      fillRect(x,p.y+1,w,2,a[0],.52);
+      if(qScale>=.78)fillRect(x,p.y+5,w,3,a[1],.26);
+      n++;
+    }
+  }
+  function drawPickupFinish(G,V,T){
+    const a=finishPalette(G); let n=0;
+    if(qScale<.75)return;
+    for(const p of G.world.pickups){
+      if(n>=24)break;
+      if(p.got||p.type!=='gem'||p.x<V.x1||p.x>V.x2||p.y<V.y1||p.y>V.y2)continue;
+      const pulse=.5+.5*Math.sin(T*3+p.x*.019+p.y*.011);
+      const rad=17+pulse*3;
+      circle(p.x,p.y,rad,a[2],.10+pulse*.06);
+      ring(p.x,p.y,rad,rad,a[2],.30+pulse*.15,1);
+      n++;
+    }
+  }
+
   function draw(G, T) {
+    frameNumber++;
+    if (frameNumber % 90 === 0) {
+      for (const [src, im] of images) {
+        if (im.scenery && im.naturalWidth * im.naturalHeight > 500000 && frameNumber - im.usedAt > 120) images.delete(src);
+      }
+    }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.fillStyle = '#101725';
     ctx.fillRect(0, 0, cw, ch);
@@ -3063,26 +3552,47 @@
     const W = G.world;
     // V58.1: mar, Luna y escuela son mundos pintados fijos al mundo (DEPTH_ART); el resto, fondos del ancho del mundo.
     const depth = !G.room && drawDepthArt(G, V);
+    if (!G.room && W.shore && V.y1 < W.scenes[0].startY) {
+      const shore = W.shore, im = image(shore.file);
+      if (ready(im)) ctx.drawImage(im, shore.x, shore.top, shore.width, shore.height);
+    }
     if (!G.room) { if (depth) drawCracks(G, V, T); else drawBackdrop(G, V); drawStreet(G, V, T); drawToxiAtmosphere(G, V, T); }
+    drawWorldFinish(G,V);
     for (const r of W.rooms) drawRoomBackground(r, V, T);
     drawWaters(G, V, false);
+    drawAbyssMatter(G,V,T,false);
     drawCascades(G, V, T);
     drawSolids(G, V);
     drawZips(G, V, T);
     drawRopes(G, V, T);
     drawPlatforms(G, V);
+    drawPlatformFinish(G,V);
     drawDoors(G, V, T);
     drawCheckpoints(G, V, T);
     drawMidpoints(G, V, T);
     drawSigns(G, V);
     drawHazards(G, V, T);
+    drawAbyssRoute(G,V,T);
+    drawPickupFinish(G,V,T);
     drawPickups(G, V, T);
+    drawSchoolBossWarning(G,V,T);
+    const arena=W.poseidonArena,boss=arena&&W.foes.find(f=>f.id===arena.bossId&&!f.dead);
+    if(!G.room&&boss&&inView(V,arena.x1,arena.top,arena.x2,arena.bottom)){
+      const c=boss.enraged?'#ffd080':'#82edff';
+      for(const xx of [arena.x1,arena.x2]){line(xx,arena.top,xx,arena.bottom,c,.13,2);drawAbyssObject(1,xx,arena.bottom,72,true);}
+      if(boss.state==='aim'||boss.state==='windup'){
+        const tx=boss.targetX??boss.x,ty=boss.targetY??boss.y;
+        ctx.save();ctx.setLineDash([8,9]);line(boss.x,boss.y,tx,ty,'#ffc66d',.8,2.5);ctx.restore();ring(tx,ty,16,16,'#ffc66d',.8,2);
+      }
+    }
     drawFoes(G, V, T);
     drawCompanions(G, T);
     drawPlayer(G, T);
     drawWaters(G, V, true);
     drawWaterFx(G, V);
     drawParticles(G, V);
+    drawAbyssMatter(G,V,T,true);
+    drawSchoolAtmosphere(G,V,T);
     if (debug) drawDebug(G);
     if (G.transition) {
       const tr = G.transition, a = 1 - Math.abs(tr.t / tr.dur - 0.45) / 0.45;
@@ -3092,6 +3602,6 @@
     drawCinematic(G, T);
   }
 
-  NS.Render = { init, resize, draw, preload, setQuality, setOptions, image, ready, outfitFor, NINA, NINA_DIR, NINA_VARIANT_DIR, COMPANIONS, COMPANIONS_SUB, PAINTERS,
-    BACKDROPS, DEPTH_ART, backdropUrls, depthUrls, castUrls, secretUrls, enemyExt, COMPANIONS_SPACE, toggleDebug: () => (debug = !debug), get debug() { return debug; } };
+  NS.Render = { init, resize, draw, preload, entryArt, enterWorld, setQuality, setOptions, image, ready, outfitFor, NINA, NINA_DIR, NINA_VARIANT_DIR, COMPANIONS, COMPANIONS_SUB, PAINTERS,
+    BACKDROPS, DEPTH_ART, backdropUrls, depthUrls, castUrls, secretUrls, enemyExt, COMPANIONS_SPACE, parafallsRobloxUrls: () => PARAFALLS_ROBLOX_URLS.slice(), toggleDebug: () => (debug = !debug), get debug() { return debug; } };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

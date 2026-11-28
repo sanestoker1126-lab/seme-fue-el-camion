@@ -1,0 +1,15 @@
+¡SE ME FUE EL CAMIÓN! · V58.8.1 ESCUELA — INTERIORES Y COMBATE
+Base exacta: ZIP V58.8.0 ESCUELA.
+- Tres interiores de 1520×800 con materiales y decoración diferenciados; estanterías, laboratorio y almacén. El plano jugable se conserva.
+- Atlas escolar RGBA 1024×768, 12 recursos independientes, 12 px de margen mínimo, coordenadas y pivotes en JSON. Ocho materiales/objetos iniciales más libros, frascos, armarios y cajas.
+- Las 12 plataformas de los tres interiores se dibujan como mobiliario apoyado en el suelo. Los elementos decorativos no cambian las colisiones. Trampillas, salidas y cajas con arte propio.
+- Objetivos de exploración reales: credencial, cuaderno y llavero existentes. Seguimiento de interiores visitados, conservación tras reintento. Son objetivos opcionales; no bloquean la salida.
+- Maestro: avisos contextuales de sus ataques, proyección de la embestida según velocidad/duración y límites, indicador de recuperación. La IA y el daño no se alteran.
+- Resultado específico de la escuela, botón para continuar a Guadalajara y botón de repetición que usa la misión realmente completada. Una estrella por completar, dos al recuperar al menos un objeto, tres al recuperar todos.
+- Corrección: la interacción con puertas verifica la región. La caché se actualiza a 58.8.1.
+
+VALIDACIÓN
+58 pruebas Node de la suite suministrada, todas aprobadas; incluye bot de combate del Maestro con 3 vidas normales y comprobaciones de exploración/reintento. Ese bot prueba el combate aislado (no una partida completa ni todas las dificultades).
+471 entradas de precarga verificadas, sin rutas faltantes. 12 combinaciones de geometría y enemigos (4 misiones × 3 dificultades) idénticas al ZIP base mediante SHA-256. Atlas RGBA: rectángulos y pivotes, margen transparente y concordancia con el renderizador comprobados.
+La prueba de navegador fue bloqueada por la política administrativa del entorno (ERR_BLOCKED_BY_ADMINISTRATOR). No se certifica renderizado en navegador ni Android, ni se han realizado pruebas táctiles reales.
+Se rechazaron los antiguos atlas de chile, murciélago y paloma por repetir el dibujo procedural genérico; permanecen sin reemplazo. Los nuevos materiales de interior son arte procedural, no un redibujo ilustrado integral. No se generaron animaciones nuevas de Sofía. No se ha actualizado GitHub. No es aún una versión comercial definitiva.

@@ -1,0 +1,319 @@
+{
+  "schema": "camion.production.atlas.v1",
+  "id": "tiburon_feroz",
+  "image": "assets/production/tiburon_feroz/atlas.png",
+  "size": [
+    2048,
+    720
+  ],
+  "format": "RGBA8888",
+  "padding_px": 8,
+  "extrusion_px": 2,
+  "anchor": "center",
+  "uniform_scale": true,
+  "source": "TIBURON_FEROZ_NADO_LENTO_ATLAS_JSON_FRAMES(1).zip",
+  "notes": "Slow swim, bite, KO. Hurt animation is not included. No physical timing or collision changes.",
+  "frame_count": 12,
+  "unique_pixel_frames": 12,
+  "animations": {
+    "nadar_lento": {
+      "frames": [
+        "nadar_lento_00",
+        "nadar_lento_01",
+        "nadar_lento_02",
+        "nadar_lento_03"
+      ],
+      "duration_ms": 300,
+      "loop": true,
+      "anchor": "center"
+    },
+    "morder": {
+      "frames": [
+        "morder_00",
+        "morder_01",
+        "morder_02",
+        "morder_03"
+      ],
+      "duration_ms": 110,
+      "loop": false,
+      "anchor": "center"
+    },
+    "morir": {
+      "frames": [
+        "morir_00",
+        "morir_01",
+        "morir_02",
+        "morir_03"
+      ],
+      "duration_ms": 280,
+      "loop": false,
+      "anchor": "center"
+    }
+  },
+  "frames": {
+    "nadar_lento_00": {
+      "rect": [
+        738,
+        312,
+        344,
+        189
+      ],
+      "pivot": [
+        170.0,
+        87.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "009f692368754d8b535aef67287c18383e6c75eef4a82c50202388067dd23dd8",
+      "source": "tiburon_feroz_atlas_rgba.png:nadar_lento_00",
+      "source_bbox": [
+        11,
+        94,
+        355,
+        283
+      ],
+      "notes": ""
+    },
+    "nadar_lento_01": {
+      "rect": [
+        373,
+        312,
+        345,
+        193
+      ],
+      "pivot": [
+        176.0,
+        93.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "f5cbf34bfa1c358fec783a66fcfbb6aae190b757f2328ba9201a8edcf151dde2",
+      "source": "tiburon_feroz_atlas_rgba.png:nadar_lento_01",
+      "source_bbox": [
+        5,
+        88,
+        350,
+        281
+      ],
+      "notes": ""
+    },
+    "nadar_lento_02": {
+      "rect": [
+        340,
+        10,
+        346,
+        235
+      ],
+      "pivot": [
+        179.0,
+        100.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "0a8dcb5581bda55664e85acf3ef5080be5755cc9282bc1b9894f5080cf4c8a0a",
+      "source": "tiburon_feroz_atlas_rgba.png:nadar_lento_02",
+      "source_bbox": [
+        2,
+        81,
+        348,
+        316
+      ],
+      "notes": ""
+    },
+    "nadar_lento_03": {
+      "rect": [
+        1102,
+        312,
+        343,
+        188
+      ],
+      "pivot": [
+        174.0,
+        92.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "b36ecd56a80d8731a0add82cc37d2fbf911bf20d0477ff5c9e53a523b3600399",
+      "source": "tiburon_feroz_atlas_rgba.png:nadar_lento_03",
+      "source_bbox": [
+        7,
+        89,
+        350,
+        277
+      ],
+      "notes": ""
+    },
+    "morder_00": {
+      "rect": [
+        1465,
+        312,
+        338,
+        188
+      ],
+      "pivot": [
+        166.0,
+        101.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "1e1378357c124e8adbc92a678e3177436441f8f60f19089d655f9caca7f0021b",
+      "source": "tiburon_feroz_atlas_rgba.png:morder_00",
+      "source_bbox": [
+        15,
+        80,
+        353,
+        268
+      ],
+      "notes": ""
+    },
+    "morder_01": {
+      "rect": [
+        1070,
+        10,
+        333,
+        204
+      ],
+      "pivot": [
+        167.0,
+        111.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "86a6f92a86748a255c70c536878afcf58dd9f3c953eaa3854c2dd4410ddaac28",
+      "source": "tiburon_feroz_atlas_rgba.png:morder_01",
+      "source_bbox": [
+        14,
+        70,
+        347,
+        274
+      ],
+      "notes": ""
+    },
+    "morder_02": {
+      "rect": [
+        706,
+        10,
+        344,
+        216
+      ],
+      "pivot": [
+        173.0,
+        122.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "6e183637a3eee4d2175ec5735795d62527778137558da15adbae3b4242f12511",
+      "source": "tiburon_feroz_atlas_rgba.png:morder_02",
+      "source_bbox": [
+        8,
+        59,
+        352,
+        275
+      ],
+      "notes": ""
+    },
+    "morder_03": {
+      "rect": [
+        1423,
+        10,
+        341,
+        202
+      ],
+      "pivot": [
+        174.0,
+        109.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "ab8b29d096ede4243f6b7befb80b3bb8f7e097dfc3026ac596fa1f6b2a353255",
+      "source": "tiburon_feroz_atlas_rgba.png:morder_03",
+      "source_bbox": [
+        7,
+        72,
+        348,
+        274
+      ],
+      "notes": ""
+    },
+    "morir_00": {
+      "rect": [
+        10,
+        10,
+        310,
+        282
+      ],
+      "pivot": [
+        167.0,
+        153.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "8ad8d9ec9ce331de81c779b662157dbd1771f6ffa3e309bd5b43a02429f8f096",
+      "source": "tiburon_feroz_atlas_rgba.png:morir_00",
+      "source_bbox": [
+        14,
+        28,
+        324,
+        310
+      ],
+      "notes": ""
+    },
+    "morir_01": {
+      "rect": [
+        10,
+        312,
+        343,
+        199
+      ],
+      "pivot": [
+        165.0,
+        102.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "d41dc0fee1c820eb5b581df3ccc4b439f21b3563d4f5a6b1d4a29f86dab025a7",
+      "source": "tiburon_feroz_atlas_rgba.png:morir_01",
+      "source_bbox": [
+        16,
+        79,
+        359,
+        278
+      ],
+      "notes": ""
+    },
+    "morir_02": {
+      "rect": [
+        10,
+        531,
+        360,
+        167
+      ],
+      "pivot": [
+        179.0,
+        77.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "3ff442457330f16e49e5db7a4b10b1d6928fa027105b6463b10339c4a28fb4e1",
+      "source": "tiburon_feroz_atlas_rgba.png:morir_02",
+      "source_bbox": [
+        2,
+        104,
+        362,
+        271
+      ],
+      "notes": ""
+    },
+    "morir_03": {
+      "rect": [
+        390,
+        531,
+        359,
+        147
+      ],
+      "pivot": [
+        181.0,
+        54.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "dbce6a9519a1bd85d65b6f95ea0d9fe271b50e15d640e69c537c627a2b7b3807",
+      "source": "tiburon_feroz_atlas_rgba.png:morir_03",
+      "source_bbox": [
+        0,
+        127,
+        359,
+        274
+      ],
+      "notes": ""
+    }
+  }
+}

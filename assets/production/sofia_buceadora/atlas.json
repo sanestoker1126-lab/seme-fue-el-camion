@@ -1,0 +1,2482 @@
+{
+  "schema": "camion.production.atlas.v1",
+  "id": "sofia_buceadora",
+  "image": "assets/production/sofia_buceadora/atlas.png",
+  "size": [
+    2048,
+    864
+  ],
+  "format": "RGBA8888",
+  "padding_px": 8,
+  "extrusion_px": 2,
+  "anchor": "per_animation",
+  "uniform_scale": true,
+  "source": "SeMeFueElCamion_V58_1_BUCEO_100_COMPLETO.zip",
+  "notes": "100 original poses; no newly drawn kick; source contains some baked water effects. Fixed runtime scale 0.4, no per-frame resize.",
+  "frame_count": 100,
+  "unique_pixel_frames": 100,
+  "animations": {
+    "idle": {
+      "frames": [
+        "idle_00",
+        "idle_01",
+        "idle_02",
+        "idle_03"
+      ],
+      "duration_ms": 180,
+      "loop": true,
+      "anchor": "feet",
+      "direction": "right"
+    },
+    "caminar_inicio": {
+      "frames": [
+        "caminar_inicio_00",
+        "caminar_inicio_01",
+        "caminar_inicio_02"
+      ],
+      "duration_ms": 110,
+      "loop": true,
+      "anchor": "feet",
+      "direction": "right"
+    },
+    "impulso_nado": {
+      "frames": [
+        "impulso_nado_00",
+        "impulso_nado_01",
+        "impulso_nado_02",
+        "impulso_nado_03",
+        "impulso_nado_04"
+      ],
+      "duration_ms": 85,
+      "loop": false,
+      "anchor": "center",
+      "direction": "right"
+    },
+    "nadar_derecha": {
+      "frames": [
+        "nadar_derecha_00",
+        "nadar_derecha_01",
+        "nadar_derecha_02",
+        "nadar_derecha_03",
+        "nadar_derecha_04",
+        "nadar_derecha_05",
+        "nadar_derecha_06",
+        "nadar_derecha_07",
+        "nadar_derecha_08",
+        "nadar_derecha_09"
+      ],
+      "duration_ms": 90,
+      "loop": true,
+      "anchor": "center",
+      "direction": "right"
+    },
+    "nadar_izquierda": {
+      "frames": [
+        "nadar_izquierda_00",
+        "nadar_izquierda_01",
+        "nadar_izquierda_02",
+        "nadar_izquierda_03",
+        "nadar_izquierda_04",
+        "nadar_izquierda_05",
+        "nadar_izquierda_06",
+        "nadar_izquierda_07",
+        "nadar_izquierda_08",
+        "nadar_izquierda_09"
+      ],
+      "duration_ms": 90,
+      "loop": true,
+      "anchor": "center",
+      "direction": "left"
+    },
+    "bucear_abajo": {
+      "frames": [
+        "bucear_abajo_00",
+        "bucear_abajo_01",
+        "bucear_abajo_02",
+        "bucear_abajo_03",
+        "bucear_abajo_04",
+        "bucear_abajo_05",
+        "bucear_abajo_06"
+      ],
+      "duration_ms": 100,
+      "loop": false,
+      "anchor": "center",
+      "direction": "right"
+    },
+    "salir_de_picada": {
+      "frames": [
+        "salir_de_picada_00",
+        "salir_de_picada_01",
+        "salir_de_picada_02",
+        "salir_de_picada_03",
+        "salir_de_picada_04",
+        "salir_de_picada_05"
+      ],
+      "duration_ms": 100,
+      "loop": false,
+      "anchor": "center",
+      "direction": "right"
+    },
+    "frenar_agua": {
+      "frames": [
+        "frenar_agua_00",
+        "frenar_agua_01",
+        "frenar_agua_02"
+      ],
+      "duration_ms": 125,
+      "loop": false,
+      "anchor": "center",
+      "direction": "right"
+    },
+    "voltereta": {
+      "frames": [
+        "voltereta_00",
+        "voltereta_01",
+        "voltereta_02",
+        "voltereta_03"
+      ],
+      "duration_ms": 90,
+      "loop": false,
+      "anchor": "center",
+      "direction": "right"
+    },
+    "estabilizar_agua": {
+      "frames": [
+        "estabilizar_agua_00",
+        "estabilizar_agua_01",
+        "estabilizar_agua_02",
+        "estabilizar_agua_03",
+        "estabilizar_agua_04",
+        "estabilizar_agua_05"
+      ],
+      "duration_ms": 120,
+      "loop": true,
+      "anchor": "center",
+      "direction": "right"
+    },
+    "caminar_fondo": {
+      "frames": [
+        "caminar_fondo_00",
+        "caminar_fondo_01",
+        "caminar_fondo_02",
+        "caminar_fondo_03",
+        "caminar_fondo_04",
+        "caminar_fondo_05"
+      ],
+      "duration_ms": 115,
+      "loop": true,
+      "anchor": "feet",
+      "direction": "right"
+    },
+    "correr_fondo": {
+      "frames": [
+        "correr_fondo_00",
+        "correr_fondo_01",
+        "correr_fondo_02"
+      ],
+      "duration_ms": 95,
+      "loop": true,
+      "anchor": "feet",
+      "direction": "right"
+    },
+    "impulso_submarino": {
+      "frames": [
+        "impulso_submarino_00",
+        "impulso_submarino_01",
+        "impulso_submarino_02",
+        "impulso_submarino_03"
+      ],
+      "duration_ms": 85,
+      "loop": true,
+      "anchor": "center",
+      "direction": "right"
+    },
+    "agacharse_fondo": {
+      "frames": [
+        "agacharse_fondo_00",
+        "agacharse_fondo_01",
+        "agacharse_fondo_02",
+        "agacharse_fondo_03",
+        "agacharse_fondo_04"
+      ],
+      "duration_ms": 130,
+      "loop": true,
+      "anchor": "feet",
+      "direction": "right"
+    },
+    "impulsarse": {
+      "frames": [
+        "impulsarse_00",
+        "impulsarse_01"
+      ],
+      "duration_ms": 90,
+      "loop": false,
+      "anchor": "center",
+      "direction": "right"
+    },
+    "giro_agua": {
+      "frames": [
+        "giro_agua_00",
+        "giro_agua_01",
+        "giro_agua_02",
+        "giro_agua_03"
+      ],
+      "duration_ms": 100,
+      "loop": true,
+      "anchor": "center",
+      "direction": "right"
+    },
+    "recuperar_equilibrio": {
+      "frames": [
+        "recuperar_equilibrio_00",
+        "recuperar_equilibrio_01",
+        "recuperar_equilibrio_02"
+      ],
+      "duration_ms": 125,
+      "loop": true,
+      "anchor": "feet",
+      "direction": "right"
+    },
+    "recibir_golpe_caer": {
+      "frames": [
+        "recibir_golpe_caer_00",
+        "recibir_golpe_caer_01",
+        "recibir_golpe_caer_02",
+        "recibir_golpe_caer_03",
+        "recibir_golpe_caer_04",
+        "recibir_golpe_caer_05",
+        "recibir_golpe_caer_06"
+      ],
+      "duration_ms": 120,
+      "loop": false,
+      "anchor": "center",
+      "direction": "right"
+    },
+    "levantarse": {
+      "frames": [
+        "levantarse_00",
+        "levantarse_01",
+        "levantarse_02",
+        "levantarse_03",
+        "levantarse_04"
+      ],
+      "duration_ms": 135,
+      "loop": false,
+      "anchor": "feet",
+      "direction": "right"
+    },
+    "recuperar_guardia": {
+      "frames": [
+        "recuperar_guardia_00",
+        "recuperar_guardia_01",
+        "recuperar_guardia_02"
+      ],
+      "duration_ms": 150,
+      "loop": true,
+      "anchor": "feet",
+      "direction": "right"
+    }
+  },
+  "frames": {
+    "idle_00": {
+      "rect": [
+        10,
+        10,
+        94,
+        154
+      ],
+      "pivot": [
+        47.0,
+        155.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "46380990be9cd8a137dfb1aa09c2014566a7503f47198b1e092adbd17f8ac72a",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:10,10,94,156",
+      "source_bbox": [
+        0,
+        1,
+        94,
+        155
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "idle_01": {
+      "rect": [
+        232,
+        10,
+        83,
+        151
+      ],
+      "pivot": [
+        42.0,
+        152.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "d29d9f0e77b51a414d672a5ca3f0c113f708abf481cbb28e689fc744f257ef1b",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:124,10,83,153",
+      "source_bbox": [
+        0,
+        1,
+        83,
+        152
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "idle_02": {
+      "rect": [
+        124,
+        10,
+        88,
+        152
+      ],
+      "pivot": [
+        44.0,
+        153.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "dbd5c879fc5f1349cfc2604433e5ca842d8437b457dd4e0fe3729fb7ce383fae",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:227,10,89,154",
+      "source_bbox": [
+        1,
+        1,
+        89,
+        153
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "idle_03": {
+      "rect": [
+        335,
+        10,
+        90,
+        150
+      ],
+      "pivot": [
+        45.0,
+        151.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "5e692ef728da1e59d6f7c55588d3697c0d57bdb3390341708324a29d148a9425",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:336,10,91,152",
+      "source_bbox": [
+        1,
+        1,
+        91,
+        151
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "caminar_inicio_00": {
+      "rect": [
+        651,
+        10,
+        82,
+        146
+      ],
+      "pivot": [
+        41.0,
+        147.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "dca42e41d396346d8d51d6ad5d71cc507c8845e936b5ec84d32fa8497be2fb16",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:447,10,83,148",
+      "source_bbox": [
+        1,
+        1,
+        83,
+        147
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "caminar_inicio_01": {
+      "rect": [
+        445,
+        10,
+        81,
+        147
+      ],
+      "pivot": [
+        41.0,
+        148.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "1f6cda806b684867c51d7d567fb72ac2866b4b816060dfba8a3a78c63d6b3505",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:550,10,83,149",
+      "source_bbox": [
+        1,
+        1,
+        82,
+        148
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "caminar_inicio_02": {
+      "rect": [
+        546,
+        10,
+        85,
+        146
+      ],
+      "pivot": [
+        43.0,
+        147.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "f6dddafbd5a69d024e6095912b92befb6b50b3751c97159bdbc81d890dac3e8f",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:653,10,85,148",
+      "source_bbox": [
+        0,
+        1,
+        85,
+        147
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "impulso_nado_00": {
+      "rect": [
+        753,
+        10,
+        101,
+        144
+      ],
+      "pivot": [
+        50.0,
+        72.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "6d8330d8601caa62743cc5adb9821fa766b97484c23c385b1e0d88dc7197c2ea",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:758,10,102,146",
+      "source_bbox": [
+        1,
+        1,
+        102,
+        145
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "impulso_nado_01": {
+      "rect": [
+        1123,
+        10,
+        90,
+        142
+      ],
+      "pivot": [
+        45.0,
+        71.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "43daefee79421e40340cca7b6ea58454bcb803362b995f3184c7fe33c18a42c0",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:880,10,91,143",
+      "source_bbox": [
+        1,
+        1,
+        91,
+        143
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "impulso_nado_02": {
+      "rect": [
+        874,
+        10,
+        96,
+        144
+      ],
+      "pivot": [
+        48.0,
+        72.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "99247331b42426e53118fbf15096bea2789a3a7d6502d4e81612c35db6e83e49",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:991,10,97,146",
+      "source_bbox": [
+        1,
+        1,
+        97,
+        145
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "impulso_nado_03": {
+      "rect": [
+        1356,
+        10,
+        87,
+        140
+      ],
+      "pivot": [
+        44.0,
+        70.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "f09b4e9ac56610a29339a89b3e71d9e3e662f64490fc4e9e8aa0b65394d1f5ce",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1108,10,87,141",
+      "source_bbox": [
+        0,
+        1,
+        87,
+        141
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "impulso_nado_04": {
+      "rect": [
+        1463,
+        10,
+        103,
+        138
+      ],
+      "pivot": [
+        51.0,
+        69.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "3a3aacbcbc597f77a1187e69e1466d4d567ba46f9e7224f000bb8d808673b920",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1215,10,104,139",
+      "source_bbox": [
+        1,
+        1,
+        104,
+        139
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "nadar_derecha_00": {
+      "rect": [
+        1490,
+        461,
+        132,
+        88
+      ],
+      "pivot": [
+        66.0,
+        44.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "50c59d3400e978a012e07dbf20dcae6f3fc34410c64b1aea5ffb179f14839923",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1339,10,132,90",
+      "source_bbox": [
+        0,
+        1,
+        132,
+        89
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "nadar_derecha_01": {
+      "rect": [
+        1059,
+        577,
+        132,
+        84
+      ],
+      "pivot": [
+        66.0,
+        43.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "415e9134e88303ba07c5bc02e4d48cffca0a44669314bccfee37d9fb410a0645",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1491,10,133,85",
+      "source_bbox": [
+        1,
+        0,
+        133,
+        84
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "nadar_derecha_02": {
+      "rect": [
+        176,
+        577,
+        134,
+        87
+      ],
+      "pivot": [
+        67.0,
+        44.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "2329f0a9b2cc1dd98ce10495078bedbc5e8911d475a6af4bb5dbc24ade3a58f9",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1644,10,136,89",
+      "source_bbox": [
+        1,
+        1,
+        135,
+        88
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "nadar_derecha_03": {
+      "rect": [
+        627,
+        684,
+        133,
+        79
+      ],
+      "pivot": [
+        67.0,
+        39.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "7c7613c49f0951ea67410f9c7e27bae1db44c098435f4cd01f19b8aa1d9b1e6e",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1800,10,135,80",
+      "source_bbox": [
+        1,
+        1,
+        134,
+        80
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "nadar_derecha_04": {
+      "rect": [
+        1075,
+        684,
+        140,
+        77
+      ],
+      "pivot": [
+        70.0,
+        39.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "368359d0d481ddcb5e8e41bab0266788abad861636db56f767c9ebf30abbca61",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:10,186,141,78",
+      "source_bbox": [
+        1,
+        0,
+        141,
+        77
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "nadar_derecha_05": {
+      "rect": [
+        301,
+        684,
+        144,
+        79
+      ],
+      "pivot": [
+        72.0,
+        40.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "ec63bd0e20033b063bce19deb01134bd343fd5f79922fa20c283fcd2f6ae3293",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:171,186,145,81",
+      "source_bbox": [
+        1,
+        1,
+        145,
+        80
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "nadar_derecha_06": {
+      "rect": [
+        10,
+        784,
+        150,
+        70
+      ],
+      "pivot": [
+        75.0,
+        35.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "b170e45afa5f239f9121689a6e1736db759b9e75a2e383126511d528f91042fa",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:336,186,152,70",
+      "source_bbox": [
+        1,
+        0,
+        151,
+        70
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "nadar_derecha_07": {
+      "rect": [
+        780,
+        684,
+        151,
+        78
+      ],
+      "pivot": [
+        75.0,
+        39.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "e6128f05645c97d8783c6bcfdb7a7a60b1704146f6ebb0a063e1190424b5438e",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:508,186,152,78",
+      "source_bbox": [
+        1,
+        0,
+        152,
+        78
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "nadar_derecha_08": {
+      "rect": [
+        1642,
+        461,
+        159,
+        87
+      ],
+      "pivot": [
+        79.0,
+        44.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "c1d110004af50e07b9080188651263b83fb7e091250d1ad84a4ecab4e61c21ac",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:680,186,160,89",
+      "source_bbox": [
+        1,
+        1,
+        160,
+        88
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "nadar_derecha_09": {
+      "rect": [
+        716,
+        577,
+        161,
+        84
+      ],
+      "pivot": [
+        80.0,
+        42.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "3612d4c1c12efddec42c1f321142e17d325c5c0f63fb305674f7e13e3955e71c",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:860,186,162,86",
+      "source_bbox": [
+        1,
+        1,
+        162,
+        85
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "nadar_izquierda_00": {
+      "rect": [
+        897,
+        577,
+        142,
+        84
+      ],
+      "pivot": [
+        71.0,
+        42.0
+      ],
+      "direction": "left",
+      "sha256_rgba": "57c1ea21482679d3de1af9d4f7bac601edbefe30d409a504be4918715d05e004",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1042,186,143,86",
+      "source_bbox": [
+        1,
+        1,
+        143,
+        85
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "nadar_izquierda_01": {
+      "rect": [
+        465,
+        684,
+        142,
+        79
+      ],
+      "pivot": [
+        72.0,
+        40.0
+      ],
+      "direction": "left",
+      "sha256_rgba": "98cb73cbb37c2c3e966fcf453a739cc08273839d851def002ae8c87f90f788c3",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1205,186,143,80",
+      "source_bbox": [
+        0,
+        0,
+        142,
+        79
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "nadar_izquierda_02": {
+      "rect": [
+        1542,
+        684,
+        142,
+        75
+      ],
+      "pivot": [
+        72.0,
+        38.0
+      ],
+      "direction": "left",
+      "sha256_rgba": "81d30cdf94217a80c3802da86cf1499a32bfd4d27b277a204bb2c13b589c4b0f",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1368,186,143,77",
+      "source_bbox": [
+        0,
+        1,
+        142,
+        76
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "nadar_izquierda_03": {
+      "rect": [
+        1821,
+        461,
+        148,
+        87
+      ],
+      "pivot": [
+        74.0,
+        44.0
+      ],
+      "direction": "left",
+      "sha256_rgba": "705e9137c55b7fed2b957aa6cb131706f92cb761b6d0d4bfab0aafa80961326a",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1531,186,150,89",
+      "source_bbox": [
+        1,
+        1,
+        149,
+        88
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "nadar_izquierda_04": {
+      "rect": [
+        1333,
+        577,
+        149,
+        82
+      ],
+      "pivot": [
+        75.0,
+        42.0
+      ],
+      "direction": "left",
+      "sha256_rgba": "f4e43070ac78e122979cf6ba664fd22f64e49cbd757ef966efebca9e3e19c9c1",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1701,186,151,83",
+      "source_bbox": [
+        1,
+        0,
+        150,
+        82
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "nadar_izquierda_05": {
+      "rect": [
+        10,
+        577,
+        146,
+        87
+      ],
+      "pivot": [
+        73.0,
+        44.0
+      ],
+      "direction": "left",
+      "sha256_rgba": "a02f75a57da8d8428326b22a35792b2d44276ec9500c007eff57d6e56dc2a3ed",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1872,186,148,89",
+      "source_bbox": [
+        1,
+        1,
+        147,
+        88
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "nadar_izquierda_06": {
+      "rect": [
+        1235,
+        684,
+        134,
+        77
+      ],
+      "pivot": [
+        67.0,
+        38.0
+      ],
+      "direction": "left",
+      "sha256_rgba": "ed45e7b4f75366310c683efd301d0e51397f2a3fa495e382e3b3564b8215eb2f",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:10,295,136,78",
+      "source_bbox": [
+        1,
+        1,
+        135,
+        78
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "nadar_izquierda_07": {
+      "rect": [
+        10,
+        684,
+        140,
+        80
+      ],
+      "pivot": [
+        70.0,
+        41.0
+      ],
+      "direction": "left",
+      "sha256_rgba": "4d4ec24fba83da83001d1cd0a86e38f70355da0ca7fcc9dab190f940d03f2342",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:166,295,141,81",
+      "source_bbox": [
+        1,
+        0,
+        141,
+        80
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "nadar_izquierda_08": {
+      "rect": [
+        1502,
+        577,
+        132,
+        81
+      ],
+      "pivot": [
+        67.0,
+        41.0
+      ],
+      "direction": "left",
+      "sha256_rgba": "55b36151af2ac9fb6bf50e6d895dd6d0868c4e7e91f2b93ecb72619f19ebfe95",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:327,295,133,82",
+      "source_bbox": [
+        0,
+        0,
+        132,
+        81
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "nadar_izquierda_09": {
+      "rect": [
+        1654,
+        577,
+        127,
+        81
+      ],
+      "pivot": [
+        64.0,
+        41.0
+      ],
+      "direction": "left",
+      "sha256_rgba": "6c9a3faa32a8efbb4b0480b7cc0fb0546d0f5b60b274b3da741e192b3a41af28",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:480,295,129,82",
+      "source_bbox": [
+        1,
+        0,
+        128,
+        81
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "bucear_abajo_00": {
+      "rect": [
+        10,
+        461,
+        129,
+        96
+      ],
+      "pivot": [
+        65.0,
+        48.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "d6beed4c25cf020b86be226bba806cc3df369c95f384d948091eeb1d806a30c7",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:629,295,131,97",
+      "source_bbox": [
+        1,
+        1,
+        130,
+        97
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "bucear_abajo_01": {
+      "rect": [
+        125,
+        184,
+        125,
+        126
+      ],
+      "pivot": [
+        63.0,
+        63.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "28649606c4b4ed34974113d90d7b93be44e3b3bd48e7f7e3db43179a2f9718d8",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:780,295,126,127",
+      "source_bbox": [
+        0,
+        1,
+        125,
+        127
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "bucear_abajo_02": {
+      "rect": [
+        990,
+        10,
+        113,
+        142
+      ],
+      "pivot": [
+        57.0,
+        71.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "3acc2ce836eb16613ed7bf213d115c32b05cc43d20922fdf6796b21f1bd3db5f",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:926,295,115,144",
+      "source_bbox": [
+        1,
+        1,
+        114,
+        143
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "bucear_abajo_03": {
+      "rect": [
+        1423,
+        184,
+        95,
+        111
+      ],
+      "pivot": [
+        48.0,
+        56.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "ffda4d3650a13a1ab9d41e748e05cd8e815e351e3f6bb86ac8decce868bf7426",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1061,295,97,113",
+      "source_bbox": [
+        1,
+        1,
+        96,
+        112
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "bucear_abajo_04": {
+      "rect": [
+        626,
+        184,
+        94,
+        121
+      ],
+      "pivot": [
+        47.0,
+        61.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "80a235e14509f81f0e5c1b2e04dcc8b97c90f078a34ab73d55e3d106f17ec6c1",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1178,295,96,123",
+      "source_bbox": [
+        1,
+        1,
+        95,
+        122
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "bucear_abajo_05": {
+      "rect": [
+        987,
+        184,
+        82,
+        117
+      ],
+      "pivot": [
+        41.0,
+        58.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "bca721c0e4df0dbab49e6a4a611d35ac8b6583be7be06304dda12a7f57888597",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1294,295,82,118",
+      "source_bbox": [
+        0,
+        1,
+        82,
+        118
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "bucear_abajo_06": {
+      "rect": [
+        1089,
+        184,
+        61,
+        116
+      ],
+      "pivot": [
+        31.0,
+        58.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "aeadf4c38b94a3ef0b606cb8a978081e7dece94d9e07a69b370fa2fcf5f4fdd6",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1396,295,62,118",
+      "source_bbox": [
+        0,
+        1,
+        61,
+        117
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "salir_de_picada_00": {
+      "rect": [
+        1824,
+        10,
+        105,
+        130
+      ],
+      "pivot": [
+        53.0,
+        65.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "2a22dc7252fdd97354a058fad12d0239979259854e8aca7217c7f164958e914c",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1478,295,107,132",
+      "source_bbox": [
+        1,
+        1,
+        106,
+        131
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "salir_de_picada_01": {
+      "rect": [
+        856,
+        184,
+        111,
+        118
+      ],
+      "pivot": [
+        56.0,
+        59.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "4dc901d4f5b131f8fae859f0c0545178fb35630a8d7d093eb2b2599dd9a6ae65",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1605,295,113,120",
+      "source_bbox": [
+        1,
+        1,
+        112,
+        119
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "salir_de_picada_02": {
+      "rect": [
+        296,
+        461,
+        115,
+        96
+      ],
+      "pivot": [
+        58.0,
+        48.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "2f6973a85e8050739bf7d91c28d87d987dbbd9622940bebc1c79588550a7ffa7",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1738,295,117,97",
+      "source_bbox": [
+        1,
+        1,
+        116,
+        97
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "salir_de_picada_03": {
+      "rect": [
+        1389,
+        684,
+        133,
+        76
+      ],
+      "pivot": [
+        67.0,
+        38.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "59a66606b1450120b268e5238a0653c13aae3573520561b7339510113bc89423",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1875,295,135,78",
+      "source_bbox": [
+        1,
+        1,
+        134,
+        77
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "salir_de_picada_04": {
+      "rect": [
+        479,
+        577,
+        118,
+        86
+      ],
+      "pivot": [
+        60.0,
+        43.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "db6d05617c691d89fd2d86d6888721f8d3a94ce063d9e429596743533c3a2d08",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:10,459,119,86",
+      "source_bbox": [
+        0,
+        0,
+        118,
+        86
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "salir_de_picada_05": {
+      "rect": [
+        330,
+        577,
+        129,
+        87
+      ],
+      "pivot": [
+        64.0,
+        43.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "b5d25e385d35b4b51ddfbb5c5f7ead51464937addb24121c537981e28eb9c9f1",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:149,459,130,88",
+      "source_bbox": [
+        1,
+        1,
+        130,
+        88
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "frenar_agua_00": {
+      "rect": [
+        1015,
+        333,
+        127,
+        99
+      ],
+      "pivot": [
+        64.0,
+        49.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "bd03448c3adb3a83ff304e11de776f0e5e835dcccabd8a7a5c8e1d946d4f1203",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:299,459,128,100",
+      "source_bbox": [
+        0,
+        1,
+        127,
+        100
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "frenar_agua_01": {
+      "rect": [
+        1130,
+        461,
+        120,
+        92
+      ],
+      "pivot": [
+        60.0,
+        47.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "eae112e04e218c8b499ac7c9d27cf75853e706f7067ffffdb4604e8a2c6e588c",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:447,459,120,93",
+      "source_bbox": [
+        0,
+        0,
+        120,
+        92
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "frenar_agua_02": {
+      "rect": [
+        1817,
+        684,
+        115,
+        73
+      ],
+      "pivot": [
+        58.0,
+        36.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "c718844784889b88d6828241c7216941a7ef8826052fde5a3f707731e0c7a314",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:587,459,117,74",
+      "source_bbox": [
+        1,
+        1,
+        116,
+        74
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "voltereta_00": {
+      "rect": [
+        951,
+        684,
+        104,
+        78
+      ],
+      "pivot": [
+        52.0,
+        39.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "b03e14008cf2a9294fa2f778864ff2a76135a135d3220633cc8777eb0f1ca7d8",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:724,459,106,80",
+      "source_bbox": [
+        1,
+        1,
+        105,
+        79
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "voltereta_01": {
+      "rect": [
+        170,
+        684,
+        111,
+        80
+      ],
+      "pivot": [
+        56.0,
+        40.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "268c18576c6b133fb64e29f8836322d980eba7a34815aca1f8195e004dc1eec6",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:850,459,113,82",
+      "source_bbox": [
+        1,
+        1,
+        112,
+        81
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "voltereta_02": {
+      "rect": [
+        1801,
+        577,
+        108,
+        81
+      ],
+      "pivot": [
+        54.0,
+        41.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "1847016101e392e73bec6a8fba99dc93526d516268c1a244fb11898a070fdb29",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:983,459,110,83",
+      "source_bbox": [
+        1,
+        1,
+        109,
+        82
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "voltereta_03": {
+      "rect": [
+        1211,
+        577,
+        102,
+        84
+      ],
+      "pivot": [
+        51.0,
+        42.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "435d0446479983dd14f72a53be08215aed505d666775b114ec96e8a57e32a0f4",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1113,459,103,86",
+      "source_bbox": [
+        1,
+        1,
+        103,
+        85
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "estabilizar_agua_00": {
+      "rect": [
+        894,
+        333,
+        101,
+        101
+      ],
+      "pivot": [
+        51.0,
+        51.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "30b2b9e4cb95220e06065cb81ddd1431ca4bb5bc487ee8731a0dcf6528bfa856",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1236,459,102,103",
+      "source_bbox": [
+        0,
+        1,
+        101,
+        102
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "estabilizar_agua_01": {
+      "rect": [
+        1290,
+        184,
+        113,
+        112
+      ],
+      "pivot": [
+        56.0,
+        56.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "1d8374dfb1057582b60a4ec703898cd34a58772dfcc900e3411b542922f321f1",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1358,459,114,114",
+      "source_bbox": [
+        1,
+        1,
+        114,
+        113
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "estabilizar_agua_02": {
+      "rect": [
+        1701,
+        10,
+        103,
+        135
+      ],
+      "pivot": [
+        52.0,
+        68.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "97165f5aed1d158c8240572a88c3b408c4105dedd1cf395f48286d931a3b6e59",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1492,459,105,137",
+      "source_bbox": [
+        1,
+        1,
+        104,
+        136
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "estabilizar_agua_03": {
+      "rect": [
+        270,
+        184,
+        103,
+        124
+      ],
+      "pivot": [
+        51.0,
+        63.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "773278c60a134e3e237f6c9ee1da1f4dbd11f6bef80c7ff657856555cec4e337",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1617,459,104,125",
+      "source_bbox": [
+        1,
+        0,
+        104,
+        124
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "estabilizar_agua_04": {
+      "rect": [
+        504,
+        184,
+        102,
+        121
+      ],
+      "pivot": [
+        51.0,
+        61.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "247a7dcc01065bf945a187a8a89f4d08bbfe490ae6260867263eab89c19a539e",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1741,459,102,121",
+      "source_bbox": [
+        0,
+        0,
+        102,
+        121
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "estabilizar_agua_05": {
+      "rect": [
+        740,
+        184,
+        96,
+        120
+      ],
+      "pivot": [
+        48.0,
+        60.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "92e75844f1f8c02ddb7bb3487eff4ab3a865cfe916667887971f34936ff09f4b",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1863,459,97,122",
+      "source_bbox": [
+        1,
+        1,
+        97,
+        121
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "caminar_fondo_00": {
+      "rect": [
+        1233,
+        10,
+        103,
+        140
+      ],
+      "pivot": [
+        51.0,
+        141.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "e67ac1678e07eacf5faadc245066c5953a9023a3eb4aea680d4b2625e1bd4bae",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:10,616,104,142",
+      "source_bbox": [
+        1,
+        1,
+        104,
+        141
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "caminar_fondo_01": {
+      "rect": [
+        1586,
+        10,
+        95,
+        137
+      ],
+      "pivot": [
+        48.0,
+        138.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "3501e77c1d61add668ef1b5c4addbfd64489415bc9db409a9143f25f7b59e514",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:134,616,97,139",
+      "source_bbox": [
+        1,
+        1,
+        96,
+        138
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "caminar_fondo_02": {
+      "rect": [
+        10,
+        184,
+        95,
+        129
+      ],
+      "pivot": [
+        47.0,
+        130.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "a001f73a0cfd98babc602b779dc521d43dd07b7f0d16fff32337e896095d1989",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:251,616,96,131",
+      "source_bbox": [
+        1,
+        1,
+        96,
+        130
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "caminar_fondo_03": {
+      "rect": [
+        393,
+        184,
+        91,
+        122
+      ],
+      "pivot": [
+        45.0,
+        122.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "6829b6d0866cec6f48f6943ee773b33ab7365eecabc5d43436ee9bc99edd496e",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:367,616,92,122",
+      "source_bbox": [
+        1,
+        0,
+        92,
+        122
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "caminar_fondo_04": {
+      "rect": [
+        1170,
+        184,
+        100,
+        114
+      ],
+      "pivot": [
+        50.0,
+        114.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "f785177bda666e502d701ac6639a2be200a75f54b523b6cef9d5c846175875c3",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:479,616,101,114",
+      "source_bbox": [
+        1,
+        0,
+        101,
+        114
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "caminar_fondo_05": {
+      "rect": [
+        395,
+        333,
+        102,
+        107
+      ],
+      "pivot": [
+        51.0,
+        107.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "76c755baa54d70857a632c370e4209e4df184e51420b48f1f67c91b3d95c137f",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:600,616,104,108",
+      "source_bbox": [
+        1,
+        1,
+        103,
+        108
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "correr_fondo_00": {
+      "rect": [
+        1798,
+        184,
+        107,
+        108
+      ],
+      "pivot": [
+        53.0,
+        109.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "94868a226b00468dde798ad6b90a2903c97da7d545889d00c174f0018fc053f4",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:724,616,108,109",
+      "source_bbox": [
+        1,
+        0,
+        108,
+        108
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "correr_fondo_01": {
+      "rect": [
+        10,
+        333,
+        102,
+        108
+      ],
+      "pivot": [
+        51.0,
+        109.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "06e6bec99d8c730ccf1df588b180b10127c0a4089e540608a3ffb79ffa1e15f9",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:852,616,104,110",
+      "source_bbox": [
+        1,
+        1,
+        103,
+        109
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "correr_fondo_02": {
+      "rect": [
+        1925,
+        184,
+        107,
+        108
+      ],
+      "pivot": [
+        53.0,
+        108.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "2da3de907b9d0e5e2426ab5f665a0203da0ac41da34b1a216cb83cefb6a247cb",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:976,616,108,109",
+      "source_bbox": [
+        1,
+        1,
+        108,
+        109
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "impulso_submarino_00": {
+      "rect": [
+        1671,
+        184,
+        107,
+        110
+      ],
+      "pivot": [
+        53.0,
+        55.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "9a053b0b00152c473e88318a9256cebe45ce67f4ac1fb888a48a34b627d55b9f",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1104,616,108,111",
+      "source_bbox": [
+        1,
+        1,
+        108,
+        111
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "impulso_submarino_01": {
+      "rect": [
+        1538,
+        184,
+        113,
+        110
+      ],
+      "pivot": [
+        57.0,
+        55.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "5af621b6e3b2b0afec4ef2ef197a8bd0b9327ba8b74439335e9c66a082925617",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1232,616,115,111",
+      "source_bbox": [
+        1,
+        1,
+        114,
+        111
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "impulso_submarino_02": {
+      "rect": [
+        247,
+        333,
+        128,
+        107
+      ],
+      "pivot": [
+        64.0,
+        54.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "ea7996b57152d07705df4542dd32a32b1e41ce7c4763bda2478cbfaff2974752",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1367,616,130,109",
+      "source_bbox": [
+        1,
+        1,
+        129,
+        108
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "impulso_submarino_03": {
+      "rect": [
+        517,
+        333,
+        124,
+        106
+      ],
+      "pivot": [
+        62.0,
+        54.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "e35a958a818c140fbb09fd54838186f806b464e6b11e10948deb49c2dc46f64b",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1517,616,125,107",
+      "source_bbox": [
+        1,
+        0,
+        125,
+        106
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "agacharse_fondo_00": {
+      "rect": [
+        431,
+        461,
+        90,
+        96
+      ],
+      "pivot": [
+        45.0,
+        96.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "54729101a76bfccf9350e7627d0acd11331f89dd854356dc1a8afaf862a7a92a",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1662,616,92,97",
+      "source_bbox": [
+        1,
+        1,
+        91,
+        97
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "agacharse_fondo_01": {
+      "rect": [
+        1395,
+        333,
+        94,
+        98
+      ],
+      "pivot": [
+        47.0,
+        98.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "542224f76b7baec8ecfc38add6323b872f79c28b357905f5b30e91444f26e270",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1774,616,95,99",
+      "source_bbox": [
+        1,
+        1,
+        95,
+        99
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "agacharse_fondo_02": {
+      "rect": [
+        658,
+        461,
+        91,
+        95
+      ],
+      "pivot": [
+        45.0,
+        95.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "cf29b9ad06da782c3ebe636d209ed3a78220f0d047538d74c2fcdf88bddf1905",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1889,616,92,96",
+      "source_bbox": [
+        1,
+        1,
+        92,
+        96
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "agacharse_fondo_03": {
+      "rect": [
+        541,
+        461,
+        97,
+        95
+      ],
+      "pivot": [
+        49.0,
+        95.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "c9a589a3116ad7545163e4831221b155d0dfd3fda92c7040994425a47221f0c3",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:10,778,99,96",
+      "source_bbox": [
+        1,
+        1,
+        98,
+        96
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "agacharse_fondo_04": {
+      "rect": [
+        769,
+        461,
+        97,
+        94
+      ],
+      "pivot": [
+        49.0,
+        95.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "ba398a8763b98845061cc948f275fd17fdb1913f4b362e3ade44b38eeb1622fa",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:129,778,97,95",
+      "source_bbox": [
+        0,
+        0,
+        97,
+        94
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "impulsarse_00": {
+      "rect": [
+        1270,
+        461,
+        113,
+        91
+      ],
+      "pivot": [
+        57.0,
+        45.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "994d717c52f4287162e198d19776c3c18a2370d49af566c0695daa1b9b351064",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:246,778,115,92",
+      "source_bbox": [
+        1,
+        1,
+        114,
+        92
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "impulsarse_01": {
+      "rect": [
+        1623,
+        333,
+        105,
+        97
+      ],
+      "pivot": [
+        53.0,
+        48.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "15c8d1765e7b5efb019f438ce3525a21d6f27e2026949f63e50a34db8d644ce9",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:381,778,107,98",
+      "source_bbox": [
+        1,
+        1,
+        106,
+        98
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "giro_agua_00": {
+      "rect": [
+        159,
+        461,
+        117,
+        96
+      ],
+      "pivot": [
+        59.0,
+        48.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "568c62288dc04a829f7d80bad18a25ba5fe6383181486210cd3ed9af207c1f5b",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:508,778,119,96",
+      "source_bbox": [
+        1,
+        0,
+        118,
+        96
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "giro_agua_01": {
+      "rect": [
+        1261,
+        333,
+        114,
+        98
+      ],
+      "pivot": [
+        57.0,
+        49.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "e1cde0667edbf91d206c89d3bb9d791e6fa148155799106c6d541548ade162a8",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:647,778,116,99",
+      "source_bbox": [
+        1,
+        1,
+        115,
+        99
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "giro_agua_02": {
+      "rect": [
+        886,
+        461,
+        108,
+        93
+      ],
+      "pivot": [
+        54.0,
+        46.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "8507d9a1c98a9d7191b4959e8697bb0ad17d0cde29a388a4a99ac44fbcbdcfae",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:783,778,110,94",
+      "source_bbox": [
+        1,
+        1,
+        109,
+        94
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "giro_agua_03": {
+      "rect": [
+        1014,
+        461,
+        96,
+        93
+      ],
+      "pivot": [
+        48.0,
+        46.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "06c254fc09f38231204ec292e40e64c6f6ff1c15e5f5d6e1713b9c3636f17933",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:913,778,98,94",
+      "source_bbox": [
+        1,
+        1,
+        97,
+        94
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "recuperar_equilibrio_00": {
+      "rect": [
+        661,
+        333,
+        95,
+        105
+      ],
+      "pivot": [
+        48.0,
+        106.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "9b6504b7158655d97ffaa17c3052235d92e948448c693dab80b9958502cbd256",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1031,778,95,107",
+      "source_bbox": [
+        0,
+        1,
+        95,
+        106
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "recuperar_equilibrio_01": {
+      "rect": [
+        132,
+        333,
+        95,
+        108
+      ],
+      "pivot": [
+        48.0,
+        109.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "5e62808ff0f0c6341b6e057f34e094d407ce529404fbed1b31c8bb567edfa2fa",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1146,778,97,109",
+      "source_bbox": [
+        1,
+        0,
+        96,
+        108
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "recuperar_equilibrio_02": {
+      "rect": [
+        776,
+        333,
+        98,
+        102
+      ],
+      "pivot": [
+        49.0,
+        103.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "2b5ba3d9ac5738bbee84bc43dc453bad5c6012010127126c7514d61fdfdcd9c1",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1263,778,100,104",
+      "source_bbox": [
+        1,
+        1,
+        99,
+        103
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "recibir_golpe_caer_00": {
+      "rect": [
+        617,
+        577,
+        79,
+        85
+      ],
+      "pivot": [
+        40.0,
+        43.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "3000b37bce1ba5138df24dc388cb31cbe6b7f63fd5fac34bfee983f0958912c2",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1383,778,81,87",
+      "source_bbox": [
+        1,
+        1,
+        80,
+        86
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "recibir_golpe_caer_01": {
+      "rect": [
+        180,
+        784,
+        84,
+        70
+      ],
+      "pivot": [
+        42.0,
+        35.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "7d01e4106bf21d90e6c29a611c988fbe7f5b873bd67a9be5cbb179506e1eea5a",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1484,778,86,70",
+      "source_bbox": [
+        1,
+        0,
+        85,
+        70
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "recibir_golpe_caer_02": {
+      "rect": [
+        473,
+        784,
+        96,
+        58
+      ],
+      "pivot": [
+        48.0,
+        30.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "ec0162301e4d25ff0038e9b06a17e26cd8e1546485e9809fdd48a37797609ef7",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1590,778,98,59",
+      "source_bbox": [
+        1,
+        0,
+        97,
+        58
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "recibir_golpe_caer_03": {
+      "rect": [
+        589,
+        784,
+        102,
+        45
+      ],
+      "pivot": [
+        51.0,
+        23.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "e968c2b74b99fb815e9bcccbbf8e72cdc41913cb0e284f52a7966cb176de9ec6",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1708,778,104,47",
+      "source_bbox": [
+        1,
+        1,
+        103,
+        46
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "recibir_golpe_caer_04": {
+      "rect": [
+        711,
+        784,
+        113,
+        40
+      ],
+      "pivot": [
+        57.0,
+        20.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "d1c2daf0219eba2c50b9ebbcf46533dfe252d4066ecd2fd5d328b8ae4d5abcc6",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:1832,778,115,42",
+      "source_bbox": [
+        1,
+        1,
+        114,
+        41
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "recibir_golpe_caer_05": {
+      "rect": [
+        957,
+        784,
+        99,
+        33
+      ],
+      "pivot": [
+        50.0,
+        17.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "159b5056394016045f6340cbb8f9d9bac4ae5f9ea2063d2191a6e71ec4e6e8c9",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:10,907,101,35",
+      "source_bbox": [
+        1,
+        1,
+        100,
+        34
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "recibir_golpe_caer_06": {
+      "rect": [
+        844,
+        784,
+        93,
+        36
+      ],
+      "pivot": [
+        47.0,
+        19.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "982dfdd1652033bf158dae26f3711ab03e7ba8b6469df9b2a227d8399990dcf7",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:131,907,95,37",
+      "source_bbox": [
+        1,
+        0,
+        94,
+        36
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "levantarse_00": {
+      "rect": [
+        1403,
+        461,
+        67,
+        89
+      ],
+      "pivot": [
+        33.0,
+        90.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "88a2a3bdfe0b7c2c5e2acf20056f6c1bcce34d5214d72269ef26684838821313",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:246,907,68,90",
+      "source_bbox": [
+        1,
+        0,
+        68,
+        89
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "levantarse_01": {
+      "rect": [
+        1162,
+        333,
+        79,
+        99
+      ],
+      "pivot": [
+        40.0,
+        100.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "74b9b15195d0a0e2f5d570e76d884c6d25d20be945a6f912d27b247c3802751b",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:334,907,81,101",
+      "source_bbox": [
+        1,
+        1,
+        80,
+        100
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "levantarse_02": {
+      "rect": [
+        1509,
+        333,
+        94,
+        98
+      ],
+      "pivot": [
+        48.0,
+        99.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "84388f883f0ed079f7bcd0573c97fcfe8de89ddd69e114a5a350283f466bc0e1",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:435,907,95,100",
+      "source_bbox": [
+        0,
+        1,
+        94,
+        99
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "levantarse_03": {
+      "rect": [
+        1748,
+        333,
+        80,
+        97
+      ],
+      "pivot": [
+        40.0,
+        98.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "c46e5701b8a36fda45090eec9002ceb11e80c29c1e4e053eb89ca852c42a8d3b",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:550,907,80,99",
+      "source_bbox": [
+        0,
+        1,
+        80,
+        98
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "levantarse_04": {
+      "rect": [
+        1848,
+        333,
+        71,
+        97
+      ],
+      "pivot": [
+        36.0,
+        98.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "ac47cce1e311272bc13a78514847b8e4783f7fce204631d8f8876ef6d288125c",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:650,907,71,99",
+      "source_bbox": [
+        0,
+        1,
+        71,
+        98
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "recuperar_guardia_00": {
+      "rect": [
+        1704,
+        684,
+        93,
+        75
+      ],
+      "pivot": [
+        47.0,
+        76.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "b3992818e2654e09bbc7051f5debec609e44d8d07f5bafeddbd81893122148ab",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:741,907,95,76",
+      "source_bbox": [
+        1,
+        0,
+        94,
+        75
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "recuperar_guardia_01": {
+      "rect": [
+        375,
+        784,
+        78,
+        69
+      ],
+      "pivot": [
+        40.0,
+        70.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "e924587f502355fcc76c5845e8256ef3e02212d41338225afca2926bef63974b",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:856,907,79,71",
+      "source_bbox": [
+        0,
+        1,
+        78,
+        70
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    },
+    "recuperar_guardia_02": {
+      "rect": [
+        284,
+        784,
+        71,
+        70
+      ],
+      "pivot": [
+        36.0,
+        71.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "4e7935920d4a244be4b763c259f747c37917a25b6b17cdbff57ba49e778e3c45",
+      "source": "assets/player/sofia/diving_source100/sofia_buceadora_movimientos_rgba.png:955,907,71,72",
+      "source_bbox": [
+        0,
+        1,
+        71,
+        71
+      ],
+      "notes": "original source; embedded effects preserved where present"
+    }
+  }
+}

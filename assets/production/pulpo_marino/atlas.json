@@ -1,0 +1,418 @@
+{
+  "schema": "camion.production.atlas.v1",
+  "id": "pulpo_marino",
+  "image": "assets/production/pulpo_marino/atlas.png",
+  "size": [
+    2048,
+    320
+  ],
+  "format": "RGBA8888",
+  "padding_px": 8,
+  "extrusion_px": 2,
+  "anchor": "center",
+  "uniform_scale": true,
+  "source": "ENEMIGOS_SECRETOS_MARINO_ESPACIAL_V1.zip",
+  "notes": "Candidate repack of previously accepted indices only. Original branch atlas may have additional local cleanup. Do not auto-replace until visual recheck.",
+  "frame_count": 16,
+  "unique_pixel_frames": 16,
+  "animations": {
+    "idle": {
+      "frames": [
+        "idle_00",
+        "idle_01",
+        "idle_02",
+        "idle_03"
+      ],
+      "duration_ms": 150,
+      "loop": true,
+      "anchor": "center"
+    },
+    "nadar": {
+      "frames": [
+        "nadar_04",
+        "nadar_05",
+        "nadar_06",
+        "nadar_07",
+        "nadar_08",
+        "nadar_09"
+      ],
+      "duration_ms": 150,
+      "loop": true,
+      "anchor": "center"
+    },
+    "tentaculo": {
+      "frames": [
+        "tentaculo_10",
+        "tentaculo_11",
+        "tentaculo_12"
+      ],
+      "duration_ms": 150,
+      "loop": false,
+      "anchor": "center"
+    },
+    "morir": {
+      "frames": [
+        "morir_21",
+        "morir_23",
+        "morir_24"
+      ],
+      "duration_ms": 150,
+      "loop": false,
+      "anchor": "center"
+    }
+  },
+  "frames": {
+    "idle_00": {
+      "rect": [
+        1502,
+        10,
+        169,
+        135
+      ],
+      "pivot": [
+        84.5,
+        67.5
+      ],
+      "direction": "right",
+      "sha256_rgba": "590a4c4b7004d0b469106be274a7337592fd30bfc8938e8cc75b3b00a6e7e76d",
+      "source": "assets/enemies/pulpo_marino/pulpo_marino_atlas_rgba.png:0",
+      "source_bbox": [
+        107,
+        81,
+        276,
+        216
+      ],
+      "notes": ""
+    },
+    "idle_01": {
+      "rect": [
+        562,
+        165,
+        162,
+        135
+      ],
+      "pivot": [
+        81.0,
+        67.5
+      ],
+      "direction": "right",
+      "sha256_rgba": "dd1187519b0b53f44e422a49ed0ff81734a8f1028196680985e458010c3cb6a7",
+      "source": "assets/enemies/pulpo_marino/pulpo_marino_atlas_rgba.png:1",
+      "source_bbox": [
+        111,
+        81,
+        273,
+        216
+      ],
+      "notes": ""
+    },
+    "idle_02": {
+      "rect": [
+        10,
+        165,
+        164,
+        135
+      ],
+      "pivot": [
+        82.0,
+        67.5
+      ],
+      "direction": "right",
+      "sha256_rgba": "3343fd3defa15ec60d13f18fea1cd348e8a4c8b798857956489df1529c68319d",
+      "source": "assets/enemies/pulpo_marino/pulpo_marino_atlas_rgba.png:2",
+      "source_bbox": [
+        110,
+        81,
+        274,
+        216
+      ],
+      "notes": ""
+    },
+    "idle_03": {
+      "rect": [
+        194,
+        165,
+        164,
+        135
+      ],
+      "pivot": [
+        82.0,
+        67.5
+      ],
+      "direction": "right",
+      "sha256_rgba": "9323a60d1e88a0cef46fbae2a4d4e91ac7c16a8fe3c402b5d9ba7625d079e4d4",
+      "source": "assets/enemies/pulpo_marino/pulpo_marino_atlas_rgba.png:3",
+      "source_bbox": [
+        110,
+        81,
+        274,
+        216
+      ],
+      "notes": ""
+    },
+    "nadar_04": {
+      "rect": [
+        378,
+        165,
+        164,
+        135
+      ],
+      "pivot": [
+        82.0,
+        67.5
+      ],
+      "direction": "right",
+      "sha256_rgba": "257435b274ff467d0deca0c9c2180a1c730a40a9bff8775ca258f881c4fc4c0e",
+      "source": "assets/enemies/pulpo_marino/pulpo_marino_atlas_rgba.png:4",
+      "source_bbox": [
+        110,
+        81,
+        274,
+        216
+      ],
+      "notes": ""
+    },
+    "nadar_05": {
+      "rect": [
+        1691,
+        10,
+        166,
+        135
+      ],
+      "pivot": [
+        83.0,
+        67.5
+      ],
+      "direction": "right",
+      "sha256_rgba": "8506371a2467afae61e721bb38ef053ac65f47b1e6fe3b92647a03871884ce0b",
+      "source": "assets/enemies/pulpo_marino/pulpo_marino_atlas_rgba.png:5",
+      "source_bbox": [
+        109,
+        81,
+        275,
+        216
+      ],
+      "notes": ""
+    },
+    "nadar_06": {
+      "rect": [
+        1306,
+        10,
+        176,
+        135
+      ],
+      "pivot": [
+        88.0,
+        67.5
+      ],
+      "direction": "right",
+      "sha256_rgba": "edef38420ce34cdcb3e7b29dda16793dc11a2e5c39ab7459368ea97c17e72829",
+      "source": "assets/enemies/pulpo_marino/pulpo_marino_atlas_rgba.png:6",
+      "source_bbox": [
+        104,
+        81,
+        280,
+        216
+      ],
+      "notes": ""
+    },
+    "nadar_07": {
+      "rect": [
+        1108,
+        10,
+        178,
+        135
+      ],
+      "pivot": [
+        89.0,
+        67.5
+      ],
+      "direction": "right",
+      "sha256_rgba": "7513f17592c380567b4434c76a8cf9a995866e16c3785640d2ed01755657e3ff",
+      "source": "assets/enemies/pulpo_marino/pulpo_marino_atlas_rgba.png:7",
+      "source_bbox": [
+        103,
+        81,
+        281,
+        216
+      ],
+      "notes": ""
+    },
+    "nadar_08": {
+      "rect": [
+        908,
+        10,
+        180,
+        135
+      ],
+      "pivot": [
+        90.0,
+        67.5
+      ],
+      "direction": "right",
+      "sha256_rgba": "4cb8d7aaa9de6826270cc604b7969d3ab5356eafd254408407b1d6bd3345df54",
+      "source": "assets/enemies/pulpo_marino/pulpo_marino_atlas_rgba.png:8",
+      "source_bbox": [
+        102,
+        81,
+        282,
+        216
+      ],
+      "notes": ""
+    },
+    "nadar_09": {
+      "rect": [
+        704,
+        10,
+        184,
+        135
+      ],
+      "pivot": [
+        92.0,
+        67.5
+      ],
+      "direction": "right",
+      "sha256_rgba": "66f8f8a4c6596881929d7a36e837538315e7c83f100dee5f95edd8e3c84a7612",
+      "source": "assets/enemies/pulpo_marino/pulpo_marino_atlas_rgba.png:9",
+      "source_bbox": [
+        100,
+        81,
+        284,
+        216
+      ],
+      "notes": ""
+    },
+    "tentaculo_10": {
+      "rect": [
+        493,
+        10,
+        191,
+        135
+      ],
+      "pivot": [
+        95.5,
+        67.5
+      ],
+      "direction": "right",
+      "sha256_rgba": "00d72e40ce2446ad77f6298761792514c1291dc465076b4ee91152efbac5d636",
+      "source": "assets/enemies/pulpo_marino/pulpo_marino_atlas_rgba.png:10",
+      "source_bbox": [
+        96,
+        81,
+        287,
+        216
+      ],
+      "notes": ""
+    },
+    "tentaculo_11": {
+      "rect": [
+        275,
+        10,
+        198,
+        135
+      ],
+      "pivot": [
+        99.0,
+        67.5
+      ],
+      "direction": "right",
+      "sha256_rgba": "2de5681c2df56ccb5f48196ea5a81980e8f3b753ce53c77f68e5eb31d5b112eb",
+      "source": "assets/enemies/pulpo_marino/pulpo_marino_atlas_rgba.png:11",
+      "source_bbox": [
+        93,
+        81,
+        291,
+        216
+      ],
+      "notes": ""
+    },
+    "tentaculo_12": {
+      "rect": [
+        10,
+        10,
+        245,
+        135
+      ],
+      "pivot": [
+        122.5,
+        67.5
+      ],
+      "direction": "right",
+      "sha256_rgba": "1bdb254c21a205be8be841ba7374ee6e75473f4945b189437a5b950324801121",
+      "source": "assets/enemies/pulpo_marino/pulpo_marino_atlas_rgba.png:12",
+      "source_bbox": [
+        69,
+        81,
+        314,
+        216
+      ],
+      "notes": ""
+    },
+    "morir_21": {
+      "rect": [
+        744,
+        165,
+        205,
+        124
+      ],
+      "pivot": [
+        102.5,
+        62.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "c8a84ab5b16b102372351efbc065938e9726fa20a92deae9c965aba2602f5e49",
+      "source": "assets/enemies/pulpo_marino/pulpo_marino_atlas_rgba.png:21",
+      "source_bbox": [
+        89,
+        92,
+        294,
+        216
+      ],
+      "notes": ""
+    },
+    "morir_23": {
+      "rect": [
+        969,
+        165,
+        218,
+        94
+      ],
+      "pivot": [
+        109.0,
+        47.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "a2d7f3d7ef6c34b87a93b20e26f9e44867499fcac6b4651c765ac07253f34e92",
+      "source": "assets/enemies/pulpo_marino/pulpo_marino_atlas_rgba.png:23",
+      "source_bbox": [
+        83,
+        122,
+        301,
+        216
+      ],
+      "notes": ""
+    },
+    "morir_24": {
+      "rect": [
+        1207,
+        165,
+        243,
+        70
+      ],
+      "pivot": [
+        121.5,
+        35.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "116796bd6260acfe1e59a220e4e1158bfbed97548d54ef20f32ec16380155ebb",
+      "source": "assets/enemies/pulpo_marino/pulpo_marino_atlas_rgba.png:24",
+      "source_bbox": [
+        70,
+        146,
+        313,
+        216
+      ],
+      "notes": ""
+    }
+  }
+}

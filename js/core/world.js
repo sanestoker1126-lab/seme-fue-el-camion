@@ -124,12 +124,22 @@
         const art = sc.artPainted && !q.gen;
         return addPlatform({
           scope, kind: 'floor', x1: X(q.x1), x2: X(q.x2), y: Y(q.y), h: 10 * S, drop: false, draw: !art, painted: true,
-          hidden: art, skin: sc.skin, gen: !!q.gen, joined: !!q.joined,
+          hidden: art, guardianPost: !!q.guardianPost, skin: sc.skin, gen: !!q.gen, joined: !!q.joined,
           theme: sc.theme, scene: sc.index, start: !!q.start, exit: !!q.exit, mid: !!q.mid,
           startX: q.startX !== undefined ? X(q.startX) : undefined, midX: q.midX !== undefined ? X(q.midX) : undefined,
           touchesLeft: q.x1 <= 1, touchesRight: q.x2 >= m.width - 1
         });
       });
+      if (sc.theme === 'guadalajara' && sc.artPainted) {
+        for (const ledge of sc.surfaces.filter(p => p.hidden)) {
+          ledge.brackets = [];
+          for (let x = ledge.x1 + 20; x < ledge.x2 - 10; x += 108) {
+            const below = sc.surfaces.filter(q => q.y > ledge.y && q.y < ledge.y + 135 && x >= q.x1 && x <= q.x2);
+            const low = below.length ? Math.min(...below.map(p => p.y)) : ledge.y + 41;
+            ledge.brackets.push({ x, low });
+          }
+        }
+      }
       sc.stairs = m.stairs.map((q) => addPlatform({
         scope, kind: 'stair', x1: X(q.x1), x2: X(q.x2), y: Y(q.y), h: 8 * S, drop: true, draw: !(sc.artPainted && sc.def.stairsPainted), painted: true,
         hidden: !!(sc.artPainted && sc.def.stairsPainted), skin: sc.skin, theme: sc.theme, scene: sc.index
@@ -182,7 +192,7 @@
         }
         // El fondo del agua profunda es sólido: desde abajo no se entra al agua (es techo para lo que está debajo).
         // V58: los desagües son huecos en ese fondo (por ahí cae el agua en cascada y se sale buceando).
-        if (z.deep && !z.toStreet) {
+        if (z.deep && !z.toStreet && !(sc.theme==='submarino' && sc.def.seamlessPainted)) {
           let x = z.x1 - 12;
           for (const d of z.drains.slice().sort((a, b) => a.x1 - b.x1)) {
             if (d.x1 - x > 1) addSolid({ scope, kind: 'bank', x1: x, x2: d.x1, y1: z.y2, y2: z.y2 + 10, scene: sc.index, theme: sc.theme, draw: false, water: z.id, bottom: true });
@@ -223,7 +233,19 @@
       // V58.6: letreros propios del nivel (p. ej. cómo usar el columpio para cruzar la barda).
       (m.signs || []).forEach((q, k) => W.signs.push({ id: scope + ':letrero:nivel' + k, x: X(q.x), y: Y(q.y), text: q.text, scene: sc.index, region: 'main', seenT: -99 }));
       m.gems.forEach((q) => addGem(X(q.x), Y(q.y), sc.index, 'main', rng));
-      const start = sc.surfaces.find((s) => s.start);
+      let start = sc.surfaces.find((s) => s.start);
+      if (m.shore && sc.index === 0) {
+        const cfg = m.shore, k = sc.drawW / cfg.width;
+        const sea = sc.waters.find(z => z.sea), floorY = sea.y - cfg.freeboard;
+        const top = floorY - cfg.floor * k;
+        W.shore = { file: cfg.file, x: sc.x0, top, width: sc.drawW, height: sc.startY - top, floorY };
+        W.bounds.y1 = Math.min(W.bounds.y1, top - 65);
+        start.start = false;
+        start = addPlatform({ scope, scene: sc.index, theme: sc.theme, kind: 'floor',
+          x1: sc.x0 + cfg.left * k, x2: sc.x0 + cfg.right * k, y: floorY, startX: sc.x0 + cfg.landing * k,
+          start: true, shore: true, draw: false, painted: true });
+        sc.surfaces.unshift(start);
+      }
       sc.startPlatform = start;
       reserve(start, start.x1, start.x2); // el punto de control queda despejado
       W.checkpoints.push({ id: scope + ':parada', scene: sc.index, x: start.startX, y: start.y, plat: start, active: false });
@@ -245,6 +267,7 @@
     /* ---------- Escaleras de transición entre tramos ---------- */
     for (let i = 0; i < W.scenes.length - 1; i++) {
       const from = W.scenes[i], to = W.scenes[i + 1], count = 11, ex = from.exitPlatform;
+      if (from.def.seamlessPainted && to.def.seamlessPainted) continue; // las repisas del arte conectan ambos tramos
       const xB = to.startPlatform.startX, yB = to.startPlatform.y, yA = ex.y;
       const stepW = 34 * S;
       // V58: la salida de los niveles nuevos es muy ancha; la escalera arranca justo afuera de su extremo más
@@ -409,9 +432,9 @@
       const floorPl = { x1: rx + 20, x2: rx + RW - 120, y: floorTop, occupied: [] }; // tramo de patrulla (no pisa la salida)
       if (i >= 1) OB.addSpikes(W, { scope, x: rx + 380, y: floorTop, w: 40, scene: i, region: reg });
       // V58: en el mar vigila un cangrejo y en la órbita un robot (no una rata de alcantarilla).
-      const guardKind = sc.theme === 'submarino' ? 'crab' : sc.theme === 'espacial' ? 'robot' : i >= 3 ? 'bravo' : i >= 1 ? 'dog' : 'rat';
+      const guardKind = sc.roomTheme === 'gruta' ? 'guardian' : sc.theme === 'submarino' ? 'crab' : sc.theme === 'espacial' ? 'robot' : i >= 3 ? 'bravo' : i >= 1 ? 'dog' : 'rat';
       addFoe(EN.create(guardKind, { x: rx + 230, y: floorTop, plat: floorPl, scene: i, region: reg, diff, rng }));
-      if (i >= 2) addFoe(EN.create('bat', { x: rx + 470, y: ry + 22, scene: i, region: reg, diff, rng }));
+      if (i >= 2 && sc.roomTheme !== 'gruta') addFoe(EN.create('bat', { x: rx + 470, y: ry + 22, scene: i, region: reg, diff, rng }));
     }
 
     /* ---------- Jefes (V50) ----------
@@ -514,14 +537,27 @@
       }
 
       // Enemigos del panel pintado.
-      const budget = Math.max(1, Math.round(def.foeBudget * diff.foeDensity));
+      for (const post of panel.filter(p => p.guardianPost)) {
+        const doors = W.doors.filter(d => d.plat === post);
+        const left = post.x1 + 28, right = post.x2 - 28;
+        const middle = (left + right) / 2;
+        const end = doors.some(d => d.x < middle) ? right : left;
+        const start = doors.length ? (middle + end) / 2 : middle;
+        const guard = EN.create('guardian', { x: start, y: post.y, plat: post, scene: i, diff, rng });
+        if (doors.length) {
+          guard.minX = end === right ? middle + 40 : left;
+          guard.maxX = end === right ? right : middle - 40;
+        }
+        addFoe(guard);
+      }
+      const budget = def.foes.length ? Math.max(1, Math.round(def.foeBudget * diff.foeDensity)) : 0;
       let walkersOn = new Set();
       for (let n = 0; n < budget; n++) {
         const kind = def.foes[n % def.foes.length];
         addFoe(placeFoe(kind, panel, rng, walkersOn, sc, scope, diff));
       }
       // Enemigos de los sectores laterales.
-      const sideBudget = Math.max(1, Math.round(def.sideFoes * diff.foeDensity));
+      const sideBudget = def.sideFoes && def.foes.length ? Math.max(1, Math.round(def.sideFoes * diff.foeDensity)) : 0;
       walkersOn = new Set();
       for (let n = 0; n < sideBudget; n++) {
         const kind = def.foes[(n + 1) % def.foes.length];
@@ -644,9 +680,19 @@
           return EN.create(kind, { scope, x, y: pl.y + (pl.h || 10) + 12, scene: sc.index, diff, rng });
         }
         if (kind === 'pigeon' || kind === 'drone') {
-          const x = (pl.x1 + pl.x2) / 2;
+          let x = (pl.x1 + pl.x2) / 2;
+          const y = pl.y - 118;
+          const safe = [W.checkpoints[sc.index], ...W.midpoints.filter(p => p.scene === sc.index)];
           const lane = { x1: Math.max(W.bounds.x1 + 40, x - 160), x2: Math.min(W.bounds.x2 - 40, x + 160) };
-          return EN.create(kind, { scope, x, y: pl.y - 118, lane, scene: sc.index, diff, rng });
+          for (const cp of safe) {
+            if (Math.abs(y - cp.y) > 138 || cp.x + 112 < lane.x1 || cp.x - 112 > lane.x2) continue;
+            const margin = 135, span = lane.x2 - lane.x1, lo = W.bounds.x1 + 40, hi = W.bounds.x2 - 40;
+            const rightSide = x >= cp.x ? hi - cp.x >= margin + 44 : cp.x - lo < margin + 44;
+            if (rightSide) { lane.x1 = cp.x + margin; lane.x2 = Math.min(hi, lane.x1 + span); }
+            else { lane.x2 = cp.x - margin; lane.x1 = Math.max(lo, lane.x2 - span); }
+            x = (lane.x1 + lane.x2) / 2;
+          }
+          return EN.create(kind, { scope, x, y, lane, scene: sc.index, diff, rng });
         }
       }
       return null;
@@ -690,7 +736,7 @@
     /* ---------- V58.7 · Zonas secretas (mar y Luna) ----------
        Se arman al final: así ningún reparto anterior (peces del mar abierto, jefe, corrientes, asteroides) toma su agua
        ni sus repisas. Ver LEVELS.SECRET_ROOMS: el recorrido está trazado en px del arte panorámico de cada zona. */
-    let secretN = 0, secretX = 0;
+    let secretN = 0;
     for (const sc of W.scenes) {
       const Z = sc.def.secret && LV.SECRET_ROOMS && LV.SECRET_ROOMS[sc.def.secret];
       if (!Z) continue;
@@ -698,32 +744,27 @@
       // La grieta va en la cornisa seca más cercana al punto marcado, en un hueco libre (sin obstáculo ni puerta).
       const dist = (p) => Math.hypot(U.clamp(Z.entry.x, p.x1, p.x2) - Z.entry.x, p.y - Z.entry.y);
       const near = W.platforms.filter((p) => p.region === 'main' && p.scene === i && p.kind === 'floor' && !p.underwater &&
-        !p.transition && !p.start && !p.exit && !p.mid && p.w >= 90).sort((a, b) => dist(a) - dist(b))[0];
+        !p.transition && !p.start && !p.exit && !p.mid && p.w >= 90).sort((a, b) => dist(a) - dist(b))[0] || (Z.id==='santuario'&&sc.startPlatform.shore?sc.startPlatform:null);
       if (!near) continue;
       const free = (x) => x - 30 >= near.x1 + 8 && x + 30 <= near.x2 - 8 && near.occupied.every(([o1, o2]) => x + 30 <= o1 || x - 30 >= o2);
       const spots = [];
       for (let x = near.x1 + 38; x <= near.x2 - 38; x += 6) if (free(x)) spots.push(x);
-      const doorX = spots.length ? spots.sort((a, b) => Math.abs(a - Z.entry.x) - Math.abs(b - Z.entry.x))[0] : (near.x1 + near.x2) / 2;
+      const doorX = spots.length ? spots.sort((a, b) => Math.abs(a - Z.entry.x) - Math.abs(b - Z.entry.x))[0] : near.shore ? near.x2-40 : (near.x1 + near.x2) / 2;
       reserve(near, doorX - 30, doorX + 30);
       // Al salir se regresa a la misma cornisa, a un paso de la grieta (sin quedar encima de ella).
       const backX = U.clamp(doorX + (doorX + 56 <= near.x2 - 14 ? 56 : -56), near.x1 + 14, near.x2 - 14);
       reserve(near, backX - 18, backX + 18);
 
       const s = Z.scale, AW = Z.artW * s, AH = Z.artH * s;
-      const rx = C.world.roomOriginX + W.scenes.length * C.world.roomSpacing + 300 + secretX, ry = Math.round(near.y - AH / 2);
-      secretX += Math.ceil(AW) + 600;
+      const rx = C.world.roomOriginX + W.scenes.length * C.world.roomSpacing + 300 + secretN * 2400, ry = Math.round(near.y - AH / 2);
       secretN++;
       const X = (px) => rx + px * s, Y = (py) => ry + py * s;
       const floorY = Y(Z.water ? Z.water.floor : Z.floor);
       // En el santuario la superficie del agua queda pegada al borde de arriba del arte: el techo de la cueva sube
       // `ceil` u sobre ese borde para que Sofía (62 u) quepa de pie en las losas (render.js pinta ahí roca de cueva).
-      // V58.8: en las aulas, igual sobre las lámparas del techo (`Z.ceil`).
-      const ceil = Z.ceil ?? (Z.water ? 46 : 0), top = ry - ceil;
+      const ceil = Z.water ? 46 : 0, top = ry - ceil;
       // `y1` deja a la cámara subir 60 u sobre el techo: así la losa de salida y su letrero quedan bajo el HUD de arriba.
-      // V58.8: varias ilustraciones seguidas (las aulas): `panels` dice dónde va cada una.
-      const arts = Array.isArray(Z.art) ? Z.art : [Z.art], panelW = AW / arts.length;
-      const room = { id: scope + ':secreto', index: i, scene: i, theme: 'secreto', secret: Z.id, label: Z.label, art: arts[0],
-        panels: arts.map((a, k) => ({ art: a, x1: rx + k * panelW, x2: rx + (k + 1) * panelW })),
+      const room = { id: scope + ':secreto', index: i, scene: i, theme: 'secreto', secret: Z.id, label: Z.label, art: Z.art,
         x1: rx, y1: top - (Z.water ? 60 : 0), x2: rx + AW, y2: floorY, ceilY: top, artY1: ry, artY2: ry + AH, scale: s, visited: false };
       W.rooms.push(room);
       const reg = room.id, th = sc.theme;
@@ -756,13 +797,13 @@
       }
       const entryDoor = { id: scope + ':grieta', kind: 'secreto', x: doorX, y: near.y, plat: near, scene: i, region: 'main', room: reg,
         to: { x: arrive.x, y: arrive.y, region: reg }, phase: rng() * 6, secret: Z.id, look: th };
-      const exitDoor = { id: scope + ':salida-secreta', kind: Z.exitKind || 'salida', x: exitSpot.x, y: exitSpot.y, plat: exitSpot.plat, scene: i, region: reg,
+      const exitDoor = { id: scope + ':salida-secreta', kind: 'salida', x: exitSpot.x, y: exitSpot.y, plat: exitSpot.plat, scene: i, region: reg,
         room: reg, to: { x: backX, y: near.y, region: 'main' }, phase: rng() * 6, look: th };
       W.doors.push(entryDoor, exitDoor);
       room.entry = entryDoor; room.exit = exitDoor;
       // Enemigos del paquete «enemigos secretos» (en FÁCIL, uno de cada tipo) y el jefe de la zona.
-      const floorPl = { x1: rx + 16, x2: rx + AW - 16, y: floorY, w: AW - 32, occupied: [] };
-      const platOf = (q) => (q.plat === 'floor' ? { x1: X(q.x1), x2: X(q.x2), y: floorY, w: X(q.x2) - X(q.x1), occupied: [] } : ledgeAt(q.plat));
+      const floorPl = { x1: rx + 16, x2: rx + AW - 16, y: floorY, occupied: [] };
+      const platOf = (q) => (q.plat === 'floor' ? { x1: X(q.x1), x2: X(q.x2), y: floorY, occupied: [] } : ledgeAt(q.plat));
       for (const q of Z.foes || []) {
         if (q.extra && diffKey === 'facil') continue;
         if (water) {
@@ -792,26 +833,94 @@
     W.goal = { x1: W.bus.doorX1 - 6, x2: W.bus.doorX2 + 6, y1: streetY - 110, y2: streetY + 1 };
     W.signs.push({ id: 'mundo:letrero:terminal', x: busX1 - 60, y: streetY, text: ST.MESSAGES.busWaiting, scene: W.scenes.length - 1, region: 'main', seenT: -99, busStop: true });
 
-    /* V58.9 · Menos cristales en pantalla: en el recorrido principal había filas de cristales a cada paso (100–270 por
-       nivel) y tapaban el dibujo. Se conserva uno cada ~200 u (el primero de cada grupo, de arriba abajo); siguen
-       marcando el camino. Los de las zonas inferiores y secretas son premio y se quedan todos. */
-    {
-      const MIN = 200, grid = new Map(), drop = new Set(), key = (x, y) => Math.floor(x / MIN) + ',' + Math.floor(y / MIN);
-      const gems = W.pickups.filter((g) => g.type === 'gem' && g.region === 'main').sort((a, b) => a.y - b.y || a.x - b.x);
-      for (const g of gems) {
-        const cx = Math.floor(g.x / MIN), cy = Math.floor(g.y / MIN);
-        let near = false;
-        for (let i = -1; i <= 1 && !near; i++) for (let j = -1; j <= 1 && !near; j++) {
-          for (const k of grid.get((cx + i) + ',' + (cy + j)) || []) if (Math.hypot(k.x - g.x, k.y - g.y) < MIN) { near = true; break; }
-        }
-        if (near) { drop.add(g); continue; }
-        const kk = key(g.x, g.y);
-        if (!grid.has(kk)) grid.set(kk, []);
-        grid.get(kk).push(g);
-      }
-      W.pickups = W.pickups.filter((g) => !drop.has(g));
+    if (seq.every(d => d.room === 'gruta')) {
+      const last = W.scenes[W.scenes.length - 1], plat = last.exitPlatform;
+      W.portal = { plat, x: last.exitX, y: plat.y };
+      W.goal = { x1: last.exitX - 43, x2: last.exitX + 43, y1: plat.y - 93, y2: plat.y + 1 };
+      const sign = W.signs[W.signs.length - 1];
+      Object.assign(sign, { x: last.exitX - 105, y: plat.y, text: 'CRUZA EL PORTAL DE LAS CASCADAS', busStop: false });
     }
 
+    // School campaign: a real final confrontation on the street, before boarding Ruta 6.
+    W.schoolMission = seq.length===3 && seq.every(d=>d.theme==='escuela');
+    if(W.schoolMission){
+      W.bus.doorX1=W.bus.x1+155;W.bus.doorX2=W.bus.x1+207;W.goal.x1=W.bus.doorX1-6;W.goal.x2=W.bus.doorX2+6;
+      const sc=W.scenes[2], boss=W.foes.find(f=>f.kind==='maestro'&&f.isBoss&&f.scene===2&&!f.secret);
+      if(boss){
+        const ax=W.bus.doorX1-255, bx=W.bus.doorX2+115;
+        // A separate patrol region on the real solid street; not a fake floating platform.
+        W.street.w=W.street.x2-W.street.x1;boss.plat=W.street;boss.arena=W.street;sc.bossArena=W.street;boss.y=streetY;boss.x=(ax+bx)/2-50;
+        boss.minX=ax+boss.w/2+4;boss.maxX=bx-boss.w/2-4;boss.spawn={x:boss.x,y:boss.y};boss.cool=1.25;
+        W.schoolFinal={bossId:boss.id,x1:ax,x2:bx,y:streetY};
+        W.schoolFinalCheckpoint={id:'school:salida',scene:2,x:ax-70,y:streetY,plat:W.street,mid:true,schoolFinal:true,active:false};
+        W.signs.push({id:'school:final:hint',x:ax-70,y:streetY,scene:2,region:'main',seenT:-99,schoolSign:4,text:'EL MAESTRO BLOQUEA LA SALIDA. ESQUIVA LA EMBESTIDA Y USA DASH CUANDO SE MAREE.'});
+      }
+      // Signs use actual mapped platforms and mark destinations, not arbitrary floating labels.
+      for(const sc of W.scenes){
+        const cp=W.checkpoints[sc.index],mid=W.midpoints.find(q=>q.scene===sc.index),ex=sc.exitPlatform;
+        const marks=[[cp.plat,cp.x+125,sc.index===0?2:sc.index===1?3:4,['AZOTEA: CRUZA LA BARDA CON EL COLUMPIO.','PATIO: USA LOS DESCANSOS Y LAS TIROLESAS.','CONSERJERÍA: SIGUE HACIA EL PORTÓN.'][sc.index]]];
+        if(mid)marks.push([mid.plat,mid.x+125,sc.index===1?6:4,'SIGUE LA RUTA DE BAJADA. EL PUNTO SEGURO QUEDA GUARDADO.']);
+        if(ex)marks.push([ex,sc.exitX,4,sc.index===2?'EL CAMIÓN ESTÁ EN LA CALLE.':'SIGUIENTE SECTOR: BAJA POR EL BORDE.']);
+        for(const [p,x,icon,text] of marks){if(!p)continue;W.signs.push({id:'school:route:'+sc.index+':'+icon+':'+p.id,x:Math.max(p.x1+18,Math.min(p.x2-18,x)),y:p.y,scene:sc.index,region:'main',seenT:-99,schoolSign:icon,text});}
+      }
+      for(const room of W.rooms)if(room.theme==='sotano'&&!room.secret){
+        room.schoolArt=['archivo','laboratorio','conserjeria'][room.scene];room.schoolName=['ARCHIVO ESCOLAR','LABORATORIO','ALMACÉN'][room.scene];
+        room.schoolObjective=W.pickups.find(p=>p.region===room.id&&p.type==='item')?.itemIndex ?? null;
+        room.schoolFurniture=W.platforms.filter(p=>p.region===room.id).map(p=>{p.schoolFurniture=room.schoolArt;return p;});
+      }
+      for(const d of W.doors)if(d.kind==='trampilla')d.schoolEntrance=true;
+    }
+    // Balizas físicas de referencia: puntos seguros sobre repisas trazadas en el arte.
+    W.abyssBeacons=[];
+    if(seq.every(d=>d.theme==='submarino') && W.scenes.length===3){
+      const zones=W.waters.filter(z=>z.sea&&z.region!=='secret'&& !z.room);
+      const shared=zones[0], final=W.scenes[2], a=final.map.poseidonArena;
+      if(shared&&a){
+        const set=new Set(zones); shared.y2=streetY;shared.toStreet=true;shared.boss=true;
+        W.waters=W.waters.filter(z=>!set.has(z)||z===shared);
+        for(const sc of W.scenes)sc.waters=[shared];
+        for(const f of W.foes)if(set.has(f.waterZone))f.waterZone=shared;
+        const X=x=>final.x0+x*S,Y=y=>final.startY+y*S;
+        const boss=W.foes.find(f=>f.kind==='poseidon'&&f.isBoss&&f.region==='main');
+        W.poseidonArena={bossId:boss.id,x1:X(a.x1),x2:X(a.x2),top:Y(a.top),bottom:Y(a.bottom),entryY:Y(a.entryY),x:final.exitX};
+        const arena=W.poseidonArena;
+        boss.lane={x1:arena.x1+65,x2:arena.x2-65};boss.x=arena.x+135;boss.y=boss.baseY=arena.bottom-235;boss.cool=1.6;boss.spawn={x:boss.x,y:boss.y};
+        boss.arenaBounds={top:arena.top+65,bottom:arena.bottom-65};
+        // Keep fight free of currents and incidental opponents.
+        W.foes=W.foes.filter(f=>f.region!=='main'||f.isBoss||f.y<arena.entryY-90);
+        W.hazards=W.hazards.filter(h=>h.scene!==2||((h.y2??h.y??0)<arena.entryY-80));
+        W.goal={x1:arena.x-42,x2:arena.x+42,y1:arena.bottom-105,y2:arena.bottom+2};
+        const sign=W.signs.find(s=>s.busStop);if(sign)Object.assign(sign,{x:arena.x,y:arena.bottom,text:'ESCOTILLA SELLADA HASTA VENCER A POSEIDÓN',busStop:false});
+        for(const [i,sc] of W.scenes.entries()){
+          if(i===0)continue;
+          const cp=W.checkpoints[i]; W.abyssBeacons.push({id:'abyss:entry:'+i,x:cp.x,y:cp.y,scene:i,mid:true,abyss:true,index:i-1,plat:null,active:false});
+        }
+        W.abyssBeacons.push({id:'abyss:poseidon',x:arena.x,y:arena.entryY,scene:2,mid:true,abyss:true,index:2,plat:null,active:false});
+        addPickup({scope:'poseidon',type:'power',power:'heart',x:arena.x,y:arena.entryY+35,scene:2,region:'main',phase:0});
+      }
+    }
+    for(const sc of W.scenes){
+      if(W.poseidonArena||sc.theme!=='submarino'||!sc.map.worldArt)continue;
+      const k=sc.scale*sc.map.worldArt.px;
+      const points=[[302,1770],[180,1966],[525,2177],[690,2434],[680,2826]];
+      for(let i=0;i<points.length;i++){
+        const [px,py]=points[i];const x=sc.x0+px*k,y=sc.startY+py*k;
+        // Cuerpo de Sofía libre de cualquier sólido en el punto de reaparición.
+        if(W.solids.some(s=>!s.open&&!s.broken&&x+20>s.x1&&x-20<s.x2&&y-66<s.y2&&y>s.y1))continue;
+        W.abyssBeacons.push({id:'abyss:'+sc.index+':'+i,x,y,scene:sc.index,mid:true,abyss:true,index:i,plat:null,active:false});
+      }
+    }
+    // Retira repetidos de la ruta principal sin cambiar el RNG del trazado ni los jefes.
+    // Se conserva el primer ejemplar de cada especie y cada guardián diseñado a mano.
+    if (!opts.preservePopulation && diffKey !== 'dificil') {
+      const seen = new Map();
+      W.foes = W.foes.filter(f => {
+        if (f.isBoss || f.secret || f.region !== 'main' || f.kind === 'guardian') return true;
+        const key = f.scene + ':' + f.kind, n = (seen.get(key) || 0) + 1;
+        seen.set(key,n);
+        return n % (diffKey === 'facil' ? 2 : 3) !== 0;
+      });
+    }
     W.platforms.sort((a, b) => a.y - b.y);
     // V58: clave de orden fija (la y de origen) para buscar por franjas de altura en la física.
     for (const p of W.platforms) p.sortY = p.y;

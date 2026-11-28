@@ -1,0 +1,17 @@
+frame,x,y,w,h,pivot_x,pivot_y,direction,sha256_rgba,source
+idle_00,1502,10,169,135,84.5,67.5,right,590a4c4b7004d0b469106be274a7337592fd30bfc8938e8cc75b3b00a6e7e76d,assets/enemies/pulpo_marino/pulpo_marino_atlas_rgba.png:0
+idle_01,562,165,162,135,81.0,67.5,right,dd1187519b0b53f44e422a49ed0ff81734a8f1028196680985e458010c3cb6a7,assets/enemies/pulpo_marino/pulpo_marino_atlas_rgba.png:1
+idle_02,10,165,164,135,82.0,67.5,right,3343fd3defa15ec60d13f18fea1cd348e8a4c8b798857956489df1529c68319d,assets/enemies/pulpo_marino/pulpo_marino_atlas_rgba.png:2
+idle_03,194,165,164,135,82.0,67.5,right,9323a60d1e88a0cef46fbae2a4d4e91ac7c16a8fe3c402b5d9ba7625d079e4d4,assets/enemies/pulpo_marino/pulpo_marino_atlas_rgba.png:3
+nadar_04,378,165,164,135,82.0,67.5,right,257435b274ff467d0deca0c9c2180a1c730a40a9bff8775ca258f881c4fc4c0e,assets/enemies/pulpo_marino/pulpo_marino_atlas_rgba.png:4
+nadar_05,1691,10,166,135,83.0,67.5,right,8506371a2467afae61e721bb38ef053ac65f47b1e6fe3b92647a03871884ce0b,assets/enemies/pulpo_marino/pulpo_marino_atlas_rgba.png:5
+nadar_06,1306,10,176,135,88.0,67.5,right,edef38420ce34cdcb3e7b29dda16793dc11a2e5c39ab7459368ea97c17e72829,assets/enemies/pulpo_marino/pulpo_marino_atlas_rgba.png:6
+nadar_07,1108,10,178,135,89.0,67.5,right,7513f17592c380567b4434c76a8cf9a995866e16c3785640d2ed01755657e3ff,assets/enemies/pulpo_marino/pulpo_marino_atlas_rgba.png:7
+nadar_08,908,10,180,135,90.0,67.5,right,4cb8d7aaa9de6826270cc604b7969d3ab5356eafd254408407b1d6bd3345df54,assets/enemies/pulpo_marino/pulpo_marino_atlas_rgba.png:8
+nadar_09,704,10,184,135,92.0,67.5,right,66f8f8a4c6596881929d7a36e837538315e7c83f100dee5f95edd8e3c84a7612,assets/enemies/pulpo_marino/pulpo_marino_atlas_rgba.png:9
+tentaculo_10,493,10,191,135,95.5,67.5,right,00d72e40ce2446ad77f6298761792514c1291dc465076b4ee91152efbac5d636,assets/enemies/pulpo_marino/pulpo_marino_atlas_rgba.png:10
+tentaculo_11,275,10,198,135,99.0,67.5,right,2de5681c2df56ccb5f48196ea5a81980e8f3b753ce53c77f68e5eb31d5b112eb,assets/enemies/pulpo_marino/pulpo_marino_atlas_rgba.png:11
+tentaculo_12,10,10,245,135,122.5,67.5,right,1bdb254c21a205be8be841ba7374ee6e75473f4945b189437a5b950324801121,assets/enemies/pulpo_marino/pulpo_marino_atlas_rgba.png:12
+morir_21,744,165,205,124,102.5,62.0,right,c8a84ab5b16b102372351efbc065938e9726fa20a92deae9c965aba2602f5e49,assets/enemies/pulpo_marino/pulpo_marino_atlas_rgba.png:21
+morir_23,969,165,218,94,109.0,47.0,right,a2d7f3d7ef6c34b87a93b20e26f9e44867499fcac6b4651c765ac07253f34e92,assets/enemies/pulpo_marino/pulpo_marino_atlas_rgba.png:23
+morir_24,1207,165,243,70,121.5,35.0,right,116796bd6260acfe1e59a220e4e1158bfbed97548d54ef20f32ec16380155ebb,assets/enemies/pulpo_marino/pulpo_marino_atlas_rgba.png:24

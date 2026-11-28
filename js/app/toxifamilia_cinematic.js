@@ -4,7 +4,7 @@
    Efectos por escena: lluvia, monitores (reloj 21:45), HUD arcade, apagón, título LEGEND OF PRESOS, recuerdo (tono de
    memoria) y burbujas. V58.2: personajes animados por cuadros con su propia línea de tiempo (caminar, voltear, nadar)
    y diálogos línea por línea con quién habla (layout 'dialogo').
-   API: CAMION.ToxiPlayer.play({ set: 'prologo'|'epilogo'|'marino', look, finishLabel, onDone(fin) }). */
+   API: CAMION.ToxiPlayer.play({ set: 'prologo'|'epilogo'|'marino'|'guadalajara', look, finishLabel, onDone(fin) }). */
 (function (root) {
   'use strict';
   const NS = root.CAMION;
@@ -14,13 +14,182 @@
   try {
     SETS.prologo = manifest.validate(manifest.SCENES);
     SETS.epilogo = manifest.validate(manifest.EPILOGUE || []);
+    SETS.espacio = manifest.validate(manifest.ESPACIO || []);
     SETS.marino = manifest.validate(manifest.MARINO || []);
+    SETS.guadalajara = manifest.validate(manifest.GDL_TRANSITION || []);
+    SETS.parafalls = manifest.validate(manifest.PARAFALLS || []);
   } catch (err) { console.error('[Toxifamilia] Guion inválido', err); return; }
   if (!SETS.prologo.length) return;
 
   let overlay = null, scenes = [], index = 0, active = false, elapsed = 0, prev = 0, frame = 0, onDone = null;
   let look = 'original', finishLabel = null, actors = [], lineIndex = -1;
   const preloaded = new Map();
+  // Porcentaje transparente bajo el último píxel opaco de los pies. Se mide al empaquetar.
+  const sole = {
+  "assets/player/sofia/idle_01.png": 2.68,
+  "assets/companions/luna.png": 3.57,
+  "assets/companions/morita.png": 2.23,
+  "assets/player/sofia/land_01.png": 2.68,
+  "assets/player/sofia/run_02.png": 2.68,
+  "assets/player/variants/uniforme/kick_01.png": 4.02,
+  "assets/player/variants/uniforme/run_01.png": 4.02,
+  "assets/player/variants/uniforme/run_02.png": 4.02,
+  "assets/player/variants/uniforme/run_03.png": 4.02,
+  "assets/player/variants/uniforme/run_04.png": 4.02,
+  "assets/player/variants/uniforme/idle_01.png": 2.68,
+  "assets/companions/morita_walk_v38_01.png": 4.91,
+  "assets/companions/morita_walk_v38_02.png": 4.46,
+  "assets/companions/morita_walk_v38_03.png": 5.36,
+  "assets/companions/morita_walk_v38_04.png": 4.46,
+  "assets/companions/morita_idle_v38_01.png": 3.57,
+  "assets/companions/morita_idle_v38_02.png": 3.57,
+  "assets/companions/morita_idle_v38_03.png": 3.57,
+  "assets/companions/morita_idle_v38_04.png": 8.48,
+  "assets/companions/morita_idle_v38_05.png": 8.93,
+  "assets/companions/morita_idle_v38_06.png": 8.93,
+  "assets/cinematica/marino/sofia_original_asombro_00.webp": 2.02,
+  "assets/cinematica/marino/sofia_original_asombro_01.webp": 2.02,
+  "assets/cinematica/marino/sofia_original_asombro_02.webp": 2.02,
+  "assets/cinematica/marino/sofia_original_asombro_03.webp": 2.36,
+  "assets/cinematica/marino/sofia_original_asombro_04.webp": 2.02,
+  "assets/cinematica/marino/sofia_original_asombro_05.webp": 2.36,
+  "assets/cinematica/marino/sofia_uniforme_asombro_00.webp": 2.06,
+  "assets/cinematica/marino/sofia_uniforme_asombro_01.webp": 2.06,
+  "assets/cinematica/marino/sofia_uniforme_asombro_02.webp": 2.06,
+  "assets/cinematica/marino/sofia_uniforme_asombro_03.webp": 2.06,
+  "assets/cinematica/marino/sofia_uniforme_asombro_04.webp": 2.06,
+  "assets/cinematica/marino/sofia_uniforme_asombro_05.webp": 2.06,
+  "assets/cinematica/marino/sofia_rosa_asombro_00.webp": 2.41,
+  "assets/cinematica/marino/sofia_rosa_asombro_01.webp": 2.41,
+  "assets/cinematica/marino/sofia_rosa_asombro_02.webp": 2.07,
+  "assets/cinematica/marino/sofia_rosa_asombro_03.webp": 2.07,
+  "assets/cinematica/marino/sofia_rosa_asombro_04.webp": 2.07,
+  "assets/cinematica/marino/sofia_rosa_asombro_05.webp": 2.07,
+  "assets/companions/luna_walk_v38_01.png": 4.46,
+  "assets/companions/luna_walk_v38_02.png": 4.46,
+  "assets/companions/luna_walk_v38_03.png": 9.38,
+  "assets/companions/luna_walk_v38_04.png": 8.93,
+  "assets/companions/luna_idle_v38_01.png": 5.8,
+  "assets/companions/luna_idle_v38_02.png": 5.8,
+  "assets/companions/luna_idle_v38_03.png": 5.8,
+  "assets/companions/luna_idle_v38_04.png": 12.5,
+  "assets/companions/luna_idle_v38_05.png": 12.95,
+  "assets/companions/luna_idle_v38_06.png": 12.5,
+  "assets/cinematica/marino/paseo_mano_00.webp": 2.97,
+  "assets/cinematica/marino/paseo_mano_01.webp": 2.97,
+  "assets/cinematica/marino/paseo_mano_02.webp": 2.97,
+  "assets/cinematica/marino/paseo_mano_03.webp": 2.67,
+  "assets/cinematica/marino/paseo_mano_04.webp": 2.37,
+  "assets/cinematica/marino/paseo_mano_05.webp": 2.67,
+  "assets/cinematica/marino/paseo_mano_06.webp": 2.08,
+  "assets/cinematica/marino/paseo_mano_07.webp": 2.37,
+  "assets/cinematica/marino/paseo_mano_08.webp": 2.08,
+  "assets/cinematica/marino/paseo_mano_09.webp": 1.48,
+  "assets/cinematica/marino/paseo_mano_10.webp": 1.48,
+  "assets/cinematica/marino/paseo_mano_11.webp": 1.19,
+  "assets/cinematica/marino/estoker_platica_00.webp": 3.24,
+  "assets/cinematica/marino/estoker_platica_01.webp": 2.06,
+  "assets/cinematica/marino/estoker_platica_02.webp": 2.65,
+  "assets/cinematica/marino/estoker_platica_03.webp": 2.35,
+  "assets/cinematica/marino/estoker_platica_04.webp": 2.35,
+  "assets/cinematica/marino/estoker_platica_05.webp": 2.06,
+  "assets/cinematica/marino/estoker_platica_06.webp": 2.35,
+  "assets/cinematica/marino/estoker_platica_07.webp": 2.35,
+  "assets/cinematica/marino/estoker_platica_08.webp": 0.88,
+  "assets/cinematica/marino/estoker_platica_09.webp": 0.88,
+  "assets/cinematica/marino/estoker_platica_10.webp": 0.88,
+  "assets/cinematica/marino/estoker_platica_11.webp": 0.88,
+  "assets/cinematica/marino/tiburon_nado_00.webp": 2.29,
+  "assets/cinematica/marino/tiburon_nado_01.webp": 7.63,
+  "assets/cinematica/marino/tiburon_nado_02.webp": 12.98,
+  "assets/cinematica/marino/tiburon_nado_03.webp": 9.92,
+  "assets/cinematica/marino/tiburon_nado_04.webp": 8.4,
+  "assets/cinematica/marino/tiburon_nado_05.webp": 12.21,
+  "assets/cinematica/marino/tiburon_nado_06.webp": 12.21,
+  "assets/cinematica/marino/pirana_nado_00.webp": 2.33,
+  "assets/cinematica/marino/pirana_nado_01.webp": 3.88,
+  "assets/cinematica/marino/pirana_nado_02.webp": 6.98,
+  "assets/cinematica/marino/pirana_nado_03.webp": 5.43,
+  "assets/cinematica/marino/pirana_nado_04.webp": 6.2,
+  "assets/cinematica/marino/pirana_nado_05.webp": 3.88,
+  "assets/cinematica/marino/pirana_nado_06.webp": 6.98,
+  "assets/cinematica/marino/pulpo_flota_00.webp": 2.05,
+  "assets/cinematica/marino/pulpo_flota_01.webp": 2.74,
+  "assets/cinematica/marino/pulpo_flota_02.webp": 4.11,
+  "assets/cinematica/marino/pulpo_flota_03.webp": 3.42,
+  "assets/cinematica/marino/pulpo_flota_04.webp": 3.42,
+  "assets/cinematica/marino/pulpo_flota_05.webp": 3.42,
+  "assets/cinematica/marino/pulpo_tinta_00.webp": 2.44,
+  "assets/cinematica/marino/pulpo_tinta_01.webp": 3.25,
+  "assets/cinematica/marino/pulpo_tinta_02.webp": 3.25,
+  "assets/cinematica/marino/pulpo_tinta_03.webp": 2.44,
+  "assets/cinematica/marino/pulpo_tinta_04.webp": 2.44,
+  "assets/cinematica/marino/pulpo_tinta_05.webp": 7.32,
+  "assets/cinematica/marino/estoker_explica_01.webp": 0.74,
+  "assets/cinematica/marino/estoker_explica_02.webp": 1.11,
+  "assets/cinematica/marino/estoker_explica_03.webp": 0.74,
+  "assets/cinematica/marino/estoker_explica_04.webp": 0.74,
+  "assets/cinematica/marino/estoker_explica_05.webp": 0.74,
+  "assets/cinematica/marino/estoker_explica_06.webp": 0.74,
+  "assets/cinematica/marino/poseidon_tridente_00.webp": 1.52,
+  "assets/cinematica/marino/poseidon_tridente_01.webp": 2.02,
+  "assets/cinematica/marino/poseidon_tridente_02.webp": 4.04,
+  "assets/cinematica/marino/poseidon_tridente_03.webp": 9.6,
+  "assets/cinematica/marino/poseidon_tridente_04.webp": 14.14,
+  "assets/cinematica/marino/poseidon_tridente_05.webp": 6.57,
+  "assets/enemies/v50/kid_buzo/idle_01.webp": 3.2,
+  "assets/enemies/v50/kid_buzo/idle_02.webp": 3.2,
+  "assets/enemies/v50/kid_buzo/idle_03.webp": 3.2,
+  "assets/enemies/v50/kid_buzo/idle_04.webp": 3.2,
+  "assets/enemies/v50/kid_buzo/throw_prepare.webp": 3.2,
+  "assets/enemies/v50/kid_buzo/throw_windup.webp": 3.2,
+  "assets/enemies/v50/kid_buzo/throw_release.webp": 3.2,
+  "assets/enemies/v50/kid_buzo/throw_projectile.webp": 3.2,
+  "assets/enemies/v50/kid_buzo/throw_recovery.webp": 3.6,
+  "assets/player/sofia/cheer_01.png": 2.68,
+  "assets/player/sofia/cheer_02.png": 2.68,
+  "assets/player/sofia/cheer_03.png": 2.68,
+  "assets/player/variants/uniforme/cheer_01.png": 2.68,
+  "assets/player/variants/uniforme/cheer_02.png": 2.68,
+  "assets/player/variants/uniforme/cheer_03.png": 2.68,
+  "assets/player/variants/rosa/cheer_01.png": 2.68,
+  "assets/player/variants/rosa/cheer_02.png": 2.68,
+  "assets/player/variants/rosa/cheer_03.png": 2.68,
+  "assets/cinematica/parafalls/luna_idle_00.png": 8.2,
+  "assets/cinematica/parafalls/luna_idle_01.png": 8.2,
+  "assets/cinematica/parafalls/morita_idle_00.png": 6.64,
+  "assets/cinematica/parafalls/morita_idle_01.png": 6.25
+};
+  function setSprite(img, url) {
+    img.src = url;
+    img.style.setProperty('--sole', (sole[url] || 0) + '%');
+  }
+
+  function fitContact() {
+    if (!active || !overlay) return;
+    const stage = $('.toxi-stage'), cast = $('.toxi-cast'), scene = scenes[index];
+    const floor = manifest.CONTACTS[scene.id];
+    stage.classList.toggle('toxi-contact', !!floor);
+    if (!floor) {
+      for (const prop of ['left','right','width','bottom']) cast.style.removeProperty(prop);
+      stage.style.removeProperty('background-size'); stage.style.removeProperty('background-position');
+      return;
+    }
+    const [width,height,x1,x2,soleY] = floor, w = stage.clientWidth, h = stage.clientHeight;
+    if (!w || !h) return;
+    const cover = Math.max(w / width, h / height);
+    const scale = Math.min(cover, w / Math.max(1, Math.min(width, (x2 - x1) * .60)));
+    const ox = width * scale < w ? (w - width * scale) / 2 : Math.max(w - width * scale, Math.min(0, w / 2 - (x1 + x2) / 2 * scale));
+    const oy = height * scale < h ? h * .83 - soleY * scale : Math.max(h - height * scale, Math.min(0, h * .83 - soleY * scale));
+    stage.style.backgroundSize = width * scale + 'px ' + height * scale + 'px';
+    stage.style.backgroundPosition = ox + 'px ' + oy + 'px';
+    const lo = Math.max(0, ox + x1 * scale), hi = Math.min(w, ox + x2 * scale);
+    const inset = Math.min(38, Math.max(0, (hi - lo) * .12));
+    const left = lo + inset, right = Math.max(left + 1, hi - inset);
+    cast.style.left = left + 'px'; cast.style.right = 'auto'; cast.style.width = (right - left) + 'px';
+    cast.style.bottom = (h - (oy + soleY * scale)) + 'px';
+  }
+  root.addEventListener('resize', fitContact);
   const reduced = root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const $ = (sel) => overlay.querySelector(sel);
   const clamp = (v, min, max, fallback) => { const n = Number(v); return Number.isFinite(n) ? Math.max(min, Math.min(max, n)) : fallback; };
@@ -86,7 +255,7 @@
   function paintActor(s, fi, x, b, flip) {
     if (fi !== s.cur) {
       const url = s.frames[fi], pre = preloaded.get(url);
-      if (!pre || pre.complete) { s.img.src = url; s.cur = fi; }
+      if (!pre || (pre.complete && pre.naturalWidth)) { setSprite(s.img, url); s.cur = fi; }
     }
     const left = x.toFixed(2) + '%', bottom = b.toFixed(2) + '%';
     if (left !== s.left) { s.wrapper.style.left = left; s.left = left; }
@@ -102,8 +271,10 @@
   }
   function actorElement(a) {
     const wrapper = document.createElement('div');
-    wrapper.className = 'toxi-actor ' + (ENTRANCES.includes(a.entrance) ? a.entrance : 'enter-rise') + (a.float ? ' float' : '');
+    wrapper.className = 'toxi-actor ' + (ENTRANCES.includes(a.entrance) ? a.entrance : 'enter-rise') + (a.float ? ' float' : '') + (a.fitWidth ? ' fit-width' : '');
     const x = clamp(a.x, 0, 100, 50), b = clamp(a.bottom, 0, 100, 18);
+    if (a.portrait) wrapper.classList.add('toxi-portrait');
+    if (a.perch) wrapper.classList.add('toxi-perched');
     wrapper.dataset.voice = a.voice || a.name;   // V58.6: se ilumina cuando habla (ver paintLine)
     wrapper.style.left = x + '%';
     wrapper.style.bottom = b + '%';
@@ -115,7 +286,7 @@
     let img = null;
     if (frames.length) {
       img = document.createElement('img');
-      img.src = frames[0]; img.alt = ''; img.decoding = 'async'; img.loading = 'eager';
+      setSprite(img, frames[0]); img.alt = ''; img.decoding = 'async'; img.loading = 'eager';
       bob.appendChild(img);
     }
     if (a.label !== false) {
@@ -135,7 +306,7 @@
   function paintFx(s) {
     const fx = $('.toxi-fx'), has = (f) => s.fxList.includes(f);
     fx.className = 'toxi-fx' + s.fxList.map((f) => ' fx-' + f).join('');
-    fx.replaceChildren();
+    fx.textContent = '';
     if (has('monitores')) {
       const clock = document.createElement('b'); clock.className = 'toxi-clock'; clock.textContent = '21:45 HRS';
       fx.appendChild(clock);
@@ -201,19 +372,39 @@
   function paintScene() {
     const s = scenes[index], stage = $('.toxi-stage');
     stage.classList.remove('toxi-pan');
+    stage.dataset.scene = s.id;
+    if (NS.Arrival) NS.Arrival.show(s.arrival);
+    const live = Number.isInteger(s.arrival);
+    stage.classList.toggle('toxi-live', live);
+    overlay.classList.toggle('toxi-live-overlay', live);
+    document.body.classList.toggle('world-arrival', live);
+    stage.classList.toggle('toxi-travel', s.backgroundMotion === 'travel');
     stage.style.backgroundImage = s.backgrounds.length
       ? s.backgrounds.map((b) => 'url("' + b + '")').join(',')
       : 'linear-gradient(130deg,#102945,#070e22 60%,#202c46)';
     stage.classList.toggle('toxi-legend', s.fxList.includes('legend'));
     stage.classList.toggle('toxi-dialogo', s.layout === 'dialogo');
     stage.classList.toggle('toxi-sombras', s.layout === 'sombras');
-    stage.style.animationDuration = s.layout === 'dialogo' ? (s.durationMs + 600) + 'ms' : '';
+    stage.style.animationDuration = s.backgroundMotion === 'travel' ? s.durationMs + 'ms' :
+      s.layout === 'dialogo' ? (s.durationMs + 600) + 'ms' : '';
     $('.toxi-eyebrow').textContent = s.tag || 'LA TOXI FAMILIA';
     $('.toxi-title').textContent = s.title;
     actors = [];
+    // Conserva decodificadas solo la toma actual y la siguiente.
+    const keep = new Set([s, scenes[index + 1]].filter(Boolean).flatMap(scene =>
+      [...scene.backgrounds, ...scene.cast.flatMap(framesOf)]));
+    for (const key of preloaded.keys()) if (!keep.has(key)) preloaded.delete(key);
     preloadScene(s);
     preloadScene(scenes[index + 1]);
-    $('.toxi-cast').replaceChildren(...s.cast.map(actorElement));
+    const cast = $('.toxi-cast');
+    cast.textContent = '';
+    for (const a of s.cast.filter(a => a.perch)) {
+      const stall = document.createElement('i');
+      stall.className = 'toxi-market-stall'; stall.style.left = a.x + '%';
+      cast.appendChild(stall);
+    }
+    cast.append(...s.cast.map(actorElement));
+    fitContact();
     paintFx(s);
     $('.toxi-count').textContent = 'ESCENA ' + (index + 1) + ' / ' + scenes.length;
     $('.toxi-progress i').style.width = '0%';
@@ -255,11 +446,13 @@
   function close(finished) {
     if (!active) return;
     active = false;
+    if (NS.Arrival) NS.Arrival.show(null);
+    document.body.classList.remove('world-arrival');
     root.cancelAnimationFrame(frame);
     overlay.hidden = true;
     actors = [];
     preloaded.clear();
-    $('.toxi-cast').replaceChildren();
+    $('.toxi-cast').textContent = '';
     document.removeEventListener('keydown', onKey, true);
     const done = onDone; onDone = null;
     if (done) { done(!!finished); return; }
@@ -318,11 +511,16 @@
       }
     } else if (b) b.remove();
   }
-  /** Botones del menú: el epílogo aparece solo cuando ya se desbloqueó; la llegada al mar, cuando ya se vio. */
-  function refreshMenu(epilogueUnlocked, marineSeen) {
+  /** Botones del menú: epílogo, llegada al mar y transición urbana aparecen solo cuando ya se desbloquearon. */
+  function refreshMenu(epilogueUnlocked, marineSeen, guadalajaraSeen, parafallsSeen, espacioSeen) {
     // V58.6: etiquetas cortas (van en la franja de opciones del menú compacto).
     menuButton('btnEpilogo', '▶ ESCENA FINAL', !!epilogueUnlocked && SETS.epilogo.length > 0, () => play({ set: 'epilogo' }));
     menuButton('btnMarino', '▶ LLEGADA AL MAR', !!marineSeen && SETS.marino.length > 0, () => play({ set: 'marino' }));
+    menuButton('btnGuadalajara', '▶ TRANSICIÓN A GUADALAJARA', !!guadalajaraSeen && SETS.guadalajara.length > 0,
+      () => play({ set: 'guadalajara', look }));
+    menuButton('btnEspacio', '▶ LLEGADA A LA LUNA', !!espacioSeen && SETS.espacio.length > 0, () => play({ set: 'espacio' }));
+    menuButton('btnParafalls', '▶ PORTAL DE PARAFALLS', !!parafallsSeen && SETS.parafalls.length > 0,
+      () => play({ set: 'parafalls', finishLabel: '¡AL PARAFALLS!' }));
   }
   /** El menú avisa el vestuario elegido (lo usa la llegada al mar al repetirse desde el menú). */
   function setLook(value) { if (typeof value === 'string') look = value; }

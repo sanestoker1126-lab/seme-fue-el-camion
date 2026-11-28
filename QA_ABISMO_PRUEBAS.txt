@@ -1,0 +1,208 @@
+TAP version 13
+# Subtest: balizas marinas seguras, ancladas, activación y reintento real
+ok 1 - balizas marinas seguras, ancladas, activación y reintento real
+  ---
+  duration_ms: 16.886695
+  type: 'test'
+  ...
+# Subtest: gravedad: Nina cae y aterriza exactamente sobre la plataforma
+ok 2 - gravedad: Nina cae y aterriza exactamente sobre la plataforma
+  ---
+  duration_ms: 3.095768
+  type: 'test'
+  ...
+# Subtest: velocidad terminal acotada y sin atravesar plataformas delgadas
+ok 3 - velocidad terminal acotada y sin atravesar plataformas delgadas
+  ---
+  duration_ms: 1.408595
+  type: 'test'
+  ...
+# Subtest: salto completo ≈ 135 u y salto corto mucho menor (salto variable)
+ok 4 - salto completo ≈ 135 u y salto corto mucho menor (salto variable)
+  ---
+  duration_ms: 1.967565
+  type: 'test'
+  ...
+# Subtest: coyote time: se puede saltar poco después de salir del borde
+ok 5 - coyote time: se puede saltar poco después de salir del borde
+  ---
+  duration_ms: 0.468704
+  type: 'test'
+  ...
+# Subtest: buffer de salto: pulsar justo antes de aterrizar salta al tocar suelo
+ok 6 - buffer de salto: pulsar justo antes de aterrizar salta al tocar suelo
+  ---
+  duration_ms: 0.942024
+  type: 'test'
+  ...
+# Subtest: paso fijo: el resultado no depende de la tasa de refresco
+ok 7 - paso fijo: el resultado no depende de la tasa de refresco
+  ---
+  duration_ms: 1.662596
+  type: 'test'
+  ...
+# Subtest: muros sólidos: ni caminando ni con dash se atraviesan
+ok 8 - muros sólidos: ni caminando ni con dash se atraviesan
+  ---
+  duration_ms: 0.791068
+  type: 'test'
+  ...
+# Subtest: techo sólido: el salto se corta sin atravesarlo
+ok 9 - techo sólido: el salto se corta sin atravesarlo
+  ---
+  duration_ms: 0.685829
+  type: 'test'
+  ...
+# Subtest: plataformas de un sentido: se atraviesan desde abajo y se aterriza encima
+ok 10 - plataformas de un sentido: se atraviesan desde abajo y se aterriza encima
+  ---
+  duration_ms: 1.029756
+  type: 'test'
+  ...
+# Subtest: BAJAR atraviesa peldaños y tarimas, pero no la piedra
+ok 11 - BAJAR atraviesa peldaños y tarimas, pero no la piedra
+  ---
+  duration_ms: 0.746662
+  type: 'test'
+  ...
+# Subtest: tarimas móviles: Nina viaja con la tarima sin resbalar ni caer
+ok 12 - tarimas móviles: Nina viaja con la tarima sin resbalar ni caer
+  ---
+  duration_ms: 0.963286
+  type: 'test'
+  ...
+# Subtest: asistencia de escalón: se baja una escalera caminando
+ok 13 - asistencia de escalón: se baja una escalera caminando
+  ---
+  duration_ms: 0.902865
+  type: 'test'
+  ...
+# Subtest: toldo rebotador: lanza hacia arriba y anula la caída
+ok 14 - toldo rebotador: lanza hacia arriba y anula la caída
+  ---
+  duration_ms: 0.667863
+  type: 'test'
+  ...
+# Subtest: charco: reduce la fricción (patina más lejos)
+ok 15 - charco: reduce la fricción (patina más lejos)
+  ---
+  duration_ms: 1.037117
+  type: 'test'
+  ...
+# Subtest: dash: un dash aéreo por salto, recarga al aterrizar
+ok 16 - dash: un dash aéreo por salto, recarga al aterrizar
+  ---
+  duration_ms: 0.77263
+  type: 'test'
+  ...
+# Subtest: cajas rompibles: el dash las rompe; caminando bloquean
+ok 17 - cajas rompibles: el dash las rompe; caminando bloquean
+  ---
+  duration_ms: 0.645058
+  type: 'test'
+  ...
+# Subtest: estados de animación: un único estado por paso con prioridad
+ok 18 - estados de animación: un único estado por paso con prioridad
+  ---
+  duration_ms: 0.311858
+  type: 'test'
+  ...
+# Subtest: cuerda: se agarra en el aire, se columpia y al soltarla con SALTAR cruza un hueco de 340 u
+ok 19 - cuerda: se agarra en el aire, se columpia y al soltarla con SALTAR cruza un hueco de 340 u
+  ---
+  duration_ms: 23.690491
+  type: 'test'
+  ...
+# Subtest: el mar es completamente submarino: solo la isla está en seco y a la salida se llega nadando
+ok 20 - el mar es completamente submarino: solo la isla está en seco y a la salida se llega nadando
+  ---
+  duration_ms: 8.547003
+  type: 'test'
+  ...
+# Subtest: cuerdas para columpiarse en el mar, la Luna y la escuela; tirolesas en los cuatro mundos
+ok 21 - cuerdas para columpiarse en el mar, la Luna y la escuela; tirolesas en los cuatro mundos
+  ---
+  duration_ms: 54.288032
+  type: 'test'
+  ...
+# Subtest: el niño de las piedras está en los cuatro mundos (de buzo en el mar, de astronauta en la Luna)
+ok 22 - el niño de las piedras está en los cuatro mundos (de buzo en el mar, de astronauta en la Luna)
+  ---
+  duration_ms: 54.283495
+  type: 'test'
+  ...
+# Subtest: el pulpo infla y lanza tinta a Sofía cuando nada en su mar; el DASH la rompe; Poseidón es el jefe
+ok 23 - el pulpo infla y lanza tinta a Sofía cuando nada en su mar; el DASH la rompe; Poseidón es el jefe
+  ---
+  duration_ms: 9.378001
+  type: 'test'
+  ...
+# Subtest: atlas marinos: cada cuadro recortado se coloca dentro de su celda en su `origin` (no en `sourceCrop`)
+ok 24 - atlas marinos: cada cuadro recortado se coloca dentro de su celda en su `origin` (no en `sourceCrop`)
+  ---
+  duration_ms: 2.966694
+  type: 'test'
+  ...
+# Subtest: cinemática de la llegada al mar: presente en la isla, recuerdo con Estoker y los peligros del nivel
+ok 25 - cinemática de la llegada al mar: presente en la isla, recuerdo con Estoker y los peligros del nivel
+  ---
+  duration_ms: 3.715178
+  type: 'test'
+  ...
+# Subtest: la llegada al mar se ve la primera vez que empieza la misión 3 y se repite desde el menú
+ok 26 - la llegada al mar se ve la primera vez que empieza la misión 3 y se repite desde el menú
+  ---
+  duration_ms: 0.255764
+  type: 'test'
+  ...
+# Subtest: el validador del guion rechaza reparto y diálogos inválidos
+ok 27 - el validador del guion rechaza reparto y diálogos inválidos
+  ---
+  duration_ms: 0.985089
+  type: 'test'
+  ...
+# Subtest: al encontrar un enemigo nuevo maúlla el otro gato; las gatas ayudan con animación propia
+ok 28 - al encontrar un enemigo nuevo maúlla el otro gato; las gatas ayudan con animación propia
+  ---
+  duration_ms: 2.256988
+  type: 'test'
+  ...
+# Subtest: el mar tiene corrientes en el agua abierta (más en DIFÍCIL); la Luna, asteroides; los demás mundos, ninguno
+ok 29 - el mar tiene corrientes en el agua abierta (más en DIFÍCIL); la Luna, asteroides; los demás mundos, ninguno
+  ---
+  duration_ms: 135.748233
+  type: 'test'
+  ...
+# Subtest: corriente fuerte: arrastra a Sofía más rápido de lo que nada; en calma no la mueve; se sale nadando abajo
+ok 30 - corriente fuerte: arrastra a Sofía más rápido de lo que nada; en calma no la mueve; se sale nadando abajo
+  ---
+  duration_ms: 38.025586
+  type: 'test'
+  ...
+# Subtest: la corriente avisa antes de soplar (fase de aviso) y suena al empezar cerca de Sofía
+ok 31 - la corriente avisa antes de soplar (fase de aviso) y suena al empezar cerca de Sofía
+  ---
+  duration_ms: 6.366268
+  type: 'test'
+  ...
+# Subtest: asteroide: mira de aviso de 1 s; si Sofía se queda en la mira la golpea, si se aparta no
+ok 32 - asteroide: mira de aviso de 1 s; si Sofía se queda en la mira la golpea, si se aparta no
+  ---
+  duration_ms: 38.875681
+  type: 'test'
+  ...
+# Subtest: el render dibuja corrientes y asteroides, y el audio tiene sus sonidos
+ok 33 - el render dibuja corrientes y asteroides, y el audio tiene sus sonidos
+  ---
+  duration_ms: 3.216299
+  type: 'test'
+  ...
+1..33
+# tests 33
+# suites 0
+# pass 33
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 401.48341

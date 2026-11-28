@@ -1,0 +1,16 @@
+frame,x,y,w,h,pivot_x,pivot_y,direction,sha256_rgba,source
+idle,10,10,115,206,58.0,206.0,right,7a6d381fb291f3829e58e3f66ec5a949e6a993f9643b8e3274dad3ec5f952103,assets/player/astronauta/idle.webp
+walk_a,145,10,140,202,70.0,202.0,right,06390576dd5c488a976604993377a234eb74d945cf11195b8284b7d695bb7021,assets/player/astronauta/walk_a.webp
+walk_b,305,10,131,202,66.0,202.0,right,73cab180fb09c5bf06825ec189812a0d8384bc7675b5395907aa8c23663dde60,assets/player/astronauta/walk_b.webp
+jump,10,236,149,181,74.0,181.0,right,ebfced1aa32a5a6dfb2997b42e912389f9dce7521ee6b77ed1a2e0ba8bf2f416,assets/player/astronauta/jump.webp
+rise,456,10,132,195,66.0,195.0,right,b2b925cca761fe7e11f2d4bfe7275fc2bfcf08ab13288302864783c1e03ee660,assets/player/astronauta/rise.webp
+fall,774,10,145,192,72.0,192.0,right,5c4483b0dd8ce1e08384efbfc71cf0fca600e87c0d93f5fb71838563dda643ea,assets/player/astronauta/fall.webp
+land,340,437,184,165,92.0,165.0,right,5e4e316ae70ac27785670c76c84a792b15dea5ee65f6ebb1d616de561bed06fc,assets/player/astronauta/land.webp
+dash,608,10,146,192,73.0,192.0,right,12a61cd1b61366f6a3642d9f32f748d9cd65d2374df23a15bea9cbbfe4ce1ba4,assets/player/astronauta/dash.webp
+kick_1,179,236,155,178,78.0,178.0,right,05989bf33c21a32bd7b354b09a3d6b4d85859760e6670c1e23073347c77f688b,assets/player/astronauta/kick_1.webp
+kick_2,354,236,157,174,78.0,174.0,right,38d8da3eca70bda0f4abd9cb78495402dc1846dde4813401a26af4cef656bc70,assets/player/astronauta/kick_2.webp
+hurt,531,236,139,174,70.0,174.0,right,710ab8c4fd0d8a81abd193cdc10a2b6322296a403904a129bfd0a2fe3cdebd03,assets/player/astronauta/hurt.webp
+down,10,437,142,169,71.0,169.0,right,efd0a004fed54880fb3b46189bd87ff9cfc136d57bdbef179d6488e365900c50,assets/player/astronauta/down.webp
+victory_1,690,236,132,174,66.0,174.0,right,66738dc84613de75ea23c916360a89f172dcce14ed418e83a19f3324593cd447,assets/player/astronauta/victory_1.webp
+victory_2,172,437,148,168,74.0,168.0,right,45183d7ef78e63e46035098a7e2b405a6b1790954b70ec040fca5f91b581b8df,assets/player/astronauta/victory_2.webp
+victory_3,842,236,157,169,78.0,169.0,right,a35d9fbd79e4e9b42754ec4214f02ff79f11700c853cf6a1b0e7c205b3959f66,assets/player/astronauta/victory_3.webp

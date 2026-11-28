@@ -1,0 +1,17 @@
+frame,x,y,w,h,pivot_x,pivot_y,direction,sha256_rgba,source
+idle_00,400,10,162,167,81.0,167.0,right,5f14939d678c6b0cb6a038b8d36be3af43d412440f4e27dc8c958b6b3c65de3c,assets/enemies/nino_espacial/nino_espacial_atlas_rgba.png:0
+idle_01,761,10,156,167,78.0,167.0,right,4fa3c3b736e8ab2dd8478d71aaefc6e06615598ac431bb8327b729ca5e26c29a,assets/enemies/nino_espacial/nino_espacial_atlas_rgba.png:1
+idle_02,10,197,156,167,78.0,167.0,right,a04b356ab33193cdcc69fb47120ce67134524d36c77ec625d8a8d30458a4ed29,assets/enemies/nino_espacial/nino_espacial_atlas_rgba.png:2
+idle_03,582,10,159,167,80.0,167.0,right,bdaa2c854cdcfbad919f7e4c7f4e2453981d5790db2e19a27ff7e9cec47ad9de,assets/enemies/nino_espacial/nino_espacial_atlas_rgba.png:3
+caminar_04,186,197,151,167,76.0,167.0,right,69df6ef9ac5f698e58819875c662fb4929a377378315324ee621292ed6625f8a,assets/enemies/nino_espacial/nino_espacial_atlas_rgba.png:4
+caminar_05,523,197,143,167,72.0,167.0,right,92eb2236cbd8e95c7a2f9bf2352d952c270a0df25582fe682123ee6e52c20246,assets/enemies/nino_espacial/nino_espacial_atlas_rgba.png:5
+caminar_07,357,197,146,167,73.0,167.0,right,45f6e57c6b490cfb2dc2e6d913281e8c30fa411566ea4c0888cb1db515430369,assets/enemies/nino_espacial/nino_espacial_atlas_rgba.png:7
+arrojar_piedra_11,213,10,167,167,84.0,167.0,right,7c12a515280ff36f95557d154b4c4af0b300b31532b3779e9d843c4fedf6e624,assets/enemies/nino_espacial/nino_espacial_atlas_rgba.png:11
+arrojar_piedra_14,10,10,183,167,92.0,167.0,right,18e77b7914115576bdadb0a129bba0abeea75c6b986d4f55f636522f36936c34,assets/enemies/nino_espacial/nino_espacial_atlas_rgba.png:14
+recibir_dano_16,686,197,167,156,84.0,156.0,right,490abc845f64b498c5510371f89857ccc78ec968dc40313e2d4bbad7458d04bd,assets/enemies/nino_espacial/nino_espacial_atlas_rgba.png:16
+recibir_dano_17,189,384,159,156,80.0,156.0,right,0635917622100ec9df61075463df48c04f381c16b6aeaa63115d64e55c969ce7,assets/enemies/nino_espacial/nino_espacial_atlas_rgba.png:17
+recibir_dano_18,368,384,156,156,78.0,156.0,right,7037d497a9287f499289fb8f05125eaf7ec7e50a1faaee040d045caa5d7cd942,assets/enemies/nino_espacial/nino_espacial_atlas_rgba.png:18
+recibir_dano_19,544,384,156,156,78.0,156.0,right,42053a95cffb9fcec059fd665fbeb32c872d9bebe54434e78f5a9a4e642e3d2c,assets/enemies/nino_espacial/nino_espacial_atlas_rgba.png:19
+morir_21,10,384,159,156,80.0,156.0,right,a6cb61940186a8ac4a0cb8edb242cbc652da01cd9fbfa1ea0897fbb61e871152,assets/enemies/nino_espacial/nino_espacial_atlas_rgba.png:21
+morir_22,720,384,183,148,92.0,148.0,right,4a394e0046cb3b0931708d3bbb6f244926fe38f855f7f0d09400ae49e70965a5,assets/enemies/nino_espacial/nino_espacial_atlas_rgba.png:22
+morir_23,10,560,188,109,94.0,109.0,right,629746f4b8d833ed11b121d06399ab1e17f85d047f48228a2b423f80e9da8334,assets/enemies/nino_espacial/nino_espacial_atlas_rgba.png:23

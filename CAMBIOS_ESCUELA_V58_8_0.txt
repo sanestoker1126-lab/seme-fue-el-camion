@@ -1,0 +1,8 @@
+¡SE ME FUE EL CAMIÓN! — V58.8.0 ESCUELA
+Base: V58.7.7 ABISMO. Intervención específica en la misión 1, conservando los otros tres mundos.
+
+Tres tramos: azoteas y aulas, patio, conserjería y portón. Fondos originales tratados y conservados a sus dimensiones; nuevos interiores de archivo, laboratorio y conserjería; atlas de ocho señales con metadatos; nuevas texturas de calle, fachada y camión recortado al límite de sus ruedas. Luna y Morita tienen escala aumentada en la escuela. Lluvia ligera al final.
+
+Final: Maestro Enojón pelea sobre el suelo sólido de la calle. El camión Ruta 6 no permite abordar hasta vencer al jefe. Punto de reaparición antes del jefe, que reinicia el combate al reintentar. Al vencer y abordar se desbloquea Guadalajara. Los dos jefes anteriores conservan su función y no se exigen para abordar.
+
+QA: 54 pruebas focalizadas aprobadas, 12 renders Canvas locales sin errores, 469 entradas de precarga verificadas. El bot del jefe se ejecutó con 30 vidas para probar las acciones y no certifica dificultad normal. No se ejecutó una partida manual completa en un teléfono ni la suite histórica completa. No es un redibujo completo de todos los escenarios, ni incluye nuevas animaciones articuladas de cada personaje. El acabado artístico y la dificultad requieren prueba humana. No se han publicado estos cambios en GitHub.

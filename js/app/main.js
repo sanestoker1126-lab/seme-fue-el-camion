@@ -7,7 +7,7 @@
   const C = NS.CONFIG, ST = NS.STORY, R = NS.Render;
   const DT = C.phys.dt || 1 / 60, MAX_STEPS = 5;
   const params = new URLSearchParams(location.search);
-  const QA = params.has('qa'), MANUAL = params.get('manual') === '1';
+  const QA = params.has('qa'), MANUAL = QA && params.get('manual') === '1';
 
   /* ---------- Almacenamiento (opcional: algunos visores lo bloquean) ---------- */
   const store = {
@@ -66,14 +66,20 @@
   const cinematicSeen = () => !opt.cinematics || store.get('camion-cinematic-seen', '0') === '1';
   // V58.2: la llegada al mar (Sofía asombrada + recuerdo con su papito Estoker) se ve la primera vez que empieza la misión 3.
   const MARINE_CINE_KEY = 'camion-cinematic-marino-seen';
+  const GDL_CINE_KEY = 'camion-cinematic-guadalajara-seen';
+  const SPACE_CINE_KEY = 'camion-cinematic-espacio-seen';
+  const PARAFALLS_CINE_KEY = 'camion-cinematic-parafalls-seen';
   const marineCineSeen = () => store.get(MARINE_CINE_KEY, '0') === '1';
-  const refreshCineMenu = () => { if (NS.ToxiPlayer) NS.ToxiPlayer.refreshMenu(!!G.save.epilogue, marineCineSeen()); };
+  const guadalajaraCineSeen = () => store.get(GDL_CINE_KEY, '0') === '1';
+  const parafallsCineSeen = () => store.get(PARAFALLS_CINE_KEY, '0') === '1';
+  const refreshCineMenu = () => { if (NS.ToxiPlayer) NS.ToxiPlayer.refreshMenu(!!G.save.epilogue, marineCineSeen(), guadalajaraCineSeen(), parafallsCineSeen(), store.get(SPACE_CINE_KEY, '0') === '1'); };
   // El reproductor carga después de este archivo: al estar listo recibe el vestuario y pinta los botones del menú.
   root.addEventListener('camion:toxiplayer-ready', () => {
     if (NS.ToxiPlayer.setLook) NS.ToxiPlayer.setLook(opt.ninaLook);
     refreshCineMenu();
   });
   const FOE_TIPS = {
+    guardian: 'El guardián levanta el brazo antes de cargar. Salta o espera a que se canse.',
     rat: 'RATA · cae encima, patéala o usa DASH',
     dog: 'PERRO · avisa antes de embestir: salta y contraataca',
     bravo: 'PERRO BRAVO · el DASH rebota: písalo o patéalo cuando se maree',
@@ -161,7 +167,7 @@
   }
 
   function resetProgress() {
-    for (const key of [SAVE_KEY, 'camion-v35-save', 'camion-v34-save', 'camion-v33-save', 'camion-unlocked', 'camion-best-score', 'camion-descent-best', 'camion-cinematic-seen', MARINE_CINE_KEY]) {
+    for (const key of [SAVE_KEY, 'camion-v35-save', 'camion-v34-save', 'camion-v33-save', 'camion-unlocked', 'camion-best-score', 'camion-descent-best', 'camion-cinematic-seen', MARINE_CINE_KEY, GDL_CINE_KEY, SPACE_CINE_KEY, PARAFALLS_CINE_KEY]) {
       try { root.localStorage.removeItem(key); } catch (_) { /* sin almacenamiento */ }
     }
     for (let i = 0; i < 40; i++) { try { root.localStorage.removeItem('camion-boss-cinematic-v38-scene-' + i); } catch (_) { /* nada */ } }
@@ -176,19 +182,30 @@
   function startRun(mission, tramo, skipIntro) {
     audio.ensure();
     mission = mission | 0; tramo = tramo | 0;
+    const practice = !!opt.freeSelect; // acceder a cualquier tramo no falsifica el progreso ni fuerza práctica
     const go = () => {
-      store.set('camion-cinematic-seen', '1');
+      if (!practice && mission === 0 && tramo === 0) store.set('camion-cinematic-seen', '1');
       input.releaseAll(); ui.clearOverlays();
-      G.newRun({ mission, startTramo: tramo, difficulty: opt.difficulty });
+      if(mission===2){bossCinematicSeen.delete('practice:2');bossCinematicSeen.delete('story:2');}
+      G.newRun({ mission, startTramo: tramo, difficulty: opt.difficulty, practice });
       afterStart();
     };
     if (!skipIntro && mission === 0 && tramo === 0 && !cinematicSeen()) {
       if (NS.ToxiPlayer && NS.ToxiPlayer.play({ set: 'prologo', onDone: go })) return;
       ui.showCinematic(go);
+    } else if (!skipIntro && mission === 1 && tramo === 0 && opt.cinematics && !guadalajaraCineSeen() && NS.ToxiPlayer) {
+      const arrive = () => { if (!practice) store.set(GDL_CINE_KEY, '1'); refreshCineMenu(); go(); };
+      if (!NS.ToxiPlayer.play({ set: 'guadalajara', look: 'uniforme', finishLabel: '¡AL CENTRO!', onDone: arrive })) go();
     } else if (!skipIntro && mission === 2 && tramo === 0 && opt.cinematics && !marineCineSeen() && NS.ToxiPlayer) {
       // Terminarla o saltarla cuenta como vista (se repite desde el menú) y en ambos casos empieza la misión.
-      const dive = () => { store.set(MARINE_CINE_KEY, '1'); refreshCineMenu(); go(); };
+      const dive = () => { if (!practice) store.set(MARINE_CINE_KEY, '1'); refreshCineMenu(); go(); };
       if (!NS.ToxiPlayer.play({ set: 'marino', look: opt.ninaLook, finishLabel: '¡AL AGUA!', onDone: dive })) go();
+    } else if (!skipIntro && mission === 3 && tramo === 0 && opt.cinematics && store.get(SPACE_CINE_KEY, '0') !== '1' && NS.ToxiPlayer) {
+      const land = () => { if (!practice) store.set(SPACE_CINE_KEY, '1'); refreshCineMenu(); go(); };
+      if (!NS.ToxiPlayer.play({ set: 'espacio', finishLabel: '¡A LA ESTACIÓN!', onDone: land })) go();
+    } else if (!skipIntro && mission === 4 && tramo === 0 && opt.cinematics && !parafallsCineSeen()) {
+      const enterParafalls = () => { if (!practice) store.set(PARAFALLS_CINE_KEY, '1'); refreshCineMenu(); go(); };
+      if (!NS.ToxiPlayer || !NS.ToxiPlayer.play({ set: 'parafalls', finishLabel: '¡AL PARAFALLS!', onDone: enterParafalls })) go();
     } else go();
   }
   function playStory() {
@@ -203,7 +220,7 @@
     if (G.state !== 'menu') return;
     const detail = event && event.detail || {};
     const m = detail.mission, tramo = detail.tramo;
-    if (Number.isInteger(m) && m >= 0 && m < 4 &&
+    if (Number.isInteger(m) && m >= 0 && m < ((NS.LEVELS && NS.LEVELS.MISSIONS && NS.LEVELS.MISSIONS.length) || 0) &&
         Number.isInteger(tramo) && tramo >= 0 && tramo < LEVEL_COUNT) {
       startRun(m, tramo, true);
     }
@@ -213,6 +230,8 @@
     seenFoeKinds.clear();
     ui.show(null);
     acc = 0;
+    R.enterWorld(G.missionId);
+    R.preload(R.entryArt(G)).catch(() => {});
     // V58.3: primero el tema (para que el mar arranque directo con su banda sonora) y luego la música.
     audio.setTramo(G.tramo, !!G.room, sceneTheme(G.tramo));
     if (opt.music) audio.start();
@@ -274,7 +293,7 @@
         case 'shieldBreak': audio.sfx('hurt'); break;
         case 'dying': audio.stop(); audio.sfx('lose'); break;
         case 'gameover': ui.showGameOver(e, G); break;
-        case 'victoryStart': audio.stop(); audio.sfx('honk'); audio.sfx('motor'); audio.sfx('win'); audio.sfx('luna'); audio.sfx('morita'); break;
+        case 'victoryStart': audio.stop(); if (G.mission < 2) { audio.sfx('honk'); audio.sfx('motor'); } audio.sfx('win'); audio.sfx('luna'); audio.sfx('morita'); break;
         case 'victory': ui.showVictory(e); refreshCineMenu(); break;
         case 'gem': audio.sfx('gem'); break;
         case 'power': audio.sfx('power'); break;
@@ -313,22 +332,24 @@
             if ((e.foe.scene | 0) < G.tramo) break; // jefe de un tramo ya superado que asoma arriba: sin aviso
             e.foe.bossIntroStart = animT;
             const sceneIndex = e.foe.scene | 0;
-            const seenKey = 'camion-boss-cinematic-v38-scene-' + sceneIndex;
-            const firstTwo = opt.cinematics && sceneIndex < 2 && !bossCinematicSeen.has(sceneIndex) && store.get(seenKey, '0') !== '1';
-            if (firstTwo) {
-              bossCinematicSeen.add(sceneIndex);
+            const introIndex = ui.bossCinematicIndex(e.foe.kind);
+            const seenKey = 'camion-boss-cinematic-v38-scene-' + introIndex;
+            const sessionKey = (G.run.practice ? 'practice:' : 'story:') + introIndex;
+            const allowCine = sceneIndex < 2 || e.foe.kind === 'poseidon';
+            const firstIntro = introIndex != null && opt.cinematics && allowCine &&
+              !bossCinematicSeen.has(sessionKey) && (e.foe.kind==='poseidon'||store.get(seenKey, '0') !== '1');
+            const showing = firstIntro && ui.showBossCinematic(e.foe, () => {
+              if (!G.run.practice) store.set(seenKey, '1');
+              input.releaseAll(); ui.show(null); G.resume(); audio.resume();
+            });
+            if (showing) {
+              bossCinematicSeen.add(sessionKey);
               input.releaseAll(); G.shakeT = 0; G.pause(); audio.pause();
-              audio.bossCue(e.foe.kind, 'intro', sceneIndex);
-              ui.showBossCinematic(e.foe, () => {
-                store.set(seenKey, '1'); input.releaseAll(); ui.show(null); G.resume();
-                audio.resume();
-              });
             } else {
-              bossCinematicSeen.add(sceneIndex);
               G.shakeT = Math.max(G.shakeT || 0, 0.1);
-              audio.bossCue(e.foe.kind, 'intro', sceneIndex);
               ui.toast((G.world.scenes[e.foe.scene]?.def?.final ? 'JEFE FINAL: ' : 'JEFE: ') + e.foe.bossName, 4, 2.5);
             }
+            audio.bossCue(e.foe.kind, 'intro', sceneIndex);
           } else if (e.foe && !seenFoeKinds.has(e.foe.kind)) {
             // V50: la primera vez que aparece cada tipo de enemigo se explica cómo vencerlo (antes, cada
             // enemigo nuevo mostraba "¡CUIDADO, ENEMIGO!" y sonaba como si hubieras tomado un cristal).
@@ -347,19 +368,73 @@
           } else { audio.sfx('stomp'); audio.sfx('otroGato'); }
           break;
         case 'sign': ui.sign(e.sign.text); break;
-        case 'busSeen': ui.toast(ST.MESSAGES.busWaiting, 3, 3.2); audio.sfx('honk'); break;
+        case 'busSeen': {
+          const goals = { submarino: 'LA ESCOTILLA ESTÁ CERCA', espacial: 'EL MÓDULO ESPERA EN LA BASE', parafalls: 'EL PORTAL ESTÁ EN LA REPISA CIRCULAR' };
+          ui.toast(goals[G.missionId] || ST.MESSAGES.busWaiting, 3, 3.2);
+          if (G.mission < 2) audio.sfx('honk');
+          break;
+        }
         case 'rescued': ui.toast('VUELVES A LA ÚLTIMA PARADA', 2); break;
         default: break;
       }
     }
   }
 
+  // La toma de llegada se dibuja en el mismo Canvas que la partida. El ensayo de cámara
+  // usa un estado de práctica independiente para que un replay nunca altere el guardado.
+  let landing = null, lastMenuPaint = -Infinity;
+  NS.Arrival = {
+    show(mission) {
+      if (!Number.isInteger(mission)) { landing = null; return; }
+      const shot = NS.Game.createGame({});
+      shot.newRun({ mission, practice: true, difficulty: opt.difficulty });
+      shot.setView(root.innerWidth, root.innerHeight);
+      const cp = shot.checkpoint, floor = cp.plat;
+      const direction = cp.x - floor.x1 >= floor.x2 - cp.x ? 1 : -1;
+      const origin = NS.util.clamp(cp.x - direction * 85, floor.x1 + 17, floor.x2 - 17);
+      landing = { shot, origin, direction, elapsed: 0 };
+      R.enterWorld(shot.missionId);
+      R.preload(R.entryArt(shot)).catch(() => {});
+      paintLanding(0);
+    }
+  };
+  function paintLanding(dt) {
+    const { shot, origin, direction } = landing, cp = shot.checkpoint, p = shot.P;
+    const floor = cp.plat, t = landing.elapsed += dt;
+    const reduced = root.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const progress = reduced ? 1 : Math.min(1, t / 1.7);
+    const ease = progress * progress * (3 - 2 * progress);
+    p.x = origin + (cp.x - origin) * ease; p.y = floor.y - p.h / 2;
+    p.face = direction; p.vx = reduced ? 0 : (cp.x - origin) * 6 * progress * (1 - progress) / 1.7;
+    p.state = Math.abs(p.vx) > 4 ? 'run' : 'idle'; p.animT = p.stateT = reduced ? 0 : t;
+    for (const [name, side] of [['luna', -1], ['morita', 1]]) {
+      const cat = shot.companions.agents[name];
+      cat.x = NS.util.clamp(p.x + side * 44, floor.x1 + 9, floor.x2 - 9);
+      cat.y = floor.y; cat.moving = p.state === 'run'; cat.face = direction;
+    }
+    const v = shot.view, b = shot.world.bounds;
+    shot.cam.x = v.w >= b.x2 - b.x1 ? (b.x1 + b.x2 - v.w) / 2 :
+      NS.util.clamp(cp.x - v.w / 2, b.x1, b.x2 - v.w);
+    // En retrato se acerca el plano a la superficie para que el mural ocupe la toma.
+    const footRatio = v.pxW < v.pxH && !shot.world.shore ? .51 : .64;
+    shot.cam.y = cp.y - v.h * footRatio;
+    shot.world.t = reduced ? 0 : t;
+    R.draw(shot, shot.world.t);
+  }
+
   /* ---------- Bucle ---------- */
   let acc = 0, last = performance.now(), animT = 0, errors = 0, hudT = 0, qAcc = 0, qN = 0, quality = 1;
   function frame(now) {
-    const real = Math.min(0.1, Math.max(0, (now - last) / 1000));
+    const frameElapsed = Math.max(0, (now - last) / 1000);
+    const real = Math.min(0.1, frameElapsed);
     last = now;
     try {
+      if (NS.ToxiPlayer && NS.ToxiPlayer.active) {
+        acc = 0; qAcc = 0; qN = 0;
+        if (landing) paintLanding(real);
+        root.requestAnimationFrame(frame);
+        return;
+      }
       if (input.consumePause()) togglePause();
       if (!MANUAL) {
         acc += real;
@@ -373,7 +448,9 @@
       tickFps(real);
       hudT -= real;
       if (hudT <= 0) { ui.hud(G); hudT = 0.1; }
-      R.draw(G, animT);
+      if (G.state !== 'menu' || now - lastMenuPaint >= 90) {
+        R.draw(G, animT); lastMenuPaint = now;
+      }
     } catch (err) {
       errors++;
       console.error(err);
@@ -381,18 +458,18 @@
     }
     // Resolución adaptativa: si el promedio de fotograma pasa de ~21 ms (menos de ~47 fps) baja la calidad; si va sobrado, la sube.
     if (!MANUAL && G.state === 'playing') {
-      qAcc += real; qN++;
+      qAcc += Math.min(.25, frameElapsed); qN++;
       if (qN >= 36) {
         const avg = qAcc / qN;
-        if (avg > 0.021 && quality > 0.5) { quality = Math.max(0.5, quality - 0.12); R.setQuality(quality); } // V51: piso 50 % (antes 60 %)
-        else if (avg < 0.0145 && quality < 1) { quality = Math.min(1, quality + 0.08); R.setQuality(quality); }
+        if (avg > 0.021 && quality > 0.55) { quality = Math.max(0.55, quality - 0.10); R.setQuality(quality); } // V51: piso 50 % (antes 60 %)
+        else if (avg < 0.0145 && quality < 1) { quality = Math.min(1, quality + 0.04); R.setQuality(quality); }
         qAcc = 0; qN = 0;
       }
     }
     root.requestAnimationFrame(frame);
   }
 
-  function resize() { R.resize(); G.setView(root.innerWidth, root.innerHeight); }
+  function resize() { R.resize(); G.setView(root.innerWidth, root.innerHeight); if (landing) landing.shot.setView(root.innerWidth, root.innerHeight); }
   let fpsT = 0, fpsN = 0;
   function tickFps(real) {
     if (!opt.fps) return;
@@ -406,7 +483,7 @@
       input.releaseAll();
       if (G.state === 'playing' || G.state === 'transition') { G.pause(); ui.show('pausePanel'); }
       audio.suspend();
-    } else last = performance.now();
+    } else { last = performance.now(); acc = 0; qAcc = 0; qN = 0; }
   });
 
   /* ---------- Carga ---------- */
@@ -414,38 +491,29 @@
     ui.setLoading('CARGANDO ESCENARIOS…', false);
     applyOptions();
     // Fondo del menú: la azotea del tramo 1, congelada.
-    G.newRun({ startTramo: 0, difficulty: opt.difficulty });
+    G.newRun({ mission: 0, practice: true, startTramo: 0, difficulty: opt.difficulty });
     G.state = 'menu'; G.drainEvents();
     ui.paintMenu(G, opt); ui.show('menu');
     refreshCineMenu();
     root.requestAnimationFrame(frame);
-    const S = NS.LEVELS.LEVEL_SEQUENCE;
-    const essential = [
-      ...S.map((d) => d.file).filter(Boolean), ...S.map((d) => d.overlay).filter(Boolean), 'assets/backgrounds/atlas_parallax_city.webp',
-      'assets/companions/luna.png', 'assets/companions/morita.png', 'assets/companions/luna_shoulder.png', 'assets/companions/morita_shoulder.png',
-      ...Object.values(R.COMPANIONS).flatMap((c) => [...c.idle, ...c.walk]),
-      'assets/vehicles/camion_frame_01.png', 'assets/vehicles/camion_frame_02.png', 'assets/vehicles/camion_frame_03.png', 'assets/vehicles/camion_frame_04.png', 'assets/audio/motor_camion_guadalajara_v25.mp3', 'assets/audio/luna_ronroneo_v31.mp3', 'assets/audio/morita_ronroneo_v31.mp3', 'assets/audio/luna_alerta_v31.mp3', 'assets/audio/morita_alerta_v31.mp3', 'assets/audio/sofia_otro_gato_usuario_v38.mp3',
-      // V50: Sofía revisada, enemigos limpios y texturas de plataformas.
-      ...Object.values(R.NINA_VARIANT_DIR || { d: R.NINA_DIR }).flatMap((dir) => [...new Set(Object.values(R.NINA).flat())].map((f) => dir + f + '.png')),
-      ...Object.keys(NS.ART.SKINS).map((k) => 'assets/platforms/' + k + '.png'),
-      ...(NS.ART.SWIM ? [NS.ART.SWIM.sheet] : []),   // V52: atlas de nado
-      // V53: fondos de los mundos nuevos y gatitas submarinas.
-      'assets/player/sofia/sofia_submarina_complementaria.png',
-      ...(R.backdropUrls ? R.backdropUrls() : []),   // V58: fondos del ancho del mundo, mar y órbita
-      ...Object.values(R.COMPANIONS_SUB || {}).flatMap((c) => [...c.idle, ...c.walk, c.shoulder])];
-    for (const [kind, E] of Object.entries(NS.ART.ENEMY)) for (const f of Object.keys(E.frames)) essential.push('assets/enemies/v50/' + kind + '/' + f + (R.enemyExt ? R.enemyExt(kind) : '.png'));
-    if (R.castUrls) essential.push(...R.castUrls());   // V58.1: Sofía y gatitas astronautas, niño con traje
-    if (R.secretUrls) essential.push(...R.secretUrls());   // V58.7: enemigos secretos, jefes nuevos y zonas secretas
+    R.enterWorld(G.missionId);
+    const essential = R.entryArt(G);
     let timer;
     const res = await Promise.race([R.preload(essential), new Promise((r) => { timer = setTimeout(() => r(null), 1500); })]);
     clearTimeout(timer);
     ui.setLoading('JUGAR HISTORIA', true);
+    prepareOffline();
     if (!res) ui.toast('Algunos gráficos terminarán de cargar durante la partida.', 2, 3);
     else if (res.slice(0, 3).some((ok) => !ok)) ui.toast('No se pudo cargar todo el arte: extrae el ZIP completo con la carpeta assets.', 5, 6);
   }
 
   root.addEventListener('error', (e) => { if (errors++ < 4) ui.toast('Error: ' + (e.message || 'desconocido'), 9, 5); });
-  if ('serviceWorker' in navigator && /^https?:/.test(location.protocol) && !QA) navigator.serviceWorker.register('sw.js').catch(() => {});
+  function prepareOffline() {
+    if (!('serviceWorker' in navigator) || !/^https?:/.test(location.protocol) || QA) return;
+    const install = () => navigator.serviceWorker.register('sw.js').catch(() => {});
+    if (root.requestIdleCallback) root.requestIdleCallback(install, { timeout: 2000 });
+    else root.setTimeout(install, 450);
+  }
 
   if (QA) {
     root.CAMION_QA = {

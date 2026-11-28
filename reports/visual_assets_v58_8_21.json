@@ -1,0 +1,266 @@
+[
+  {
+    "world": "escuela",
+    "path": "assets/scenes/school_pro/01_aulas_superiores.webp",
+    "size": [
+      1501,
+      2496
+    ],
+    "beforeBytes": 838388,
+    "afterBytes": 704652,
+    "beforeSHA256": "246280263423f9a7e419af30bc8f7f2877cf19704d547e293e741d6740212857",
+    "afterSHA256": "0e80ce22bd73f5ecd30d4ad2167a3a8859614709000cbb748a607d1559af11ab"
+  },
+  {
+    "world": "escuela",
+    "path": "assets/scenes/school_pro/02_patio_escolar.webp",
+    "size": [
+      1476,
+      2496
+    ],
+    "beforeBytes": 1153344,
+    "afterBytes": 985216,
+    "beforeSHA256": "c8b03b20dd4a8b37ecfb0ca911da5467506e8f29280abb97957084e4dd0d86de",
+    "afterSHA256": "40b2e8252c800b753199b94aaf19601587247826d6439a0eb2a039a071130929"
+  },
+  {
+    "world": "escuela",
+    "path": "assets/scenes/school_pro/03_conserjeria_entrada.webp",
+    "size": [
+      1521,
+      2496
+    ],
+    "beforeBytes": 1109340,
+    "afterBytes": 915338,
+    "beforeSHA256": "540a6a1a05e70d9a0ebfc07f3249b673068525f839c783d4cc5e6bd369407447",
+    "afterSHA256": "760e4901edf3cb5f41e57e16c261ef7be4c10098b34f48f53b78a6e79320e1d1"
+  },
+  {
+    "world": "guadalajara",
+    "path": "assets/scenes/guadalajara_pro_v2/bg_centro_historico_pro_v2.webp",
+    "size": [
+      1536,
+      2504
+    ],
+    "beforeBytes": 971302,
+    "afterBytes": 1011388,
+    "beforeSHA256": "bc0aa2026b5f28aefe74ff06b392966d36e13f110c16ada0dee73bcfecec3369",
+    "afterSHA256": "5f6c704940605ff6d8786bb15eca7bd181bb60a3d03d80beba4d3646fbd8e9d3"
+  },
+  {
+    "world": "guadalajara",
+    "path": "assets/scenes/guadalajara_pro_v2/bg_guadalajara_pro_v2.webp",
+    "size": [
+      1920,
+      540
+    ],
+    "beforeBytes": 480314,
+    "afterBytes": 501444,
+    "beforeSHA256": "8799d75f4c8b46c80479f9fce6bc8ef642ef88ab631360ce13d772ca4d6ae59c",
+    "afterSHA256": "29d453898eadcfa8d3c1e48f5bb48bbe2e66f125f164d5feef81ca8b3ff80410"
+  },
+  {
+    "world": "guadalajara",
+    "path": "assets/scenes/guadalajara_pro_v2/bg_portales_pro_v2.webp",
+    "size": [
+      1536,
+      2504
+    ],
+    "beforeBytes": 1295540,
+    "afterBytes": 1346320,
+    "beforeSHA256": "83b80b244513c7be410eb11d0516c9f7243d8710167ce3b62255ccc2560a9f56",
+    "afterSHA256": "8c57032ba9057c606b2306879384e68d1210b57cc85cb07cf79ccde4e96568b9"
+  },
+  {
+    "world": "guadalajara",
+    "path": "assets/scenes/generated/guadalajara_colonia_noche.webp",
+    "size": [
+      1080,
+      1920
+    ],
+    "beforeBytes": 643986,
+    "afterBytes": 627820,
+    "beforeSHA256": "a8ae23490f0f7bc17cf15119a3d069f09741ac92091688b90fd572fb575b7503",
+    "afterSHA256": "4cca3969c1ab3db2736ec77b27f628e993a3bb60b5f000575087fa1d4d097c71"
+  },
+  {
+    "world": "guadalajara",
+    "path": "assets/scenes/generated/zapopan_basilica_noche.webp",
+    "size": [
+      500,
+      1024
+    ],
+    "beforeBytes": 148924,
+    "afterBytes": 145172,
+    "beforeSHA256": "320f265d25b57b4f16198c965ee291e155c625a0eecf178a368773bc9ee4c0c4",
+    "afterSHA256": "75ebbb90c8951e76daadda8e6f3f71a914c047d6607ec8f3f3ac5cfb2b345a6a"
+  },
+  {
+    "world": "guadalajara",
+    "path": "assets/scenes/generated/terminal_guadalajara_amanecer.webp",
+    "size": [
+      1080,
+      1920
+    ],
+    "beforeBytes": 686930,
+    "afterBytes": 670212,
+    "beforeSHA256": "f8c75bd5e7f3d2590cdf2017aa63a9031383a610379c5912db72ad5ddcbd1e67",
+    "afterSHA256": "f383490c13c7bf8697dc4ff464217fb3a6d3d5a563ce052a574624ef67478c86"
+  },
+  {
+    "world": "guadalajara",
+    "path": "assets/scenes/generated/mercado_tapatio_amanecer.webp",
+    "size": [
+      628,
+      1024
+    ],
+    "beforeBytes": 257030,
+    "afterBytes": 255978,
+    "beforeSHA256": "dae0c719605298d79d6b82147acd84cf76a5ddda7bc9238d291f7ab5a765d01d",
+    "afterSHA256": "633afdc05c8945f27fe43b0d3a1bb56cd727c5b4a50721f42bb28ad3a2b11c17"
+  },
+  {
+    "world": "guadalajara",
+    "path": "assets/scenes/generated/parque_metropolitano_atardecer.webp",
+    "size": [
+      500,
+      1024
+    ],
+    "beforeBytes": 212808,
+    "afterBytes": 210438,
+    "beforeSHA256": "3df19840b7424cd2aa6e1d011c15e669df7093c8b5446f7e3471fb3125f168ee",
+    "afterSHA256": "636de5592db7568f0a0d27888ac86bc16834150ce506b021f03abb833f4501fd"
+  },
+  {
+    "world": "guadalajara",
+    "path": "assets/scenes/generated/anden_tren_ligero_guadalajara.webp",
+    "size": [
+      628,
+      1024
+    ],
+    "beforeBytes": 190748,
+    "afterBytes": 188420,
+    "beforeSHA256": "82eb1140237bc6d7e7e698af810eb10be9963bc2e3ae66560ba3f6890406209c",
+    "afterSHA256": "2a6249ac27f9cb537cffaf16938f0e8e77780a5566461aa35d546dbea1bb1510"
+  },
+  {
+    "world": "guadalajara",
+    "path": "assets/scenes/generated/plaza_jacarandas_noche.webp",
+    "size": [
+      628,
+      1024
+    ],
+    "beforeBytes": 221408,
+    "afterBytes": 218460,
+    "beforeSHA256": "da37b27d77cbab5bc079880da6bafb7ba176cc05173d6f0f3993d01a05093a61",
+    "afterSHA256": "e12608efcb77a0652b8e6346bfab67782b0652f2ad17e08515d3eef264b2c8de"
+  },
+  {
+    "world": "submarino",
+    "path": "assets/scenes/underwater/v59/canal_inundado_redisenio.webp",
+    "size": [
+      1536,
+      2304
+    ],
+    "beforeBytes": 1196906,
+    "afterBytes": 916338,
+    "beforeSHA256": "5790e7aa3122917d401b78407b98c6669b485dd52f46c52e7e8dd5508706e70e",
+    "afterSHA256": "5120c8a11bd45353d99a7d2dd45157c6acb1ea3e3608cbe981b19c04d8a176ae"
+  },
+  {
+    "world": "submarino",
+    "path": "assets/scenes/underwater/v59/bosque_algas.webp",
+    "size": [
+      768,
+      1152
+    ],
+    "beforeBytes": 169204,
+    "afterBytes": 175046,
+    "beforeSHA256": "136f6fe1e9089921edf12a10a21dffe30cf869d3b842a7869abd974f861e5a68",
+    "afterSHA256": "77378a98e9ef7d7feb97466a006ac579bfbbe334abd263598eea8a0bd1e70731"
+  },
+  {
+    "world": "submarino",
+    "path": "assets/scenes/underwater/v59/fosa_azul.webp",
+    "size": [
+      768,
+      1152
+    ],
+    "beforeBytes": 72260,
+    "afterBytes": 70884,
+    "beforeSHA256": "73435f01d00a6bdf1d8990518172595ee5554873009f1c7b2ca0fc3bd25d70cf",
+    "afterSHA256": "ea47c1b0a9b615b2b168e109e3529064e4a8794b99221e8a4bdf6fd3a8fd3db7"
+  },
+  {
+    "world": "espacial",
+    "path": "assets/parallax/espacial/depth_v5/background/page_01.webp",
+    "size": [
+      1680,
+      1024
+    ],
+    "beforeBytes": 237564,
+    "afterBytes": 298300,
+    "beforeSHA256": "51211d991117a6da55dcaa56dd67a928c7ae9723a600b0a7bf3b3811f32afec2",
+    "afterSHA256": "b16977a1a228f4b3d73034045471f22480566cb5bdf00a25499262d2277c16ec"
+  },
+  {
+    "world": "espacial",
+    "path": "assets/parallax/espacial/depth_v5/background/page_02.webp",
+    "size": [
+      1680,
+      1024
+    ],
+    "beforeBytes": 243950,
+    "afterBytes": 298754,
+    "beforeSHA256": "95cd35a50fb22b13f62c9c1267071d4d0e74d40e7838da55dab658cfe412b085",
+    "afterSHA256": "e52f20389cb5ea84b097290519b6d704d0e8bfa034194b901faf544c703c9929"
+  },
+  {
+    "world": "espacial",
+    "path": "assets/parallax/espacial/depth_v5/background/page_03.webp",
+    "size": [
+      1680,
+      1024
+    ],
+    "beforeBytes": 256582,
+    "afterBytes": 319882,
+    "beforeSHA256": "2e3d052cf06d157a4dea678407dd36b60cdbcb447263ed85d048ec7423e6707e",
+    "afterSHA256": "7b2406ee93f20f7df0e5367547282e1e62b403445037b10966f453afa516feea"
+  },
+  {
+    "world": "parafalls",
+    "path": "assets/scenes/waterfalls/parafalls_v2/scene_01.webp",
+    "size": [
+      941,
+      1672
+    ],
+    "beforeBytes": 350888,
+    "afterBytes": 423788,
+    "beforeSHA256": "1ae03ef0cbae5ecf5310c58922492f0ff24e03219a80fce1bb85fa15491017a8",
+    "afterSHA256": "8df4c1b330c3951be8e99dd5e2495460acf4707fc64488867d9e2bad5e678952"
+  },
+  {
+    "world": "parafalls",
+    "path": "assets/scenes/waterfalls/parafalls_v2/scene_02.webp",
+    "size": [
+      941,
+      1672
+    ],
+    "beforeBytes": 364818,
+    "afterBytes": 439164,
+    "beforeSHA256": "40f31bf0ad3ec1d175e342725dde0f992373e2d8f02c7e0ace8e93283a180196",
+    "afterSHA256": "3e46b1cbdf7cea66b84d4a5ed3f224f3442eb01bf192c23b1f25f617ee8e19e9"
+  },
+  {
+    "world": "parafalls",
+    "path": "assets/scenes/waterfalls/parafalls_v2/scene_03.webp",
+    "size": [
+      941,
+      1672
+    ],
+    "beforeBytes": 387614,
+    "afterBytes": 469670,
+    "beforeSHA256": "fbaba3a233b69f772bb7bfd3f867d8915a7c257716d5f26d49b0459e1c0b7086",
+    "afterSHA256": "2ade5dd82b6d1b10c67873d82753dbfec5f15dee1ceca7c00f55e8e4a5845014"
+  }
+]

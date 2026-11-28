@@ -29,12 +29,12 @@
 
   /* Un capítulo por tramo. `line` aparece al entrar; `driver` es lo que se oye del camión a lo lejos. */
   const CHAPTERS = [
-    { title: 'LA ESCUELA', line: 'Baja por los balcones antes de que el conserje cierre el portón.', driver: 'A lo lejos: ¡Ruta 6, ya nos vamos!' },
+    { title: 'AZOTEAS Y AULAS', line: 'Sofía, Luna y Morita buscan el camino hacia el patio. Cruza la barda con el columpio y baja por los balcones.', driver: 'A lo lejos: ¡Ruta 6, ya nos vamos!' },
     { title: 'EL CENTRO DE GUADALAJARA', line: 'El camión dobló hacia el centro. Los balcones coloniales son el atajo.', driver: 'Se oye el claxon en la avenida. Todavía hay tiempo.' },
-    { title: 'LA SECUNDARIA VECINA', line: 'Un atajo por la secundaria de al lado. Aquí los perros no conocen a Sofía.', driver: 'El camión se detuvo en el semáforo. ¡Más rápido!' },
+    { title: 'EL PATIO ESCOLAR', line: 'Cruza los patios y las canchas. El niño de las piedras anda cerca; usa las gatitas para abrirte camino.', driver: 'El camión se detuvo en el semáforo. ¡Más rápido!' },
     { title: 'CALLES BAJAS DE JALISCO', line: 'Ya oscureció. Los cables chispean y las palomas no duermen.', driver: '¡Ahí va! Dobló hacia las Arcadas.' },
     { title: 'AZOTEAS DE LA COLONIA', line: 'Por la calle no llega: cruza de azotea en azotea. Ojo, las tejas viejas se desmoronan.', driver: 'Desde arriba se alcanza a ver el camión en el semáforo.' },
-    { title: 'LA ESCUELA ABANDONADA', line: 'La escuela vieja está cerrada desde hace años. Nadie la ha cruzado de noche.', driver: 'Se ve la luz de la terminal al fondo.' },
+    { title: 'CONSERJERÍA Y SALIDA', line: 'Empieza a llover. Baja hasta el portón y esquiva los ataques del Maestro Enojón para alcanzar el camión.', driver: '¡Ruta 6! Última llamada.' },
     { title: 'CENTRO HISTÓRICO', line: 'Las torres de la Catedral aparecen entre las azoteas. Cruza los portales antes del cierre.', driver: 'El camión avanza por la avenida. ¡No pierdas el paso!' },
     { title: 'LOS PORTALES', line: 'Los portales siguen iluminados y el kiosco brilla. Alguien conocido la está esperando…', driver: 'El camión rodea la plaza. ¡Por los portales es más corto!' },
     { title: 'ZAPOPAN · PLAZA DE LAS AMÉRICAS', line: 'La ruta corta por Zapopan. La Basílica está iluminada y las gatitas conocen el camino.', driver: 'El motor espera al otro lado de la plaza.' },
@@ -46,8 +46,13 @@
     { title: 'ANDÉN DEL TREN LIGERO', line: 'El tren se va; Sofía usa el andén como atajo hacia la ruta 6.', driver: '¡La terminal está muy cerca!' },
     { title: 'PLAZA DE LAS JACARANDAS', line: 'El último guardián espera en la plaza. Después, solo queda llegar a la terminal.', driver: '¡Corre, el camión está por arrancar!' },
     // V53 · Misiones nuevas (16 submarino, 17 espacial).
-    { title: 'RUINAS SUMERGIDAS', line: 'El atajo se hundió: cruza las ruinas y bucea por los cristales del fondo.', driver: 'Burbujas y un claxon lejano bajo el agua…' },
-    { title: 'LUNA HUECA', line: 'Ni el espacio la detiene: baja de la estación lunar por las cavernas de cristal hasta la ciudad bajo la Luna.', driver: 'La estación avisa: último acople de la ruta 6.' }
+    { title: 'ISLA DEL CANAL', line: 'La ruta hacia el fondo marino empieza arriba, en la isla. Baja al canal, cruza el bosque de algas y llega a la fosa de Poseidón.', driver: 'Burbujas y un claxon lejano bajo el agua…' },
+    { title: 'LUNA HUECA', line: 'Ni el espacio la detiene: baja de la estación lunar por las cavernas de cristal hasta la ciudad bajo la Luna.', driver: 'La estación avisa: último acople de la ruta 6.' },
+    { title: 'CASCADAS DEL CIELO · INICIO', line: 'La primera repisa marca el comienzo del descenso. Usa los apoyos de roca que ya forman parte del paisaje.', driver: 'El rugido del agua cubre los sonidos de la ciudad.' },
+    { title: 'CASCADAS DEL CIELO · TRAMO MEDIO', line: 'La ruta baja entre cascadas y plataformas de piedra. La bandera señala el siguiente punto seguro.', driver: 'La corriente cae entre los acantilados.' },
+    { title: 'CASCADAS DEL CIELO · LLEGADA', line: 'Sigue las repisas visibles hasta la plataforma circular de llegada.', driver: 'El agua se abre alrededor de la plataforma final.' },
+    {title:'BOSQUE DE ALGAS',line:'Sigue las luces entre las algas y desciende a la fosa.',driver:'Las corrientes empujan entre las ruinas.'},
+    {title:'FOSA AZUL',line:'Desciende al santuario. Poseidón guarda la escotilla de rescate.',driver:'Un tridente brilla en la oscuridad.'}
   ];
 
   /* Objetos perdidos: uno por tramo, en su zona inferior. */
@@ -88,7 +93,9 @@
       'ANDÉN: CRUZA LOS NIVELES PARA ALCANZAR LA SALIDA.',
       'PLAZA FINAL: VENCE AL GUARDIÁN Y SIGUE AL CAMIÓN.',
       'FONDO MARINO: USA ↓ PARA BUCEAR. LAS PIRAÑAS ATACAN SOLO EN AGUA Y AVISAN ANTES.',
-      'ESTACIÓN ORBITAL: LOS DRONES MARCAN SU DISPARO; ESQUIVA O ROMPE EL PLASMA CON DASH.'
+      'ESTACIÓN ORBITAL: LOS DRONES MARCAN SU DISPARO; ESQUIVA O ROMPE EL PLASMA CON DASH.',
+      'CASCADAS DEL CIELO', 'CASCADAS DEL CIELO', 'CASCADAS DEL CIELO',
+      'BOSQUE DE ALGAS: SIGUE LOS CRISTALES.', 'FOSA AZUL: ESQUIVA EL TRIDENTE Y CONTRAATACA.'
     ],
     // V58 · Letreros de la parada intermedia (inicio de la mitad nueva de cada nivel).
     mid: [
@@ -124,8 +131,14 @@
     catsTired: 'LAS GATITAS RECUPERAN EL ALIENTO…'
   };
 
-  /** Final según objetos recuperados (0–6) y vidas restantes. */
+  /** Final según objetos recuperados; las rutas sin colección usan un cierre neutral. */
   function ending(itemsFound, total, livesLeft) {
+    if (total <= 0) {
+      return {
+        title: '¡MISIÓN<br><span>COMPLETADA!</span>',
+        text: 'Llegaste al final de este recorrido. Los seis objetos de la mochila se buscan en la historia principal; su progreso se conserva.'
+      };
+    }
     if (itemsFound >= total) {
       return {
         title: '¡LLEGASTE<br><span>CON TODO!</span>',

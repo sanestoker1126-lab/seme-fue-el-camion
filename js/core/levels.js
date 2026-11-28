@@ -655,15 +655,17 @@
   const V58_CFG = {
     // `text`: rótulos del arte pintado (px de la imagen) que se vuelven a dibujar sin reflejar en la copia espejo.
     escuela:              { painted: true, pieces: ['zip', 'plain', 'bounce', 'vehicle'], vehicle: 'carrito', text: [[75, 5, 350, 88], [228, 212, 124, 25], [365, 545, 113, 78]] },
-    guadalajara:          { keepWidth: true, pieces: ['vehicle', 'zip', 'bounce'], vehicle: 'camion' },
+    // Mantiene la generación de mapa en el mismo modo pintado declarado por el tramo: las cornisas y escaleras
+    // pertenecen al arte/overlay del fondo, no a plataformas texturizadas dibujadas por encima.
+    guadalajara:          { keepWidth: true, painted: true, pieces: ['plain', 'zip', 'bounce'] },
     escuela_vecina:       { pieces: ['zip', 'crumble', 'vehicle', 'bounce'], vehicle: 'carrito' },
-    gdl_noche:            { pieces: ['vehicle', 'zip', 'bounce', 'crumble'], vehicle: 'camion', zipLook: 'cable' },
+    gdl_noche:            { pieces: ['zip', 'bounce', 'crumble'], zipLook: 'cable' },
     azoteas:              { pieces: ['crumble', 'zip', 'bounce', 'zip'], vehicle: 'carrito', zipLook: 'tendedero' },
     escuela_ruinas:       { pieces: ['crumble', 'zip', 'vehicle', 'belt'], vehicle: 'carrito' },
-    centro_historico:     { pieces: ['vehicle', 'zip', 'bounce', 'crumble'], vehicle: 'camion' },
-    portales:             { painted: true, pieces: ['vehicle', 'zip', 'bounce', 'belt'], vehicle: 'camion' },
-    zapopan:              { pieces: ['zip', 'vehicle', 'crumble', 'bounce'], vehicle: 'camion' },
-    arcadas:              { pieces: ['belt', 'vehicle', 'zip', 'bounce'], vehicle: 'camion' },
+    centro_historico:     { pieces: ['zip', 'bounce', 'crumble'] },
+    portales:             { painted: true, pieces: ['zip', 'bounce', 'belt'] },
+    zapopan:              { pieces: ['zip', 'crumble', 'bounce'] },
+    arcadas:              { pieces: ['belt', 'zip', 'bounce'] },
     metro:                { pieces: ['belt', 'vehicle', 'zip', 'belt'], vehicle: 'tren' },
     mercado_tapatio:      { pieces: ['vehicle', 'bounce', 'zip', 'crumble'], vehicle: 'carrito' },
     parque_metropolitano: { pieces: ['zip', 'vehicle', 'bounce', 'zip'], vehicle: 'carrito' },
@@ -671,120 +673,47 @@
     anden_tren_ligero:    { pieces: ['vehicle', 'belt', 'zip', 'bounce'], vehicle: 'tren' },
     plaza_jacarandas:     { pieces: ['zip', 'crumble', 'belt', 'vehicle', 'bounce'], vehicle: 'camion' }
   };
-  /* ============ V58.1 · Mar trazado sobre el arte «Marino Parallax PRO V4» ============
-     El fondo del mar es una sola ilustración vertical de 971 × 2928 px (isla → mar abierto → ciudad hundida →
-     abismo), fija al mundo. Cada plataforma está trazada sobre lo que el dibujo ya muestra (repisas de roca, puente
-     de cuerda, cubierta y techo del barco, capiteles, piso de las cuevas, hongos gigantes) y no se dibuja encima;
-     lo que no está en el dibujo (barca, manta, pez, cuerda de la tirolesa, brechas) sí se dibuja.
-     · Isla (aire): de la cima al mirador, escaleras, puente de cuerda y peldaños hasta la roca grande.
-     · Mar abierto: superficie en la línea de espuma de la roca grande; el fondo es el camino de la meseta de la
-       casa-piña y sus puentes. Las dos brechas de esos puentes son los desagües por los que se baja.
-     · Ciudad hundida y abismo (aire, como el templo de V58): Poseidón, columnas, el barco con su cadena (tirolesa),
-       cuevas y arrecifes hasta la salida.
-     Coordenadas en px del arte; y = línea de los pies. El mapa usa MARINE_PX unidades por px (× 0,82 en el mundo):
-     1,72 u de mundo por px, así mide más del doble que V54 (940 × 3072) a lo ancho y a lo alto. */
+  /* ============ V59 · Canal inundado → bosque de algas → fosa azul ============
+     Tres fondos WebP verticales de 768 × 1152 px, apilados sin reescalar ni repetir arquitectura. El mapa usa las
+     mismas coordenadas de píxel y una ruta submarina continua: repisas laterales y arco del canal; salientes de roca
+     del bosque; repisas de ambos bordes y arena final de la fosa. Todo el trayecto está bajo el agua; el jugador nada
+     desde el comienzo. Las colisiones pintadas se mantienen fuera del dibujo y se ocultan al renderizar.
+     Coordenadas en px de las ilustraciones; y = línea de los pies. */
   const MARINE_PX = 2.1;
   const MARINE_ART = Object.freeze({
-    dir: 'assets/parallax/marino/depth_v4/backgrounds/', width: 971, height: 2928, px: MARINE_PX,
-    pages: ['01_marino_base_isla.webp', '02_marino_base_ciudad.webp', '03_marino_base_abismo.webp'], pageH: 976
+    // El canal está a 1536×2304 nativos (2×); bosque y fosa siguen a 768×1152, normalizados por el renderer.
+    dir: 'assets/scenes/underwater/v59/', width: 768, height: 3456, px: MARINE_PX,
+    pages: ['canal_inundado_redisenio.webp', 'bosque_algas.webp', 'fosa_azul.webp'], pageH: 1152
   });
   const MARINE_TRACE = {
+    shore: { file: 'assets/cinematica/llegadas/isla_canal.webp', width: 971, height: 417,
+      left: 154, right: 575, landing: 300, floor: 272, freeboard: 94 },
     // [x1, x2, y, opciones]
     surfaces: [
-      [135, 600, 270, { start: true, startX: 215 }],   // sendero de la cima y mirador
-      [0, 135, 292],      // sendero izquierdo
-      [255, 448, 440],    // repisa al pie de la escalera
-      [452, 722, 497],    // repisa derecha alta
-      [0, 105, 500],      // repisa de las flores
-      [182, 482, 638],    // repisa media (entrada del puente de cuerda)
-      [706, 950, 668],    // repisa de las palmeras
-      [448, 690, 712],    // repisa sobre la cueva
-      [112, 212, 718],    // roca de la cascada
-      [100, 200, 795],    // repisa baja de la cascada
-      [280, 480, 808],    // repisa baja izquierda
-      [550, 722, 896],    // peldaños de roca hacia el mar
-      [685, 808, 958],
-      [770, 932, 1012],
-      [616, 696, 1045],   // roca del hongo naranja
-      [700, 900, 1073, { mid: true, midX: 760 }],      // roca grande: parada intermedia antes del mar
-      [45, 100, 1004],    // rocas de la orilla, junto a la cascada
-      [140, 215, 999],
-      // Ciudad hundida (bajo el fondo del mar)
-      [250, 372, 1770],   // repisa bajo la meseta
-      [88, 200, 1800],    // arco en ruinas
-      [40, 82, 1845],     // columna rota
-      [0, 100, 1962],     // repisa de los peces
-      [125, 258, 1966],   // hombro de Poseidón
-      [110, 216, 2045],   // pedestal del tridente
-      [410, 470, 2050],   // capitel
-      [688, 758, 2032],   // proa del barco
-      [758, 845, 2055],   // cubierta del barco
-      [862, 971, 2022],   // techo de la cabina
-      [800, 971, 2136],   // repisa bajo el barco
-      [0, 200, 2165],     // repisa alta izquierda
-      [200, 300, 2188],   // sendero de piedra
-      [300, 420, 2218],
-      [470, 570, 2177],   // repisa de la columna
-      [592, 760, 2181],   // roca flotante central
-      [470, 700, 2310],   // repisa larga
-      [228, 296, 2264],   // capitel de la cueva
-      [0, 470, 2392],     // piso de la cueva izquierda
-      [830, 971, 2334],   // repisa de los corales
-      [680, 830, 2386],   // fin de la cadena
-      [640, 760, 2434],   // repisa pequeña
-      [620, 800, 2515],   // repisa derecha baja
-      [800, 971, 2500],   // repisa de los hongos
-      [0, 400, 2628],     // repisa del barco hundido
-      [400, 500, 2650],   // repisa del cofre
-      [298, 490, 2688],   // escalones del arrecife
-      [115, 332, 2758],
-      [520, 630, 2750],   // roca media
-      [722, 900, 2766],   // piso de la cueva derecha
-      [540, 792, 2826, { exit: true }],                // arrecife del fondo: salida
-      [470, 540, 2848]
+      [75, 165, 224, { start: true, startX: 90 }],                // cornisa de inicio sobre el arco izquierdo
+      [0, 190, 346],                                              // repisa corrida del muro izquierdo
+      [0, 205, 625],                                              // saliente coralino izquierdo
+      [645, 768, 814],                                            // cornisa visible de la ruina derecha
+      [210, 510, 1080, { mid: true, midX: 360 }],                 // transición al bosque de algas
+      [0, 225, 1280], [520, 768, 1465],                           // salientes del bosque, lado a lado
+      [0, 230, 1660], [520, 768, 1845],                           // ruta alternante entre frondas
+      [0, 240, 2050], [265, 520, 2260],                           // salida inferior del bosque
+      [0, 218, 2420], [548, 768, 2600],                           // cornisas de la fosa
+      [0, 220, 2790], [540, 768, 2980],
+      [0, 225, 3180], [185, 590, 3380, { exit: true }]            // arena final y salida de la misión
     ],
-    // Escaleras de piedra de la isla (peldaños: se bajan caminando).
-    stairs: [
-      [210, 240, 333], [211, 262, 347], [215, 280, 363], [231, 296, 377], [244, 311, 392], [260, 327, 406], [270, 342, 421],
-      [427, 485, 727], [411, 470, 742], [399, 460, 756], [389, 450, 769], [376, 442, 782],
-      [470, 514, 822], [485, 532, 836], [500, 551, 852], [520, 570, 866], [539, 589, 879]
-    ],
-    planks: [[482, 545, 650], [545, 655, 664], [655, 708, 656]],   // puente de cuerda (se baja con BAJAR)
-    // V58.2 · El mar es TODO lo que queda bajo la isla: del agua junto a la roca grande hasta el lecho marino, donde
-    // está la escotilla de rescate (la salida). Solo la isla se camina; lo demás se nada.
-    sea: { y: 1155, toStreet: true },
-    // Brechas dibujadas en los puentes de la meseta (se bucea a través de ellas).
-    breaches: [[262, 312, 1636, 1690], [632, 688, 1664, 1690]],
-    // Carriles de nado de peces, tiburones y pulpos: [y, x1, x2] (libres de roca).
-    swimLanes: [[1230, 20, 620], [1360, 20, 540], [1470, 220, 560], [1580, 20, 560], [1760, 380, 960], [1900, 280, 680],
-      [2060, 480, 960], [2240, 20, 460], [2440, 300, 800], [2560, 20, 620], [2700, 620, 960], [2870, 20, 520]],
-    // V58.2: liana para columpiarse en la isla (de la repisa de las flores hacia abajo).
-    ropes: [{ x: 131.8, y: 347.9, len: 75.5, look: 'liana' }],
-    // Relieve sólido del mar (no se dibuja: es la roca y la meseta pintadas).
-    blocks: [
-      [700, 900, 1080, 1160], [640, 971, 1160, 1300], [560, 880, 1300, 1440],   // roca grande y su base sumergida
-      [0, 205, 1503, 1532],                                                       // repisa del arco
-      [200, 262, 1636, 1690], [312, 560, 1636, 1690],                             // meseta de la casa-piña
-      [560, 632, 1664, 1690], [688, 760, 1668, 1690],                             // puente de arco (brecha al medio)
-      [750, 870, 1668, 1690], [840, 971, 1614, 1640], [870, 971, 1664, 1690]       // repisa del caracol y de los hongos
-    ],
-    movers: [
-      { x1: 300, x2: 382, y: 1152, range: 120, vertical: 2, speed: 0.7, look: 'bote' }      // barca en la superficie
-    ],
-    zips: [
-      { x1: 600, y1: 229, x2: 905, y2: 636, look: 'cuerda' },     // del mirador a las palmeras
-      { x1: 472, y1: 767, x2: 720, y2: 1040, look: 'cuerda' }     // de la repisa baja a la roca grande
-    ],
-    // Estelas de cristales en el mar abierto: puntos de paso y cuántos cristales se reparten a lo largo.
+    // El recorrido entero es acuático; las superficies son apoyos de roca visibles, no plataformas flotantes.
+    sea: { y: -60, toStreet: true },
+    swimLanes: [[310, 180, 650], [520, 170, 610], [740, 180, 670], [960, 150, 620],
+      [1300, 180, 650], [1530, 180, 650], [1770, 170, 670], [2010, 160, 640], [2200, 180, 650],
+      [2470, 170, 650], [2700, 170, 650], [2910, 170, 650], [3140, 170, 650], [3310, 170, 650]],
+    // Trazos de cristales guían los tramos de nado libre sin bloquear el paso por arcos ni paredes.
     seaTrails: [
-      [[[610, 1190], [520, 1262], [420, 1360], [330, 1480], [287, 1600]], 10],   // de la roca grande a la brecha izquierda
-      [[[940, 1470], [860, 1520], [760, 1560], [660, 1625]], 7],                  // bajo la roca, hacia la brecha del puente
-      [[[40, 1240], [180, 1290], [320, 1250], [470, 1300], [600, 1262]], 9],      // ola bajo la cascada
-      [[[215, 1590], [300, 1500], [385, 1468], [470, 1500], [555, 1590]], 7],     // arco sobre la casa-piña
-      [[[30, 1478], [180, 1478]], 3],                                             // sobre la repisa del arco
-      [[[70, 1572], [130, 1572]], 2]                                              // dentro del arco
+      [[[210, 520], [360, 570], [515, 650], [420, 760], [300, 900]], 8],
+      [[[250, 1350], [430, 1490], [315, 1640], [480, 1790], [300, 1960], [420, 2160]], 10],
+      [[[250, 2470], [470, 2600], [300, 2760], [470, 2930], [300, 3110], [390, 3300]], 10]
     ],
-    exitX: 666
+    exitX: 390
   };
   /** Puntos repartidos a lo largo de una polilínea (por longitud). */
   function alongPath(pts, n) {
@@ -816,6 +745,7 @@
   function buildPaintedMap(id, T, A) {
     const K = A.px, x0 = A.x0 || 0, cropW = A.cropW || A.width;
     const o = emptyMap(id, rnd(cropW * K), rnd(A.height * K));
+    if (T.shore) o.shore = T.shore;
     o.worldArt = A;   // el renderer dibuja esta lámina fija al mundo (ver render.js · DEPTH_ART)
     const X = (v) => rnd((v - x0) * K), Y = (v) => rnd(v * K);
     const surf = (q) => Object.assign({ x1: X(q[0]), x2: X(q[1]), y: Y(q[2]) }, q[3] || {});
@@ -933,12 +863,11 @@
       [950, 1150, 1925],
       [1000, 1365, 1960],  // repisa de roca
       // Banda de roca (sólida; dos grietas la cruzan hacia la ciudad)
-      // V58.9: el trozo izquierdo sube a la cima de sus rocas (antes Sofía quedaba hundida en la pared de roca) y el
-      // derecho de la grieta se quitó: estaba dentro de la roca, bajo la repisa de 1960, en un hueco que el dibujo no tiene.
-      [315, 380, 2003],
+      [315, 380, 2030],
       [425, 600, 2030],
       [600, 950, 2088],
       [950, 1100, 2045],
+      [1150, 1365, 2045],
       // Ciudad bajo la Luna
       [1100, 1240, 2300],  // balcón de la ciudad
       [315, 450, 2310],    // repisa izquierda
@@ -951,7 +880,7 @@
       [440, 730, 2700],    // terraza izquierda
       [950, 1270, 2778],   // cúpula baja
       [500, 710, 2845],    // muelle izquierdo
-      [315, 470, 2894],    // roca de los cristales (V58.9: en la cima de las rocas, no 11 px dentro)
+      [315, 470, 2905],    // roca de los cristales
       [960, 1170, 2995],   // borde dorado derecho
       [560, 760, 3025, { exit: true }]                 // borde dorado izquierdo: salida (arena del dron)
     ],
@@ -971,7 +900,7 @@
       { x1: 1180, y1: 2610, x2: 985, y2: 2745, look: 'anclaje' }  // en la ciudad, a la cúpula baja
     ],
     // La banda de roca es sólida (no se dibuja: es el arte) salvo en sus dos grietas, que son pozos hacia la ciudad.
-    blocks: [[315, 380, 2005, 2178], [425, 600, 2032, 2178], [600, 950, 2090, 2182], [950, 1100, 2047, 2182], [1150, 1365, 1962, 2178]],
+    blocks: [[315, 380, 2032, 2178], [425, 600, 2032, 2178], [600, 950, 2090, 2182], [950, 1100, 2047, 2182], [1150, 1365, 2047, 2178]],
     cracks: [[380, 425, 2030, 2180], [1100, 1150, 2045, 2182]],
     // V58.2: cables para columpiarse (entre repisas) y uno de arco en la superficie lunar (base = piso, px).
     ropes: [
@@ -982,21 +911,52 @@
   };
   const ESPACIAL_MAP = buildPaintedMap('espacial', LUNAR_TRACE, LUNAR_ART);
 
-  /* ============ V58.1 · Escuela Miguel Hidalgo (paquete «Plataformas alineadas V3») ============
+  /* Parafalls PRO V2 · tres páginas continuas, reescaladas con la misma unidad de cámara. Las colisiones activas
+     se trazan sobre las repisas visibles; dos estimaciones sobre cascadas sin soporte se excluyeron del runtime. */
+  const PARAFALLS_DIR = 'assets/scenes/waterfalls/parafalls_v2/';
+  const PARAFALLS_DATA = NS.PARAFALLS_DATA;
+  const PARAFALLS_SCALE = 1.2;
+  const WATERFALL_CHECKPOINTS = { 1: { id: 'P01_01', x: 165 }, 2: { id: 'P02_01', x: 150 }, 3: { id: 'P03_02', x: 740 } };
+  const WATERFALL_EXITS = { 1: { id: 'P01_13', x: 430 }, 2: { id: 'P02_17', x: 740 }, 3: { id: 'P03_15', x: 468 } };
+  const WATERFALL_POSTS = new Set(['P01_04', 'P01_07', 'P02_02', 'P02_10', 'P03_01', 'P03_10']);
+  function waterfallTrace(page) {
+    const offset = (page - 1) * PARAFALLS_DATA.sceneHeight;
+    const cp = WATERFALL_CHECKPOINTS[page], ex = WATERFALL_EXITS[page];
+    const surfaces = PARAFALLS_DATA.platforms.filter((p) => p.page === page).map((p) => {
+      const opts = { guardianPost: WATERFALL_POSTS.has(p.id) };
+      if (p.id === cp.id) { opts.start = true; opts.startX = cp.x; }
+      if (p.id === ex.id) opts.exit = true;
+      return [p.x, p.x + p.w, p.y - offset, opts];
+    });
+    surfaces.sort((a, b) => a[2] - b[2] || a[0] - b[0]);
+    return { surfaces, exitX: ex.x };
+  }
+  const WATERFALL_ART = (page) => Object.freeze({ dir: PARAFALLS_DIR, width: PARAFALLS_DATA.sceneWidth,
+    height: PARAFALLS_DATA.sceneHeight, pageH: PARAFALLS_DATA.sceneHeight, px: PARAFALLS_SCALE,
+    pages: [`scene_0${page}.webp`] });
+  const WATERFALL_MAPS = [1, 2, 3].map((page) => buildPaintedMap('parafalls_' + page, waterfallTrace(page), WATERFALL_ART(page)));
+  const WATERFALL_LEVELS = WATERFALL_MAPS.map((map, i) => ({
+    id: 'parafalls_' + (i + 1), label: ['EL DESCENSO INICIAL', 'LAS CASCADAS MEDIAS', 'LA PLATAFORMA FINAL'][i],
+    file: PARAFALLS_DIR + `scene_0${i + 1}.webp`, map, art: 'painted', stairsPainted: true, seamlessPainted: true,
+    tint: 0xffffff, wash: 0x11374a, shade: 0.02, theme: 'cascadas_0' + (i + 1), room: 'gruta',
+    storyIndex: 18 + i, sideWidth: 0, foes: [], obstacles: [], foeBudget: 0, obstacleBudget: 0, sideFoes: 0, isNew: true
+  }));
+
+  /* ============ V58.1 · Escuela Benito Juárez (paquete «Plataformas alineadas V3») ============
      Tres ilustraciones verticales de la escuela (aulas superiores → patio → conserjería y entrada), una por nivel de la
      misión 1, apiladas. Cada nivel se trazó sobre su dibujo: azotea, balcones de los salones, escaleras, cafetería,
      terrazas, andador techado, patio, banqueta y cancha; la entrada termina en la calle frente al camión escolar.
      Las alturas de las losas salen de las cornisas rojas detectadas en el propio arte. La cafetería y las banquetas
      son tablones (se atraviesan con BAJAR). Los tres miden 2101 u de mapa de ancho (px distinto por lámina) para que
      se apilen sin huecos. Coordenadas en px del arte; y = línea de los pies. */
-  const SCHOOL_DIR = 'assets/scenes/school_miguel_hidalgo/';
+  const SCHOOL_DIR = 'assets/scenes/school_pro/';
   const schoolArt = (file, width) => Object.freeze({ dir: SCHOOL_DIR, pages: [file], width, height: 2496, pageH: 2496, px: 2101 / width });
   const SCHOOL_ART = [schoolArt('01_aulas_superiores.webp', 1501), schoolArt('02_patio_escolar.webp', 1476), schoolArt('03_conserjeria_entrada.webp', 1521)];
   const SCHOOL_TRACE = [
     { // 01 · Aulas superiores (tutorial): [0] parada, [2] escaleras, [5] mitad, [7] parte baja (letreros del tutorial).
       surfaces: [
         [605, 745, 194, { start: true, startX: 660 }],   // azotea: techo del cuarto del tinaco
-        [0, 450, 142],       // techo del letrero ESCUELA MIGUEL HIDALGO
+        [0, 450, 142],       // techo del letrero ESCUELA BENITO JUÁREZ
         [0, 165, 712],       // descanso arriba de la escalera izquierda
         [0, 1286, 334],      // azotea (V58.6: la corta la barda con vidrios; se cruza con el columpio)
         [1330, 1380, 334, { noGems: true }],   // azotea tras la barda (se baja por la orilla derecha; el columpio suele lanzar más allá)
@@ -1084,14 +1044,13 @@
       tint: 0xffffff, wash: 0x244a4b, shade: 0.035, theme: 'escuela', room: 'sotano',
       foes: ['rat'], obstacles: ['crate', 'spikes'], foeBudget: 3, obstacleBudget: 2, sideFoes: 1,
       boss: { kind: 'dog', name: 'PERRO FURIOSO', hp: 4 },
-      tutorial: true, music: 0, secret: 'aulas'   // V58.8: las aulas ocultas (sala de cómputo y laboratorio) con El Maestro Enojón
+      tutorial: true, music: 0, secret: 'aula_escolar'
     },
     {
       // V58.1 · «Guadalajara Azoteas PRO V2»: fondo nuevo + capa de cornisas dibujadas EXACTAMENTE en las colisiones de este mapa.
       id: 'guadalajara', label: 'EL CENTRO DE GUADALAJARA', file: 'assets/scenes/guadalajara_pro_v2/bg_guadalajara_pro_v2.webp', overlay: 'assets/scenes/guadalajara_pro_v2/architecture_guadalajara_pro_v2.png',
       map: SOFEVI_MAP, art: 'painted', stairsPainted: true, ledges2d: true, skin: 'stone_long',
       tint: 0xffffff, wash: 0x805633, shade: 0.045, theme: 'guadalajara', room: 'alcantarilla',
-      ledgeSkin: true,   // V58.9: sus repisas se dibujan (las cornisas de su capa no se ven y Sofía parecía flotar)
       foes: ['rat', 'dog', 'pigeon'], obstacles: ['pot', 'puddle', 'crate'], foeBudget: 5, obstacleBudget: 3, sideFoes: 2,
       boss: { kind: 'kid', name: 'DUEÑO DEL PERRO · 12 AÑOS', hp: 4 }, music: 1
     },
@@ -1102,7 +1061,7 @@
       boss: { kind: 'chile', name: 'CHILE DE LA SECUNDARIA', hp: 4 }, music: 2
     },
     {
-      id: 'gdl_noche', label: 'COLONIAS DE GUADALAJARA DE NOCHE', file: 'assets/scenes/generated/guadalajara_colonia_noche.png', map: NOCHE_MAP, skin: 'brick',
+      id: 'gdl_noche', label: 'COLONIAS DE GUADALAJARA DE NOCHE', file: 'assets/scenes/generated/guadalajara_colonia_noche.webp', map: NOCHE_MAP, skin: 'brick',
       tint: 0xb1b7d2, wash: 0x142349, shade: 0.2, theme: 'guadalajara', room: 'alcantarilla',
       foes: ['bat', 'pigeon', 'dog', 'rat'], obstacles: ['spark', 'pot', 'puddle'], foeBudget: 7, obstacleBudget: 4, sideFoes: 3,
       boss: { kind: 'bat', name: 'MURCIÉLAGO CAPITÁN', hp: 4 }, music: 3
@@ -1135,13 +1094,13 @@
       boss: { kind: 'kid', name: 'EL DUEÑO DEL PERRO · REVANCHA', hp: 5 }, music: 7
     },
     {
-      id: 'zapopan', label: 'ZAPOPAN · PLAZA DE LAS AMÉRICAS', file: 'assets/scenes/generated/zapopan_basilica_noche.png', map: BASILICA_MAP, skin: 'stone_slim',
+      id: 'zapopan', label: 'ZAPOPAN · PLAZA DE LAS AMÉRICAS', file: 'assets/scenes/generated/zapopan_basilica_noche.webp', map: BASILICA_MAP, skin: 'stone_slim',
       tint: 0xb7b5c8, wash: 0x2e324f, shade: 0.17, theme: 'guadalajara', room: 'alcantarilla',
       foes: ['bat', 'dog', 'pigeon', 'bravo'], obstacles: ['spark', 'spikes', 'puddle', 'pot'], foeBudget: 9, obstacleBudget: 6, sideFoes: 4,
       boss: { kind: 'bravo', name: 'PERRO BRAVO DE ZAPOPAN', hp: 5 }, music: 8
     },
     {
-      id: 'arcadas', label: 'TERMINAL DE GUADALAJARA AL AMANECER', file: 'assets/scenes/generated/terminal_guadalajara_amanecer.png', map: TERMINAL_MAP, skin: 'stone_long',
+      id: 'arcadas', label: 'TERMINAL DE GUADALAJARA AL AMANECER', file: 'assets/scenes/generated/terminal_guadalajara_amanecer.webp', map: TERMINAL_MAP, skin: 'stone_long',
       tint: 0xa7b0a8, wash: 0x344448, shade: 0.2, theme: 'guadalajara', room: 'alcantarilla',
       foes: ['dog', 'chile', 'bat', 'pigeon'], obstacles: ['spark', 'spikes', 'pot', 'puddle'], foeBudget: 9, obstacleBudget: 6, sideFoes: 4,
       boss: { kind: 'rat', name: 'RATA DE LAS ARCADAS', hp: 5 }, music: 9
@@ -1153,13 +1112,13 @@
       boss: { kind: 'rat', name: 'RATA DEL TÚNEL', hp: 6 }, music: 10
     },
     {
-      id: 'mercado_tapatio', label: 'MERCADO TAPATÍO AL AMANECER', file: 'assets/scenes/generated/mercado_tapatio_amanecer.png', map: MERCADO_MAP, skin: 'wood_table',
+      id: 'mercado_tapatio', label: 'MERCADO TAPATÍO AL AMANECER', file: 'assets/scenes/generated/mercado_tapatio_amanecer.webp', map: MERCADO_MAP, skin: 'wood_table',
       tint: 0xffe2bd, wash: 0x905b36, shade: 0.06, theme: 'guadalajara', room: 'alcantarilla',
       foes: ['rat', 'dog', 'pigeon', 'kid'], obstacles: ['pot', 'puddle', 'crate', 'spark'], foeBudget: 9, obstacleBudget: 6, sideFoes: 4,
       boss: { kind: 'dog', name: 'PERRO DEL MERCADO', hp: 5 }, music: 11
     },
     {
-      id: 'parque_metropolitano', label: 'PARQUE METROPOLITANO AL ATARDECER', file: 'assets/scenes/generated/parque_metropolitano_atardecer.png', map: PARQUE_MAP, skin: 'stone_moss',
+      id: 'parque_metropolitano', label: 'PARQUE METROPOLITANO AL ATARDECER', file: 'assets/scenes/generated/parque_metropolitano_atardecer.webp', map: PARQUE_MAP, skin: 'stone_moss',
       tint: 0xf3d6c9, wash: 0x465f53, shade: 0.11, theme: 'guadalajara', room: 'alcantarilla',
       foes: ['bat', 'dog', 'pigeon', 'kid', 'bravo'], obstacles: ['spark', 'puddle', 'spikes', 'crate'], foeBudget: 10, obstacleBudget: 7, sideFoes: 5,
       boss: { kind: 'bravo', name: 'GUARDIÁN DEL PARQUE', hp: 6 }, music: 12
@@ -1171,13 +1130,13 @@
       boss: { kind: 'bat', name: 'MURCIÉLAGO DEL CALLEJÓN', hp: 6 }, music: 13
     },
     {
-      id: 'anden_tren_ligero', label: 'ANDÉN DEL TREN LIGERO', file: 'assets/scenes/generated/anden_tren_ligero_guadalajara.png', map: ANDEN_MAP, skin: 'scaffold',
+      id: 'anden_tren_ligero', label: 'ANDÉN DEL TREN LIGERO', file: 'assets/scenes/generated/anden_tren_ligero_guadalajara.webp', map: ANDEN_MAP, skin: 'scaffold',
       tint: 0xc8b6e8, wash: 0x28264b, shade: 0.13, theme: 'guadalajara', room: 'alcantarilla',
       foes: ['pigeon', 'bat', 'dog', 'rat', 'kid'], obstacles: ['spark', 'pot', 'puddle', 'crate'], foeBudget: 10, obstacleBudget: 7, sideFoes: 5,
       boss: { kind: 'pigeon', name: 'PALOMA DEL ANDÉN', hp: 6 }, music: 14
     },
     {
-      id: 'plaza_jacarandas', label: 'PLAZA DE LAS JACARANDAS · FINAL', file: 'assets/scenes/generated/plaza_jacarandas_noche.png', map: PLAZA_MAP, skin: 'stone_rocks',
+      id: 'plaza_jacarandas', label: 'PLAZA DE LAS JACARANDAS · FINAL', file: 'assets/scenes/generated/plaza_jacarandas_noche.webp', map: PLAZA_MAP, skin: 'stone_rocks',
       tint: 0xd1bddf, wash: 0x26234a, shade: 0.18, theme: 'guadalajara', room: 'alcantarilla',
       foes: ['bravo', 'bat', 'pigeon', 'chile', 'kid'], obstacles: ['spark', 'spikes', 'pot', 'puddle', 'crate'], foeBudget: 11, obstacleBudget: 8, sideFoes: 5,
       boss: { kind: 'bravo', name: 'GUARDIÁN DE LAS JACARANDAS', hp: 7 }, final: true, music: 15
@@ -1196,31 +1155,74 @@
     d.baseMap = d.map;
     const school = ['escuela', 'escuela_vecina', 'escuela_ruinas'].indexOf(d.id);
     if (school >= 0) {
-      // V58.1: trazados sobre el arte de la Escuela Miguel Hidalgo (ver SCHOOL_TRACE).
+      // V58.1: trazados sobre el arte de la Escuela Benito Juárez (ver SCHOOL_TRACE).
       d.map = SCHOOL_MAPS[school]; d.file = SCHOOL_DIR + SCHOOL_ART[school].pages[0];
       d.art = 'painted'; d.stairsPainted = true; d.sideWidth = 0;
       // Sin sectores laterales: sus enemigos pasan al recorrido del nivel (si no, la misión quedaría con menos).
       d.foeBudget += d.sideFoes; d.sideFoes = 0;
     } else d.map = buildV58(d.map, cfg);
-    // V58.9: sin los multiplicadores de V58 (×1,7 enemigos, ×1,6 obstáculos, ×1,4 en los sectores): con ellos la ciudad
-    // tenía de 13 a 27 enemigos por nivel, de 5 a 7 veces la densidad de la escuela, y todo se veía amontonado.
+    d.foeBudget = Math.round(d.foeBudget * 1.7);
+    d.obstacleBudget = Math.round(d.obstacleBudget * 1.6);
+    d.sideFoes = Math.round(d.sideFoes * 1.4);
   });
 
   /* Niveles nuevos (misiones 3 y 4). storyIndex 16/17: su capítulo y letrero están en story.js. */
-  /* V58 · Mar y órbita son mundos completos trazados de borde a borde (sideWidth 0: sin sectores procedurales).
-     En el mar el tiburón patrulla el mar abierto; en órbita la gravedad es menor (saltos más largos y altos). */
-  // V58.1: `art: 'painted'` — las repisas, escaleras y hongos están dibujados en el arte marino V4 (no se dibujan encima).
-  const SUBMARINO_LEVEL = {
-    id: 'submarino', label: 'RUINAS SUMERGIDAS', file: 'assets/parallax/marino/depth_v4/backgrounds/01_marino_base_isla.webp', map: SUBMARINO_MAP, skin: 'stone_moss', isNew: true,
+  /* V59 · El mundo marino usa tres páginas verticales continuas (canal, bosque, fosa), sin sectores laterales. */
+  // `art: 'painted'`: las repisas visibles en las tres páginas definen las colisiones; no se duplican como tarimas.
+  const marineSceneTrace = ({ id, page, startY, endY, label, shore = false, finale = false }) => {
+    const cut = (q) => q[2] >= startY && q[2] <= endY;
+    const rows = MARINE_TRACE.surfaces.filter(cut).map((q) => [q[0], q[1], q[2] - startY, Object.assign({}, q[3] || {})]);
+    rows.forEach((r) => { delete r[3].start; delete r[3].startX; delete r[3].exit; });
+    if (rows.length) {
+      rows[0][3].start = true;
+      rows[0][3].startX = Math.round((rows[0][0] + rows[0][1]) / 2);
+      rows[rows.length - 1][3].exit = true;
+    }
+    const lanes = (MARINE_TRACE.swimLanes || []).filter((q) => q[0] >= startY && q[0] <= endY).map((q) => [q[0] - startY, q[1], q[2]]);
+    const trails = (MARINE_TRACE.seaTrails || []).map(([pts, n]) => [pts.filter((p) => p[1] >= startY && p[1] <= endY).map((p) => [p[0], p[1] - startY]), n]).filter(([pts]) => pts.length >= 2);
+    if (finale) {
+      delete rows[rows.length - 1][3].exit;
+      rows.push([60,708,1152+1080,{exit:true,noGems:true}]);
+    }
+    const A = { dir: MARINE_ART.dir, width: MARINE_ART.width, height: MARINE_ART.pageH*(finale?2:1), pageH: MARINE_ART.pageH, px: MARINE_ART.px, pages: finale?[page,'santuario_poseidon_v23.webp']:[page] };
+    const T = {
+      surfaces: rows,
+      sea: finale ? { y: -60, toStreet: true } : { y: -60, y2: MARINE_ART.pageH },
+      swimLanes: lanes,
+      seaTrails: trails,
+      exitX: Math.round((rows[rows.length - 1][0] + rows[rows.length - 1][1]) / 2)
+    };
+    if (shore) T.shore = MARINE_TRACE.shore;
+    const map=buildPaintedMap(id,T,A);
+    if(finale) map.poseidonArena={x1:90*MARINE_PX,x2:678*MARINE_PX,top: (1152+665)*MARINE_PX,bottom:(1152+1080)*MARINE_PX,entryY:(1152+570)*MARINE_PX};
+    return map;
+  };
+  const SUBMARINO_ISLA_MAP = marineSceneTrace({ id: 'submarino_isla', page: 'canal_inundado_redisenio.webp', startY: 0, endY: 1152, label: 'ISLA DEL CANAL', shore: true });
+  const SUBMARINO_BOSQUE_MAP = marineSceneTrace({ id: 'submarino_bosque', page: 'bosque_algas.webp', startY: 1152, endY: 2304, label: 'BOSQUE DE ALGAS' });
+  const SUBMARINO_FOSA_MAP = marineSceneTrace({ id: 'submarino_fosa', page: 'fosa_azul.webp', startY: 2304, endY: 3456, label: 'FOSA AZUL', finale: true });
+
+  const SUBMARINO_LEVEL_ISLA = {
+    id: 'submarino_isla', seamlessPainted: true, label: 'ISLA DEL CANAL', file: 'assets/scenes/underwater/v59/canal_inundado_redisenio.webp', map: SUBMARINO_ISLA_MAP, skin: 'stone_moss', isNew: true,
     art: 'painted', stairsPainted: true,
     tint: 0x9fd8e6, wash: 0x0a2e48, shade: 0.12, theme: 'submarino', room: 'alcantarilla', storyIndex: 16, sideWidth: 0,
-    // Pirañas solo en el agua; cangrejos en las cornisas secas de las ruinas.
-    // V58.1: el niño gordito de las piedras, con traje de buzo (atlas aportado), en las repisas secas.
-    // V58.2: mar completo. Pirañas, tiburones y pulpos nadan en sus carriles (topes 6/2/4); cangrejos y niños buzos
-    // en las repisas (secas o sumergidas). El jefe es Poseidón, que custodia la escotilla del lecho marino.
-    foes: ['crab', 'piranha', 'kid', 'pulpo', 'shark', 'crab', 'piranha', 'kid', 'pulpo', 'piranha'], obstacles: ['spark', 'crate'], foeBudget: 40, obstacleBudget: 8, sideFoes: 0,
-    boss: { kind: 'poseidon', name: 'POSEIDÓN, REY DEL MAR', hp: 8 }, music: 12, secret: 'santuario'
+    foes: ['crab', 'piranha', 'kid', 'pulpo', 'piranha'], obstacles: ['spark', 'crate'], foeBudget: 14, obstacleBudget: 2, sideFoes: 0,
+    music: 12, secret: 'santuario'
   };
+  const SUBMARINO_LEVEL_BOSQUE = {
+    id: 'submarino_bosque', seamlessPainted: true, label: 'BOSQUE DE ALGAS', file: 'assets/scenes/underwater/v59/bosque_algas.webp', map: SUBMARINO_BOSQUE_MAP, skin: 'stone_moss', isNew: true,
+    art: 'painted', stairsPainted: true,
+    tint: 0x90d7db, wash: 0x083448, shade: 0.12, theme: 'submarino', room: 'alcantarilla', storyIndex: 21, sideWidth: 0,
+    foes: ['piranha', 'kid', 'pulpo', 'shark', 'crab', 'piranha'], obstacles: ['spark', 'crate'], foeBudget: 16, obstacleBudget: 3, sideFoes: 0,
+    music: 12
+  };
+  const SUBMARINO_LEVEL_FOSA = {
+    id: 'submarino_fosa', seamlessPainted: true, label: 'FOSA AZUL', file: 'assets/scenes/underwater/v59/fosa_azul.webp', map: SUBMARINO_FOSA_MAP, skin: 'stone_moss', isNew: true,
+    art: 'painted', stairsPainted: true,
+    tint: 0x78bfd0, wash: 0x071d34, shade: 0.16, theme: 'submarino', room: 'alcantarilla', storyIndex: 22, sideWidth: 0,
+    foes: ['pulpo', 'shark', 'piranha', 'kid', 'pulpo'], obstacles: ['spark', 'crate'], foeBudget: 12, obstacleBudget: 3, sideFoes: 0,
+    boss: { kind: 'poseidon', name: 'POSEIDÓN, REY DEL MAR', hp: 8 }, music: 12
+  };
+  const SUBMARINO_LEVEL = SUBMARINO_LEVEL_ISLA;
   const ESPACIAL_LEVEL = {
     id: 'espacial', label: 'LUNA HUECA', file: 'assets/parallax/espacial/depth_v5/background/page_01.webp', map: ESPACIAL_MAP, skin: 'scaffold', isNew: true,
     art: 'painted', stairsPainted: true,
@@ -1237,36 +1239,6 @@
      «enemigos secretos» y cada una tiene un jefe. `entry`: punto del mundo junto al que va la grieta (se busca la
      cornisa seca más cercana). */
   const SECRET_ROOMS = {
-    /* V58.8 · Las aulas ocultas de la escuela (nivel 1): la sala de cómputo y, pegado, el laboratorio de ciencias
-       (dos ilustraciones de la misma escuela, una junto a la otra: px 0–1672 y 1672–3344). Se llega por el portal de
-       la sala de cómputo; el portal del laboratorio (a la mitad) es la salida. Ahí da clase El Maestro Enojón. Se pisan
-       las mesas, el escritorio, los libreros, las repisas, la charola del pizarrón y las lámparas del techo. */
-    aulas: {
-      id: 'aulas', label: 'LAS AULAS OCULTAS', art: ['aula_computo', 'aula_ciencias'], artW: 3344, artH: 941, scale: 0.5,
-      entry: { x: -790, y: 818 },
-      floor: 740,
-      // Techo 90 u sobre el borde del dibujo: de pie sobre una lámpara (48 u bajo ese borde), Sofía (62 u) cabe.
-      ceil: 90,
-      ledges: [
-        // Sala de cómputo: repisa de la planta, librero, dos bancos de computadoras, escritorio del maestro y lámparas.
-        { x1: 0, x2: 95, y: 266 }, { x1: 218, x2: 372, y: 303, floor: true }, { x1: 378, x2: 780, y: 540 }, { x1: 833, x2: 1237, y: 540 },
-        { x1: 1303, x2: 1560, y: 537 }, { x1: 375, x2: 650, y: 97 }, { x1: 868, x2: 1140, y: 97 }, { x1: 1355, x2: 1632, y: 97 },
-        // Laboratorio: repisa, librero, tres mesas, tarja, charola del pizarrón, dos repisas de frascos y lámparas.
-        { x1: 1672, x2: 1767, y: 266 }, { x1: 1879, x2: 2038, y: 272, floor: true }, { x1: 2090, x2: 2358, y: 541 }, { x1: 2420, x2: 2667, y: 541 },
-        { x1: 2725, x2: 2982, y: 541 }, { x1: 2990, x2: 3234, y: 534 }, { x1: 2447, x2: 2797, y: 460 }, { x1: 3152, x2: 3340, y: 310 },
-        { x1: 3152, x2: 3340, y: 378 }, { x1: 2047, x2: 2322, y: 97 }, { x1: 2540, x2: 2812, y: 97 }, { x1: 3027, x2: 3304, y: 97 }
-      ],
-      arrive: [190, 740], exit: [1772, 740], exitKind: 'portal',
-      foes: [
-        { kind: 'kid', plat: 'floor', x1: 320, x2: 1250 }, { kind: 'rat', plat: 'floor', x1: 700, x2: 1620, extra: true },
-        { kind: 'chile', plat: [1400, 537], extra: true }
-      ],
-      // El maestro patrulla el frente del laboratorio (no llega al portal de salida).
-      boss: { kind: 'maestro', name: 'EL MAESTRO ENOJÓN', hp: 5, plat: 'floor', x1: 2000, x2: 3300 },
-      gems: [[450, 690], [1000, 690], [580, 490], [1030, 490], [295, 253], [512, 47], [1004, 47], [1494, 47],
-        [2224, 491], [2853, 491], [2622, 410], [3246, 260], [1958, 222], [2184, 47], [2676, 47]],
-      heart: [3165, 47]
-    },
     santuario: {
       id: 'santuario', label: 'SANTUARIO PERDIDO DE POSEIDÓN', art: 'marino_oculto', artW: 2172, artH: 724, scale: 0.72,
       entry: { x: -760, y: 861 },
@@ -1304,22 +1276,32 @@
       gems: [[250, 700], [420, 700], [600, 700], [394, 520], [669, 345], [590, 200], [640, 200], [176, 300], [76, 190],
         [1227, 555], [1345, 500], [1236, 320], [1420, 205], [1690, 505], [1560, 60]],
       heart: [1700, 60]
+    },
+    aula_escolar: {
+      id: 'aula_escolar', label: 'AULA SECRETA DEL ARCHIVO', art: 'aula_escolar_oculta', artW: 1520, artH: 855, scale: 0.5,
+      entry: { x: -400, y: 384 }, floor: 787,
+      ledges: [{ x1: 0, x2: 1520, y: 787, floor: true }],
+      arrive: [90, 745], exit: [1430, 787],
+      foes: [{ kind: 'kid', plat: 'floor', x1: 650, x2: 930 }],
+      gems: [[300, 761], [540, 761], [1080, 761], [1300, 761]]
     }
   };
 
   /* Misiones: separan el juego por mundos. Las 1 y 2 reúnen los 16 niveles existentes por su tema (sin cambiar su
-     diseño); las 3 y 4 son los mundos nuevos. buildWorld({ levels }) arma el mundo de cada misión. */
+     diseño); las 3–5 son mundos adicionales. buildWorld({ levels }) arma el mundo de cada misión. */
   const byTheme = (t) => LEVEL_SEQUENCE.filter((d) => d.theme === t);
   const MISSIONS = [
     { id: 'escuela', label: 'MISIÓN 1 · LA ESCUELA', theme: 'escuela', levels: byTheme('escuela') },
     { id: 'guadalajara', label: 'MISIÓN 2 · GUADALAJARA', theme: 'guadalajara', levels: byTheme('guadalajara') },
-    { id: 'submarino', label: 'MISIÓN 3 · EL SUBMARINO', theme: 'submarino', levels: [SUBMARINO_LEVEL] },
-    { id: 'espacial', label: 'MISIÓN 4 · EL ESPACIO', theme: 'espacial', levels: [ESPACIAL_LEVEL] }
+    { id: 'submarino', label: 'MISIÓN 3 · EL SUBMARINO', theme: 'submarino', levels: [SUBMARINO_LEVEL_ISLA, SUBMARINO_LEVEL_BOSQUE, SUBMARINO_LEVEL_FOSA] },
+    { id: 'espacial', label: 'MISIÓN 4 · EL ESPACIO', theme: 'espacial', levels: [ESPACIAL_LEVEL] },
+    { id: 'parafalls', label: 'MISIÓN 5 · CASCADAS DEL CIELO', theme: 'cascadas', levels: WATERFALL_LEVELS }
   ];
 
   NS.LEVELS = { SCHOOL_MAP, GDL_MAP, SCHOOL_M, GDL_M, CENTRO_MAP, ZAPOPAN_MAP, SOFEVI_MAP, AZOTEAS_MAP, METRO_MAP, TLAQUE_MAP,
     PATIO_MAP, PASILLOS_MAP, NOCHE_MAP, CATEDRAL_MAP, BASILICA_MAP, TERMINAL_MAP, MERCADO_MAP, PARQUE_MAP, ANDEN_MAP, PLAZA_MAP,
     SUBMARINO_MAP, ESPACIAL_MAP, SUBMARINO_V54_MAP, ESPACIAL_V54_MAP, SUBMARINO_BASE_MAP, ESPACIAL_BASE_MAP,
-    SUBMARINO_LEVEL, ESPACIAL_LEVEL, MISSIONS, LEVEL_SEQUENCE, SECRET_ROOMS, mirror, buildV58, V58_CFG, HAND,
-    MARINE_ART, MARINE_PX, buildMarineMap, LUNAR_ART, buildPaintedMap, SCHOOL_ART, SCHOOL_MAPS };
+    SUBMARINO_LEVEL, SUBMARINO_LEVEL_ISLA, SUBMARINO_LEVEL_BOSQUE, SUBMARINO_LEVEL_FOSA, SUBMARINO_ISLA_MAP, SUBMARINO_BOSQUE_MAP, SUBMARINO_FOSA_MAP, ESPACIAL_LEVEL, MISSIONS, LEVEL_SEQUENCE, SECRET_ROOMS, mirror, buildV58, V58_CFG, HAND,
+    MARINE_ART, MARINE_PX, buildMarineMap, LUNAR_ART, WATERFALL_MAPS, WATERFALL_LEVELS, PARAFALLS_DATA,
+    buildPaintedMap, SCHOOL_ART, SCHOOL_MAPS };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

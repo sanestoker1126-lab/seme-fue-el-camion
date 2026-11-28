@@ -1,0 +1,310 @@
+{
+  "schema": "camion.production.atlas.v1",
+  "id": "luna_sub",
+  "image": "assets/production/luna_sub/atlas.png",
+  "size": [
+    1024,
+    336
+  ],
+  "format": "RGBA8888",
+  "padding_px": 8,
+  "extrusion_px": 2,
+  "anchor": "feet",
+  "uniform_scale": true,
+  "source": "SeMeFueElCamion_V58_1_BUCEO_100_COMPLETO.zip",
+  "notes": "Existing authentic poses; not a new swimming or attack animation. Feet anchor is a packing reference, not a validated collision pivot.",
+  "frame_count": 11,
+  "unique_pixel_frames": 11,
+  "animations": {
+    "idle": {
+      "frames": [
+        "luna_idle_sub_01",
+        "luna_idle_sub_02",
+        "luna_idle_sub_03"
+      ],
+      "duration_ms": 180,
+      "loop": true,
+      "anchor": "feet"
+    },
+    "alert": {
+      "frames": [
+        "luna_idle_sub_04",
+        "luna_idle_sub_06"
+      ],
+      "duration_ms": 180,
+      "loop": true,
+      "anchor": "feet"
+    },
+    "sniff": {
+      "frames": [
+        "luna_idle_sub_05"
+      ],
+      "duration_ms": 200,
+      "loop": false,
+      "anchor": "feet"
+    },
+    "walk": {
+      "frames": [
+        "luna_walk_sub_01",
+        "luna_walk_sub_02",
+        "luna_walk_sub_03",
+        "luna_walk_sub_04"
+      ],
+      "duration_ms": 125,
+      "loop": true,
+      "anchor": "feet"
+    },
+    "shoulder": {
+      "frames": [
+        "luna_shoulder_sub"
+      ],
+      "duration_ms": 200,
+      "loop": true,
+      "anchor": "feet"
+    }
+  },
+  "frames": {
+    "luna_idle_sub_01": {
+      "rect": [
+        833,
+        10,
+        148,
+        141
+      ],
+      "pivot": [
+        65.0,
+        180.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "59db17557a6a742081546e19fe9b69496a74de913171c72edb9b43385b0ea3c5",
+      "source": "assets/companions/sub/luna_idle_sub_01.png",
+      "source_bbox": [
+        47,
+        39,
+        195,
+        180
+      ],
+      "notes": ""
+    },
+    "luna_idle_sub_02": {
+      "rect": [
+        664,
+        10,
+        149,
+        141
+      ],
+      "pivot": [
+        66.0,
+        179.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "9c6774acbe4e17a5623edceb2d6ab9cb67919c17d9046628e3a18373c51cadb8",
+      "source": "assets/companions/sub/luna_idle_sub_02.png",
+      "source_bbox": [
+        46,
+        40,
+        195,
+        181
+      ],
+      "notes": ""
+    },
+    "luna_idle_sub_03": {
+      "rect": [
+        325,
+        10,
+        148,
+        142
+      ],
+      "pivot": [
+        65.0,
+        179.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "f3cdae4bf36a87a96a6a5fc4ae35e2aad66cb7357a6d93bceb79c446b59ca640",
+      "source": "assets/companions/sub/luna_idle_sub_03.png",
+      "source_bbox": [
+        47,
+        40,
+        195,
+        182
+      ],
+      "notes": ""
+    },
+    "luna_idle_sub_04": {
+      "rect": [
+        505,
+        174,
+        144,
+        139
+      ],
+      "pivot": [
+        61.0,
+        179.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "bdc7550be0dae90a1bc37f3ea4da85f058e25923e7f11771bc3f8e8fe6bd79fb",
+      "source": "assets/companions/sub/luna_idle_sub_04.png",
+      "source_bbox": [
+        51,
+        40,
+        195,
+        179
+      ],
+      "notes": ""
+    },
+    "luna_idle_sub_06": {
+      "rect": [
+        173,
+        174,
+        148,
+        140
+      ],
+      "pivot": [
+        65.0,
+        179.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "67446b85d3964a44718552f623b5442ded0dd4f2f0dbf32f3d3854ed1ca45542",
+      "source": "assets/companions/sub/luna_idle_sub_06.png",
+      "source_bbox": [
+        47,
+        40,
+        195,
+        180
+      ],
+      "notes": ""
+    },
+    "luna_idle_sub_05": {
+      "rect": [
+        669,
+        174,
+        149,
+        127
+      ],
+      "pivot": [
+        66.0,
+        167.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "7dab1d9cde1e55c76be47386960c98fba72e17ca96d2f8a0abb5ad87f5b81c61",
+      "source": "assets/companions/sub/luna_idle_sub_05.png",
+      "source_bbox": [
+        46,
+        52,
+        195,
+        179
+      ],
+      "notes": ""
+    },
+    "luna_walk_sub_01": {
+      "rect": [
+        10,
+        174,
+        143,
+        141
+      ],
+      "pivot": [
+        60.0,
+        179.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "fe7efb85704ed872f1f7d72fdb7bdf7d90f71957f2f1723dfba819b83c3856f2",
+      "source": "assets/companions/sub/luna_walk_sub_01.png",
+      "source_bbox": [
+        52,
+        40,
+        195,
+        181
+      ],
+      "notes": ""
+    },
+    "luna_walk_sub_02": {
+      "rect": [
+        493,
+        10,
+        151,
+        141
+      ],
+      "pivot": [
+        68.0,
+        179.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "6dac0df5b4e5ce19ea133ade3d4c12cefdb27cedaaa2fa97845f3b2b3262dd3c",
+      "source": "assets/companions/sub/luna_walk_sub_02.png",
+      "source_bbox": [
+        44,
+        40,
+        195,
+        181
+      ],
+      "notes": ""
+    },
+    "luna_walk_sub_03": {
+      "rect": [
+        341,
+        174,
+        144,
+        140
+      ],
+      "pivot": [
+        61.0,
+        179.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "a0183c1c04d088180b52be7c9845f52b6d8443ebc9992c74e66632df80176bdf",
+      "source": "assets/companions/sub/luna_walk_sub_03.png",
+      "source_bbox": [
+        51,
+        40,
+        195,
+        180
+      ],
+      "notes": ""
+    },
+    "luna_walk_sub_04": {
+      "rect": [
+        154,
+        10,
+        151,
+        142
+      ],
+      "pivot": [
+        68.0,
+        179.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "8e406468ea50bcdb29247e3531724187d97eddbaf9ea6c1d3b5dd8b1a6e391d0",
+      "source": "assets/companions/sub/luna_walk_sub_04.png",
+      "source_bbox": [
+        44,
+        40,
+        195,
+        182
+      ],
+      "notes": ""
+    },
+    "luna_shoulder_sub": {
+      "rect": [
+        10,
+        10,
+        124,
+        144
+      ],
+      "pivot": [
+        61.0,
+        181.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "16d50ecdd1f2e6ca28628a7348d297fb09f09bdaef87d50dff535c7df16e5e21",
+      "source": "assets/companions/sub/luna_shoulder_sub.png",
+      "source_bbox": [
+        51,
+        38,
+        175,
+        182
+      ],
+      "notes": ""
+    }
+  }
+}

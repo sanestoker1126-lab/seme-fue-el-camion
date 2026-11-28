@@ -1,0 +1,428 @@
+{
+  "juego": "¡Se me fue el camión!",
+  "candidata": "V58.8.18 RC",
+  "base": {
+    "maestra": "V58.8.1",
+    "fase_recibida": "V58.8.17 RC",
+    "ficheros": 628,
+    "sha256_zip_recibidos": {
+      "SE_ME_FUE_EL_CAMION_V58_8_17_RC_01_NUCLEO_CODIGO_Q.zip": "d2bec746cadb465d8ca7d11c9a1ef93034cd92adce2962671ed4aa1eb7849c8d",
+      "SE_ME_FUE_EL_CAMION_V58_8_17_RC_02_ESCENARIOS_CINE.zip": "41759ca7d9ed7d0132f756f7c353957391da8d621da0bcdba28f1c52105265de",
+      "SE_ME_FUE_EL_CAMION_V58_8_17_RC_03_PERSONAJES_AUDI.zip": "cd8ec86212c385441989f3afd27833d3a894ba9384d72e07da4e5add2d9dcb06"
+    },
+    "suite_node": {
+      "aprobadas": 82,
+      "fallidas": 0
+    }
+  },
+  "revision": {
+    "suite_node": {
+      "aprobadas": 92,
+      "fallidas": 0,
+      "omitidas": 0
+    },
+    "sintaxis_js": 39,
+    "assets_identicos_sha256": 563,
+    "png_webp_decodificados": 497,
+    "svg_parseados": 7,
+    "mp3_decodificados": 17
+  },
+  "navegador": {
+    "portada": {
+      "url": "http://127.0.0.1:8127/juego/Se_Me_Fue_El_Camion.html?manual=1&partida=origen#inicio",
+      "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) QtWebEngine/5.15.2 Chrome/83.0.4103.122 Safari/537.36",
+      "version": "58.8.18",
+      "build": "v58-8-18-rc",
+      "active": 1,
+      "cards": 5,
+      "qa": false,
+      "render": [
+        1280,
+        720
+      ]
+    },
+    "pwa_instalada": {
+      "state": "activated",
+      "urls": 492,
+      "scope": "http://127.0.0.1:8127/juego/"
+    },
+    "servidor_apagado": true,
+    "portada_offline": {
+      "url": "http://127.0.0.1:8127/juego/Se_Me_Fue_El_Camion.html?desconectado=1#partida",
+      "controlled": true,
+      "cards": 5,
+      "canvas": 1280
+    },
+    "recursos_offline": {
+      "images": [
+        [
+          1501,
+          2496
+        ],
+        [
+          1920,
+          540
+        ],
+        [
+          941,
+          1672
+        ],
+        [
+          1536,
+          864
+        ],
+        [
+          2048,
+          864
+        ],
+        [
+          1024,
+          624
+        ],
+        [
+          2048,
+          1536
+        ],
+        [
+          2048,
+          1536
+        ]
+      ],
+      "audioBytes": 193140
+    },
+    "escuela_offline": true,
+    "controles": {
+      "inicio": {
+        "x": -103.73000000000002,
+        "y": 192.04
+      },
+      "xMovimiento": -83.19875000000002,
+      "ySalto": 172.60666666666665
+    },
+    "intro_jefe_con_escena": true,
+    "jefe_sin_escena_continua": true,
+    "practica": {
+      "practice": true,
+      "tramo": 2,
+      "persistent": 0
+    },
+    "continuar_desde_espacio": "CONTINUAR · CASCADAS DEL CIELO",
+    "partida_completa_parafalls": {
+      "estado": "won",
+      "paradas": [
+        0,
+        1,
+        2
+      ],
+      "salidas": [
+        0,
+        1,
+        2
+      ],
+      "vidas": 3,
+      "muertes": 0,
+      "segundos": 23.033333333333307,
+      "practica": false,
+      "dificultad": "normal",
+      "relajado": false,
+      "resultado": "Llegaste al final de este recorrido. Los seis objetos de la mochila se buscan en la historia principal; su progreso se conserva.Tiempo 0:23 (¡mejor tiempo!) · 1005 pts (¡récord!) · 63 cristales · 0 enemigosLLAVES USB RECUPERADAS: 0 / 6 · Reúne las seis para ver la escena final.",
+      "guardado": 3
+    },
+    "guardado_tras_recarga": {
+      "estado": "3 / 3 PARADAS",
+      "wins": 2
+    },
+    "vista_390": {
+      "viewport": [
+        390,
+        844
+      ],
+      "canvas": [
+        390,
+        844
+      ],
+      "anchoDocumento": 390,
+      "tarjetas": 5,
+      "bordes": [
+        113.84375,
+        276.140625
+      ],
+      "centroM5": 0
+    },
+    "vista_844": {
+      "viewport": [
+        844,
+        390
+      ],
+      "canvas": [
+        844,
+        390
+      ],
+      "anchoDocumento": 844,
+      "tarjetas": 5,
+      "bordes": [
+        131.4140625,
+        322.4765625
+      ],
+      "centroM5": 0
+    },
+    "vista_1280": {
+      "viewport": [
+        1280,
+        720
+      ],
+      "canvas": [
+        1280,
+        720
+      ],
+      "anchoDocumento": 1280,
+      "tarjetas": 5,
+      "bordes": [
+        345.75,
+        539.25
+      ],
+      "centroM5": 0
+    },
+    "solicitudes_http_fallidas": []
+  },
+  "campana_desde_perfil_nuevo": {
+    "perfil_inicial": {
+      "misiones_abiertas": 1,
+      "victorias": 0,
+      "version": "58.8.18"
+    },
+    "campana_escuela": {
+      "mision": "escuela",
+      "estado": "won",
+      "segundos": 227.75,
+      "vidas": 3,
+      "muertes": 0,
+      "jefes": 3,
+      "relajado": true,
+      "practica": false,
+      "tramos": [
+        1,
+        2,
+        3
+      ],
+      "paradas": [
+        1,
+        2,
+        3
+      ],
+      "introsJefe": [
+        0
+      ],
+      "victorias": 1,
+      "progreso": {
+        "escuela": 3,
+        "guadalajara": 1,
+        "submarino": 0,
+        "espacial": 0
+      },
+      "boton": "CONTINUAR · GUADALAJARA"
+    },
+    "campana_guadalajara": {
+      "mision": "guadalajara",
+      "estado": "won",
+      "segundos": 136.72,
+      "vidas": 3,
+      "muertes": 0,
+      "jefes": 0,
+      "relajado": true,
+      "practica": false,
+      "tramos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13
+      ],
+      "paradas": [
+        1,
+        11
+      ],
+      "introsJefe": [],
+      "victorias": 2,
+      "progreso": {
+        "escuela": 3,
+        "guadalajara": 13,
+        "submarino": 1,
+        "espacial": 0
+      },
+      "boton": "CONTINUAR · EL SUBMARINO"
+    },
+    "campana_submarino": {
+      "mision": "submarino",
+      "estado": "won",
+      "segundos": 26.08,
+      "vidas": 3,
+      "muertes": 0,
+      "jefes": 0,
+      "relajado": true,
+      "practica": false,
+      "tramos": [
+        1
+      ],
+      "paradas": [
+        1
+      ],
+      "introsJefe": [],
+      "victorias": 3,
+      "progreso": {
+        "escuela": 3,
+        "guadalajara": 13,
+        "submarino": 1,
+        "espacial": 1
+      },
+      "boton": "CONTINUAR · EL ESPACIO"
+    },
+    "campana_espacial": {
+      "mision": "espacial",
+      "estado": "won",
+      "segundos": 42.85,
+      "vidas": 3,
+      "muertes": 0,
+      "jefes": 0,
+      "relajado": true,
+      "practica": false,
+      "tramos": [
+        1
+      ],
+      "paradas": [
+        1
+      ],
+      "introsJefe": [],
+      "victorias": 4,
+      "progreso": {
+        "escuela": 3,
+        "guadalajara": 13,
+        "submarino": 1,
+        "espacial": 1,
+        "parafalls": 1
+      },
+      "boton": "CONTINUAR · CASCADAS DEL CIELO"
+    },
+    "campana_parafalls": {
+      "mision": "parafalls",
+      "estado": "won",
+      "segundos": 23.03,
+      "vidas": 3,
+      "muertes": 0,
+      "jefes": 0,
+      "relajado": false,
+      "practica": false,
+      "tramos": [
+        1,
+        2,
+        3
+      ],
+      "paradas": [
+        1,
+        2,
+        3
+      ],
+      "introsJefe": [],
+      "victorias": 5,
+      "progreso": {
+        "escuela": 3,
+        "guadalajara": 13,
+        "submarino": 1,
+        "espacial": 1,
+        "parafalls": 3
+      },
+      "boton": null
+    },
+    "campana_persistente": {
+      "victorias": 5,
+      "misiones": [
+        "escuela",
+        "guadalajara",
+        "submarino",
+        "espacial",
+        "parafalls"
+      ],
+      "progreso": {
+        "escuela": 3,
+        "guadalajara": 13,
+        "submarino": 1,
+        "espacial": 1,
+        "parafalls": 3
+      }
+    }
+  },
+  "archivos_de_codigo_y_pruebas": {
+    "Se_Me_Fue_El_Camion.html": {
+      "origen_sha256": "16174a3e822197ec33c6f90bacb1a5a9bb0033cf0c3445b6fcc30184e52ff8c2",
+      "rc_sha256": "d15317b9851e1cf94df85b8a790a21c947025f279dd261477bc7459c673ad547"
+    },
+    "index.html": {
+      "origen_sha256": "e16c852021e6a595bd6d25f2d2064997b58a87fe7876040ff4c9a4fb6a19e3c3",
+      "rc_sha256": "04e2495cec096852d40c27fca647e8aee336443dd24629ba82be25732b3d9261"
+    },
+    "js/app/main.js": {
+      "origen_sha256": "013726af7f13253363d0483069a9a8443e6982105d7f743fed788f43ee82b58c",
+      "rc_sha256": "87ea3a22b4c1e4e193946cc8ffe27824566a9c0edfd6964af9c4457308592600"
+    },
+    "js/app/toxifamilia_cinematic.js": {
+      "origen_sha256": "e23d0cc578f22fe174638a6a63e013594eb67170c4d81f91284b445a3501209a",
+      "rc_sha256": "988cbc250edb05f9be6ea73fffbc411c89f2a3acb53ab8f6c3339cc146ea4b06"
+    },
+    "js/app/ui.js": {
+      "origen_sha256": "adbd7c013d3e5c88ec320dc6caf41c56ab0252f978833f9be54bbb8f4bfd40c9",
+      "rc_sha256": "6ac05246e9f1df8d2569cdea9d82c5bf246a146fb15aa125125554bb37ff749b"
+    },
+    "js/core/config.js": {
+      "origen_sha256": "874f7e3ebb19277e08089c24196623460990b529893c78acc0a3f269fcd0c385",
+      "rc_sha256": "8b48d2d8f1e09a70385c79a738ebbe31fe048ac3c40dd603da3738af7caa7fbe"
+    },
+    "js/core/game.js": {
+      "origen_sha256": "f4f39e39eb12582d9576ec93171df6cdb4cc5ca55a48baf478bb11758701521e",
+      "rc_sha256": "0d4dfa6ead559e45f00d31347bebe415a4876347ba2f63ac3ec508e8da54f5e1"
+    },
+    "sw.js": {
+      "origen_sha256": "02447d482c5fb836a3a9e30ba8782c69813e0672b270803bd7dc6b2a4dc7fe45",
+      "rc_sha256": "f1e5448e2aa74e6fb9f146e1bd1cc301a7e6dabb4540d04ef4882b5031bdd6c2"
+    },
+    "tests/campaign_progress.test.js": {
+      "origen_sha256": null,
+      "rc_sha256": "4bc534221f79efb3c04c278f2b47c973e09545fabf55244c904a8973800d895a"
+    },
+    "tests/fixtures/campaign-routes.json": {
+      "origen_sha256": null,
+      "rc_sha256": "7a329a2632b8732128c42dcf9fae4da4512bcd1e3c906804c79c7ad489196a2a"
+    },
+    "tests/fixtures/espacio-route.json": {
+      "origen_sha256": null,
+      "rc_sha256": "4902516df04935b641e85d979e596f8e68017699100e131b6ed6bd8123dbbf31"
+    },
+    "tests/fixtures/parafalls-route.json": {
+      "origen_sha256": null,
+      "rc_sha256": "488ca48ff184df69e165379dc842290843eada540b451c8fc97c08ad66f399c1"
+    },
+    "tests/guadalajara_transition.test.js": {
+      "origen_sha256": "00db695486d9c47c266891363ce46ed17bc472b27f4916c934c7e3a19a6a296f",
+      "rc_sha256": "64de5d926bc3290b938e17aeb0d487fcfdf8ddc2a52df469243f84a8bda263d6"
+    },
+    "tests/parafalls_cinematic.test.js": {
+      "origen_sha256": "7129532fbfcf4bb51cb7024d1dae57b818acb203c6bcfbdf781cd9662d5b814a",
+      "rc_sha256": "797853f160e1df808e9da75f2ae5f57e23e9dbc70f8f6ec1bd2b93d4d1b15b69"
+    },
+    "tests/parafalls_roblox_atlases.test.js": {
+      "origen_sha256": "a67ebd731492f6b64db4295adf63d087d48a8c63fc918f7ca6e680927846bf5d",
+      "rc_sha256": "18bd3d25edd11234e681d8e224be29a5321dc36ca48f7e7d39ebfd982d37f5a3"
+    },
+    "tests/web_delivery.test.js": {
+      "origen_sha256": null,
+      "rc_sha256": "c0cc604200ad002b8fddf96e28c2de674f0d06e4b54ae07ff81412bcae669c1d"
+    }
+  }
+}

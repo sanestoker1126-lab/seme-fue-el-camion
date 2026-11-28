@@ -1,0 +1,310 @@
+{
+  "schema": "camion.production.atlas.v1",
+  "id": "morita_sub",
+  "image": "assets/production/morita_sub/atlas.png",
+  "size": [
+    1024,
+    336
+  ],
+  "format": "RGBA8888",
+  "padding_px": 8,
+  "extrusion_px": 2,
+  "anchor": "feet",
+  "uniform_scale": true,
+  "source": "SeMeFueElCamion_V58_1_BUCEO_100_COMPLETO.zip",
+  "notes": "Existing authentic poses; not a new swimming or attack animation. Feet anchor is a packing reference, not a validated collision pivot.",
+  "frame_count": 11,
+  "unique_pixel_frames": 11,
+  "animations": {
+    "idle": {
+      "frames": [
+        "morita_idle_sub_01",
+        "morita_idle_sub_02",
+        "morita_idle_sub_03"
+      ],
+      "duration_ms": 180,
+      "loop": true,
+      "anchor": "feet"
+    },
+    "alert": {
+      "frames": [
+        "morita_idle_sub_04",
+        "morita_idle_sub_06"
+      ],
+      "duration_ms": 180,
+      "loop": true,
+      "anchor": "feet"
+    },
+    "sniff": {
+      "frames": [
+        "morita_idle_sub_05"
+      ],
+      "duration_ms": 200,
+      "loop": false,
+      "anchor": "feet"
+    },
+    "walk": {
+      "frames": [
+        "morita_walk_sub_01",
+        "morita_walk_sub_02",
+        "morita_walk_sub_03",
+        "morita_walk_sub_04"
+      ],
+      "duration_ms": 125,
+      "loop": true,
+      "anchor": "feet"
+    },
+    "shoulder": {
+      "frames": [
+        "morita_shoulder_sub"
+      ],
+      "duration_ms": 200,
+      "loop": true,
+      "anchor": "feet"
+    }
+  },
+  "frames": {
+    "morita_idle_sub_01": {
+      "rect": [
+        178,
+        175,
+        145,
+        141
+      ],
+      "pivot": [
+        62.0,
+        180.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "2f6cafb4ff73447e7d6d742b3145af65ea6b194000ff837b55f2d09a4ab796a0",
+      "source": "assets/companions/sub/morita_idle_sub_01.png",
+      "source_bbox": [
+        50,
+        39,
+        195,
+        180
+      ],
+      "notes": ""
+    },
+    "morita_idle_sub_02": {
+      "rect": [
+        487,
+        10,
+        151,
+        141
+      ],
+      "pivot": [
+        68.0,
+        179.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "381422e9132079e77ec237f0f97c6db60469b9352e2094f7c43fa238f22882a2",
+      "source": "assets/companions/sub/morita_idle_sub_02.png",
+      "source_bbox": [
+        44,
+        40,
+        195,
+        181
+      ],
+      "notes": ""
+    },
+    "morita_idle_sub_03": {
+      "rect": [
+        150,
+        10,
+        149,
+        142
+      ],
+      "pivot": [
+        66.0,
+        179.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "a3efb013d67d919708c0818b139a101ac9de2a3dbbe8d3af18289e97b2857b0d",
+      "source": "assets/companions/sub/morita_idle_sub_03.png",
+      "source_bbox": [
+        46,
+        40,
+        195,
+        182
+      ],
+      "notes": ""
+    },
+    "morita_idle_sub_04": {
+      "rect": [
+        343,
+        175,
+        148,
+        140
+      ],
+      "pivot": [
+        65.0,
+        179.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "2cc2e5b4d41bbb8c6a60654dbcb7f8e5e820ac56d9c86bfe7df8670a596b34cc",
+      "source": "assets/companions/sub/morita_idle_sub_04.png",
+      "source_bbox": [
+        47,
+        40,
+        195,
+        180
+      ],
+      "notes": ""
+    },
+    "morita_idle_sub_06": {
+      "rect": [
+        511,
+        175,
+        151,
+        135
+      ],
+      "pivot": [
+        68.0,
+        179.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "63ef6e3d63a9426d70d7ab23623710f02898be74cc92c17915a8042f9148d8ce",
+      "source": "assets/companions/sub/morita_idle_sub_06.png",
+      "source_bbox": [
+        44,
+        40,
+        195,
+        175
+      ],
+      "notes": ""
+    },
+    "morita_idle_sub_05": {
+      "rect": [
+        682,
+        175,
+        149,
+        125
+      ],
+      "pivot": [
+        66.0,
+        167.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "f28c16e34bfbe53bc786eda6efca67dbcef98d48bb988f23e5a7e0e866e47ddc",
+      "source": "assets/companions/sub/morita_idle_sub_05.png",
+      "source_bbox": [
+        46,
+        52,
+        195,
+        177
+      ],
+      "notes": ""
+    },
+    "morita_walk_sub_01": {
+      "rect": [
+        827,
+        10,
+        148,
+        141
+      ],
+      "pivot": [
+        65.0,
+        179.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "c3e129e4ddf52b54675e518f281a4a770d7121f5bea7f7dac6885864215549a0",
+      "source": "assets/companions/sub/morita_walk_sub_01.png",
+      "source_bbox": [
+        47,
+        40,
+        195,
+        181
+      ],
+      "notes": ""
+    },
+    "morita_walk_sub_02": {
+      "rect": [
+        658,
+        10,
+        149,
+        141
+      ],
+      "pivot": [
+        66.0,
+        179.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "d9ca88cd91a8c51fcd6b5e36c978c0d25d1fa1826d24179bfc8c0e78224cdf66",
+      "source": "assets/companions/sub/morita_walk_sub_02.png",
+      "source_bbox": [
+        46,
+        40,
+        195,
+        181
+      ],
+      "notes": ""
+    },
+    "morita_walk_sub_03": {
+      "rect": [
+        10,
+        175,
+        148,
+        141
+      ],
+      "pivot": [
+        65.0,
+        179.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "02d49b61a874bf088fc522c1f5bf5e1404be0d60a73639b58be3802c025ad6db",
+      "source": "assets/companions/sub/morita_walk_sub_03.png",
+      "source_bbox": [
+        47,
+        40,
+        195,
+        181
+      ],
+      "notes": ""
+    },
+    "morita_walk_sub_04": {
+      "rect": [
+        319,
+        10,
+        148,
+        142
+      ],
+      "pivot": [
+        65.0,
+        179.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "1d091a90d6c2c5bf104dc687ddc0101010685e58f7ba311c421730a3d5d5a877",
+      "source": "assets/companions/sub/morita_walk_sub_04.png",
+      "source_bbox": [
+        47,
+        40,
+        195,
+        182
+      ],
+      "notes": ""
+    },
+    "morita_shoulder_sub": {
+      "rect": [
+        10,
+        10,
+        120,
+        145
+      ],
+      "pivot": [
+        57.0,
+        181.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "dd2f6c81f0d50da17b02f6d0f07b28c89b7b485fc06134bbeccf9b58bbc24379",
+      "source": "assets/companions/sub/morita_shoulder_sub.png",
+      "source_bbox": [
+        55,
+        38,
+        175,
+        183
+      ],
+      "notes": ""
+    }
+  }
+}

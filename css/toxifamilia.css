@@ -5,9 +5,11 @@
 .toxi-stage::before{content:"";position:absolute;z-index:1;inset:0;background:linear-gradient(180deg,rgba(5,7,18,.58),transparent 28%,rgba(3,7,18,.25) 55%,rgba(3,7,18,.90));pointer-events:none}
 .toxi-stage::after{content:"";position:absolute;z-index:0;inset:-12%;background:radial-gradient(circle at 70% 45%,rgba(99,155,239,.15),transparent 45%);animation:toxiGlow 7s ease-in-out infinite alternate;pointer-events:none}
 .toxi-stage.toxi-pan{animation:toxiCamera 9s ease-in-out both}
+.toxi-stage.toxi-travel.toxi-pan{animation-name:toxiTravel;animation-timing-function:linear}
 .toxi-actor{position:absolute;z-index:2;display:flex;flex-direction:column;align-items:center;gap:5px;transform:translateX(-50%);max-width:35%;filter:drop-shadow(0 12px 12px rgba(0,0,0,.55))}
 .toxi-actor .toxi-bob{display:flex;justify-content:center;max-width:100%;transform-origin:50% 100%;animation:toxiBreathe 2.3s ease-in-out infinite alternate}
 .toxi-actor img{max-width:100%;height:auto;max-height:48vh;object-fit:contain;image-rendering:auto}
+.toxi-actor.fit-width img{width:100%}
 .toxi-actor span{font-size:clamp(10px,2vw,15px);font-weight:850;letter-spacing:.1em;padding:4px 10px;border-radius:100px;background:rgba(7,13,29,.78);border:1px solid rgba(255,255,255,.22);white-space:nowrap;text-shadow:0 1px 2px #000}
 .toxi-actor.enter-left{animation:toxiFromLeft .95s cubic-bezier(.14,.88,.23,1) both}
 .toxi-actor.enter-right{animation:toxiFromRight .95s cubic-bezier(.14,.88,.23,1) both}
@@ -30,6 +32,7 @@
 @keyframes toxiBreathe{from{transform:translateY(0) scale(1)}to{transform:translateY(-5px) scale(1.012)}}
 @keyframes toxiReveal{from{opacity:1}to{opacity:0}}
 @keyframes toxiCamera{from{background-position:45% 51%}to{background-position:54% 49%}}
+@keyframes toxiTravel{from{background-position:32% 50%}to{background-position:50% 50%}}
 @keyframes toxiGlow{from{opacity:.5}to{opacity:1}}
 @media(max-width:600px){.toxi-caption{left:3%;right:3%;bottom:3%;padding:13px}.toxi-actor img{max-height:38vh}.toxi-footer{min-height:62px;gap:8px}.toxi-footer button{padding:10px 12px;font-size:11px}}
 @media(prefers-reduced-motion:reduce){.toxi-overlay *, .toxi-stage{animation:none!important;transition:none!important}}
@@ -82,6 +85,7 @@
 .toxi-who{display:none}
 .toxi-dialogo{background-position:50% 100%}
 .toxi-dialogo.toxi-pan{animation-name:toxiCameraLow;animation-timing-function:linear}
+.toxi-dialogo.toxi-travel.toxi-pan{animation-name:toxiTravel;animation-timing-function:linear}
 @keyframes toxiCameraLow{from{background-position:44% 100%}to{background-position:56% 100%}}
 .toxi-dialogo::before{background:linear-gradient(180deg,rgba(5,7,18,.42),transparent 34%,transparent 78%,rgba(3,7,18,.35))}
 .toxi-dialogo .toxi-caption{top:3%;bottom:auto;left:3%;right:3%;width:auto;max-width:980px;margin:0 auto;padding:10px 18px 13px;border:2px solid rgba(120,215,255,.55);border-radius:14px;background:rgba(6,16,38,.88);box-shadow:0 10px 30px rgba(0,0,0,.35);backdrop-filter:none}
@@ -165,3 +169,33 @@
 }
 @media(orientation:portrait){.toxi-sombras .toxi-actor{max-width:48%}.toxi-sombras .toxi-actor img{max-height:52vh}.toxi-sombras .toxi-caption{bottom:3%}}
 @media(prefers-reduced-motion:reduce){.toxi-sombras .toxi-monitor{opacity:.9}.toxi-place{opacity:.9;clip-path:none}.toxi-lamp{animation:none}}
+
+/* El límite inferior del actor es el pie. El nombre ocupa una capa aparte. */
+.toxi-actor > span{position:absolute;bottom:100%;margin-bottom:4px}
+.toxi-actor:not(.float) .toxi-bob{animation:none}
+.toxi-actor:not(.float) img{transform:translateY(var(--sole,0%)) scaleX(var(--face,1));transform-origin:center bottom}
+.toxi-actor.flip{--face:-1}
+.toxi-actor.enter-rise:not(.float),.toxi-contact .toxi-actor{animation:toxiFade .55s ease-out both}
+.toxi-stage.toxi-contact{animation:none}
+.toxi-contact .toxi-actor{bottom:0!important}
+.toxi-actor.toxi-portrait{bottom:0;left:7%!important;max-width:18%;overflow:hidden;border-radius:50% 50% 0 0;background:rgba(22,35,48,.82);border:2px solid #cfcbac}
+.toxi-actor.toxi-portrait img{max-height:22vh}
+.toxi-live-overlay,.toxi-stage.toxi-live{background:transparent!important}
+.toxi-stage.toxi-live::before,.toxi-stage.toxi-live::after{display:none}
+body.world-arrival > :not(#wrap):not(.toxi-overlay){visibility:hidden!important}
+.toxi-stage.toxi-live .toxi-caption{max-width:740px}
+@media (orientation:landscape) and (max-height:500px){
+ .toxi-stage.toxi-live .toxi-caption{top:1%;padding:5px 12px}
+ .toxi-stage.toxi-live .toxi-title{font-size:15px}
+ .toxi-stage.toxi-live .toxi-text{font-size:12px}
+}
+
+/* WebViews que todavía no implementan el atajo inset. */
+.toxi-overlay,.toxi-cast,.toxi-fx,.toxi-tint,.toxi-dimmer,.toxi-stage::before{top:0;right:0;bottom:0;left:0}
+.toxi-stage::after{top:-12%;right:-12%;bottom:-12%;left:-12%}
+@media (min-aspect-ratio:13/10){.toxi-stage:not(.toxi-dialogo):not(.toxi-sombras) .toxi-cast{left:47%}}
+
+.toxi-stage[data-scene="e2_mercado"]{--stall-height:clamp(45px,12vh,100px)}
+.toxi-contact .toxi-actor.toxi-perched{bottom:var(--stall-height)!important}
+.toxi-market-stall{position:absolute;bottom:0;width:22%;max-width:165px;height:var(--stall-height);transform:translateX(-50%);border-left:5px solid #72503c;border-right:5px solid #72503c;box-sizing:border-box}
+.toxi-market-stall::before{content:"";position:absolute;top:0;left:-7px;right:-7px;height:12px;background:#98583f url('../assets/platforms/tiles_a.png') center top/auto 100%;border-radius:3px}

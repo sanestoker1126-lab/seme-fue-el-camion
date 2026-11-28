@@ -15,6 +15,9 @@
      para que patada/dash/pisotón conecten sobre el cuerpo visible del sprite,
      que se dibuja bastante más grande que la caja física. */
   const TYPES = {
+    guardian: { walker: true, w: 38, h: 50, hp: 2, speed: 38, chargeMul: 2.55, sight: 205,
+      windup: .68, charge: .62, recover: 1.05, stomp: true, dash: 'dizzy', minPlatform: 160,
+      hitKW: 1.06, hitKH: 1.06, contactRequiresCharge: true },
     rat:    { walker: true, w: 30, h: 20, hp: 1, speed: 56, alertMul: 1.6, alertRange: 150, stomp: true, dash: true, minPlatform: 90, hitKW: 1.5, hitKH: 1.9 },
     dog:    { walker: true, w: 40, h: 26, hp: 1, speed: 44, chargeMul: 3.6, sight: 230, windup: 0.5, charge: 0.8, recover: 0.75, stomp: true, dash: true, minPlatform: 120, hitKW: 1.8, hitKH: 2.05 },
     bravo:  { walker: true, w: 52, h: 34, hp: 2, speed: 40, chargeMul: 3.8, sight: 280, windup: 0.6, charge: 0.9, recover: 1.1, stomp: true, dash: 'dizzy', minPlatform: 160, hitKW: 1.65, hitKH: 1.95 },
@@ -29,7 +32,7 @@
     shark:  { flyer: true, w: 82, h: 36, hp: 3, speed: 78, sight: 220, contactRequiresCharge: true, windup: 0.72, charge: 0.65, recover: 1.0, chargeMul: 2.2, stomp: true, dash: 'dizzy', hitK: 1.12 },
     // V58.2: pulpo (lanza tinta con aviso) y Poseidón, jefe del mar: embiste con el tridente de cerca y lanza olas de lejos.
     pulpo:  { flyer: true, w: 40, h: 34, hp: 2, speed: 40, sight: 300, windup: 0.62, recover: 0.8, shotSpeed: 165, cooldown: 2.6, stomp: true, dash: true, hitK: 1.35 },
-    poseidon: { flyer: true, w: 56, h: 70, hp: 8, speed: 70, sight: 420, contactRequiresCharge: true, windup: 0.78, charge: 0.6, recover: 1.05, chargeMul: 2.6,
+    poseidon: { flyer: true, w: 92, h: 110, hp: 8, speed: 76, sight: 500, contactRequiresCharge: true, windup: 0.95, charge: 0.72, recover: 1.65, chargeMul: 2.8,
               shotSpeed: 175, cooldown: 2.2, stomp: true, dash: 'dizzy', hitK: 1.2 },
     drone:  { flyer: true, w: 34, h: 28, hp: 1, speed: 73, sight: 350, windup: 0.64, recover: 0.7, shotSpeed: 205, cooldown: 2.4, stomp: true, dash: true, hitK: 1.9 },
     // V58: cangrejo de las ruinas (patrulla de lado y se apura al verte) y robot de la estación (embiste como el perro).
@@ -51,7 +54,7 @@
                  stoneSpeed: 235, shot: 'roca' },
     // V58.7 · El Maestro Enojón (jefe de la escuela): levanta la regla y embiste; de lejos lanza libros (en arco) y
     // borradores (rectos); enojado (media vida) grita y manda dos ondas por el piso que se saltan.
-    maestro: { walker: true, w: 36, h: 52, hp: 4, speed: 44, chargeMul: 3.1, sight: 300, windup: 0.7, charge: 0.72, recover: 1.15, stomp: true,
+    maestro: { walker: true, w: 36, h: 52, hp: 6, speed: 44, chargeMul: 3.1, sight: 300, windup: 0.7, charge: 0.72, recover: 1.15, stomp: true,
                dash: 'dizzy', minPlatform: 160, hitKW: 1.45, hitKH: 1.1, throwNear: 160, throwRange: 440, throwWindup: 0.6, throwCD: 2.0,
                stoneSpeed: 250, shoutWindup: 0.75, shoutSpeed: 230, shoutCD: 6.5 },
     // V58.7 · El Pulpo del Abismo (jefe de la zona secreta del mar): embiste con los tentáculos de cerca y de lejos
@@ -184,6 +187,7 @@
       case 'bravo':
       case 'robot':
       case 'astronino':
+      case 'guardian':
       case 'kid': {
         if (f.state === 'patrol') {
           if (walk(f, W, f.spd * 0.7, dt)) f.dir *= -1;
@@ -370,12 +374,14 @@
         // Jefe del mar. Patrulla sobre la arena de salida; de cerca avisa y embiste con el tridente (después queda
         // mareado: momento de contraatacar); de lejos levanta el tridente y lanza una ola. Siempre con aviso.
         const z = f.waterZone, swimming = z && P.water === z && !P.dead;
-        const minY = z ? z.y + f.h / 2 + 8 : f.baseY - 60, maxY = z ? z.y2 - f.h / 2 - 8 : f.baseY + 60;
+        const minY = f.arenaBounds?.top ?? (z ? z.y + f.h / 2 + 8 : f.baseY - 60), maxY = f.arenaBounds?.bottom ?? (z ? z.y2 - f.h / 2 - 8 : f.baseY + 60);
         if (f.state === 'fly') {
           f.x += f.dir * f.spd * 0.7 * dt;
           if (f.x < f.lane.x1) { f.x = f.lane.x1; f.dir = 1; }
           if (f.x > f.lane.x2) { f.x = f.lane.x2; f.dir = -1; }
-          f.y += (f.baseY + Math.sin(f.t * 1.4 + f.phase) * 14 - f.y) * Math.min(1, dt * 3);
+          const targetY=swimming&&visible?Math.max(minY,Math.min(maxY,P.y)):f.baseY;
+          f.y += (targetY + Math.sin(f.t * 1.4 + f.phase) * 9 - f.y) * Math.min(1, dt * 0.9);
+          f.y=Math.max(minY,Math.min(maxY,f.y));
           if (swimming && visible && f.cool <= 0 && adx < T.sight && Math.abs(P.y - f.y) < 260) {
             f.dir = Math.sign(dx) || f.dir;
             f.targetX = P.x; f.targetY = P.y;
@@ -383,7 +389,7 @@
             ev.push({ type: 'foeAlert', foe: f });
           }
         } else if (f.state === 'windup') {
-          if (f.stateT >= T.windup * f.reaction) { f.aimY = swimming ? P.y : f.baseY; setState(f, 'charge'); ev.push({ type: 'foeCharge', foe: f }); }
+          if (f.stateT >= T.windup * f.reaction) { f.aimY = f.targetY ?? f.baseY; setState(f, 'charge'); ev.push({ type: 'foeCharge', foe: f }); }
         } else if (f.state === 'charge') {
           f.x = Math.max(f.lane.x1, Math.min(f.lane.x2, f.x + f.dir * f.spd * T.chargeMul * dt));
           f.y = Math.max(minY, Math.min(maxY, f.y + Math.max(-f.spd * dt, Math.min(f.spd * dt, (f.aimY || f.baseY) - f.y))));
@@ -393,10 +399,10 @@
             const vx = f.targetX - f.x, vy = f.targetY - f.y, dist = Math.hypot(vx, vy) || 1, sp = T.shotSpeed * f.shotMul;
             W.shots.push({ kind: 'tide', x: f.x + f.dir * 24, y: f.y - 6, vx: vx / dist * sp, vy: vy / dist * sp, g: 0, r: 14, life: 2.8, from: f.id });
             ev.push({ type: 'shoot', foe: f });
-            f.cool = T.cooldown * f.reaction; setState(f, 'fly');
+            f.cool = T.cooldown * f.reaction; setState(f, 'dizzy');
           }
         } else if (f.state === 'dizzy') {
-          f.y += Math.sin(f.t * 9) * 0.4;
+          f.y = Math.max(minY,Math.min(maxY,f.y + Math.sin(f.t * 9) * 0.4));
           if (f.stateT >= T.recover * f.reaction) setState(f, 'fly');
         }
         break;
@@ -710,7 +716,7 @@
     const body = ctx.bodybox ? ctx.bodybox() : hbAll;
     for (const f of W.foes) {
       if (f.dead) { f.deadT += dt; continue; }
-      if (!ctx.active(f.x, f.y)) continue;
+      if ((ctx.region && ctx.region !== f.region) || !ctx.active(f.x, f.y)) continue;
       updateFoe(f, W, P, dt, ctx, ev);
       if (P.dead || ctx.busy) continue;
       // Sumergida, Sofía queda fuera del alcance de lo que vive en tierra, pero no del pez de su propio estanque.
@@ -754,7 +760,7 @@
         f.hitCD = 0.4;
         ev.push({ type: 'clank', foe: f });
       } else if (def && (!TYPES[f.kind].contactRequiresCharge ||
-        (f.state === 'charge' && P.water === f.waterZone))) {
+        (f.state === 'charge' && (!AQUATIC.has(f.kind) || P.water === f.waterZone)))) {
         // V57: peces ofensivos SOLO cuando Sofía comparte su estanque
         // y la embestida ya se anunció. Dash y pisotón siguen funcionando.
         ctx.hurt(f.x, b.y1 + (b.y2 - b.y1) / 2, f.kind);

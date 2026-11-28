@@ -5,9 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#101725">
 <title>¡Se me fue el camión! | Plataformas 2.5D</title>
-<link rel="stylesheet" href="css/game.css?v=58.9">
-<link rel="stylesheet" href="css/toxifamilia_style.css?v=58.9">
-<link rel="stylesheet" href="css/toxifamilia.css?v=58.9">
+<link rel="stylesheet" href="css/game.css?v=58.8.1">
+<link rel="stylesheet" href="css/toxifamilia_style.css?v=58.8.17">
+<link rel="stylesheet" href="css/toxifamilia.css?v=58.8.19">
+<link rel="stylesheet" href="css/release_visual.css?v=58.8.23">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
 </head>
@@ -15,9 +16,9 @@
 <div id="wrap"><canvas id="game" aria-label="Juego de plataformas: Sofía baja por la ciudad con Luna y Morita para alcanzar el camión"></canvas></div>
 
 <div id="hud">
- <div class="pill"><b id="hudTramo">TRAMO 1/12</b> <span class="sub">· <span id="hudTime">0:00</span></span><br><span id="objective" class="sub objective">OBJETIVO: SIGUE BAJANDO</span><br><span class="sub">PTS <b id="score">0</b><b id="combo" style="color:#d9ff65"></b></span></div>
+ <div class="pill hudRoute"><span id="hudWorld" class="hudWorld">LA ESCUELA</span><b id="hudTramo">TRAMO 1/12</b> <span class="sub">· <span id="hudTime">0:00</span></span><br><span id="objective" class="sub objective">OBJETIVO: SIGUE BAJANDO</span><br><span class="sub">PTS <b id="score">0</b><b id="combo" style="color:#d9ff65"></b></span><div class="routeTrack" aria-hidden="true"><i id="routeFill"></i></div></div>
  <div id="rightHud">
-  <div class="pill">CRISTALES <b id="gems">0</b><br><span class="sub">VIDA <b id="life">♥ ♥ ♥</b></span><br><span class="sub">OBJETOS <b id="items">0/6</b></span> <span id="keyBadge"></span><br><span class="sub" id="catsHud">GATAS LISTAS</span></div>
+  <div class="pill hudVitals"><span class="hudGem">◆ <b id="gems">0</b> <small>CRISTALES</small></span><br><span class="sub">VIDA <b id="life">♥ ♥ ♥</b></span><span class="hudItems"><span class="sub">OBJETOS <b id="items">0/6</b></span> <span id="keyBadge"></span></span><span class="sub hudCats" id="catsHud">GATAS LISTAS</span></div>
   <button id="pause" aria-label="Pausa">Ⅱ</button>
  </div>
 </div>
@@ -27,10 +28,10 @@
 <div id="bubble" hidden aria-live="polite"><span class="who">LETRERO</span><span id="bubbleText"></span></div>
 <div id="card" hidden aria-live="polite"><div class="tag" id="cardTag"></div><h3 id="cardTitle"></h3><p id="cardText"></p></div>
 
-<div id="menu" class="panel menu">
+<div id="menu" class="panel menu" data-selection="escuela">
  <header class="menuHead">
   <div class="menuBrand">
-   <div class="eyebrow">PLATAFORMAS · ESTILO LA TOXIFAMILIA</div>
+   <div class="eyebrow">LA AVENTURA DE SOFÍA · 5 MUNDOS</div>
    <h1>¡SE ME FUE <span>EL CAMIÓN!</span></h1>
   </div>
   <div class="menuStat" title="Objetos de la mochila recuperados">
@@ -40,11 +41,11 @@
  </header>
  <div class="menuBody">
   <section class="menuCol" aria-labelledby="missionsLabel">
-   <div class="label" id="missionsLabel">MISIONES</div>
+   <div class="label" id="missionsLabel">ELIGE TU MUNDO <span class="worldAvailability">21 PARADAS</span></div>
    <div id="missions" class="missionGrid"></div>
   </section>
   <section class="menuCol menuPlayCol" aria-labelledby="tramosLabel">
-   <div class="label" id="tramosLabel">PARADAS</div>
+   <div class="worldHero" aria-hidden="true"><div class="worldHeroCopy"><span id="worldKicker">MUNDO 01</span><strong id="worldTitle">LA ESCUELA</strong><span id="worldDesc">Corre tras la ruta 6.</span></div><div class="heroCast"><img src="assets/ui/worlds_v21/luna.webp" alt=""><img src="assets/ui/worlds_v21/sofia.webp" alt=""><img src="assets/ui/worlds_v21/morita.webp" alt=""></div></div><div class="label" id="tramosLabel">PARADAS</div>
    <div id="tramos"></div>
    <button class="primary" id="start" disabled>CARGANDO…</button>
    <p class="menuMeta"><button class="chip" id="optDiff" type="button"></button><span id="diffHelp"></span></p>
@@ -52,7 +53,7 @@
   </section>
  </div>
  <nav class="menuFoot menuActions" aria-label="Más opciones">
-  <button class="opt ghost" id="btnStory" type="button">▶ CINEMÁTICA</button>
+  <button class="opt ghost" id="btnStory" type="button">▶ HISTORIA</button>
   <button class="opt ghost" id="btnHowto" type="button">? CÓMO JUGAR</button>
   <button class="opt ghost" id="btnOptions" type="button">⚙ OPCIONES</button>
  </nav>
@@ -70,9 +71,12 @@
  <div class="letterbox bottom"></div>
 </div>
 
+<div id="poseidonMeter" hidden><div><b id="poseidonStatus"></b><span id="poseidonHp"></span></div><div class="poseidonTrack"><i id="poseidonFill"></i></div></div>
 <section id="bossCinematic" class="panel bossCinematic" hidden role="dialog" aria-modal="true" aria-labelledby="bossCineTitle">
  <div class="letterbox top"></div>
  <div id="bossCineScene" class="bossCineScene" aria-live="polite">
+  <img id="poseidonCineBackdrop" hidden alt="">
+  <img id="poseidonCinePortrait" hidden alt="Poseidón con su tridente">
   <div class="bossCineHeader"><span id="bossCineStage"></span><b id="bossCineBoss"></b></div>
   <div class="bossCineImpact" aria-hidden="true"><i></i><b id="bossCineWord">¡GRR!</b></div>
   <div class="bossCineCaption"><div class="eyebrow" id="bossCineTag"></div><h2 id="bossCineTitle"></h2><p id="bossCineText"></p><div id="bossCineCue" class="bossCineCue"></div></div>
@@ -122,6 +126,7 @@
  <div class="optRow"><span>Modo relajado <small>(los golpes empujan pero no quitan vidas)</small></span><button class="opt" data-opt="relaxed"></button></div>
  <div class="optRow"><span>Las gatitas distraen enemigos</span><button class="opt" data-opt="catsHelp"></button></div>
  <div class="optRow"><span>Anillo que marca dónde caes</span><button class="opt" data-opt="landingRing"></button></div>
+ <div class="optRow"><span>Modo práctica <small>(sin guardar progreso)</small></span><button class="opt" data-opt="freeSelect"></button></div>
  <div class="optRow"><span>Cinemáticas</span><button class="opt" data-opt="cinematics"></button></div>
  <div class="optRow"><span>Ropa de calle de Sofía <small>(Guadalajara y la isla del mar; en la escuela va de uniforme, en el agua de buzo y en la Luna de astronauta)</small></span><button class="opt" data-opt="ninaLook"></button></div>
  <div class="label">SONIDO</div>
@@ -145,6 +150,7 @@
  <div id="resultStars"></div>
  <p id="resultText"></p>
  <div id="resultItems"></div>
+ <button class="primary" id="nextSchoolMission" hidden>CONTINUAR · GUADALAJARA</button>
  <button class="primary" id="retry">VOLVER A INTENTAR</button>
  <button class="primary secondary" id="back">MENÚ</button>
 </div>
@@ -161,25 +167,30 @@
 </div>
 
 <!-- Núcleo sin DOM (probado con node --test) -->
-<script src="js/core/util.js?v=58.9"></script>
-<script src="js/core/config.js?v=58.9"></script>
-<script src="js/core/levels.js?v=58.9"></script>
-<script src="js/core/story.js?v=58.9"></script>
-<script src="js/core/toxifamilia_style.js?v=58.9"></script>
-<script src="js/core/toxifamilia.js?v=58.9"></script>
-<script src="js/core/physics.js?v=58.9"></script>
-<script src="js/core/enemies.js?v=58.9"></script>
-<script src="js/core/obstacles.js?v=58.9"></script>
-<script src="js/core/world.js?v=58.9"></script>
-<script src="js/core/game.js?v=58.9"></script>
+<script src="js/core/util.js?v=58.8.1"></script>
+<script src="js/core/config.js?v=58.8.20"></script>
+<script src="js/core/parafalls_data.js?v=58.8.13"></script>
+<script src="js/core/levels.js?v=58.8.23"></script>
+<script src="js/core/story.js?v=58.8.23"></script>
+<script src="js/core/toxifamilia_style.js?v=58.8.1"></script>
+<script src="js/core/toxifamilia.js?v=58.8.20"></script>
+<script src="js/core/physics.js?v=58.8.1"></script>
+<script src="js/core/enemies.js?v=58.8.23"></script>
+<script src="js/core/obstacles.js?v=58.8.1"></script>
+<script src="js/core/world.js?v=58.8.23"></script>
+<script src="js/core/game.js?v=58.8.23"></script>
 <!-- Capa de navegador -->
-<script src="js/app/art_data.js?v=58.9"></script>
-<script src="js/app/art_secretos.js?v=58.9"></script>
-<script src="js/app/render.js?v=58.9"></script>
-<script src="js/app/input.js?v=58.9"></script>
-<script src="js/app/audio.js?v=58.9"></script>
-<script src="js/app/ui.js?v=58.9"></script>
-<script src="js/app/main.js?v=58.9"></script>
-<script src="js/app/toxifamilia_cinematic.js?v=58.9"></script>
+<script src="js/app/art_data.js?v=58.8.1"></script>
+<script src="js/app/art_secretos.js?v=58.8.6"></script>
+<script src="js/app/art_production.js?v=58.8.1"></script>
+<script src="assets/player/sofia_roblox/sofia_atlas_data.js?v=58.8.14"></script>
+<script src="assets/player/sofia_roblox/sofia_parafalls_adapter.js?v=58.8.14"></script>
+<script src="js/app/parafalls_roblox_atlases.js?v=58.8.14"></script>
+<script src="js/app/render.js?v=58.8.23"></script>
+<script src="js/app/input.js?v=58.8.1"></script>
+<script src="js/app/audio.js?v=58.8.1"></script>
+<script src="js/app/ui.js?v=58.8.23"></script>
+<script src="js/app/main.js?v=58.8.23"></script>
+<script src="js/app/toxifamilia_cinematic.js?v=58.8.20"></script>
 </body>
 </html>

@@ -1,0 +1,207 @@
+{
+  "image": "assets/scenes/school_pro/school_furniture.png",
+  "size": [
+    1024,
+    768
+  ],
+  "cell": [
+    256,
+    256
+  ],
+  "frames": {
+    "wood_shelf": {
+      "rect": [
+        12,
+        112,
+        232,
+        32
+      ],
+      "pivot": [
+        116,
+        0
+      ],
+      "size": [
+        232,
+        32
+      ]
+    },
+    "lab_top": {
+      "rect": [
+        268,
+        112,
+        232,
+        32
+      ],
+      "pivot": [
+        116,
+        0
+      ],
+      "size": [
+        232,
+        32
+      ]
+    },
+    "locker_top": {
+      "rect": [
+        524,
+        112,
+        232,
+        32
+      ],
+      "pivot": [
+        116,
+        0
+      ],
+      "size": [
+        232,
+        32
+      ]
+    },
+    "wood_upright": {
+      "rect": [
+        882,
+        12,
+        28,
+        232
+      ],
+      "pivot": [
+        14,
+        0
+      ],
+      "size": [
+        28,
+        232
+      ]
+    },
+    "steel_upright": {
+      "rect": [
+        114,
+        268,
+        28,
+        232
+      ],
+      "pivot": [
+        14,
+        0
+      ],
+      "size": [
+        28,
+        232
+      ]
+    },
+    "hatch": {
+      "rect": [
+        268,
+        339,
+        232,
+        90
+      ],
+      "pivot": [
+        116,
+        78
+      ],
+      "size": [
+        232,
+        90
+      ]
+    },
+    "exit_door": {
+      "rect": [
+        562,
+        268,
+        156,
+        232
+      ],
+      "pivot": [
+        78,
+        231
+      ],
+      "size": [
+        156,
+        232
+      ]
+    },
+    "crate": {
+      "rect": [
+        792,
+        280,
+        208,
+        208
+      ],
+      "pivot": [
+        104,
+        208
+      ],
+      "size": [
+        208,
+        208
+      ]
+    },
+    "archive_books": {
+      "rect": [
+        12,
+        590,
+        232,
+        100
+      ],
+      "pivot": [
+        116.0,
+        100
+      ],
+      "size": [
+        232,
+        100
+      ]
+    },
+    "lab_bottles": {
+      "rect": [
+        268,
+        590,
+        232,
+        100
+      ],
+      "pivot": [
+        116.0,
+        100
+      ],
+      "size": [
+        232,
+        100
+      ]
+    },
+    "locker_panel": {
+      "rect": [
+        524,
+        524,
+        232,
+        232
+      ],
+      "pivot": [
+        116.0,
+        232
+      ],
+      "size": [
+        232,
+        232
+      ]
+    },
+    "supply_boxes": {
+      "rect": [
+        780,
+        595,
+        232,
+        90
+      ],
+      "pivot": [
+        116.0,
+        90
+      ],
+      "size": [
+        232,
+        90
+      ]
+    }
+  },
+  "padding": 12,
+  "source": "Original procedural materials; no character sprites changed."
+}

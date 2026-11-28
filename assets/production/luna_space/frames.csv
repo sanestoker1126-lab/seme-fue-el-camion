@@ -1,0 +1,5 @@
+frame,x,y,w,h,pivot_x,pivot_y,direction,sha256_rgba,source
+luna_idle,250,10,217,206,108.0,203.0,right,0a5d7c4f90e1891251c267ba1d94d9b9980adea8f9064e581721dc8c5277104e,assets/companions/space/luna_idle.webp
+luna_walk_a,10,10,220,206,110.0,203.0,right,f51ea82286a2cc3d23cd01335f0ceaf0d5540475f416b01017426dd78635fe8c,assets/companions/space/luna_walk_a.webp
+luna_walk_b,487,10,216,202,108.0,199.0,right,3573e8703f719c224dd6a7d315e48cb8f78a71d1770a199b102ccb6df6524bbc,assets/companions/space/luna_walk_b.webp
+luna_jump,723,10,224,195,112.0,192.0,right,2c227333b9e14d70882531d5dc39b59724167baba4762f346829786f554e7b5b,assets/companions/space/luna_jump.webp

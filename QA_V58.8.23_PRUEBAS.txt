@@ -1,0 +1,766 @@
+TAP version 13
+# Subtest: práctica: iniciar por una parada bloqueada, reintentar y ganar conserva la campaña
+ok 1 - práctica: iniciar por una parada bloqueada, reintentar y ganar conserva la campaña
+  ---
+  duration_ms: 32.795723
+  type: 'test'
+  ...
+# Subtest: práctica: los objetos de la partida se cuentan sin alterar la colección guardada
+ok 2 - práctica: los objetos de la partida se cuentan sin alterar la colección guardada
+  ---
+  duration_ms: 115.354285
+  type: 'test'
+  ...
+# Subtest: la meta de Espacio abre Parafalls y la campaña se recupera después de practicar
+ok 3 - la meta de Espacio abre Parafalls y la campaña se recupera después de practicar
+  ---
+  duration_ms: 24.625408
+  type: 'test'
+  ...
+# Subtest: Parafalls: recorrido continuo de tres páginas, dos paradas nuevas y victoria desde el inicio
+ok 4 - Parafalls: recorrido continuo de tres páginas, dos paradas nuevas y victoria desde el inicio
+  ---
+  duration_ms: 180.067962
+  type: 'test'
+  ...
+# Subtest: campaña: un perfil nuevo completa las cuatro misiones en modo relajado y desbloquea Parafalls
+ok 5 - campaña: un perfil nuevo completa las cuatro misiones en modo relajado y desbloquea Parafalls
+  ---
+  duration_ms: 6117.854931
+  type: 'test'
+  ...
+# Subtest: pisotón: derrota a la rata y Nina rebota sin recibir daño
+ok 6 - pisotón: derrota a la rata y Nina rebota sin recibir daño
+  ---
+  duration_ms: 13.423281
+  type: 'test'
+  ...
+# Subtest: dash: derrota a la rata; caminar contra ella hace daño una sola vez
+ok 7 - dash: derrota a la rata; caminar contra ella hace daño una sola vez
+  ---
+  duration_ms: 2.272871
+  type: 'test'
+  ...
+# Subtest: perro: avisa, embiste, se detiene en el borde y queda mareado
+ok 8 - perro: avisa, embiste, se detiene en el borde y queda mareado
+  ---
+  duration_ms: 2.217655
+  type: 'test'
+  ...
+# Subtest: perro bravo: el dash choca sin daño salvo si está mareado; necesita dos golpes
+ok 9 - perro bravo: el dash choca sin daño salvo si está mareado; necesita dos golpes
+  ---
+  duration_ms: 1.608537
+  type: 'test'
+  ...
+# Subtest: chile: dispara tras la señal previa solo con línea de tiro libre
+ok 10 - chile: dispara tras la señal previa solo con línea de tiro libre
+  ---
+  duration_ms: 4.150591
+  type: 'test'
+  ...
+# Subtest: proyectiles: el dash los destruye sin daño; sin dash hieren
+ok 11 - proyectiles: el dash los destruye sin daño; sin dash hieren
+  ---
+  duration_ms: 0.563896
+  type: 'test'
+  ...
+# Subtest: murciélago: duerme, se alerta, persigue y regresa a su percha
+ok 12 - murciélago: duerme, se alerta, persigue y regresa a su percha
+  ---
+  duration_ms: 9.660551
+  type: 'test'
+  ...
+# Subtest: paloma: solo suelta proyectiles cuando Nina está debajo
+ok 13 - paloma: solo suelta proyectiles cuando Nina está debajo
+  ---
+  duration_ms: 5.514783
+  type: 'test'
+  ...
+# Subtest: cable: solo hace daño cuando tiene corriente
+ok 14 - cable: solo hace daño cuando tiene corriente
+  ---
+  duration_ms: 0.821202
+  type: 'test'
+  ...
+# Subtest: maceta: tiembla, cae, se rompe y reaparece fuera de cámara
+ok 15 - maceta: tiembla, cae, se rompe y reaparece fuera de cámara
+  ---
+  duration_ms: 2.644539
+  type: 'test'
+  ...
+# Subtest: jefes: cada arquetipo emite una señal antes de preparar su ataque
+ok 16 - jefes: cada arquetipo emite una señal antes de preparar su ataque
+  ---
+  duration_ms: 0.76234
+  type: 'test'
+  ...
+# Subtest: apoyo felino: distrae brevemente a un enemigo normal, sin daño ni efecto en jefes
+ok 17 - apoyo felino: distrae brevemente a un enemigo normal, sin daño ni efecto en jefes
+  ---
+  duration_ms: 0.311411
+  type: 'test'
+  ...
+# Subtest: púas: dañan al pisarlas
+ok 18 - púas: dañan al pisarlas
+  ---
+  duration_ms: 0.606692
+  type: 'test'
+  ...
+# Subtest: inicio: Nina aparece en la parada del tramo 1, apoyada y con 3 vidas en Normal
+ok 19 - inicio: Nina aparece en la parada del tramo 1, apoyada y con 3 vidas en Normal
+  ---
+  duration_ms: 154.290025
+  type: 'test'
+  ...
+# Subtest: gatitas: detectan al enemigo cercano y lo distraen sin quitarle vida
+ok 20 - gatitas: detectan al enemigo cercano y lo distraen sin quitarle vida
+  ---
+  duration_ms: 101.610984
+  type: 'test'
+  ...
+# Subtest: gatitas: exploran y alternan conductas propias mientras Sofía espera
+ok 21 - gatitas: exploran y alternan conductas propias mientras Sofía espera
+  ---
+  duration_ms: 424.723591
+  type: 'test'
+  ...
+# Subtest: gatitas: siguen el movimiento sin saltos y se congelan al pausar
+ok 22 - gatitas: siguen el movimiento sin saltos y se congelan al pausar
+  ---
+  duration_ms: 63.766524
+  type: 'test'
+  ...
+# Subtest: daño: resta una vida, aplica retroceso desde la fuente e invulnerabilidad
+ok 23 - daño: resta una vida, aplica retroceso desde la fuente e invulnerabilidad
+  ---
+  duration_ms: 101.042015
+  type: 'test'
+  ...
+# Subtest: escudo: absorbe un golpe sin perder vidas
+ok 24 - escudo: absorbe un golpe sin perder vidas
+  ---
+  duration_ms: 72.155652
+  type: 'test'
+  ...
+# Subtest: caída dañina: depende de la dificultad (Fácil perdona más que Difícil)
+ok 25 - caída dañina: depende de la dificultad (Fácil perdona más que Difícil)
+  ---
+  duration_ms: 700.139463
+  type: 'test'
+  ...
+# Subtest: derrota: sin vidas → animación → game over; reintento desde la última parada
+ok 26 - derrota: sin vidas → animación → game over; reintento desde la última parada
+  ---
+  duration_ms: 2254.143187
+  type: 'test'
+  ...
+# Subtest: pausa: congela la simulación y el cronómetro
+ok 27 - pausa: congela la simulación y el cronómetro
+  ---
+  duration_ms: 239.319058
+  type: 'test'
+  ...
+# Subtest: puertas: la trampilla lleva a la zona inferior y la salida devuelve más abajo
+ok 28 - puertas: la trampilla lleva a la zona inferior y la salida devuelve más abajo
+  ---
+  duration_ms: 196.821376
+  type: 'test'
+  ...
+# Subtest: llave y reja: la reja bloquea sin llave y se abre con ella
+ok 29 - llave y reja: la reja bloquea sin llave y se abre con ella
+  ---
+  duration_ms: 297.120126
+  type: 'test'
+  ...
+# Subtest: objetos perdidos: se recogen, cuentan para el final y se guardan
+ok 30 - objetos perdidos: se recogen, cuentan para el final y se guardan
+  ---
+  duration_ms: 332.276352
+  type: 'test'
+  ...
+# Subtest: parada: activarla guarda el progreso y desbloquea el tramo
+ok 31 - parada: activarla guarda el progreso y desbloquea el tramo
+  ---
+  duration_ms: 273.73543
+  type: 'test'
+  ...
+# Subtest: victoria: llegar a la puerta del camión termina la partida con estrellas y final
+ok 32 - victoria: llegar a la puerta del camión termina la partida con estrellas y final
+  ---
+  duration_ms: 271.075695
+  type: 'test'
+  ...
+# Subtest: cámara: Nina siempre dentro del encuadre durante una caída larga
+ok 33 - cámara: Nina siempre dentro del encuadre durante una caída larga
+  ---
+  duration_ms: 477.409353
+  type: 'test'
+  ...
+# Subtest: la transición escuela–Guadalajara valida escenas breves, visuales y sin diálogo atribuido al guion
+ok 34 - la transición escuela–Guadalajara valida escenas breves, visuales y sin diálogo atribuido al guion
+  ---
+  duration_ms: 25.382192
+  type: 'test'
+  ...
+# Subtest: la primera misión urbana carga el mapa panorámico con cinco cornisas pintadas conectadas
+ok 35 - la primera misión urbana carga el mapa panorámico con cinco cornisas pintadas conectadas
+  ---
+  duration_ms: 190.673187
+  type: 'test'
+  ...
+# Subtest: la transición se conecta al inicio de la misión 2, respeta el bypass y ofrece replay tras verla
+ok 36 - la transición se conecta al inicio de la misión 2, respeta el bypass y ofrece replay tras verla
+  ---
+  duration_ms: 5.190345
+  type: 'test'
+  ...
+# Subtest: escuela / escuela · apoyo, distribución y hábitats
+ok 37 - escuela / escuela · apoyo, distribución y hábitats
+  ---
+  duration_ms: 196.722684
+  type: 'test'
+  ...
+# Subtest: escuela / escuela_vecina · apoyo, distribución y hábitats
+ok 38 - escuela / escuela_vecina · apoyo, distribución y hábitats
+  ---
+  duration_ms: 88.993918
+  type: 'test'
+  ...
+# Subtest: escuela / escuela_ruinas · apoyo, distribución y hábitats
+ok 39 - escuela / escuela_ruinas · apoyo, distribución y hábitats
+  ---
+  duration_ms: 105.1063
+  type: 'test'
+  ...
+# Subtest: guadalajara / guadalajara · apoyo, distribución y hábitats
+ok 40 - guadalajara / guadalajara · apoyo, distribución y hábitats
+  ---
+  duration_ms: 3323.505798
+  type: 'test'
+  ...
+# Subtest: guadalajara / gdl_noche · apoyo, distribución y hábitats
+ok 41 - guadalajara / gdl_noche · apoyo, distribución y hábitats
+  ---
+  duration_ms: 741.036643
+  type: 'test'
+  ...
+# Subtest: guadalajara / azoteas · apoyo, distribución y hábitats
+ok 42 - guadalajara / azoteas · apoyo, distribución y hábitats
+  ---
+  duration_ms: 762.584256
+  type: 'test'
+  ...
+# Subtest: guadalajara / centro_historico · apoyo, distribución y hábitats
+ok 43 - guadalajara / centro_historico · apoyo, distribución y hábitats
+  ---
+  duration_ms: 729.546968
+  type: 'test'
+  ...
+# Subtest: guadalajara / portales · apoyo, distribución y hábitats
+ok 44 - guadalajara / portales · apoyo, distribución y hábitats
+  ---
+  duration_ms: 187.48201
+  type: 'test'
+  ...
+# Subtest: guadalajara / zapopan · apoyo, distribución y hábitats
+ok 45 - guadalajara / zapopan · apoyo, distribución y hábitats
+  ---
+  duration_ms: 226.130665
+  type: 'test'
+  ...
+# Subtest: guadalajara / arcadas · apoyo, distribución y hábitats
+ok 46 - guadalajara / arcadas · apoyo, distribución y hábitats
+  ---
+  duration_ms: 199.456733
+  type: 'test'
+  ...
+# Subtest: guadalajara / metro · apoyo, distribución y hábitats
+ok 47 - guadalajara / metro · apoyo, distribución y hábitats
+  ---
+  duration_ms: 202.396106
+  type: 'test'
+  ...
+# Subtest: guadalajara / mercado_tapatio · apoyo, distribución y hábitats
+ok 48 - guadalajara / mercado_tapatio · apoyo, distribución y hábitats
+  ---
+  duration_ms: 276.295893
+  type: 'test'
+  ...
+# Subtest: guadalajara / parque_metropolitano · apoyo, distribución y hábitats
+ok 49 - guadalajara / parque_metropolitano · apoyo, distribución y hábitats
+  ---
+  duration_ms: 203.154025
+  type: 'test'
+  ...
+# Subtest: guadalajara / tlaquepaque · apoyo, distribución y hábitats
+ok 50 - guadalajara / tlaquepaque · apoyo, distribución y hábitats
+  ---
+  duration_ms: 118.596427
+  type: 'test'
+  ...
+# Subtest: guadalajara / anden_tren_ligero · apoyo, distribución y hábitats
+ok 51 - guadalajara / anden_tren_ligero · apoyo, distribución y hábitats
+  ---
+  duration_ms: 112.179096
+  type: 'test'
+  ...
+# Subtest: guadalajara / plaza_jacarandas · apoyo, distribución y hábitats
+ok 52 - guadalajara / plaza_jacarandas · apoyo, distribución y hábitats
+  ---
+  duration_ms: 156.944799
+  type: 'test'
+  ...
+# Subtest: submarino / submarino_isla · apoyo, distribución y hábitats
+ok 53 - submarino / submarino_isla · apoyo, distribución y hábitats
+  ---
+  duration_ms: 12.427893
+  type: 'test'
+  ...
+# Subtest: submarino / submarino_bosque · apoyo, distribución y hábitats
+ok 54 - submarino / submarino_bosque · apoyo, distribución y hábitats
+  ---
+  duration_ms: 15.164982
+  type: 'test'
+  ...
+# Subtest: submarino / submarino_fosa · apoyo, distribución y hábitats
+ok 55 - submarino / submarino_fosa · apoyo, distribución y hábitats
+  ---
+  duration_ms: 11.829934
+  type: 'test'
+  ...
+# Subtest: espacial / espacial · apoyo, distribución y hábitats
+ok 56 - espacial / espacial · apoyo, distribución y hábitats
+  ---
+  duration_ms: 20.245457
+  type: 'test'
+  ...
+# Subtest: parafalls / parafalls_1 · apoyo, distribución y hábitats
+ok 57 - parafalls / parafalls_1 · apoyo, distribución y hábitats
+  ---
+  duration_ms: 19.274467
+  type: 'test'
+  ...
+# Subtest: parafalls / parafalls_2 · apoyo, distribución y hábitats
+ok 58 - parafalls / parafalls_2 · apoyo, distribución y hábitats
+  ---
+  duration_ms: 10.985715
+  type: 'test'
+  ...
+# Subtest: parafalls / parafalls_3 · apoyo, distribución y hábitats
+ok 59 - parafalls / parafalls_3 · apoyo, distribución y hábitats
+  ---
+  duration_ms: 10.636597
+  type: 'test'
+  ...
+# Subtest: cinco cinemáticas terminan en el checkpoint de su propia misión y usan archivos locales
+ok 60 - cinco cinemáticas terminan en el checkpoint de su propia misión y usan archivos locales
+  ---
+  duration_ms: 11.447626
+  type: 'test'
+  ...
+# Subtest: Submarino empieza en seco, permite caminar al borde y equipa el buceo al entrar al mar
+ok 61 - Submarino empieza en seco, permite caminar al borde y equipa el buceo al entrar al mar
+  ---
+  duration_ms: 14.670544
+  type: 'test'
+  ...
+# Subtest: el guardián de bloques patrulla, avisa y solo causa contacto al cargar en su propia sala
+ok 62 - el guardián de bloques patrulla, avisa y solo causa contacto al cargar en su propia sala
+  ---
+  duration_ms: 1.816593
+  type: 'test'
+  ...
+# Subtest: Parafalls sitúa la meta en la repisa circular y recupera una caída por debajo
+ok 63 - Parafalls sitúa la meta en la repisa circular y recupera una caída por debajo
+  ---
+  duration_ms: 5.564194
+  type: 'test'
+  ...
+# Subtest: final neutral: un total de cero no equivale a mochila completa
+ok 64 - final neutral: un total de cero no equivale a mochila completa
+  ---
+  duration_ms: 3.655078
+  type: 'test'
+  ...
+# Subtest: resultados: las misiones sin objetos no ganan estrellas por comparar cero con cero
+ok 65 - resultados: las misiones sin objetos no ganan estrellas por comparar cero con cero
+  ---
+  duration_ms: 254.113071
+  type: 'test'
+  ...
+# Subtest: Parafalls: transformación y llegada al checkpoint valida solo recursos existentes y poses de atlas activos
+ok 66 - Parafalls: transformación y llegada al checkpoint valida solo recursos existentes y poses de atlas activos
+  ---
+  duration_ms: 9.354278
+  type: 'test'
+  ...
+# Subtest: Parafalls: primer inicio y replay usan progreso persistente y assets cacheados con nueva versión
+ok 67 - Parafalls: primer inicio y replay usan progreso persistente y assets cacheados con nueva versión
+  ---
+  duration_ms: 3.08366
+  type: 'test'
+  ...
+# Subtest: Parafalls Roblox: atlas fuente completos, referencias dentro de hoja y metadata íntegra
+ok 68 - Parafalls Roblox: atlas fuente completos, referencias dentro de hoja y metadata íntegra
+  ---
+  duration_ms: 14.686964
+  type: 'test'
+  ...
+# Subtest: Parafalls Roblox: scripts y recursos se cargan solo en la ruta de misión elegida
+ok 69 - Parafalls Roblox: scripts y recursos se cargan solo en la ruta de misión elegida
+  ---
+  duration_ms: 2.870521
+  type: 'test'
+  ...
+# Subtest: Parafalls V2: tres escenas y seis capas RGBA existen y las páginas conservan su tamaño fuente
+ok 70 - Parafalls V2: tres escenas y seis capas RGBA existen y las páginas conservan su tamaño fuente
+  ---
+  duration_ms: 11.889121
+  type: 'test'
+  ...
+# Subtest: Parafalls: el prólogo distingue la campaña principal de la misión adicional
+ok 71 - Parafalls: el prólogo distingue la campaña principal de la misión adicional
+  ---
+  duration_ms: 1.366926
+  type: 'test'
+  ...
+# Subtest: Parafalls V2: trazado y puntos de control están en el arte y con hitboxes no dibujadas
+ok 72 - Parafalls V2: trazado y puntos de control están en el arte y con hitboxes no dibujadas
+  ---
+  duration_ms: 1.464493
+  type: 'test'
+  ...
+# Subtest: Parafalls V2: el runtime inicia en cada checkpoint con física real y no genera escaleras entre láminas
+ok 73 - Parafalls V2: el runtime inicia en cada checkpoint con física real y no genera escaleras entre láminas
+  ---
+  duration_ms: 86.226146
+  type: 'test'
+  ...
+# Subtest: Parafalls V2: las salidas y los checkpoints son alcanzables con saltos/caídas de la física real
+ok 74 - Parafalls V2: las salidas y los checkpoints son alcanzables con saltos/caídas de la física real
+  ---
+  duration_ms: 2744.388153
+  type: 'test'
+  ...
+# Subtest: Parafalls V2: el renderer registra un grupo de parallax por página
+ok 75 - Parafalls V2: el renderer registra un grupo de parallax por página
+  ---
+  duration_ms: 1.967501
+  type: 'test'
+  ...
+# Subtest: gravedad: Nina cae y aterriza exactamente sobre la plataforma
+ok 76 - gravedad: Nina cae y aterriza exactamente sobre la plataforma
+  ---
+  duration_ms: 6.177739
+  type: 'test'
+  ...
+# Subtest: velocidad terminal acotada y sin atravesar plataformas delgadas
+ok 77 - velocidad terminal acotada y sin atravesar plataformas delgadas
+  ---
+  duration_ms: 2.832811
+  type: 'test'
+  ...
+# Subtest: salto completo ≈ 135 u y salto corto mucho menor (salto variable)
+ok 78 - salto completo ≈ 135 u y salto corto mucho menor (salto variable)
+  ---
+  duration_ms: 2.501293
+  type: 'test'
+  ...
+# Subtest: coyote time: se puede saltar poco después de salir del borde
+ok 79 - coyote time: se puede saltar poco después de salir del borde
+  ---
+  duration_ms: 0.922393
+  type: 'test'
+  ...
+# Subtest: buffer de salto: pulsar justo antes de aterrizar salta al tocar suelo
+ok 80 - buffer de salto: pulsar justo antes de aterrizar salta al tocar suelo
+  ---
+  duration_ms: 1.344352
+  type: 'test'
+  ...
+# Subtest: paso fijo: el resultado no depende de la tasa de refresco
+ok 81 - paso fijo: el resultado no depende de la tasa de refresco
+  ---
+  duration_ms: 3.159957
+  type: 'test'
+  ...
+# Subtest: muros sólidos: ni caminando ni con dash se atraviesan
+ok 82 - muros sólidos: ni caminando ni con dash se atraviesan
+  ---
+  duration_ms: 1.88552
+  type: 'test'
+  ...
+# Subtest: techo sólido: el salto se corta sin atravesarlo
+ok 83 - techo sólido: el salto se corta sin atravesarlo
+  ---
+  duration_ms: 2.093905
+  type: 'test'
+  ...
+# Subtest: plataformas de un sentido: se atraviesan desde abajo y se aterriza encima
+ok 84 - plataformas de un sentido: se atraviesan desde abajo y se aterriza encima
+  ---
+  duration_ms: 1.192459
+  type: 'test'
+  ...
+# Subtest: BAJAR atraviesa peldaños y tarimas, pero no la piedra
+ok 85 - BAJAR atraviesa peldaños y tarimas, pero no la piedra
+  ---
+  duration_ms: 2.086518
+  type: 'test'
+  ...
+# Subtest: tarimas móviles: Nina viaja con la tarima sin resbalar ni caer
+ok 86 - tarimas móviles: Nina viaja con la tarima sin resbalar ni caer
+  ---
+  duration_ms: 1.943048
+  type: 'test'
+  ...
+# Subtest: asistencia de escalón: se baja una escalera caminando
+ok 87 - asistencia de escalón: se baja una escalera caminando
+  ---
+  duration_ms: 1.370017
+  type: 'test'
+  ...
+# Subtest: toldo rebotador: lanza hacia arriba y anula la caída
+ok 88 - toldo rebotador: lanza hacia arriba y anula la caída
+  ---
+  duration_ms: 1.622812
+  type: 'test'
+  ...
+# Subtest: charco: reduce la fricción (patina más lejos)
+ok 89 - charco: reduce la fricción (patina más lejos)
+  ---
+  duration_ms: 1.230821
+  type: 'test'
+  ...
+# Subtest: dash: un dash aéreo por salto, recarga al aterrizar
+ok 90 - dash: un dash aéreo por salto, recarga al aterrizar
+  ---
+  duration_ms: 1.28847
+  type: 'test'
+  ...
+# Subtest: cajas rompibles: el dash las rompe; caminando bloquean
+ok 91 - cajas rompibles: el dash las rompe; caminando bloquean
+  ---
+  duration_ms: 1.254146
+  type: 'test'
+  ...
+# Subtest: estados de animación: un único estado por paso con prioridad
+ok 92 - estados de animación: un único estado por paso con prioridad
+  ---
+  duration_ms: 0.436577
+  type: 'test'
+  ...
+# Subtest: mar continuo, fosa original, arena propia y ausencia de amenazas secundarias
+ok 93 - mar continuo, fosa original, arena propia y ausencia de amenazas secundarias
+  ---
+  duration_ms: 31.227909
+  type: 'test'
+  ...
+# Subtest: escotilla bloquea victoria antes de vencer a Poseidón y se abre después
+ok 94 - escotilla bloquea victoria antes de vencer a Poseidón y se abre después
+  ---
+  duration_ms: 12.522618
+  type: 'test'
+  ...
+# Subtest: el jefe avisa, carga, recupera y permite contraatacar dentro de la arena
+ok 95 - el jefe avisa, carga, recupera y permite contraatacar dentro de la arena
+  ---
+  duration_ms: 7.256626
+  type: 'test'
+  ...
+# Subtest: school victory label uses the official name Benito Juárez
+ok 96 - school victory label uses the official name Benito Juárez
+  ---
+  duration_ms: 2.537031
+  type: 'test'
+  ...
+# Subtest: school campaign: three stages, named rooms, aligned route markers, final boss on real solid street
+ok 97 - school campaign: three stages, named rooms, aligned route markers, final boss on real solid street
+  ---
+  duration_ms: 36.638532
+  type: 'test'
+  ...
+# Subtest: school camera stays inside the painted art at both ends of stages 2 and 3
+ok 98 - school camera stays inside the painted art at both ends of stages 2 and 3
+  ---
+  duration_ms: 10.045907
+  type: 'test'
+  ...
+# Subtest: the bus cannot be boarded before the teacher is defeated; opens afterwards and unlocks Guadalajara
+ok 99 - the bus cannot be boarded before the teacher is defeated; opens afterwards and unlocks Guadalajara
+  ---
+  duration_ms: 21.988684
+  type: 'test'
+  ...
+# Subtest: final checkpoint retry returns to street before the boss, with active new fight
+ok 100 - final checkpoint retry returns to street before the boss, with active new fight
+  ---
+  duration_ms: 10.952429
+  type: 'test'
+  ...
+# Subtest: school rooms have functional entry, exit and school-specific art
+ok 101 - school rooms have functional entry, exit and school-specific art
+  ---
+  duration_ms: 33.171873
+  type: 'test'
+  ...
+# Subtest: hidden school archive has its own art, a real stone-throwing kid, and leaves the teacher as final boss
+ok 102 - hidden school archive has its own art, a real stone-throwing kid, and leaves the teacher as final boss
+  ---
+  duration_ms: 10.695519
+  type: 'test'
+  ...
+# Subtest: other campaigns do not acquire school gate or school final checkpoint
+ok 103 - other campaigns do not acquire school gate or school final checkpoint
+  ---
+  duration_ms: 113.004515
+  type: 'test'
+  ...
+# Subtest: teacher is beatable in real fight with timed attacks and then boarding
+ok 104 - teacher is beatable in real fight with timed attacks and then boarding
+  ---
+  duration_ms: 72.270123
+  type: 'test'
+  ...
+# Subtest: school furniture is mapped to all twelve real room platforms, with no added collision geometry
+ok 105 - school furniture is mapped to all twelve real room platforms, with no added collision geometry
+  ---
+  duration_ms: 20.120189
+  type: 'test'
+  ...
+# Subtest: school furniture lower-shelf lookup is cached per room, not filtered and sorted each frame
+ok 106 - school furniture lower-shelf lookup is cached per room, not filtered and sorted each frame
+  ---
+  duration_ms: 21.461684
+  type: 'test'
+  ...
+# Subtest: school discovery and recovered object survive retry; room objective is not duplicated
+ok 107 - school discovery and recovered object survive retry; room objective is not duplicated
+  ---
+  duration_ms: 10.173251
+  type: 'test'
+  ...
+# Subtest: school victory event includes next mission and school exploration statistics
+ok 108 - school victory event includes next mission and school exploration statistics
+  ---
+  duration_ms: 8.691661
+  type: 'test'
+  ...
+# Subtest: other missions have no school furniture and their difficulty settings are untouched
+ok 109 - other missions have no school furniture and their difficulty settings are untouched
+  ---
+  duration_ms: 104.530948
+  type: 'test'
+  ...
+# Subtest: Misión submarina: vuelve a tener 3 escenarios definidos
+ok 110 - Misión submarina: vuelve a tener 3 escenarios definidos
+  ---
+  duration_ms: 1.916121
+  type: 'test'
+  ...
+# Subtest: Mapas marinos: primer tramo con isla y último tramo con salida profunda
+ok 111 - Mapas marinos: primer tramo con isla y último tramo con salida profunda
+  ---
+  duration_ms: 0.400498
+  type: 'test'
+  ...
+# Subtest: Runtime marino: se generan tres escenas, la isla aparece arriba y Poseidón queda en la fosa
+ok 112 - Runtime marino: se generan tres escenas, la isla aparece arriba y Poseidón queda en la fosa
+  ---
+  duration_ms: 34.220278
+  type: 'test'
+  ...
+# Subtest: UI: el HUD y la cinemática del jefe reflejan isla, bosque, fosa y a Poseidón
+ok 113 - UI: el HUD y la cinemática del jefe reflejan isla, bosque, fosa y a Poseidón
+  ---
+  duration_ms: 1.208379
+  type: 'test'
+  ...
+# Subtest: la azotea del nivel 1 la corta una barda con vidrios; el columpio cuelga antes de la barda
+ok 114 - la azotea del nivel 1 la corta una barda con vidrios; el columpio cuelga antes de la barda
+  ---
+  duration_ms: 61.300029
+  type: 'test'
+  ...
+# Subtest: sin el columpio la barda no se pasa: ni corriendo, ni saltando, ni con DASH, ni desde el tinaco o el letrero
+ok 115 - sin el columpio la barda no se pasa: ni corriendo, ni saltando, ni con DASH, ni desde el tinaco o el letrero
+  ---
+  duration_ms: 830.367893
+  type: 'test'
+  ...
+# Subtest: con el columpio sí se pasa: correr, saltar a la cuerda, columpiarse y soltar con SALTAR, sin cortarse
+ok 116 - con el columpio sí se pasa: correr, saltar a la cuerda, columpiarse y soltar con SALTAR, sin cortarse
+  ---
+  duration_ms: 172.424996
+  type: 'test'
+  ...
+# Subtest: V58.8.20: menos repetidos, misma geometría, jefes y especies
+ok 117 - V58.8.20: menos repetidos, misma geometría, jefes y especies
+  ---
+  duration_ms: 374.86468
+  type: 'test'
+  ...
+# Subtest: apertura escolar: fondo local, actores con pasos y franja de suelo
+ok 118 - apertura escolar: fondo local, actores con pasos y franja de suelo
+  ---
+  duration_ms: 1.885082
+  type: 'test'
+  ...
+# Subtest: selector DOM: 5 mundos, 23 paradas habilitadas y partidas seleccionables desde guardado nuevo
+ok 119 - selector DOM: 5 mundos, 23 paradas habilitadas y partidas seleccionables desde guardado nuevo
+  ---
+  duration_ms: 6.48598
+  type: 'test'
+  ...
+# Subtest: V58.8.21: 22 imágenes originales retocadas, dimensiones declaradas y hashes verificados
+ok 120 - V58.8.21: 22 imágenes originales retocadas, dimensiones declaradas y hashes verificados
+  ---
+  duration_ms: 37.021253
+  type: 'test'
+  ...
+# Subtest: V58.8.21: recursos de presentación y estilos versionados están en precache
+ok 121 - V58.8.21: recursos de presentación y estilos versionados están en precache
+  ---
+  duration_ms: 1.557625
+  type: 'test'
+  ...
+# Subtest: index conserva la consulta y el fragmento al abrir el juego en una subcarpeta
+ok 122 - index conserva la consulta y el fragmento al abrir el juego en una subcarpeta
+  ---
+  duration_ms: 3.165214
+  type: 'test'
+  ...
+# Subtest: instalación PWA: todos los recursos existen y el HTML usa las mismas versiones del precache
+ok 123 - instalación PWA: todos los recursos existen y el HTML usa las mismas versiones del precache
+  ---
+  duration_ms: 28.094758
+  type: 'test'
+  ...
+# Subtest: sin red: abre la carpeta, index y HTML con parámetros y respeta las versiones de scripts
+ok 124 - sin red: abre la carpeta, index y HTML con parámetros y respeta las versiones de scripts
+  ---
+  duration_ms: 53.803064
+  type: 'test'
+  ...
+# Subtest: activación PWA: retira la versión anterior de esta carpeta y conserva cachés de otros juegos
+ok 125 - activación PWA: retira la versión anterior de esta carpeta y conserva cachés de otros juegos
+  ---
+  duration_ms: 12.513552
+  type: 'test'
+  ...
+# Subtest: una descarga interrumpida no activa un caché parcial y el siguiente intento lo reconstruye
+ok 126 - una descarga interrumpida no activa un caché parcial y el siguiente intento lo reconstruye
+  ---
+  duration_ms: 10.594083
+  type: 'test'
+  ...
+1..126
+# tests 126
+# suites 0
+# pass 126
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 9987.292863

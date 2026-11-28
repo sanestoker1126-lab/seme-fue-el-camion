@@ -1,0 +1,771 @@
+{
+  "schema": "camion.production.atlas.v1",
+  "id": "maestro_enojon",
+  "image": "assets/production/maestro_enojon/atlas.png",
+  "size": [
+    2048,
+    880
+  ],
+  "format": "RGBA8888",
+  "padding_px": 8,
+  "extrusion_px": 2,
+  "anchor": "feet",
+  "uniform_scale": true,
+  "source": "ENEMIGOS_MAESTRO_PULPO_PRO_FLUIDO_V58_2_2.zip",
+  "notes": "Only prior pack key poses, optical-flow interpolated frames excluded. Existing game boss assets retained as fallback. Some key poses are derived, not articulated originals.",
+  "frame_count": 30,
+  "unique_pixel_frames": 30,
+  "animations": {
+    "idle": {
+      "frames": [
+        "idle_000",
+        "idle_003",
+        "idle_006",
+        "idle_009",
+        "idle_012",
+        "idle_015"
+      ],
+      "duration_ms": 250,
+      "loop": true,
+      "anchor": "feet",
+      "source_kind": "clean_source_reanimated"
+    },
+    "walk": {
+      "frames": [
+        "idle_000",
+        "walk_003",
+        "walk_006",
+        "walk_009"
+      ],
+      "duration_ms": 167,
+      "loop": true,
+      "anchor": "feet",
+      "source_kind": "new_generated"
+    },
+    "run": {
+      "frames": [
+        "run_000",
+        "run_003",
+        "run_006",
+        "run_009"
+      ],
+      "duration_ms": 136,
+      "loop": true,
+      "anchor": "feet",
+      "source_kind": "new_generated"
+    },
+    "ruler_attack": {
+      "frames": [
+        "ruler_attack_000",
+        "ruler_attack_003",
+        "ruler_attack_006",
+        "ruler_attack_009"
+      ],
+      "duration_ms": 114,
+      "loop": false,
+      "anchor": "feet",
+      "source_kind": "new_generated"
+    },
+    "fall": {
+      "frames": [
+        "fall_000",
+        "fall_003",
+        "fall_006",
+        "fall_009",
+        "fall_012"
+      ],
+      "duration_ms": 162,
+      "loop": false,
+      "anchor": "feet",
+      "source_kind": "clean_source_reanimated"
+    },
+    "getup": {
+      "frames": [
+        "fall_012",
+        "getup_003",
+        "getup_006",
+        "getup_009",
+        "getup_012",
+        "idle_000"
+      ],
+      "duration_ms": 157,
+      "loop": false,
+      "anchor": "feet",
+      "source_kind": "clean_source_reanimated"
+    },
+    "ko": {
+      "frames": [
+        "ko_000",
+        "ko_003",
+        "ko_006",
+        "ko_009"
+      ],
+      "duration_ms": 208,
+      "loop": false,
+      "anchor": "feet",
+      "source_kind": "clean_source_reanimated"
+    }
+  },
+  "frames": {
+    "idle_000": {
+      "rect": [
+        1540,
+        10,
+        194,
+        215
+      ],
+      "pivot": [
+        97.0,
+        215.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "e0df0d2d9c75520394881092f78f81f88497742183313d1135f3498e73fdfb38",
+      "source": "assets/enemies/bosses/maestro_enojon/atlas.png:idle_000",
+      "source_bbox": [
+        31,
+        33,
+        225,
+        248
+      ],
+      "notes": "keyframe from prior source; may itself be derived, not certified new drawing"
+    },
+    "idle_003": {
+      "rect": [
+        895,
+        10,
+        195,
+        215
+      ],
+      "pivot": [
+        98.0,
+        215.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "d40bbac3c2813db1658e964dca78dda1b061033e6bd2074c22c9623f31a3391c",
+      "source": "assets/enemies/bosses/maestro_enojon/atlas.png:idle_003",
+      "source_bbox": [
+        30,
+        33,
+        225,
+        248
+      ],
+      "notes": "keyframe from prior source; may itself be derived, not certified new drawing"
+    },
+    "idle_006": {
+      "rect": [
+        676,
+        10,
+        199,
+        215
+      ],
+      "pivot": [
+        100.0,
+        215.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "9e5699ab9dfa7de6c811f8684f16d3c1b553d30bed2bf50e6f411113f407896f",
+      "source": "assets/enemies/bosses/maestro_enojon/atlas.png:idle_006",
+      "source_bbox": [
+        28,
+        33,
+        227,
+        248
+      ],
+      "notes": "keyframe from prior source; may itself be derived, not certified new drawing"
+    },
+    "idle_009": {
+      "rect": [
+        1110,
+        10,
+        195,
+        215
+      ],
+      "pivot": [
+        98.0,
+        215.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "a9edf95d76cba535239074227b225464755dbf1724752fe6d353974502ae3ff8",
+      "source": "assets/enemies/bosses/maestro_enojon/atlas.png:idle_009",
+      "source_bbox": [
+        30,
+        33,
+        225,
+        248
+      ],
+      "notes": "keyframe from prior source; may itself be derived, not certified new drawing"
+    },
+    "idle_012": {
+      "rect": [
+        222,
+        245,
+        191,
+        215
+      ],
+      "pivot": [
+        96.0,
+        215.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "e7f31c3271db684a6709dc23f7bc7a2514d3ff81f58d604e73b9d11c35b25600",
+      "source": "assets/enemies/bosses/maestro_enojon/atlas.png:idle_012",
+      "source_bbox": [
+        32,
+        33,
+        223,
+        248
+      ],
+      "notes": "keyframe from prior source; may itself be derived, not certified new drawing"
+    },
+    "idle_015": {
+      "rect": [
+        10,
+        245,
+        192,
+        215
+      ],
+      "pivot": [
+        96.0,
+        215.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "4cc3337f6af0491865fca2a82455311a616208b31e444add21cc3baf06ae6f04",
+      "source": "assets/enemies/bosses/maestro_enojon/atlas.png:idle_015",
+      "source_bbox": [
+        32,
+        33,
+        224,
+        248
+      ],
+      "notes": "keyframe from prior source; may itself be derived, not certified new drawing"
+    },
+    "walk_003": {
+      "rect": [
+        1754,
+        10,
+        193,
+        215
+      ],
+      "pivot": [
+        97.0,
+        215.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "005c775bd2062928038c7dcbbbeafe1912cc48145ad7ce086ae4694f8a21ed75",
+      "source": "assets/enemies/bosses/maestro_enojon/atlas.png:walk_003",
+      "source_bbox": [
+        31,
+        33,
+        224,
+        248
+      ],
+      "notes": "keyframe from prior source; may itself be derived, not certified new drawing"
+    },
+    "walk_006": {
+      "rect": [
+        433,
+        245,
+        189,
+        215
+      ],
+      "pivot": [
+        95.0,
+        215.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "62c48e967c329a85e0b933ba9443b903337435ec1218f00332b6d960aacc627c",
+      "source": "assets/enemies/bosses/maestro_enojon/atlas.png:walk_006",
+      "source_bbox": [
+        33,
+        33,
+        222,
+        248
+      ],
+      "notes": "keyframe from prior source; may itself be derived, not certified new drawing"
+    },
+    "walk_009": {
+      "rect": [
+        1325,
+        10,
+        195,
+        215
+      ],
+      "pivot": [
+        98.0,
+        215.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "920a6270a1f149c6dcf0df5ffd44d7eb08bbba39a4c403cbd74e5965d168b36e",
+      "source": "assets/enemies/bosses/maestro_enojon/atlas.png:walk_009",
+      "source_bbox": [
+        30,
+        33,
+        225,
+        248
+      ],
+      "notes": "keyframe from prior source; may itself be derived, not certified new drawing"
+    },
+    "run_000": {
+      "rect": [
+        10,
+        10,
+        204,
+        215
+      ],
+      "pivot": [
+        102.0,
+        215.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "313663b1a2b09c1defac2ea4d102a145cebc07e28b30df869fa628c8fd0d787f",
+      "source": "assets/enemies/bosses/maestro_enojon/atlas.png:run_000",
+      "source_bbox": [
+        26,
+        33,
+        230,
+        248
+      ],
+      "notes": "keyframe from prior source; may itself be derived, not certified new drawing"
+    },
+    "run_003": {
+      "rect": [
+        1620,
+        480,
+        210,
+        173
+      ],
+      "pivot": [
+        105.0,
+        173.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "1b390b98bd75f7edda4b5ea240f68db3e5676f4559ec213f4636fc2f0e00744a",
+      "source": "assets/enemies/bosses/maestro_enojon/atlas.png:run_003",
+      "source_bbox": [
+        23,
+        75,
+        233,
+        248
+      ],
+      "notes": "keyframe from prior source; may itself be derived, not certified new drawing"
+    },
+    "run_006": {
+      "rect": [
+        1066,
+        245,
+        210,
+        207
+      ],
+      "pivot": [
+        105.0,
+        207.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "7bab586e831b8530ef5b60b98ed49fc6a652dff3afa4aca4f05a8f7c21233c22",
+      "source": "assets/enemies/bosses/maestro_enojon/atlas.png:run_006",
+      "source_bbox": [
+        23,
+        41,
+        233,
+        248
+      ],
+      "notes": "keyframe from prior source; may itself be derived, not certified new drawing"
+    },
+    "run_009": {
+      "rect": [
+        240,
+        480,
+        210,
+        191
+      ],
+      "pivot": [
+        105.0,
+        191.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "db36f4cb4cc7e75d5cada23e7d9673f10c19063d212f9fea4d78e3126e7e0f79",
+      "source": "assets/enemies/bosses/maestro_enojon/atlas.png:run_009",
+      "source_bbox": [
+        23,
+        57,
+        233,
+        248
+      ],
+      "notes": "keyframe from prior source; may itself be derived, not certified new drawing"
+    },
+    "ruler_attack_000": {
+      "rect": [
+        642,
+        245,
+        174,
+        215
+      ],
+      "pivot": [
+        87.0,
+        215.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "8eecab10eaaf3b396110374727aa6c52a869c54e733e90ad1b976e1e12af0d87",
+      "source": "assets/enemies/bosses/maestro_enojon/atlas.png:ruler_attack_000",
+      "source_bbox": [
+        41,
+        33,
+        215,
+        248
+      ],
+      "notes": "keyframe from prior source; may itself be derived, not certified new drawing"
+    },
+    "ruler_attack_003": {
+      "rect": [
+        1160,
+        480,
+        210,
+        182
+      ],
+      "pivot": [
+        105.0,
+        182.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "cdc63acf37eb2a8e98a61637c70c0da0a2863f8b7115eea74e68458dfb040f24",
+      "source": "assets/enemies/bosses/maestro_enojon/atlas.png:ruler_attack_003",
+      "source_bbox": [
+        23,
+        66,
+        233,
+        248
+      ],
+      "notes": "keyframe from prior source; may itself be derived, not certified new drawing"
+    },
+    "ruler_attack_006": {
+      "rect": [
+        240,
+        692,
+        210,
+        163
+      ],
+      "pivot": [
+        105.0,
+        163.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "cbb3a6265112a99d1a112cf79dbd793648cf0cafa445f09ebdff1120813f6394",
+      "source": "assets/enemies/bosses/maestro_enojon/atlas.png:ruler_attack_006",
+      "source_bbox": [
+        23,
+        85,
+        233,
+        248
+      ],
+      "notes": "keyframe from prior source; may itself be derived, not certified new drawing"
+    },
+    "ruler_attack_009": {
+      "rect": [
+        930,
+        480,
+        210,
+        183
+      ],
+      "pivot": [
+        105.0,
+        183.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "3c3210a91ee6d90bc3d8c8b90d6fac3e7dd3a9454801576e629690a741e5036a",
+      "source": "assets/enemies/bosses/maestro_enojon/atlas.png:ruler_attack_009",
+      "source_bbox": [
+        23,
+        65,
+        233,
+        248
+      ],
+      "notes": "keyframe from prior source; may itself be derived, not certified new drawing"
+    },
+    "fall_000": {
+      "rect": [
+        234,
+        10,
+        201,
+        215
+      ],
+      "pivot": [
+        101.0,
+        215.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "5c38bc1640c4963e41415c4bde3495d939e23b34d3670c5f52f4c3d2758f119d",
+      "source": "assets/enemies/bosses/maestro_enojon/atlas.png:fall_000",
+      "source_bbox": [
+        27,
+        33,
+        228,
+        248
+      ],
+      "notes": "keyframe from prior source; may itself be derived, not certified new drawing"
+    },
+    "fall_003": {
+      "rect": [
+        1756,
+        245,
+        210,
+        197
+      ],
+      "pivot": [
+        105.0,
+        197.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "5ab159fb65874a3bb7443737a9e82b16d69d329523bb15127ce07bba2250d379",
+      "source": "assets/enemies/bosses/maestro_enojon/atlas.png:fall_003",
+      "source_bbox": [
+        23,
+        51,
+        233,
+        248
+      ],
+      "notes": "keyframe from prior source; may itself be derived, not certified new drawing"
+    },
+    "fall_006": {
+      "rect": [
+        1390,
+        480,
+        210,
+        174
+      ],
+      "pivot": [
+        105.0,
+        174.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "cc8575fdc488c4379b2dcad7004d72378b9c11151a15ca916c14045a7753c6c3",
+      "source": "assets/enemies/bosses/maestro_enojon/atlas.png:fall_006",
+      "source_bbox": [
+        23,
+        74,
+        233,
+        248
+      ],
+      "notes": "keyframe from prior source; may itself be derived, not certified new drawing"
+    },
+    "fall_009": {
+      "rect": [
+        470,
+        692,
+        210,
+        154
+      ],
+      "pivot": [
+        105.0,
+        154.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "11a720c62c95c93f09ca8bbae2488fece555658054e3c07c6b5e21b5d25d2308",
+      "source": "assets/enemies/bosses/maestro_enojon/atlas.png:fall_009",
+      "source_bbox": [
+        23,
+        94,
+        233,
+        248
+      ],
+      "notes": "keyframe from prior source; may itself be derived, not certified new drawing"
+    },
+    "fall_012": {
+      "rect": [
+        470,
+        480,
+        210,
+        188
+      ],
+      "pivot": [
+        105.0,
+        188.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "2c5c78ae409fc26601ecc4de5af0889dc82b6fc21a25b0ca88db3d294cf37c3d",
+      "source": "assets/enemies/bosses/maestro_enojon/atlas.png:fall_012",
+      "source_bbox": [
+        23,
+        60,
+        233,
+        248
+      ],
+      "notes": "keyframe from prior source; may itself be derived, not certified new drawing"
+    },
+    "getup_003": {
+      "rect": [
+        700,
+        692,
+        210,
+        153
+      ],
+      "pivot": [
+        105.0,
+        153.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "46c6e559bdfee60f03bbbe738ed21e316be03c678fc2d31fd4f3db7fa357ee83",
+      "source": "assets/enemies/bosses/maestro_enojon/atlas.png:getup_003",
+      "source_bbox": [
+        23,
+        95,
+        233,
+        248
+      ],
+      "notes": "keyframe from prior source; may itself be derived, not certified new drawing"
+    },
+    "getup_006": {
+      "rect": [
+        700,
+        480,
+        210,
+        187
+      ],
+      "pivot": [
+        105.0,
+        187.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "59dce474f94567c6d504cdac16377430b4e191866525e961f21012461c04f3bf",
+      "source": "assets/enemies/bosses/maestro_enojon/atlas.png:getup_006",
+      "source_bbox": [
+        23,
+        61,
+        233,
+        248
+      ],
+      "notes": "keyframe from prior source; may itself be derived, not certified new drawing"
+    },
+    "getup_009": {
+      "rect": [
+        836,
+        245,
+        210,
+        212
+      ],
+      "pivot": [
+        105.0,
+        212.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "e8df14cb88d979344105d262d0ce66f21456511f1717becaf1818c34072193e4",
+      "source": "assets/enemies/bosses/maestro_enojon/atlas.png:getup_009",
+      "source_bbox": [
+        23,
+        36,
+        233,
+        248
+      ],
+      "notes": "keyframe from prior source; may itself be derived, not certified new drawing"
+    },
+    "getup_012": {
+      "rect": [
+        455,
+        10,
+        201,
+        215
+      ],
+      "pivot": [
+        101.0,
+        215.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "a11b05c027eacadd5596ff4933c7ae57d7e85e24b86fab0b5935829ada5b94d5",
+      "source": "assets/enemies/bosses/maestro_enojon/atlas.png:getup_012",
+      "source_bbox": [
+        27,
+        33,
+        228,
+        248
+      ],
+      "notes": "keyframe from prior source; may itself be derived, not certified new drawing"
+    },
+    "ko_000": {
+      "rect": [
+        10,
+        692,
+        210,
+        167
+      ],
+      "pivot": [
+        105.0,
+        167.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "30caaa362823b7d7990cb78b658665d035bb5df20f0cb8d156fd34af0525b21b",
+      "source": "assets/enemies/bosses/maestro_enojon/atlas.png:ko_000",
+      "source_bbox": [
+        23,
+        81,
+        233,
+        248
+      ],
+      "notes": "keyframe from prior source; may itself be derived, not certified new drawing"
+    },
+    "ko_003": {
+      "rect": [
+        10,
+        480,
+        210,
+        192
+      ],
+      "pivot": [
+        105.0,
+        192.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "20f581c0905f75916b6079098fc1964010a736fa6f2f504880c9596680bc3227",
+      "source": "assets/enemies/bosses/maestro_enojon/atlas.png:ko_003",
+      "source_bbox": [
+        23,
+        56,
+        233,
+        248
+      ],
+      "notes": "keyframe from prior source; may itself be derived, not certified new drawing"
+    },
+    "ko_006": {
+      "rect": [
+        1526,
+        245,
+        210,
+        201
+      ],
+      "pivot": [
+        105.0,
+        201.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "4443f2188d1c47b273f09e08387c480d8152623d6e780e3b3412401a5fd40e41",
+      "source": "assets/enemies/bosses/maestro_enojon/atlas.png:ko_006",
+      "source_bbox": [
+        23,
+        47,
+        233,
+        248
+      ],
+      "notes": "keyframe from prior source; may itself be derived, not certified new drawing"
+    },
+    "ko_009": {
+      "rect": [
+        1296,
+        245,
+        210,
+        206
+      ],
+      "pivot": [
+        105.0,
+        206.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "ed7cca52cf9df7a25d658080d0e46186cc5e1abf1fa1f9f57ff36bd66a569822",
+      "source": "assets/enemies/bosses/maestro_enojon/atlas.png:ko_009",
+      "source_bbox": [
+        23,
+        42,
+        233,
+        248
+      ],
+      "notes": "keyframe from prior source; may itself be derived, not certified new drawing"
+    }
+  }
+}

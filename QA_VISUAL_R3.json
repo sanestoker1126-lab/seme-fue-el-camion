@@ -1,0 +1,45 @@
+{
+  "missions": [
+    {
+      "m": 0,
+      "theme": "escuela",
+      "foes": 41
+    },
+    {
+      "m": 1,
+      "theme": "guadalajara",
+      "foes": 294
+    },
+    {
+      "m": 2,
+      "theme": "submarino",
+      "foes": 35
+    },
+    {
+      "m": 3,
+      "theme": "espacial",
+      "foes": 37
+    }
+  ],
+  "draws": {
+    "assets/fx/water_energy_hd.png": 33,
+    "assets/production/maestro_enojon/atlas.png": 3,
+    "assets/production/luna_sub/atlas.png": 27,
+    "assets/production/morita_sub/atlas.png": 27,
+    "assets/production/sofia_buceadora/atlas.png": 27,
+    "assets/fx/combat_hd.png": 2,
+    "assets/production/pulpo_marino/atlas.png": 10,
+    "assets/production/nino_marino/atlas.png": 15,
+    "assets/production/pulpo_abismo/atlas.png": 5,
+    "assets/production/tiburon_feroz/atlas.png": 4,
+    "assets/production/luna_space/atlas.png": 19,
+    "assets/production/morita_space/atlas.png": 19,
+    "assets/production/sofia_astronauta/atlas.png": 19,
+    "assets/production/marciano_espacial/atlas.png": 10,
+    "assets/production/nino_espacial/atlas.png": 10
+  },
+  "errors": [],
+  "missing": [],
+  "precacheCount": 453,
+  "cacheMissing": []
+}

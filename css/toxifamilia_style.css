@@ -83,6 +83,7 @@ button:focus-visible{outline:3px solid #fbd58b;outline-offset:3px}
 #menu .menuCol{min-width:0}
 #menu .label{margin:0 0 6px;font-size:10px;letter-spacing:.2em;color:#a9eddf}
 #menu .missionGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0}
+#menu #missions .mission:nth-child(5){grid-column:1/-1;width:calc((100% - 8px)/2);justify-self:center}
 #menu #missions .mission{position:relative;isolation:isolate;overflow:hidden;display:grid;grid-template-rows:auto 1fr auto;justify-items:start;align-items:end;gap:2px;min-width:0;min-height:80px;padding:8px 10px;
  border:1px solid #ffffff22;border-radius:12px;text-align:left;color:#fff;background:#1d2238 var(--art,none) center 25%/cover no-repeat;box-shadow:none;transition:transform .12s,box-shadow .12s}
 #menu #missions .mission::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,#0b0f1e30 0%,#0b0f1ee8 82%)}

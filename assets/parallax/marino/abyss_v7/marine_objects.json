@@ -1,0 +1,49 @@
+{
+  "size": [
+    768,
+    256
+  ],
+  "cell": [
+    256,
+    256
+  ],
+  "source": "original procedural material illustration, not character replacement",
+  "frames": {
+    "abyss_crystal": {
+      "rect": [
+        0,
+        0,
+        256,
+        256
+      ],
+      "pivot": [
+        128,
+        128
+      ]
+    },
+    "navigation_beacon": {
+      "rect": [
+        256,
+        0,
+        256,
+        256
+      ],
+      "pivot": [
+        128,
+        224
+      ]
+    },
+    "rescue_hatch": {
+      "rect": [
+        512,
+        0,
+        256,
+        256
+      ],
+      "pivot": [
+        128,
+        224
+      ]
+    }
+  }
+}

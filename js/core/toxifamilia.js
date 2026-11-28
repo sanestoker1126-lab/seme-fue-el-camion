@@ -24,7 +24,7 @@
     /* V58.6 · Apertura en penumbra: al principio solo se ven las dos siluetas, a contraluz de los monitores; luego
        hablan (subtítulos abajo) y quien habla se ilumina. Las frases son las del guion, partidas por oraciones. */
     { id: 'e1_sombras', tag: 'ARCHIVO 01 · GUADALAJARA · BASE DE LA TOXI FAMILIA', title: 'LA CUENTA REGRESIVA', layout: 'sombras', text: '',
-      background: 'assets/scenes/generated/guadalajara_colonia_noche.png', fx: ['monitores', 'niebla'], introMs: 3200,
+      background: 'assets/scenes/generated/guadalajara_colonia_noche.webp', fx: ['monitores', 'niebla'], introMs: 3200,
       cast: [Object.assign({}, ESTOKER, { x: 32, bottom: 0, scale: 1.9, entrance: 'enter-fade', label: false, voice: 'ESTOKER' }),
         Object.assign({}, TOXICA, { x: 68, bottom: 0, scale: 1.9, entrance: 'enter-fade', label: false, voice: 'DOÑA TÓXICA' })],
       lines: [
@@ -34,23 +34,23 @@
         { who: 'DOÑA TÓXICA', tone: 'toxica', text: 'La Calzada Olímpica es un hervidero de patrullas y cárteles locales.' },
         { who: 'ESTOKER', tone: 'estoker', text: 'Si no llega antes de la medianoche, la leyenda termina antes de empezar.' }
       ] },
-    { id: 'e2_mercado', tag: 'ESCENA 2 · MERCADO SAN JUAN DE DIOS · CALLE ALDAMA', title: 'LA ODISEA URBANA',
+    { id: 'e2_mercado', tag: 'ESCENA 2 · MERCADO SAN JUAN DE DIOS · CALLE ALDAMA', title: 'LA ODISEA URBANA', layout: 'dialogo',
       text: 'Lluvia intensa sobre el mercado. Sofía, empapada pero con mirada desafiante, ajusta las correas de su mochila. Siluetas de pandilleros bloquean los callejones. Sobre los tejados, Luna y Morita brillan con un aura sutil: listas para interceptar francotiradores o activar trampas del entorno.',
       background: [GDL + 'mercado_parque/02_arquitectura_anclada.webp', GDL + 'mercado_parque/01_nubes_reales.webp', GDL + 'mercado_parque/00_cielo_degradado.webp'],
-      durationMs: 10000, fx: 'lluvia', cast: [SOFIA({ sprite: ST + 'idle_01.png' }), LUNA(), MORITA()] },
-    { id: 'e2_voz', tag: 'SOFÍA · VOZ EN OFF', title: 'NO SABEN LO QUE LLEVO',
+      durationMs: 10000, fx: 'lluvia', cast: [SOFIA({ sprite: ST + 'idle_01.png' }), LUNA({ x: 16, perch: true, entrance: 'enter-fade' }), MORITA({ x: 83, perch: true, entrance: 'enter-fade' })] },
+    { id: 'e2_voz', tag: 'SOFÍA · VOZ EN OFF', title: 'NO SABEN LO QUE LLEVO', layout: 'dialogo',
       text: '«Piensan que solo soy una estudiante que perdió el camión. No saben lo que llevo en la mochila.»',
       background: [GDL + 'mercado_parque/02_arquitectura_anclada.webp', GDL + 'mercado_parque/00_cielo_degradado.webp'],
       durationMs: 8000, fx: 'lluvia', cast: [SOFIA({ sprite: ST + 'land_01.png', scale: 1.35, entrance: 'enter-rise' })] },
-    { id: 'e2_usb', tag: 'SOFÍA · CLOSE-UP A LA MOCHILA (ZUMBIDO)', title: 'SEIS LLAVES ENCRIPTADAS',
+    { id: 'e2_usb', tag: 'SOFÍA · CLOSE-UP A LA MOCHILA (ZUMBIDO)', title: 'SEIS LLAVES ENCRIPTADAS', layout: 'dialogo',
       text: '«Seis memorias USB. Seis llaves encriptadas. Recuperar los objetos que perdí en la huida no es capricho… es la única forma de abrir las puertas de máxima seguridad.»',
       background: [GDL + 'barrios_inferiores/02_arquitectura_anclada.webp', GDL + 'barrios_inferiores/00_cielo_degradado.webp'],
       durationMs: 11000, fx: 'lluvia', cast: [SOFIA({ sprite: ST + 'run_02.png', x: 46, entrance: 'enter-left' }), LUNA({ bottom: 14, x: 18 }), MORITA({ bottom: 14, x: 78 })] },
     { id: 'e3_start', tag: 'ESCENA 3 · EL FRENTE CONJUNTO', title: 'OBJETIVO: CRUZA LA CIUDAD. RECUPERA LAS 6 LLAVES. SOBREVIVE.',
       text: 'Sofía truena los nudillos. El HUD de combate parpadea y se enciende línea por línea.\n[ INSERT COIN / PRESS START ]',
-      background: 'assets/scenes/school_miguel_hidalgo/01_aulas_superiores.webp', durationMs: 9000, fx: 'hud',
-      cast: [SOFIA({ sprite: 'assets/player/variants/uniforme/kick_01.png', scale: 1.4, x: 50 }), LUNA({ bottom: 14, x: 22 }), MORITA({ bottom: 14, x: 77 })],   // V58.6: en la escuela, uniforme
-      nextMission: { mission: 0, tramo: 0 } }
+      background: 'assets/scenes/school_pro/school_exit_facade.webp', layout: 'dialogo', durationMs: 9000, fx: 'hud',
+      cast: [SOFIA({ sprite: 'assets/player/variants/uniforme/idle_01.png', scale: 1.4, x: 50 }), LUNA({ bottom: 14, x: 22 }), MORITA({ bottom: 14, x: 77 })],   // V58.6: en la escuela, uniforme
+      }
   ];
 
   const EPILOGUE = [
@@ -78,7 +78,7 @@
   const KID = 'assets/enemies/v50/kid_buzo/';
   const CHEER = (dir) => ['cheer_01', 'cheer_02', 'cheer_03'].map((f) => dir + f + '.png');
   const SOFIA_HOY = 'SOFÍA', SOFIA_NINA = 'SOFÍA PEQUEÑA', PAPITO = 'PAPITO ESTOKER';
-  const ESTOKER_NARRA = { name: PAPITO, frames: seq('estoker_explica', 7), fps: 2.4, x: 13, bottom: 0, scale: 1.4, entrance: 'enter-left' };
+  const ESTOKER_NARRA = { portrait: true, name: PAPITO, frames: seq('estoker_explica', 7), fps: 2.4, x: 13, bottom: 0, scale: 1.4, entrance: 'enter-left' };
   const MARINO = [
     { id: 'm1_isla', tag: 'MISIÓN 3 · EL SUBMARINO · LA ISLA', title: '¿DÓNDE ESTOY?', layout: 'dialogo',
       background: MAR + 'fondo_isla_cima.webp', text: '',
@@ -97,7 +97,7 @@
         { who: SOFIA_HOY, tone: 'sofia', text: 'Este lugar se me hace conocido… ¿Ya había venido aquí?' }
       ] },
     { id: 'm2_recuerdo', tag: 'RECUERDO · CUANDO SOFÍA ERA MÁS PEQUEÑA', title: 'LOS PASEOS CON PAPITO ESTOKER', layout: 'dialogo',
-      background: MAR + 'fondo_playa.webp', fx: 'recuerdo', text: '',
+      background: MAR + 'fondo_costa.webp', fx: 'recuerdo', text: '',
       cast: [{ name: 'PAPITO Y SOFÍA', frames: seq('paseo_mano', 12), x: 10, bottom: 3, scale: 1.75, entrance: 'enter-fade',
         anim: [{ f: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], fps: 8, ms: 14000, to: 62 }, { f: [0], ms: 60000 }] }],
       lines: [
@@ -161,6 +161,104 @@
       ] }
   ];
 
+  /* Transición visual solicitada: escuela → camión → centro de Guadalajara.
+     No forma parte del guion fuente ni añade diálogo; reutiliza fondos y sprites activos. */
+  const GDL_TRANSITION = [
+    { id: 'gdl_salida', tag: 'TRANSICIÓN · ESCUELA BENITO JUÁREZ', title: 'SALIDA DE LA ESCUELA',
+      background: 'assets/scenes/school_pro/school_exit_facade.webp', text: '', durationMs: 4200,
+      cast: [
+        { name: 'SOFÍA', frames: ['assets/player/variants/uniforme/run_01.png', 'assets/player/variants/uniforme/run_02.png',
+          'assets/player/variants/uniforme/run_03.png', 'assets/player/variants/uniforme/run_04.png'],
+          x: 32, bottom: 3, scale: 1.05, entrance: 'enter-left',
+          anim: [{ f: [0, 1, 2, 3], fps: 9, ms: 2500, to: 65 }, { f: [0], ms: 1500 }] },
+        LUNA({ x: 17, bottom: 2, scale: 0.52 }), MORITA({ x: 82, bottom: 2, scale: 0.52 })
+      ] },
+    { id: 'gdl_camion', tag: 'TRAYECTO · RUMBO AL CENTRO', title: 'RUMBO A GUADALAJARA', layout: 'dialogo',
+      background: 'assets/scenes/guadalajara_pro_v2/transit_street.webp',
+      backgroundMotion: 'travel', text: '', durationMs: 5000,
+      cast: [{ name: 'CAMIÓN ESCOLAR', frames: ['assets/scenes/school_pro/school_bus.png'], label: false,
+        x: 3, bottom: 3, scale: 2.05, entrance: 'enter-left',
+        anim: [{ f: [0], ms: 4800, to: 93 }] }] },
+    { id: 'gdl_llegada', tag: 'DESTINO · CENTRO DE GUADALAJARA', title: '¡AL CENTRO!', layout: 'dialogo',
+      background: 'assets/scenes/guadalajara_pro_v2/transit_street.webp',
+      text: '', durationMs: 4600,
+      cast: [
+        SOFIA({ sprite: 'assets/player/variants/uniforme/idle_01.png', x: 49, bottom: 3, scale: 1.3, entrance: 'enter-rise' }),
+        LUNA({ x: 25, bottom: 2, scale: 0.62 }), MORITA({ x: 74, bottom: 2, scale: 0.62 })
+      ] }
+  ];
+
+  /* ADAPTACIÓN de los tableros conceptuales Roblox (37163/37165/37166): conserva solo los beats del portal;
+     no se presenta como guion canónico. Sofía, Luna y Morita salen de los atlas Roblox activos. */
+  const PF = 'assets/cinematica/parafalls/';
+  const ARR = 'assets/cinematica/llegadas/';
+  const transform = (name, steps) => steps.map(n => ARR + name + '_' + n + '.webp');
+  const papi = (o) => Object.assign({ name: 'PAPITO ESTOKER', x: 24, scale: 1.25, label: false, entrance: 'enter-fade' }, o);
+  const hija = (o) => Object.assign({ name: 'SOFÍA', x: 62, scale: 1.12, label: false, entrance: 'enter-fade' }, o);
+  const PARAFALLS = [
+    { id: 'pf_luz', tag: 'PARAFALLS · ADAPTACIÓN DEL ARTE CONCEPTUAL', title: 'UNA LUZ ENTRE LAS CASCADAS',
+      layout: 'dialogo', text: '', background: PF + 'forest_approach.webp', introMs: 350,
+      cast: [papi({ sprite: ARR + 'estoker_original.webp' }), hija({ sprite: ARR + 'sofia_02.webp' })],
+      lines: [{ who: 'SOFÍA', tone: 'sofia', text: '¡Papá... mira eso! ¿Qué es esa luz?' }] },
+    { id: 'pf_portal', tag: 'PARAFALLS · ADAPTACIÓN DEL ARTE CONCEPTUAL', title: 'EL PORTAL', layout: 'dialogo', text: '',
+      background: PF + 'portal_reveal.webp',
+      cast: [papi({ sprite: ARR + 'estoker_original.webp' }),
+        hija({ frames: transform('sofia', ['02','04','06','08','10','11']),
+          anim: [{ f: [0], ms: 2000 }, { f: [0,1,2,3,4,5], fps: 2, ms: 3000 }, { f: [5], ms: 60000 }] })],
+      lines: [{ who: 'PAPITO ESTOKER', tone: 'estoker', text: 'Parece un portal... ¡Vamos a ver!' },
+        { who: 'NARRADOR', tone: 'narra', text: 'Al acercarse, una fuerza los absorbió de repente.' }] },
+    { id: 'pf_guardianes', tag: 'MISIÓN PARAFALLS · LOS GUARDIANES', title: 'DEL OTRO LADO', layout: 'dialogo', text: '',
+      background: PF + 'portal_reveal.webp',
+      cast: [papi({ frames: transform('estoker', ['original','00','04','08','11']),
+        anim: [{ f: [0], ms: 700 }, { f: [1,2,3,4], fps: 2, ms: 2000 }, { f: [4], ms: 60000 }] }),
+        hija({ sprite: ARR + 'sofia_11.webp' })],
+      lines: [{ who: 'PAPITO ESTOKER', tone: 'estoker', text: 'Mira mis manos, Sofi. Los niños que se quedaron jugando aquí ahora vigilan las cascadas.' },
+        { who: 'SOFÍA', tone: 'sofia', text: 'Voy a cruzar con Luna y Morita. Encontraremos a los niños, papá.' }] },
+    { id: 'pf_llegada', tag: 'MISIÓN PARAFALLS · ROBLOX', title: 'LA PRIMERA CASCADA',
+      layout: 'dialogo', text: '', background: PF + 'forest_approach.webp',
+      cast: [papi({ sprite: ARR + 'estoker_11.webp', x: 16 }), hija({ frames: [PF + 'sofia_00_front_idle.png',
+          PF + 'sofia_01_front_blink.png', PF + 'sofia_02_look_up.png'], fps: 2, x: 48, scale: 1.3, fitWidth: true }),
+        { name: 'LUNA', frames: [PF + 'luna_idle_00.png', PF + 'luna_idle_01.png'], x: 72, scale: .55, fps: 3, label: false, entrance: 'enter-fade' },
+        { name: 'MORITA', frames: [PF + 'morita_idle_00.png', PF + 'morita_idle_01.png'], x: 90, scale: .55, fps: 3, label: false, entrance: 'enter-fade' }],
+      lines: [{ who: 'SOFÍA', tone: 'sofia', text: '¡Wow! ¡Estamos dentro del mundo de Roblox!' }] }
+  ];
+
+  const ESPACIO = [
+    { id: 'orbita_estacion', tag: 'MISIÓN 4 · ÓRBITA LUNAR', title: 'LA ESTACIÓN SOBRE EL CRÁTER',
+      layout: 'dialogo', text: '', background: ARR + 'estacion_lunar.webp', cast: [],
+      lines: [{ who: 'SOFÍA', tone: 'sofia', text: 'Desde aquí se ve toda la Luna. Luna, Morita… ¿listas para salir por la esclusa?' }] }
+  ];
+  // El último plano usa el fondo, el vestuario, las compañeras y la colisión del primer tramo jugable.
+  function arrival(id, mission, title, text) {
+    return { id, arrival: mission, tag: 'LLEGADA · ' + ['ESCUELA','GUADALAJARA','EL SUBMARINO','ESPACIO','PARAFALLS'][mission],
+      title, text, layout: 'dialogo', durationMs: 4300, cast: [] };
+  }
+  SCENES.unshift({ id: 'esc_aula_inicio', tag: 'ESCUELA · FIN DE CLASES', title: '¡SONÓ LA CAMPANA!', layout: 'dialogo',
+    background: 'assets/backgrounds/secretos/aula_escolar_oculta.webp', durationMs: 5200, text: 'Sofía sale del salón con Luna y Morita. Tiene que alcanzar el camión.',
+    cast: [
+      { name: 'SOFÍA', frames: ['idle_01','run_01','run_02','run_03','run_04'].map(f=>'assets/player/variants/uniforme/'+f+'.png'), x: 26, bottom: 0, scale: 1.1, entrance: 'enter-fade', anim: [{f:[0],ms:850},{f:[1,2,3,4],fps:7,ms:2700,to:65},{f:[0],ms:60000}] },
+      { name:'LUNA', frames:[...CAT_WALK('luna'),...CAT_IDLE('luna')], x:12,bottom:0,scale:.48,entrance:'enter-fade',anim:[{f:[0,1,2,3],fps:7,ms:3550,to:51},{f:[4,5,6,7,8,9],fps:4,ms:60000}] },
+      { name:'MORITA', frames:[...CAT_WALK('morita'),...CAT_IDLE('morita')], x:40,bottom:0,scale:.48,entrance:'enter-fade',anim:[{f:[0,1,2,3],fps:7,ms:3550,to:79},{f:[4,5,6,7,8,9],fps:4,ms:60000}] }
+    ] });
+  SCENES.push(Object.assign(arrival('esc_azotea', 0, 'LA AZOTEA DE LA ESCUELA', 'La campana acaba de sonar. Sofía alcanza la azotea y busca el columpio junto a la barda.'), { nextMission: { mission: 0, tramo: 0 } }));
+  GDL_TRANSITION.push(arrival('gdl_terraza', 1, 'SOBRE EL CENTRO', 'Ya en el centro, Sofía sale a la terraza. La primera bajada pasa sobre los arcos.'));
+  MARINO.push(arrival('mar_orilla', 2, 'A LA ORILLA', 'Sofía se detiene en la roca con las gatas. El traje de buceo entra en acción al sumergirse.'));
+  ESPACIO.push(arrival('orbita_cubierta', 3, 'PRIMEROS PASOS EN LA LUNA', 'Sofía pisa la cubierta con el traje espacial. Desde aquí puede bajar a las pasarelas en gravedad lunar.'));
+  PARAFALLS.push(arrival('pf_repisa', 4, 'LA REPISA DEL MIRADOR', 'El agua cae entre las repisas. Los guardianes recorren las más anchas y dejan libre el mirador.'));
+
+  // Coordenadas de las franjas pisables en el arte, en píxeles de la imagen. El encuadre conserva ese suelo al girar.
+  const CONTACTS = {
+    esc_aula_inicio: [1520,855,285,1450,764],
+    e2_mercado: [1536,864,80,1450,841], e2_voz: [1536,864,100,1436,841],
+    e2_usb: [1536,864,70,1466,816], e3_start: [1521,365,70,1451,353],
+    pc_reja: [1536,864,90,1446,816], pc_apagon: [1536,864,90,1446,816],
+    m1_isla: [971,405,161,490,272], m2_recuerdo: [1600,667,35,317,491],
+    m3_tiburones: [1600,667,1100,1510,413], m6_bucear: [971,405,311,469,246],
+    gdl_salida: [1521,365,110,1410,353], gdl_camion: [1920,900,20,1900,828], gdl_llegada: [1920,900,130,1790,800],
+    pf_luz: [2816,1584,855,2030,1430], pf_portal: [2816,1584,1290,2480,1390],
+    pf_guardianes: [2816,1584,1300,2460,1390], pf_llegada: [2816,1584,710,2130,1440]
+  };
+
   const SOURCE = Object.freeze({
     title: 'ARCHIVO 01: LA TOXI FAMILIA · El prólogo a la leyenda',
     document: 'Guion v3.0 · Director\'s Cut (Conexión de Universos) — entregado en el chat del proyecto',
@@ -174,6 +272,7 @@
       !path.split('/').includes('..');
   }
   const FX = new Set(['lluvia', 'monitores', 'hud', 'apagon', 'legend', 'recuerdo', 'burbujas', 'niebla']);
+  const BACKGROUND_MOTIONS = new Set(['travel']);
   // V58.6: 'sombras' = apertura en penumbra (siluetas a contraluz, subtítulos abajo, se ilumina quien habla).
   const LAYOUTS = new Set(['dialogo', 'sombras']);
   const TONES = new Set(['sofia', 'estoker', 'narra', 'toxica']);
@@ -205,7 +304,7 @@
       out.looks = Object.freeze(looks);
     }
     if (a.fps != null && !num(a.fps, 0.5, 24)) throw new Error('fps invalido: ' + a.name);
-    for (const k of ['flip', 'float', 'loop', 'label']) if (a[k] != null && typeof a[k] !== 'boolean') throw new Error(k + ' invalido: ' + a.name);
+    for (const k of ['flip', 'float', 'loop', 'label', 'fitWidth']) if (a[k] != null && typeof a[k] !== 'boolean') throw new Error(k + ' invalido: ' + a.name);
     // V58.6: `voice` = el nombre con el que habla en las líneas (se ilumina cuando habla).
     if (a.voice != null && (typeof a.voice !== 'string' || !a.voice.trim() || a.voice.length > 32)) throw new Error('voz invalida: ' + a.name);
     if (a.anim != null) {
@@ -229,6 +328,8 @@
       if (typeof s.title !== 'string' || !s.title.trim() || typeof s.text !== 'string') throw new Error('titulo/texto invalido: ' + s.id);
       const bgs = s.background == null ? [] : Array.isArray(s.background) ? s.background : [s.background];
       if (bgs.length > 4 || !bgs.every(validAsset)) throw new Error('fondo invalido: ' + s.id);
+      if (s.backgroundMotion != null && !BACKGROUND_MOTIONS.has(s.backgroundMotion)) throw new Error('movimiento de fondo invalido: ' + s.id);
+      if (s.arrival != null && (!Number.isInteger(s.arrival) || s.arrival < 0 || s.arrival > 4)) throw new Error('mundo de llegada inválido');
       const fxs = s.fx == null ? [] : Array.isArray(s.fx) ? s.fx : [s.fx];
       if (fxs.length > 3 || !fxs.every((f) => FX.has(f))) throw new Error('efecto invalido: ' + s.id);
       if (s.layout != null && !LAYOUTS.has(s.layout)) throw new Error('acomodo invalido: ' + s.id);
@@ -272,5 +373,5 @@
     }
     return [...out];
   }
-  NS.TOXIFAMILIA = { SOURCE, SCENES, EPILOGUE, MARINO, validate, validAsset, assetsOf, lineMs, get ready() { return SCENES.length > 0; } };
+  NS.TOXIFAMILIA = { SOURCE, SCENES, EPILOGUE, MARINO, GDL_TRANSITION, ESPACIO, PARAFALLS, CONTACTS, validate, validAsset, assetsOf, lineMs, get ready() { return SCENES.length > 0; } };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

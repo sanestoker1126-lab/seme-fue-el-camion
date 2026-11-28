@@ -1,0 +1,12 @@
+frame,x,y,w,h,pivot_x,pivot_y,direction,sha256_rgba,source
+luna_idle_sub_01,833,10,148,141,65.0,180.0,right,59db17557a6a742081546e19fe9b69496a74de913171c72edb9b43385b0ea3c5,assets/companions/sub/luna_idle_sub_01.png
+luna_idle_sub_02,664,10,149,141,66.0,179.0,right,9c6774acbe4e17a5623edceb2d6ab9cb67919c17d9046628e3a18373c51cadb8,assets/companions/sub/luna_idle_sub_02.png
+luna_idle_sub_03,325,10,148,142,65.0,179.0,right,f3cdae4bf36a87a96a6a5fc4ae35e2aad66cb7357a6d93bceb79c446b59ca640,assets/companions/sub/luna_idle_sub_03.png
+luna_idle_sub_04,505,174,144,139,61.0,179.0,right,bdc7550be0dae90a1bc37f3ea4da85f058e25923e7f11771bc3f8e8fe6bd79fb,assets/companions/sub/luna_idle_sub_04.png
+luna_idle_sub_06,173,174,148,140,65.0,179.0,right,67446b85d3964a44718552f623b5442ded0dd4f2f0dbf32f3d3854ed1ca45542,assets/companions/sub/luna_idle_sub_06.png
+luna_idle_sub_05,669,174,149,127,66.0,167.0,right,7dab1d9cde1e55c76be47386960c98fba72e17ca96d2f8a0abb5ad87f5b81c61,assets/companions/sub/luna_idle_sub_05.png
+luna_walk_sub_01,10,174,143,141,60.0,179.0,right,fe7efb85704ed872f1f7d72fdb7bdf7d90f71957f2f1723dfba819b83c3856f2,assets/companions/sub/luna_walk_sub_01.png
+luna_walk_sub_02,493,10,151,141,68.0,179.0,right,6dac0df5b4e5ce19ea133ade3d4c12cefdb27cedaaa2fa97845f3b2b3262dd3c,assets/companions/sub/luna_walk_sub_02.png
+luna_walk_sub_03,341,174,144,140,61.0,179.0,right,a0183c1c04d088180b52be7c9845f52b6d8443ebc9992c74e66632df80176bdf,assets/companions/sub/luna_walk_sub_03.png
+luna_walk_sub_04,154,10,151,142,68.0,179.0,right,8e406468ea50bcdb29247e3531724187d97eddbaf9ea6c1d3b5dd8b1a6e391d0,assets/companions/sub/luna_walk_sub_04.png
+luna_shoulder_sub,10,10,124,144,61.0,181.0,right,16d50ecdd1f2e6ca28628a7348d297fb09f09bdaef87d50dff535c7df16e5e21,assets/companions/sub/luna_shoulder_sub.png

@@ -1,0 +1,135 @@
+{
+  "schema": "camion.production.atlas.v1",
+  "id": "luna_space",
+  "image": "assets/production/luna_space/atlas.png",
+  "size": [
+    2048,
+    240
+  ],
+  "format": "RGBA8888",
+  "padding_px": 8,
+  "extrusion_px": 2,
+  "anchor": "feet",
+  "uniform_scale": true,
+  "source": "SeMeFueElCamion_V58_1_BUCEO_100_COMPLETO.zip",
+  "notes": "Existing authentic poses; not a new swimming or attack animation. Feet anchor is a packing reference, not a validated collision pivot.",
+  "frame_count": 4,
+  "unique_pixel_frames": 4,
+  "animations": {
+    "idle": {
+      "frames": [
+        "luna_idle"
+      ],
+      "duration_ms": 250,
+      "loop": true,
+      "anchor": "feet"
+    },
+    "walk": {
+      "frames": [
+        "luna_walk_a",
+        "luna_walk_b"
+      ],
+      "duration_ms": 120,
+      "loop": true,
+      "anchor": "feet"
+    },
+    "jump": {
+      "frames": [
+        "luna_jump"
+      ],
+      "duration_ms": 180,
+      "loop": false,
+      "anchor": "feet"
+    }
+  },
+  "frames": {
+    "luna_idle": {
+      "rect": [
+        250,
+        10,
+        217,
+        206
+      ],
+      "pivot": [
+        108.0,
+        203.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "0a5d7c4f90e1891251c267ba1d94d9b9980adea8f9064e581721dc8c5277104e",
+      "source": "assets/companions/space/luna_idle.webp",
+      "source_bbox": [
+        4,
+        16,
+        221,
+        222
+      ],
+      "notes": ""
+    },
+    "luna_walk_a": {
+      "rect": [
+        10,
+        10,
+        220,
+        206
+      ],
+      "pivot": [
+        110.0,
+        203.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "f51ea82286a2cc3d23cd01335f0ceaf0d5540475f416b01017426dd78635fe8c",
+      "source": "assets/companions/space/luna_walk_a.webp",
+      "source_bbox": [
+        2,
+        16,
+        222,
+        222
+      ],
+      "notes": ""
+    },
+    "luna_walk_b": {
+      "rect": [
+        487,
+        10,
+        216,
+        202
+      ],
+      "pivot": [
+        108.0,
+        199.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "3573e8703f719c224dd6a7d315e48cb8f78a71d1770a199b102ccb6df6524bbc",
+      "source": "assets/companions/space/luna_walk_b.webp",
+      "source_bbox": [
+        4,
+        20,
+        220,
+        222
+      ],
+      "notes": ""
+    },
+    "luna_jump": {
+      "rect": [
+        723,
+        10,
+        224,
+        195
+      ],
+      "pivot": [
+        112.0,
+        192.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "2c227333b9e14d70882531d5dc39b59724167baba4762f346829786f554e7b5b",
+      "source": "assets/companions/space/luna_jump.webp",
+      "source_bbox": [
+        0,
+        27,
+        224,
+        222
+      ],
+      "notes": ""
+    }
+  }
+}

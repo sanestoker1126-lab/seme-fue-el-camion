@@ -1,0 +1,5 @@
+frame,x,y,w,h,pivot_x,pivot_y,direction,sha256_rgba,source
+morita_idle,10,10,215,206,108.0,203.0,right,e0cddd9ad501c3b702554b79091aa6efbee6e68dadb3d3806e92bbbfb5344b8f,assets/companions/space/morita_idle.webp
+morita_walk_a,245,10,224,191,112.0,188.0,right,e83b92b79c27fbc388284f2f9e1e893f1910453e72fa334b0c0e1d95dfd7b1e3,assets/companions/space/morita_walk_a.webp
+morita_walk_b,489,10,224,186,112.0,183.0,right,e822cab8c6c65ef158475e154603edb4309ba20c72750ac4909ad575016f09bf,assets/companions/space/morita_walk_b.webp
+morita_jump,733,10,216,175,108.0,172.0,right,9d82c4cc923e043ee7d06445d59764897e235b98cf269fb6ba370086cc1d1fba,assets/companions/space/morita_jump.webp

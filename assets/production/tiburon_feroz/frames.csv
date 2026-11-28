@@ -1,0 +1,13 @@
+frame,x,y,w,h,pivot_x,pivot_y,direction,sha256_rgba,source
+nadar_lento_00,738,312,344,189,170.0,87.0,right,009f692368754d8b535aef67287c18383e6c75eef4a82c50202388067dd23dd8,tiburon_feroz_atlas_rgba.png:nadar_lento_00
+nadar_lento_01,373,312,345,193,176.0,93.0,right,f5cbf34bfa1c358fec783a66fcfbb6aae190b757f2328ba9201a8edcf151dde2,tiburon_feroz_atlas_rgba.png:nadar_lento_01
+nadar_lento_02,340,10,346,235,179.0,100.0,right,0a8dcb5581bda55664e85acf3ef5080be5755cc9282bc1b9894f5080cf4c8a0a,tiburon_feroz_atlas_rgba.png:nadar_lento_02
+nadar_lento_03,1102,312,343,188,174.0,92.0,right,b36ecd56a80d8731a0add82cc37d2fbf911bf20d0477ff5c9e53a523b3600399,tiburon_feroz_atlas_rgba.png:nadar_lento_03
+morder_00,1465,312,338,188,166.0,101.0,right,1e1378357c124e8adbc92a678e3177436441f8f60f19089d655f9caca7f0021b,tiburon_feroz_atlas_rgba.png:morder_00
+morder_01,1070,10,333,204,167.0,111.0,right,86a6f92a86748a255c70c536878afcf58dd9f3c953eaa3854c2dd4410ddaac28,tiburon_feroz_atlas_rgba.png:morder_01
+morder_02,706,10,344,216,173.0,122.0,right,6e183637a3eee4d2175ec5735795d62527778137558da15adbae3b4242f12511,tiburon_feroz_atlas_rgba.png:morder_02
+morder_03,1423,10,341,202,174.0,109.0,right,ab8b29d096ede4243f6b7befb80b3bb8f7e097dfc3026ac596fa1f6b2a353255,tiburon_feroz_atlas_rgba.png:morder_03
+morir_00,10,10,310,282,167.0,153.0,right,8ad8d9ec9ce331de81c779b662157dbd1771f6ffa3e309bd5b43a02429f8f096,tiburon_feroz_atlas_rgba.png:morir_00
+morir_01,10,312,343,199,165.0,102.0,right,d41dc0fee1c820eb5b581df3ccc4b439f21b3563d4f5a6b1d4a29f86dab025a7,tiburon_feroz_atlas_rgba.png:morir_01
+morir_02,10,531,360,167,179.0,77.0,right,3ff442457330f16e49e5db7a4b10b1d6928fa027105b6463b10339c4a28fb4e1,tiburon_feroz_atlas_rgba.png:morir_02
+morir_03,390,531,359,147,181.0,54.0,right,dbce6a9519a1bd85d65b6f95ea0d9fe271b50e15d640e69c537c627a2b7b3807,tiburon_feroz_atlas_rgba.png:morir_03

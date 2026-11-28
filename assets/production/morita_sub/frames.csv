@@ -1,0 +1,12 @@
+frame,x,y,w,h,pivot_x,pivot_y,direction,sha256_rgba,source
+morita_idle_sub_01,178,175,145,141,62.0,180.0,right,2f6cafb4ff73447e7d6d742b3145af65ea6b194000ff837b55f2d09a4ab796a0,assets/companions/sub/morita_idle_sub_01.png
+morita_idle_sub_02,487,10,151,141,68.0,179.0,right,381422e9132079e77ec237f0f97c6db60469b9352e2094f7c43fa238f22882a2,assets/companions/sub/morita_idle_sub_02.png
+morita_idle_sub_03,150,10,149,142,66.0,179.0,right,a3efb013d67d919708c0818b139a101ac9de2a3dbbe8d3af18289e97b2857b0d,assets/companions/sub/morita_idle_sub_03.png
+morita_idle_sub_04,343,175,148,140,65.0,179.0,right,2cc2e5b4d41bbb8c6a60654dbcb7f8e5e820ac56d9c86bfe7df8670a596b34cc,assets/companions/sub/morita_idle_sub_04.png
+morita_idle_sub_06,511,175,151,135,68.0,179.0,right,63ef6e3d63a9426d70d7ab23623710f02898be74cc92c17915a8042f9148d8ce,assets/companions/sub/morita_idle_sub_06.png
+morita_idle_sub_05,682,175,149,125,66.0,167.0,right,f28c16e34bfbe53bc786eda6efca67dbcef98d48bb988f23e5a7e0e866e47ddc,assets/companions/sub/morita_idle_sub_05.png
+morita_walk_sub_01,827,10,148,141,65.0,179.0,right,c3e129e4ddf52b54675e518f281a4a770d7121f5bea7f7dac6885864215549a0,assets/companions/sub/morita_walk_sub_01.png
+morita_walk_sub_02,658,10,149,141,66.0,179.0,right,d9ca88cd91a8c51fcd6b5e36c978c0d25d1fa1826d24179bfc8c0e78224cdf66,assets/companions/sub/morita_walk_sub_02.png
+morita_walk_sub_03,10,175,148,141,65.0,179.0,right,02d49b61a874bf088fc522c1f5bf5e1404be0d60a73639b58be3802c025ad6db,assets/companions/sub/morita_walk_sub_03.png
+morita_walk_sub_04,319,10,148,142,65.0,179.0,right,1d091a90d6c2c5bf104dc687ddc0101010685e58f7ba311c421730a3d5d5a877,assets/companions/sub/morita_walk_sub_04.png
+morita_shoulder_sub,10,10,120,145,57.0,181.0,right,dd2f6c81f0d50da17b02f6d0f07b28c89b7b485fc06134bbeccf9b58bbc24379,assets/companions/sub/morita_shoulder_sub.png

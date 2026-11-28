@@ -1,0 +1,6 @@
+V58.7.7 — ABISMO
+Tres páginas originales procesadas con profundidad continua, sin mover las colisiones.
+Atlas de mineral, baliza y escotilla, tres diseños procedurales independientes de los personajes.
+Corrientes con burbujas direccionales, rutas y objetivos por sectores; acompañantes con posición sumergida diferenciada.
+No incluye una nueva ilustración integral del mundo ni nuevas poses de personajes.
+Balizas de rescate activables por proximidad, con reaparición al reintentar en la misma sesión. No se guardan entre sesiones.

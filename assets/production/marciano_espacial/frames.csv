@@ -1,0 +1,16 @@
+frame,x,y,w,h,pivot_x,pivot_y,direction,sha256_rgba,source
+caminar_00,10,10,165,207,83.0,207.0,right,11a8cfc5b6cee710b3f92399d6128bf0ff4e86770766e05024c839553aea91c0,assets/enemies/marciano_espacial/marciano_espacial_atlas_rgba.png:0
+caminar_01,195,10,174,206,87.0,206.0,right,c2ae2d6d3d7bf9dd82a45c34fb9fa6abb1985a1924bc89d4f49b9b5d080a78da,assets/enemies/marciano_espacial/marciano_espacial_atlas_rgba.png:1
+caminar_02,389,10,164,205,82.0,205.0,right,d1ab6074d1d0a17c231d4615cbd2fa570b0dcd27b2aba3d3e3324acbfa73825a,assets/enemies/marciano_espacial/marciano_espacial_atlas_rgba.png:2
+caminar_03,1169,10,171,203,86.0,203.0,right,b96f6bc464de18aefbc42df0871820d256e0cd23231dcbab29efd86e75f2de9f,assets/enemies/marciano_espacial/marciano_espacial_atlas_rgba.png:3
+disparo_04,769,10,154,204,77.0,204.0,right,72c7c069f19b4870f3388264f55707924b5ef48705c667687750d20e998de76c,assets/enemies/marciano_espacial/marciano_espacial_atlas_rgba.png:4
+disparo_05,943,10,206,203,103.0,203.0,right,e2410033df2bbc70c03b1888f9dce297513e8ac96efe40f879156c782b4e3c92,assets/enemies/marciano_espacial/marciano_espacial_atlas_rgba.png:5
+disparo_07,1360,10,221,201,111.0,201.0,right,4c67e2685b13b8c16c6854624d5279a7307bdd75bf9e2f9dfe42995cea7c787f,assets/enemies/marciano_espacial/marciano_espacial_atlas_rgba.png:7
+recibir_dano_08,573,10,176,204,88.0,204.0,right,c50c7311506b57bfc17d3fd7d3edb82899bf6d635d8a5ab0b46b88859a1c170d,assets/enemies/marciano_espacial/marciano_espacial_atlas_rgba.png:8
+recibir_dano_09,1601,10,184,199,92.0,199.0,right,ecbf8befa33cba71f9b059f3b85a2fe1a7867f0e0ef17f4b965f651ff7415b94,assets/enemies/marciano_espacial/marciano_espacial_atlas_rgba.png:9
+recibir_dano_10,10,237,176,177,88.0,177.0,right,a4598debc6e161f6d1c04835f4ac3815b4bffbc61b268959b92bc27cc83ab6ee,assets/enemies/marciano_espacial/marciano_espacial_atlas_rgba.png:10
+recibir_dano_11,1805,10,168,186,84.0,186.0,right,60c110c997137444c1ca71cc16ec2eec9c17f4eb578a330aa72ed30686f52f11,assets/enemies/marciano_espacial/marciano_espacial_atlas_rgba.png:11
+morir_12,206,237,235,166,118.0,166.0,right,b5e10b426d3bc2db5a4079c5900a1863f60856b43e4f6e929345cd9209a38e01,assets/enemies/marciano_espacial/marciano_espacial_atlas_rgba.png:12
+morir_13,461,237,247,139,124.0,139.0,right,b89c7093ae828415380a7f22942b4483a9a17bd8ea3703ec6746a80989672227,assets/enemies/marciano_espacial/marciano_espacial_atlas_rgba.png:13
+morir_14,728,237,203,118,102.0,118.0,right,42f0390992a14141f59e87073840b017938634d6680ef21b3a568ffa4ab97b32,assets/enemies/marciano_espacial/marciano_espacial_atlas_rgba.png:14
+morir_15,951,237,239,89,120.0,89.0,right,1649003b7ae703ec3b2034daa0233f51f4e067dceb25effbd603efabae7927aa,assets/enemies/marciano_espacial/marciano_espacial_atlas_rgba.png:15

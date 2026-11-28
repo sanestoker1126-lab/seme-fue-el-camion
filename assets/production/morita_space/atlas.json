@@ -1,0 +1,135 @@
+{
+  "schema": "camion.production.atlas.v1",
+  "id": "morita_space",
+  "image": "assets/production/morita_space/atlas.png",
+  "size": [
+    2048,
+    240
+  ],
+  "format": "RGBA8888",
+  "padding_px": 8,
+  "extrusion_px": 2,
+  "anchor": "feet",
+  "uniform_scale": true,
+  "source": "SeMeFueElCamion_V58_1_BUCEO_100_COMPLETO.zip",
+  "notes": "Existing authentic poses; not a new swimming or attack animation. Feet anchor is a packing reference, not a validated collision pivot.",
+  "frame_count": 4,
+  "unique_pixel_frames": 4,
+  "animations": {
+    "idle": {
+      "frames": [
+        "morita_idle"
+      ],
+      "duration_ms": 250,
+      "loop": true,
+      "anchor": "feet"
+    },
+    "walk": {
+      "frames": [
+        "morita_walk_a",
+        "morita_walk_b"
+      ],
+      "duration_ms": 120,
+      "loop": true,
+      "anchor": "feet"
+    },
+    "jump": {
+      "frames": [
+        "morita_jump"
+      ],
+      "duration_ms": 180,
+      "loop": false,
+      "anchor": "feet"
+    }
+  },
+  "frames": {
+    "morita_idle": {
+      "rect": [
+        10,
+        10,
+        215,
+        206
+      ],
+      "pivot": [
+        108.0,
+        203.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "e0cddd9ad501c3b702554b79091aa6efbee6e68dadb3d3806e92bbbfb5344b8f",
+      "source": "assets/companions/space/morita_idle.webp",
+      "source_bbox": [
+        4,
+        16,
+        219,
+        222
+      ],
+      "notes": ""
+    },
+    "morita_walk_a": {
+      "rect": [
+        245,
+        10,
+        224,
+        191
+      ],
+      "pivot": [
+        112.0,
+        188.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "e83b92b79c27fbc388284f2f9e1e893f1910453e72fa334b0c0e1d95dfd7b1e3",
+      "source": "assets/companions/space/morita_walk_a.webp",
+      "source_bbox": [
+        0,
+        31,
+        224,
+        222
+      ],
+      "notes": ""
+    },
+    "morita_walk_b": {
+      "rect": [
+        489,
+        10,
+        224,
+        186
+      ],
+      "pivot": [
+        112.0,
+        183.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "e822cab8c6c65ef158475e154603edb4309ba20c72750ac4909ad575016f09bf",
+      "source": "assets/companions/space/morita_walk_b.webp",
+      "source_bbox": [
+        0,
+        36,
+        224,
+        222
+      ],
+      "notes": ""
+    },
+    "morita_jump": {
+      "rect": [
+        733,
+        10,
+        216,
+        175
+      ],
+      "pivot": [
+        108.0,
+        172.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "9d82c4cc923e043ee7d06445d59764897e235b98cf269fb6ba370086cc1d1fba",
+      "source": "assets/companions/space/morita_jump.webp",
+      "source_bbox": [
+        4,
+        47,
+        220,
+        222
+      ],
+      "notes": ""
+    }
+  }
+}

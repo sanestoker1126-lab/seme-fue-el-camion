@@ -1,0 +1,437 @@
+{
+  "schema": "camion.production.atlas.v1",
+  "id": "sofia_astronauta",
+  "image": "assets/production/sofia_astronauta/atlas.png",
+  "size": [
+    1024,
+    624
+  ],
+  "format": "RGBA8888",
+  "padding_px": 8,
+  "extrusion_px": 2,
+  "anchor": "feet",
+  "uniform_scale": true,
+  "source": "SeMeFueElCamion_V58_1_BUCEO_100_COMPLETO.zip",
+  "notes": "Original repository images consolidated. Walk and kick still require additional drawn poses; no fake in-betweens.",
+  "frame_count": 15,
+  "unique_pixel_frames": 15,
+  "animations": {
+    "idle": {
+      "frames": [
+        "idle"
+      ],
+      "duration_ms": 180,
+      "loop": true,
+      "anchor": "feet"
+    },
+    "walk": {
+      "frames": [
+        "walk_a",
+        "walk_b"
+      ],
+      "duration_ms": 120,
+      "loop": true,
+      "anchor": "feet"
+    },
+    "jump": {
+      "frames": [
+        "jump",
+        "rise"
+      ],
+      "duration_ms": 110,
+      "loop": false,
+      "anchor": "feet"
+    },
+    "fall": {
+      "frames": [
+        "fall"
+      ],
+      "duration_ms": 180,
+      "loop": true,
+      "anchor": "feet"
+    },
+    "land": {
+      "frames": [
+        "land"
+      ],
+      "duration_ms": 75,
+      "loop": false,
+      "anchor": "feet"
+    },
+    "dash": {
+      "frames": [
+        "dash"
+      ],
+      "duration_ms": 85,
+      "loop": false,
+      "anchor": "feet"
+    },
+    "kick": {
+      "frames": [
+        "kick_1",
+        "kick_2"
+      ],
+      "duration_ms": 110,
+      "loop": false,
+      "anchor": "feet"
+    },
+    "hurt": {
+      "frames": [
+        "hurt"
+      ],
+      "duration_ms": 100,
+      "loop": false,
+      "anchor": "feet"
+    },
+    "ko": {
+      "frames": [
+        "down"
+      ],
+      "duration_ms": 260,
+      "loop": false,
+      "anchor": "feet"
+    },
+    "victory": {
+      "frames": [
+        "victory_1",
+        "victory_2",
+        "victory_3"
+      ],
+      "duration_ms": 170,
+      "loop": false,
+      "anchor": "feet"
+    }
+  },
+  "frames": {
+    "idle": {
+      "rect": [
+        10,
+        10,
+        115,
+        206
+      ],
+      "pivot": [
+        58.0,
+        206.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "7a6d381fb291f3829e58e3f66ec5a949e6a993f9643b8e3274dad3ec5f952103",
+      "source": "assets/player/astronauta/idle.webp",
+      "source_bbox": [
+        70,
+        26,
+        185,
+        232
+      ],
+      "notes": ""
+    },
+    "walk_a": {
+      "rect": [
+        145,
+        10,
+        140,
+        202
+      ],
+      "pivot": [
+        70.0,
+        202.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "06390576dd5c488a976604993377a234eb74d945cf11195b8284b7d695bb7021",
+      "source": "assets/player/astronauta/walk_a.webp",
+      "source_bbox": [
+        58,
+        30,
+        198,
+        232
+      ],
+      "notes": ""
+    },
+    "walk_b": {
+      "rect": [
+        305,
+        10,
+        131,
+        202
+      ],
+      "pivot": [
+        66.0,
+        202.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "73cab180fb09c5bf06825ec189812a0d8384bc7675b5395907aa8c23663dde60",
+      "source": "assets/player/astronauta/walk_b.webp",
+      "source_bbox": [
+        62,
+        30,
+        193,
+        232
+      ],
+      "notes": ""
+    },
+    "jump": {
+      "rect": [
+        10,
+        236,
+        149,
+        181
+      ],
+      "pivot": [
+        74.0,
+        181.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "ebfced1aa32a5a6dfb2997b42e912389f9dce7521ee6b77ed1a2e0ba8bf2f416",
+      "source": "assets/player/astronauta/jump.webp",
+      "source_bbox": [
+        54,
+        51,
+        203,
+        232
+      ],
+      "notes": ""
+    },
+    "rise": {
+      "rect": [
+        456,
+        10,
+        132,
+        195
+      ],
+      "pivot": [
+        66.0,
+        195.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "b2b925cca761fe7e11f2d4bfe7275fc2bfcf08ab13288302864783c1e03ee660",
+      "source": "assets/player/astronauta/rise.webp",
+      "source_bbox": [
+        62,
+        37,
+        194,
+        232
+      ],
+      "notes": ""
+    },
+    "fall": {
+      "rect": [
+        774,
+        10,
+        145,
+        192
+      ],
+      "pivot": [
+        72.0,
+        192.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "5c4483b0dd8ce1e08384efbfc71cf0fca600e87c0d93f5fb71838563dda643ea",
+      "source": "assets/player/astronauta/fall.webp",
+      "source_bbox": [
+        56,
+        40,
+        201,
+        232
+      ],
+      "notes": ""
+    },
+    "land": {
+      "rect": [
+        340,
+        437,
+        184,
+        165
+      ],
+      "pivot": [
+        92.0,
+        165.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "5e4e316ae70ac27785670c76c84a792b15dea5ee65f6ebb1d616de561bed06fc",
+      "source": "assets/player/astronauta/land.webp",
+      "source_bbox": [
+        36,
+        67,
+        220,
+        232
+      ],
+      "notes": ""
+    },
+    "dash": {
+      "rect": [
+        608,
+        10,
+        146,
+        192
+      ],
+      "pivot": [
+        73.0,
+        192.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "12a61cd1b61366f6a3642d9f32f748d9cd65d2374df23a15bea9cbbfe4ce1ba4",
+      "source": "assets/player/astronauta/dash.webp",
+      "source_bbox": [
+        55,
+        40,
+        201,
+        232
+      ],
+      "notes": ""
+    },
+    "kick_1": {
+      "rect": [
+        179,
+        236,
+        155,
+        178
+      ],
+      "pivot": [
+        78.0,
+        178.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "05989bf33c21a32bd7b354b09a3d6b4d85859760e6670c1e23073347c77f688b",
+      "source": "assets/player/astronauta/kick_1.webp",
+      "source_bbox": [
+        50,
+        54,
+        205,
+        232
+      ],
+      "notes": ""
+    },
+    "kick_2": {
+      "rect": [
+        354,
+        236,
+        157,
+        174
+      ],
+      "pivot": [
+        78.0,
+        174.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "38d8da3eca70bda0f4abd9cb78495402dc1846dde4813401a26af4cef656bc70",
+      "source": "assets/player/astronauta/kick_2.webp",
+      "source_bbox": [
+        50,
+        58,
+        207,
+        232
+      ],
+      "notes": ""
+    },
+    "hurt": {
+      "rect": [
+        531,
+        236,
+        139,
+        174
+      ],
+      "pivot": [
+        70.0,
+        174.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "710ab8c4fd0d8a81abd193cdc10a2b6322296a403904a129bfd0a2fe3cdebd03",
+      "source": "assets/player/astronauta/hurt.webp",
+      "source_bbox": [
+        58,
+        58,
+        197,
+        232
+      ],
+      "notes": ""
+    },
+    "down": {
+      "rect": [
+        10,
+        437,
+        142,
+        169
+      ],
+      "pivot": [
+        71.0,
+        169.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "efd0a004fed54880fb3b46189bd87ff9cfc136d57bdbef179d6488e365900c50",
+      "source": "assets/player/astronauta/down.webp",
+      "source_bbox": [
+        57,
+        63,
+        199,
+        232
+      ],
+      "notes": ""
+    },
+    "victory_1": {
+      "rect": [
+        690,
+        236,
+        132,
+        174
+      ],
+      "pivot": [
+        66.0,
+        174.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "66738dc84613de75ea23c916360a89f172dcce14ed418e83a19f3324593cd447",
+      "source": "assets/player/astronauta/victory_1.webp",
+      "source_bbox": [
+        62,
+        58,
+        194,
+        232
+      ],
+      "notes": ""
+    },
+    "victory_2": {
+      "rect": [
+        172,
+        437,
+        148,
+        168
+      ],
+      "pivot": [
+        74.0,
+        168.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "45183d7ef78e63e46035098a7e2b405a6b1790954b70ec040fca5f91b581b8df",
+      "source": "assets/player/astronauta/victory_2.webp",
+      "source_bbox": [
+        54,
+        64,
+        202,
+        232
+      ],
+      "notes": ""
+    },
+    "victory_3": {
+      "rect": [
+        842,
+        236,
+        157,
+        169
+      ],
+      "pivot": [
+        78.0,
+        169.0
+      ],
+      "direction": "right",
+      "sha256_rgba": "a35d9fbd79e4e9b42754ec4214f02ff79f11700c853cf6a1b0e7c205b3959f66",
+      "source": "assets/player/astronauta/victory_3.webp",
+      "source_bbox": [
+        50,
+        63,
+        207,
+        232
+      ],
+      "notes": ""
+    }
+  }
+}

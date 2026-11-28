@@ -1,0 +1,29 @@
+¡SE ME FUE EL CAMIÓN! · V58.8.21 RC
+
+Extrae el ZIP completo y conserva juntas las carpetas assets, css y js.
+El archivo de entrada es Se_Me_Fue_El_Camion.html.
+
+CÓMO JUGAR
+- En la computadora: abre una terminal en esta carpeta y escribe
+      python3 -m http.server 8000
+  luego abre http://localhost:8000/Se_Me_Fue_El_Camion.html en el navegador.
+  (Abrir el HTML con doble clic no basta: el navegador bloquea parte del juego fuera de un servidor.)
+- En Android: copia la carpeta al teléfono y ábrela con una app de servidor web local
+  (por ejemplo «Simple HTTP Server»); luego abre la dirección que te dé en Chrome.
+- Para jugar sin conexión, ábrelo primero en localhost o mediante HTTPS e inicia una partida.
+  Deja que el juego termine de guardar los recursos antes de desconectar.
+
+CONTROLES
+- Teclado: flechas o A/D para moverse, ESPACIO, W, K o flecha arriba para saltar (bajo el agua, brazada),
+  S o flecha abajo para bajar, SHIFT, J o L para DASH, X o U para patear, C o E para las gatas, P o ESC para pausa.
+- Teléfono: joystick a la izquierda y botones a la derecha (se pueden agrandar o poner para zurdos en Opciones).
+
+V58.8.20: todos los mundos y paradas están disponibles sin completar la campaña.
+El modo práctica es opcional y no guarda progreso.
+
+V58.8.21 · EDICIÓN VISUAL
+- Selector ilustrado de cinco mundos y presentación del mundo elegido.
+- HUD con progreso del recorrido y controles de colores.
+- Avisos de tramo arriba para dejar visible a Sofía.
+- 22 fondos existentes retocados, con dimensiones idénticas y sin cambios de física.
+- Caché PWA actualizado. Ver QA_V58.8.21.md para alcance y pruebas.

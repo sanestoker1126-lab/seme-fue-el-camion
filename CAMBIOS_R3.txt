@@ -1,0 +1,3 @@
+V58.7.6 VISUAL FOCUS
+Base: V58.7.5 R2. Camara vertical 310 unidades en vez de 360; gatitas normalizadas a 22 unidades; HUD contextual compacto y controles acuaticos; corrientes organicas; calidad adaptativa 70%-100%. No nuevos dibujos de personajes ni fondos. No se alteran colisiones, mapas o progresion. QA local: ver informe adjunto si disponible.
+Pruebas: 37/37 pruebas focalizadas del motor; rasterizado Canvas de las cuatro misiones y estados acuaticos y enemigos sin errores; 453 rutas de precarga presentes. No se verifico el HUD en navegador real ni los FPS en telefono. Los fondos y dibujos originales se conservan.

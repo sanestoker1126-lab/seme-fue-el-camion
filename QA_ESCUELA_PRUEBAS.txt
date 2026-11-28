@@ -1,0 +1,334 @@
+TAP version 13
+# Subtest: pisotón: derrota a la rata y Nina rebota sin recibir daño
+ok 1 - pisotón: derrota a la rata y Nina rebota sin recibir daño
+  ---
+  duration_ms: 6.615089
+  type: 'test'
+  ...
+# Subtest: dash: derrota a la rata; caminar contra ella hace daño una sola vez
+ok 2 - dash: derrota a la rata; caminar contra ella hace daño una sola vez
+  ---
+  duration_ms: 1.708717
+  type: 'test'
+  ...
+# Subtest: perro: avisa, embiste, se detiene en el borde y queda mareado
+ok 3 - perro: avisa, embiste, se detiene en el borde y queda mareado
+  ---
+  duration_ms: 1.556399
+  type: 'test'
+  ...
+# Subtest: perro bravo: el dash choca sin daño salvo si está mareado; necesita dos golpes
+ok 4 - perro bravo: el dash choca sin daño salvo si está mareado; necesita dos golpes
+  ---
+  duration_ms: 0.793813
+  type: 'test'
+  ...
+# Subtest: chile: dispara tras la señal previa solo con línea de tiro libre
+ok 5 - chile: dispara tras la señal previa solo con línea de tiro libre
+  ---
+  duration_ms: 2.823212
+  type: 'test'
+  ...
+# Subtest: proyectiles: el dash los destruye sin daño; sin dash hieren
+ok 6 - proyectiles: el dash los destruye sin daño; sin dash hieren
+  ---
+  duration_ms: 0.739221
+  type: 'test'
+  ...
+# Subtest: murciélago: duerme, se alerta, persigue y regresa a su percha
+ok 7 - murciélago: duerme, se alerta, persigue y regresa a su percha
+  ---
+  duration_ms: 2.129019
+  type: 'test'
+  ...
+# Subtest: paloma: solo suelta proyectiles cuando Nina está debajo
+ok 8 - paloma: solo suelta proyectiles cuando Nina está debajo
+  ---
+  duration_ms: 0.582135
+  type: 'test'
+  ...
+# Subtest: cable: solo hace daño cuando tiene corriente
+ok 9 - cable: solo hace daño cuando tiene corriente
+  ---
+  duration_ms: 0.502014
+  type: 'test'
+  ...
+# Subtest: maceta: tiembla, cae, se rompe y reaparece fuera de cámara
+ok 10 - maceta: tiembla, cae, se rompe y reaparece fuera de cámara
+  ---
+  duration_ms: 0.802415
+  type: 'test'
+  ...
+# Subtest: jefes: cada arquetipo emite una señal antes de preparar su ataque
+ok 11 - jefes: cada arquetipo emite una señal antes de preparar su ataque
+  ---
+  duration_ms: 0.500422
+  type: 'test'
+  ...
+# Subtest: apoyo felino: distrae brevemente a un enemigo normal, sin daño ni efecto en jefes
+ok 12 - apoyo felino: distrae brevemente a un enemigo normal, sin daño ni efecto en jefes
+  ---
+  duration_ms: 0.274212
+  type: 'test'
+  ...
+# Subtest: púas: dañan al pisarlas
+ok 13 - púas: dañan al pisarlas
+  ---
+  duration_ms: 0.261142
+  type: 'test'
+  ...
+# Subtest: inicio: Nina aparece en la parada del tramo 1, apoyada y con 3 vidas en Normal
+ok 14 - inicio: Nina aparece en la parada del tramo 1, apoyada y con 3 vidas en Normal
+  ---
+  duration_ms: 81.147536
+  type: 'test'
+  ...
+# Subtest: gatitas: detectan al enemigo cercano y lo distraen sin quitarle vida
+ok 15 - gatitas: detectan al enemigo cercano y lo distraen sin quitarle vida
+  ---
+  duration_ms: 55.530117
+  type: 'test'
+  ...
+# Subtest: gatitas: exploran y alternan conductas propias mientras Sofía espera
+ok 16 - gatitas: exploran y alternan conductas propias mientras Sofía espera
+  ---
+  duration_ms: 213.567276
+  type: 'test'
+  ...
+# Subtest: gatitas: siguen el movimiento sin saltos y se congelan al pausar
+ok 17 - gatitas: siguen el movimiento sin saltos y se congelan al pausar
+  ---
+  duration_ms: 60.92637
+  type: 'test'
+  ...
+# Subtest: daño: resta una vida, aplica retroceso desde la fuente e invulnerabilidad
+ok 18 - daño: resta una vida, aplica retroceso desde la fuente e invulnerabilidad
+  ---
+  duration_ms: 41.423096
+  type: 'test'
+  ...
+# Subtest: escudo: absorbe un golpe sin perder vidas
+ok 19 - escudo: absorbe un golpe sin perder vidas
+  ---
+  duration_ms: 37.551009
+  type: 'test'
+  ...
+# Subtest: caída dañina: depende de la dificultad (Fácil perdona más que Difícil)
+ok 20 - caída dañina: depende de la dificultad (Fácil perdona más que Difícil)
+  ---
+  duration_ms: 200.702076
+  type: 'test'
+  ...
+# Subtest: derrota: sin vidas → animación → game over; reintento desde la última parada
+ok 21 - derrota: sin vidas → animación → game over; reintento desde la última parada
+  ---
+  duration_ms: 80.00209
+  type: 'test'
+  ...
+# Subtest: pausa: congela la simulación y el cronómetro
+ok 22 - pausa: congela la simulación y el cronómetro
+  ---
+  duration_ms: 40.888213
+  type: 'test'
+  ...
+# Subtest: puertas: la trampilla lleva a la zona inferior y la salida devuelve más abajo
+ok 23 - puertas: la trampilla lleva a la zona inferior y la salida devuelve más abajo
+  ---
+  duration_ms: 43.783753
+  type: 'test'
+  ...
+# Subtest: llave y reja: la reja bloquea sin llave y se abre con ella
+ok 24 - llave y reja: la reja bloquea sin llave y se abre con ella
+  ---
+  duration_ms: 53.693332
+  type: 'test'
+  ...
+# Subtest: objetos perdidos: se recogen, cuentan para el final y se guardan
+ok 25 - objetos perdidos: se recogen, cuentan para el final y se guardan
+  ---
+  duration_ms: 54.924953
+  type: 'test'
+  ...
+# Subtest: parada: activarla guarda el progreso y desbloquea el tramo
+ok 26 - parada: activarla guarda el progreso y desbloquea el tramo
+  ---
+  duration_ms: 41.89822
+  type: 'test'
+  ...
+# Subtest: victoria: llegar a la puerta del camión termina la partida con estrellas y final
+ok 27 - victoria: llegar a la puerta del camión termina la partida con estrellas y final
+  ---
+  duration_ms: 52.46059
+  type: 'test'
+  ...
+# Subtest: cámara: Nina siempre dentro del encuadre durante una caída larga
+ok 28 - cámara: Nina siempre dentro del encuadre durante una caída larga
+  ---
+  duration_ms: 69.62641
+  type: 'test'
+  ...
+# Subtest: gravedad: Nina cae y aterriza exactamente sobre la plataforma
+ok 29 - gravedad: Nina cae y aterriza exactamente sobre la plataforma
+  ---
+  duration_ms: 2.960378
+  type: 'test'
+  ...
+# Subtest: velocidad terminal acotada y sin atravesar plataformas delgadas
+ok 30 - velocidad terminal acotada y sin atravesar plataformas delgadas
+  ---
+  duration_ms: 1.42468
+  type: 'test'
+  ...
+# Subtest: salto completo ≈ 135 u y salto corto mucho menor (salto variable)
+ok 31 - salto completo ≈ 135 u y salto corto mucho menor (salto variable)
+  ---
+  duration_ms: 1.371731
+  type: 'test'
+  ...
+# Subtest: coyote time: se puede saltar poco después de salir del borde
+ok 32 - coyote time: se puede saltar poco después de salir del borde
+  ---
+  duration_ms: 0.350086
+  type: 'test'
+  ...
+# Subtest: buffer de salto: pulsar justo antes de aterrizar salta al tocar suelo
+ok 33 - buffer de salto: pulsar justo antes de aterrizar salta al tocar suelo
+  ---
+  duration_ms: 0.846953
+  type: 'test'
+  ...
+# Subtest: paso fijo: el resultado no depende de la tasa de refresco
+ok 34 - paso fijo: el resultado no depende de la tasa de refresco
+  ---
+  duration_ms: 1.482468
+  type: 'test'
+  ...
+# Subtest: muros sólidos: ni caminando ni con dash se atraviesan
+ok 35 - muros sólidos: ni caminando ni con dash se atraviesan
+  ---
+  duration_ms: 0.792902
+  type: 'test'
+  ...
+# Subtest: techo sólido: el salto se corta sin atravesarlo
+ok 36 - techo sólido: el salto se corta sin atravesarlo
+  ---
+  duration_ms: 0.675445
+  type: 'test'
+  ...
+# Subtest: plataformas de un sentido: se atraviesan desde abajo y se aterriza encima
+ok 37 - plataformas de un sentido: se atraviesan desde abajo y se aterriza encima
+  ---
+  duration_ms: 1.208435
+  type: 'test'
+  ...
+# Subtest: BAJAR atraviesa peldaños y tarimas, pero no la piedra
+ok 38 - BAJAR atraviesa peldaños y tarimas, pero no la piedra
+  ---
+  duration_ms: 0.846061
+  type: 'test'
+  ...
+# Subtest: tarimas móviles: Nina viaja con la tarima sin resbalar ni caer
+ok 39 - tarimas móviles: Nina viaja con la tarima sin resbalar ni caer
+  ---
+  duration_ms: 1.053824
+  type: 'test'
+  ...
+# Subtest: asistencia de escalón: se baja una escalera caminando
+ok 40 - asistencia de escalón: se baja una escalera caminando
+  ---
+  duration_ms: 0.631649
+  type: 'test'
+  ...
+# Subtest: toldo rebotador: lanza hacia arriba y anula la caída
+ok 41 - toldo rebotador: lanza hacia arriba y anula la caída
+  ---
+  duration_ms: 0.357897
+  type: 'test'
+  ...
+# Subtest: charco: reduce la fricción (patina más lejos)
+ok 42 - charco: reduce la fricción (patina más lejos)
+  ---
+  duration_ms: 0.686101
+  type: 'test'
+  ...
+# Subtest: dash: un dash aéreo por salto, recarga al aterrizar
+ok 43 - dash: un dash aéreo por salto, recarga al aterrizar
+  ---
+  duration_ms: 0.426251
+  type: 'test'
+  ...
+# Subtest: cajas rompibles: el dash las rompe; caminando bloquean
+ok 44 - cajas rompibles: el dash las rompe; caminando bloquean
+  ---
+  duration_ms: 0.699701
+  type: 'test'
+  ...
+# Subtest: estados de animación: un único estado por paso con prioridad
+ok 45 - estados de animación: un único estado por paso con prioridad
+  ---
+  duration_ms: 0.222013
+  type: 'test'
+  ...
+# Subtest: school campaign: three stages, named rooms, aligned route markers, final boss on real solid street
+ok 46 - school campaign: three stages, named rooms, aligned route markers, final boss on real solid street
+  ---
+  duration_ms: 21.326392
+  type: 'test'
+  ...
+# Subtest: the bus cannot be boarded before the teacher is defeated; opens afterwards and unlocks Guadalajara
+ok 47 - the bus cannot be boarded before the teacher is defeated; opens afterwards and unlocks Guadalajara
+  ---
+  duration_ms: 13.127899
+  type: 'test'
+  ...
+# Subtest: final checkpoint retry returns to street before the boss, with active new fight
+ok 48 - final checkpoint retry returns to street before the boss, with active new fight
+  ---
+  duration_ms: 8.224557
+  type: 'test'
+  ...
+# Subtest: school rooms have functional entry, exit and school-specific art
+ok 49 - school rooms have functional entry, exit and school-specific art
+  ---
+  duration_ms: 10.541729
+  type: 'test'
+  ...
+# Subtest: other campaigns do not acquire school gate or school final checkpoint
+ok 50 - other campaigns do not acquire school gate or school final checkpoint
+  ---
+  duration_ms: 70.055165
+  type: 'test'
+  ...
+# Subtest: teacher is beatable in real fight with timed attacks and then boarding
+ok 51 - teacher is beatable in real fight with timed attacks and then boarding
+  ---
+  duration_ms: 65.492004
+  type: 'test'
+  ...
+# Subtest: la azotea del nivel 1 la corta una barda con vidrios; el columpio cuelga antes de la barda
+ok 52 - la azotea del nivel 1 la corta una barda con vidrios; el columpio cuelga antes de la barda
+  ---
+  duration_ms: 12.736876
+  type: 'test'
+  ...
+# Subtest: sin el columpio la barda no se pasa: ni corriendo, ni saltando, ni con DASH, ni desde el tinaco o el letrero
+ok 53 - sin el columpio la barda no se pasa: ni corriendo, ni saltando, ni con DASH, ni desde el tinaco o el letrero
+  ---
+  duration_ms: 238.745729
+  type: 'test'
+  ...
+# Subtest: con el columpio sí se pasa: correr, saltar a la cuerda, columpiarse y soltar con SALTAR, sin cortarse
+ok 54 - con el columpio sí se pasa: correr, saltar a la cuerda, columpiarse y soltar con SALTAR, sin cortarse
+  ---
+  duration_ms: 51.259145
+  type: 'test'
+  ...
+1..54
+# tests 54
+# suites 0
+# pass 54
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1238.08621

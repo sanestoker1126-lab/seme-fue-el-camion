@@ -38,8 +38,10 @@
     G.save.missions = Object.assign({ escuela: 1, guadalajara: 0, submarino: 0, espacial: 0 }, G.save.missions || {});
     if (!(G.save.missions.escuela > 0)) G.save.missions.escuela = 1;
 
+    // La práctica usa una copia privada del progreso durante toda la partida.
+    let runSave = G.save;
     const emit = (type, data) => { G.events.push(Object.assign({ type }, data || {})); };
-    const persist = () => { if (G.onSave) G.onSave(G.save); };
+    const persist = () => { if (G.onSave && !G.run.practice) G.onSave(runSave); };
     const diff = () => C.difficulty[G.difficulty] || C.difficulty.normal;
     function message(key, text, cd = 2.5, priority = 1) {
       const now = G.run ? G.run.t : 0;
@@ -53,20 +55,26 @@
       const WC = C.world;
       const minH = pxW > pxH * 1.15 ? (WC.viewMinHLandscape || WC.viewMinH) : WC.viewMinH;
       const vs = G.viewScale || 1; // opción CÁMARA: cerca (<1) / normal / lejos (>1)
-      const zoom = U.clamp(Math.min(pxW / (WC.viewMinW * vs), pxH / (minH * vs)), WC.zoomMin, WC.zoomMax);
+      const portrait = pxW < pxH * 0.85;
+      const minW = portrait ? 310 : WC.viewMinW;
+      const zoom = U.clamp(Math.min(pxW / (minW * vs), pxH / (minH * vs)), WC.zoomMin, WC.zoomMax);
       G.view = { pxW, pxH, zoom, w: pxW / zoom, h: pxH / zoom };
       if (G.P) updateCamera(0, true);
     }
 
-    function cameraBounds() {
-      const W = G.world, v = G.view;
-      let x1, x2, y1, y2;
-      if (G.room) { x1 = G.room.x1 - 60; x2 = G.room.x2 + 60; y1 = G.room.y1 - 70; y2 = G.room.y2 + 70; }
-      else { x1 = W.bounds.x1 - 50; x2 = W.bounds.x2 + 50; y1 = W.bounds.y1; y2 = W.bounds.y2; }
-      const bx = x2 - x1 <= v.w ? [(x1 + x2 - v.w) / 2, (x1 + x2 - v.w) / 2] : [x1, x2 - v.w];
-      const by = y2 - y1 <= v.h ? [(y1 + y2 - v.h) / 2, (y1 + y2 - v.h) / 2] : [y1, y2 - v.h];
-      return { bx, by };
-    }
+  function cameraBounds() {
+    const W = G.world, v = G.view;
+    let x1, x2, y1, y2;
+    if (G.room) { x1 = G.room.x1 - 60; x2 = G.room.x2 + 60; y1 = G.room.y1 - 70; y2 = G.room.y2 + 70; }
+    else if (W.schoolMission && W.scenes && W.scenes[0] && W.scenes[0].map.worldArt) {
+      // El arte escolar acaba en los bordes de la lámina; la cámara debe usar sus límites exactos, no el margen de 50 u.
+      const S = W.scenes[0], A = S.map.worldArt, k = S.scale * A.px;
+      x1 = S.x0 - (A.x0 || 0) * k; x2 = x1 + A.width * k; y1 = W.bounds.y1; y2 = W.bounds.y2;
+    } else { x1 = W.bounds.x1 - 50; x2 = W.bounds.x2 + 50; y1 = W.bounds.y1; y2 = W.bounds.y2; }
+    const bx = x2 - x1 <= v.w ? [(x1 + x2 - v.w) / 2, (x1 + x2 - v.w) / 2] : [x1, x2 - v.w];
+    const by = y2 - y1 <= v.h ? [(y1 + y2 - v.h) / 2, (y1 + y2 - v.h) / 2] : [y1, y2 - v.h];
+    return { bx, by };
+  }
 
     function updateCamera(dt, snap) {
       const P = G.P, v = G.view, CC = C.camera;
@@ -94,6 +102,8 @@
 
     /* ---------- Partida ---------- */
     function newRun(o = {}) {
+      const practice = !!o.practice;
+      runSave = practice ? { ...G.save, missions: { ...G.save.missions }, items: { ...G.save.items }, secrets: { ...G.save.secrets } } : G.save;
       if (o.difficulty) G.difficulty = o.difficulty;
       const d = diff();
       const missions = NS.LEVELS.MISSIONS;
@@ -102,19 +112,20 @@
       const mi = hasMission ? U.clamp(o.mission | 0, 0, missions.length - 1) : 0;
       G.mission = mi; G.missionId = missions ? missions[mi].id : 'escuela';
       G.runMission = hasMission ? mi : null;   // V58: el reintento reconstruye la MISMA misión (antes armaba la secuencia completa)
-      const W = NS.World.buildWorld({ difficulty: G.difficulty, seed: o.seed, levels: hasMission ? missions[mi].levels : undefined });
+      const W = NS.World.buildWorld({ difficulty: G.difficulty, seed: o.seed, preservePopulation: G.assist.relaxed, levels: hasMission ? missions[mi].levels : undefined });
       G.world = W;
       const startTramo = U.clamp(o.startTramo | 0, 0, W.scenes.length - 1);
       // V58: reintentar desde una parada intermedia reaparece ahí y no al inicio del nivel.
       const mid = o.startMid ? (W.midpoints || []).find((q) => q.scene === startTramo) : null;
-      const cp = mid || W.checkpoints[startTramo];
+      const cp = (o.startSchoolFinal && W.schoolFinalCheckpoint) || (o.startAbyss && W.abyssBeacons.find(q=>q.id===o.startAbyss)) || mid || W.checkpoints[startTramo];
       G.P = PHY.createPlayer(cp.x, cp.y);
       G.P.ground = cp.plat;
-      G.P.invuln = startTramo > 0 || mid ? 1.2 : 0;
+      if(cp.abyss){G.P.water=W.waters.find(z=>z.sea&&z.toStreet&&cp.y>z.y&&cp.y<z.y2);G.P.submerged=!!G.P.water;G.P.state='swimUnder';}
+      G.P.invuln = startTramo > 0 || mid || cp.schoolFinal ? 1.2 : 0;
       G.run = {
-        t: 0, score: 0, combo: 0, comboT: 0, gems: 0, lives: d.lives, maxLives: d.lives, items: [],
+        practice, t: 0, score: 0, combo: 0, comboT: 0, gems: 0, lives: d.lives, maxLives: d.lives, items: [],
         keys: new Set(), deaths: o.deaths || 0, startTramo, maxDepth: 0, kills: 0, bosses: 0, secretBosses: 0, secrets: 0, seenChapters: new Set(), busSeen: false,
-        carriedItems: o.carriedItems ? o.carriedItems.slice() : []
+        carriedItems: o.carriedItems ? o.carriedItems.slice() : [], schoolRooms: new Set(W.schoolMission ? (o.schoolRooms || []) : [])
       };
       for (const it of G.run.carriedItems) {
         G.run.items.push(it);
@@ -139,18 +150,22 @@
       // V58: se compara el tramo donde estaba el objeto, no su índice de historia (en la misión 2 no coinciden).
       const sceneOfItem = (idx) => { const pk = G.world.pickups.find((p) => p.type === 'item' && p.itemIndex === idx); return pk ? pk.scene : Infinity; };
       const carried = G.run ? G.run.items.filter((i) => sceneOfItem(i) < cpScene || (cp && cp.mid && sceneOfItem(i) === cpScene)) : [];
-      newRun({ mission: G.runMission, startTramo: cpScene, startMid: !!(cp && cp.mid), deaths: G.run ? G.run.deaths : 0, carriedItems: carried });
+      newRun({ mission: G.runMission, practice: !!G.run?.practice, ...(G.world.schoolMission ? {seed:G.world.seed,schoolRooms:[...G.run.schoolRooms]} : {}), startTramo: cpScene, startMid: !!(cp && cp.mid && !cp.abyss && !cp.schoolFinal), startSchoolFinal: !!cp?.schoolFinal, startAbyss: cp?.abyss?cp.id:null, deaths: G.run ? G.run.deaths : 0, carriedItems: carried });
     }
 
     function activateCheckpoint(cp, silent) {
       for (const c of G.world.checkpoints) c.active = c === cp;
       for (const c of G.world.midpoints || []) c.active = c === cp;
+      for(const c of G.world.abyssBeacons||[])c.active=c===cp;
+      if(G.world.schoolFinalCheckpoint)G.world.schoolFinalCheckpoint.active=G.world.schoolFinalCheckpoint===cp;
       G.checkpoint = cp;
+      if(cp.schoolFinal){if(!silent){emit('checkpoint',{cp});message('schoolFinal','CONSERJERÍA · PUNTO SEGURO ACTIVADO',5,2);}return;}
+      if(cp.abyss){if(!silent){emit('checkpoint',{cp});message('abyssCP','BALIZA '+String(cp.index+1).padStart(2,'0')+' ACTIVADA · PUNTO DE RESCATE',5,2);}return;}
       if (cp.mid) { if (!silent) { emit('checkpoint', { cp }); message('cp', ST.MESSAGES.midCheckpoint, 3); } return; }
-      if (!G.save.missions) G.save.missions = {};
+      if (!runSave.missions) runSave.missions = {};
       let changed = false;
-      if (cp.scene + 1 > (G.save.missions[G.missionId] || 0)) { G.save.missions[G.missionId] = cp.scene + 1; changed = true; }
-      if (cp.scene + 1 > G.save.unlocked) { G.save.unlocked = cp.scene + 1; changed = true; } // espejo heredado
+      if (cp.scene + 1 > (runSave.missions[G.missionId] || 0)) { runSave.missions[G.missionId] = cp.scene + 1; changed = true; }
+      if (cp.scene + 1 > runSave.unlocked) { runSave.unlocked = cp.scene + 1; changed = true; } // espejo heredado
       if (changed) persist();
       if (!silent) { emit('checkpoint', { cp }); message('cp', ST.MESSAGES.checkpoint, 3); }
     }
@@ -185,8 +200,8 @@
     function createCompanionAgents(P) {
       const foot = P.y + P.h / 2;
       return {
-        luna: { x: P.x - 46, y: foot, vx: 0, mode: 'follow', modeT: 0, nextMood: 1.7, moodIndex: 0, phase: 0, face: -1, moving: false, target: null },
-        morita: { x: P.x + 46, y: foot, vx: 0, mode: 'follow', modeT: 0, nextMood: 3.1, moodIndex: 1, phase: 1.8, face: 1, moving: false, target: null }
+        luna: { x: companionAnchorX(P.x - 46, P), y: foot, vx: 0, mode: 'follow', modeT: 0, nextMood: 1.7, moodIndex: 0, phase: 0, face: -1, moving: false, target: null },
+        morita: { x: companionAnchorX(P.x + 46, P), y: foot, vx: 0, mode: 'follow', modeT: 0, nextMood: 3.1, moodIndex: 1, phase: 1.8, face: 1, moving: false, target: null }
       };
     }
 
@@ -283,7 +298,10 @@
         // V52: en tierra las gatitas no nadan: mientras Sofía está en agua profunda la esperan en la orilla.
         // V58: en el mundo marino llevan casco y tanque: bucean a su lado.
         const diving = P.water && P.water.theme === 'submarino';
-        if (P.water && a.mode !== 'assist' && diving) { tx = P.x + side * 40; ty = P.y + P.h / 2 - 6; }
+        if (P.water && a.mode !== 'assist' && diving) {
+          const spacing = 43; tx = U.clamp(P.x + side * spacing, P.water.x1+12,P.water.x2-12);
+          ty = U.clamp(P.y + (name==='luna'?8:23),P.water.y+17,P.water.y2-4);
+        }
         else if (P.water && a.mode !== 'assist') {
           const z = P.water, nearLeft = P.x - z.x1 < z.x2 - P.x;
           tx = nearLeft ? z.x1 - 16 - (side < 0 ? 20 : 0) : z.x2 + 16 + (side > 0 ? 20 : 0);
@@ -300,6 +318,12 @@
           a.vx = U.clamp(a.vx + (dx * stiffness - a.vx * damping) * dt, -480, 480);
           a.x += a.vx * dt;
           a.y += (ty - a.y) * (1 - Math.exp(-13 * dt));
+        }
+        // Al pisar una cornisa el resorte horizontal no lleva las patas más allá de su borde.
+        if (grounded && !P.water && a.mode !== 'shoulder' && a.mode !== 'assist') {
+          const onLedge = companionAnchorX(a.x, P);
+          if (onLedge !== a.x) a.vx = 0;
+          a.x = onLedge; a.y = P.ground.y;
         }
         if (Math.abs(a.vx) > 5) a.face = a.vx < 0 ? -1 : 1;
         a.moving = a.mode === 'explore' || a.mode === 'assist' || a.mode === 'return' || Math.abs(a.vx) > 18 || Math.abs(dx) > 9;
@@ -428,9 +452,9 @@
     function finishGameOver() {
       G.state = 'gameover';
       const depth = Math.floor(G.run.maxDepth / 10);
-      if (depth > G.save.bestDepth) G.save.bestDepth = depth;
-      const newScore = G.run.score > G.save.bestScore;
-      if (newScore) G.save.bestScore = G.run.score;
+      if (depth > runSave.bestDepth) runSave.bestDepth = depth;
+      const newScore = !G.run.practice && G.run.score > runSave.bestScore;
+      if (newScore) runSave.bestScore = G.run.score;
       persist();
       emit('gameover', { summary: summary(), newScore, checkpointScene: G.checkpoint ? G.checkpoint.scene : 0 });
     }
@@ -449,35 +473,35 @@
       G.state = 'won';
       const r = G.run, t = Math.round(r.t);
       const items = r.items.length, total = G.world.totalItems;
-      const stars = 1 + (items >= 3 ? 1 : 0) + (items >= total ? 1 : 0);
+      const stars = G.world.schoolMission ? 1 + (items >= 1 ? 1 : 0) + (total > 0 && items >= total ? 1 : 0) : 1 + (items >= 3 ? 1 : 0) + (total > 0 && items >= total ? 1 : 0);
       const fullRun = r.startTramo === 0;
-      const newTime = fullRun && (!G.save.bestTime || t < G.save.bestTime);
-      if (newTime) G.save.bestTime = t;
-      const newScore = r.score > G.save.bestScore;
-      if (newScore) G.save.bestScore = r.score;
-      G.save.wins = (G.save.wins || 0) + 1;
-      G.save.unlocked = Math.max(G.save.unlocked, G.world.scenes.length); // espejo heredado
+      const newTime = !r.practice && fullRun && (!runSave.bestTime || t < runSave.bestTime);
+      if (newTime) runSave.bestTime = t;
+      const newScore = !r.practice && r.score > runSave.bestScore;
+      if (newScore) runSave.bestScore = r.score;
+      runSave.wins = (runSave.wins || 0) + 1;
+      runSave.unlocked = Math.max(runSave.unlocked, G.world.scenes.length); // espejo heredado
       // V53 · completar la misión la deja toda abierta y desbloquea la siguiente.
-      if (!G.save.missions) G.save.missions = {};
-      G.save.missions[G.missionId] = Math.max(G.save.missions[G.missionId] || 0, G.world.scenes.length);
+      if (!runSave.missions) runSave.missions = {};
+      runSave.missions[G.missionId] = Math.max(runSave.missions[G.missionId] || 0, G.world.scenes.length);
       const missions = NS.LEVELS.MISSIONS, next = missions && missions[G.mission + 1];
-      if (next) G.save.missions[next.id] = Math.max(G.save.missions[next.id] || 0, 1);
+      if (next) runSave.missions[next.id] = Math.max(runSave.missions[next.id] || 0, 1);
       const depth = Math.floor(r.maxDepth / 10);
-      if (depth > G.save.bestDepth) G.save.bestDepth = depth;
+      if (depth > runSave.bestDepth) runSave.bestDepth = depth;
       // V58 · Escena post-créditos (nexo con Legend of Presos): al terminar la última misión con las 6 llaves.
-      const keys = ST.ITEMS.filter((it) => G.save.items[it.id]).length;
+      const keys = ST.ITEMS.filter((it) => runSave.items[it.id]).length;
       const lastMission = !missions || G.mission === missions.length - 1;
-      const postCredits = lastMission && keys >= ST.ITEMS.length;
-      if (postCredits) G.save.epilogue = true;
+      const postCredits = !r.practice && lastMission && keys >= ST.ITEMS.length;
+      if (postCredits) runSave.epilogue = true;
       persist();
       emit('victory', { summary: summary(), stars, newTime, newScore, fullRun, ending: ST.ending(items, total, r.lives),
-        postCredits, keys, totalKeys: ST.ITEMS.length, lastMission });
+        postCredits, keys, totalKeys: ST.ITEMS.length, lastMission, mission:G.mission, nextMission:next ? G.mission+1 : null });
     }
 
     function summary() {
       const r = G.run;
-      return { time: r.t, score: r.score, gems: r.gems, lives: r.lives, maxLives: r.maxLives, items: r.items.slice(), totalItems: G.world.totalItems, depth: Math.floor(r.maxDepth / 10), kills: r.kills, bosses: r.bosses, totalBosses: G.world.foes.filter((f) => f.isBoss && !f.secret).length, secrets: r.secrets || 0,
-        totalSecrets: G.world.rooms.filter((q) => q.secret).length, secretBosses: r.secretBosses || 0, deaths: r.deaths, tramo: G.tramo, relaxed: !!G.assist.relaxed };
+      return { practice: r.practice, time: r.t, score: r.score, gems: r.gems, lives: r.lives, maxLives: r.maxLives, items: r.items.slice(), totalItems: G.world.totalItems, depth: Math.floor(r.maxDepth / 10), kills: r.kills, bosses: r.bosses, totalBosses: G.world.foes.filter((f) => f.isBoss && !f.secret).length, secrets: r.secrets || 0,
+        schoolRooms:G.world.schoolMission?G.run.schoolRooms.size:0, schoolTotalRooms:G.world.schoolMission?G.world.rooms.filter(q=>q.schoolArt).length:0, totalSecrets: G.world.rooms.filter((q) => q.secret).length, secretBosses: r.secretBosses || 0, deaths: r.deaths, tramo: G.tramo, relaxed: !!G.assist.relaxed };
     }
 
     /* ---------- Puntuación y efectos ---------- */
@@ -487,7 +511,9 @@
     function burst(x, y, color, n) {
       for (let i = 0; i < n; i++) {
         const a = Math.random() * Math.PI * 2, s = 60 + Math.random() * 260;
-        G.fx.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0.25 + Math.random() * 0.45, max: 0.7, color });
+        const life = 0.25 + Math.random() * 0.45;
+        G.fx.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life, max: 0.7, color,
+          ...(i === 0 && n >= 6 ? { cue: { x, y, life } } : {}) });
       }
       if (G.fx.length > 360) G.fx.splice(0, G.fx.length - 360);
     }
@@ -517,7 +543,7 @@
     function doorAt(P) {
       const foot = P.y + P.h / 2;
       for (const d of G.world.doors) {
-        if (Math.abs(P.x - d.x) < 30 && Math.abs(foot - d.y) < 8) return d;
+        if (d.region === G.region && Math.abs(P.x - d.x) < 30 && Math.abs(foot - d.y) < 8) return d;
       }
       return null;
     }
@@ -542,14 +568,15 @@
         // V58.7: la primera vez que se entra a una zona secreta se anuncia y queda guardada.
         if (room && room.secret && !room.visited) {
           G.run.secrets = (G.run.secrets || 0) + 1;
-          const first = !(G.save.secrets && G.save.secrets[room.secret]);
-          G.save.secrets = Object.assign({}, G.save.secrets, { [room.secret]: true }); persist();
+          const first = !(runSave.secrets && runSave.secrets[room.secret]);
+          runSave.secrets = Object.assign({}, runSave.secrets, { [room.secret]: true }); persist();
           addScore(C.scoring.secret);
           emit('secretFound', { room, first });
         }
         if (room && !room.visited) { room.visited = true; }
+        if (room?.schoolArt) G.run.schoolRooms.add(room.id);
         if (room && room.secret) message('room', '¡ZONA SECRETA! ' + room.label, 3, 2);
-        else if (room) message('room', ST.MESSAGES.roomEnter[room.theme] || 'ZONA ESCONDIDA', 2.5);
+        else if (room) message('room', room.schoolName || ST.MESSAGES.roomEnter[room.theme] || 'ZONA ESCONDIDA', 2.5);
         else message('roomExit', ST.MESSAGES.roomExit, 2.5);
         emit('doorSwap', { door: tr.door, room });
       }
@@ -619,8 +646,8 @@
           emit('key', { pickup: pk }); message('key', ST.MESSAGES.keyGot, 3, 2); burst(pk.x, pk.y, 0xffd35a, 18);
         } else if (pk.type === 'item') {
           if (!G.run.items.includes(pk.itemIndex)) G.run.items.push(pk.itemIndex);
-          const first = !G.save.items[pk.itemId];
-          G.save.items[pk.itemId] = true; persist();
+          const first = !runSave.items[pk.itemId];
+          runSave.items[pk.itemId] = true; persist();
           addScore(C.scoring.item);
           emit('item', { item: ST.ITEMS[pk.itemIndex], index: pk.itemIndex, first, count: G.run.items.length, total: W.totalItems });
           burst(pk.x, pk.y, 0xffe27a, 26);
@@ -693,7 +720,7 @@
       if (G.run.comboT <= 0) G.run.combo = 0;
       PHY.updatePlatforms(W, W.t, dt);
 
-      const ctx = { active, onScreen, hurt, hurtbox, bodybox, jumpHeld: !!inp.jumpHeld, busy: G.state !== 'playing' };
+      const ctx = { region: G.region, active, onScreen, hurt, hurtbox, bodybox, jumpHeld: !!inp.jumpHeld, busy: G.state !== 'playing' };
 
       if (G.state === 'transition') stepTransition(dt);
       else if (G.state === 'dying') {
@@ -728,6 +755,11 @@
           for (const cp of W.midpoints || []) {   // V58: basta pisar la fila de la parada intermedia
             if (!cp.active && P.ground === cp.plat && ahead(cp)) activateCheckpoint(cp);
           }
+          if(!G.room&&P.water&&P.water.toStreet){
+            for(const cp of W.abyssBeacons||[]){
+              if((!G.checkpoint||cp.y>G.checkpoint.y+10)&&Math.hypot(P.x-cp.x,P.y-(cp.y-30))<65)activateCheckpoint(cp);
+            }
+          }
           const ev2 = [];
           EN.update(W, P, dt, ctx, ev2);
           OB.update(W, P, dt, ctx, ev2);
@@ -735,9 +767,25 @@
           updatePickups(dt);
           updateGates();
           updateSigns();
-          if (!G.run.busSeen && !G.room && P.y > W.bounds.streetY - 520) { G.run.busSeen = true; emit('busSeen'); }
+          if (!G.run.busSeen && !G.room && !W.poseidonArena && P.y > (W.portal ? W.portal.y - 420 : W.bounds.streetY - 520)) { G.run.busSeen = true; emit('busSeen'); }
           // V58.2: en el mar que baja hasta el lecho, la escotilla se alcanza buceando.
-          if ((P.ground === W.street || (P.water && P.water.toStreet)) && U.overlap(U.bodyRect(P), W.goal)) startVictory();
+          if(!G.room && W.schoolFinalCheckpoint && P.ground===W.street && !W.schoolFinalCheckpoint.active)activateCheckpoint(W.schoolFinalCheckpoint);
+          if (W.portal && !G.room && P.ground === W.street) {
+            // La corriente inferior devuelve a Sofía a un extremo seguro de la repisa final.
+            const ledge = W.portal.plat;
+            P.x = ledge.x1 + 35; P.y = ledge.y - P.h / 2; P.vy = P.vx = 0;
+            P.prevFoot = P.airTopFoot = ledge.y;
+            P.ground = ledge;
+            updateCamera(0, true);
+          }
+          const atGoal = W.poseidonArena ? !!P.water : W.portal ? P.ground === W.portal.plat : P.ground === W.street || (P.water && P.water.toStreet);
+          if (!G.room && atGoal && U.overlap(U.bodyRect(P), W.goal)) {
+            const guard=W.schoolFinal&&W.foes.find(f=>f.id===W.schoolFinal.bossId&&!f.dead);
+            const seaGuard=W.poseidonArena&&W.foes.find(f=>f.id===W.poseidonArena.bossId&&!f.dead);
+            if(seaGuard)message('poseidonLocked','ESCOTILLA SELLADA · VENCE A POSEIDÓN',4,3);
+            else if(guard)message('schoolBusLocked','EL MAESTRO CUSTODIA EL CAMIÓN · VÉNCELO PARA SUBIR',4,3);
+            else startVictory();
+          }
           // Red de seguridad: posición inválida o fuera de todo volumen jugable.
           const lost = !Number.isFinite(P.x) || !Number.isFinite(P.y) || P.y > W.bounds.y2 + 300 ||
             (!G.room && (P.x < W.bounds.x1 - 200 || P.x > W.bounds.x2 + 200));
@@ -862,6 +910,7 @@
             if (G.run.lives < G.run.maxLives) { G.run.lives++; message('bossReward', '¡JEFE VENCIDO! +1 ♥ · +5 CRISTALES', 3, 3); }
             else { G.P.shield = true; message('bossReward', '¡JEFE VENCIDO! ESCUDO · +5 CRISTALES', 3, 3); }
           }
+          if(G.world.schoolFinal?.bossId===e.foe?.id)message('schoolBusOpen','¡SALIDA LIBRE! SUBE AL CAMIÓN DE LA RUTA 6',7,4);
           emit('foeKilled', { foe: e.foe, how: e.how });
           burst(e.foe.x, e.foe.y - 10, 0xff9a5a, 16);
           burst(e.foe.x, e.foe.y - 14, 0xffffff, 6);                 // chispa blanca de impacto

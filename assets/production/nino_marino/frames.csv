@@ -1,0 +1,17 @@
+frame,x,y,w,h,pivot_x,pivot_y,direction,sha256_rgba,source
+idle_00,10,10,167,159,83.5,79.5,right,8de045e846479d4dbb0be82423799afe6e3b1671eb87c7edcfd96c29089b6d08,assets/enemies/nino_marino/nino_marino_atlas_rgba.png:0
+idle_01,739,10,162,156,81.0,78.0,right,ed267856a88b32dfcb771b90d67d6f74df489940b979fae426982de7e8a822c5,assets/enemies/nino_marino/nino_marino_atlas_rgba.png:1
+idle_02,552,10,167,156,83.5,78.0,right,6eb7b1ac732992e773ec8cccdc1bf73e7fbd7567727b332326035d0f18621c72,assets/enemies/nino_marino/nino_marino_atlas_rgba.png:2
+idle_03,360,10,172,156,86.0,78.0,right,520494bcbb8c0ef2cb87df21cfe99a0d44a9402120b8c184721925fe81b31b99,assets/enemies/nino_marino/nino_marino_atlas_rgba.png:3
+nadar_04,10,363,180,148,90.0,74.0,right,d298618c882da3dbee9dc35a311f4fc81c5763456fb8f2998ae40e9a1e1ed331,assets/enemies/nino_marino/nino_marino_atlas_rgba.png:4
+nadar_05,210,363,188,146,94.0,73.0,right,4b200c1af91f82add72b4470b9d53934b7d33b5a5259a78035acbedc429492d4,assets/enemies/nino_marino/nino_marino_atlas_rgba.png:5
+nadar_07,10,531,191,138,95.5,69.0,right,18a7f0e03a72bd02353b05e8a9b5fa6188b1a1787a48f36083104aa2ad1f6710,assets/enemies/nino_marino/nino_marino_atlas_rgba.png:7
+nadar_08,616,363,170,146,85.0,73.0,right,8ca6678fa9b8db7b7aa45135f86009a80dfe4673da685984ec57e082c7cb79dd,assets/enemies/nino_marino/nino_marino_atlas_rgba.png:8
+arrojar_piedra_10,418,363,178,146,89.0,73.0,right,fc12384c3dd62288494a1fcc74341f9522e240bc3e14684eaa63f3e32c00cfa6,assets/enemies/nino_marino/nino_marino_atlas_rgba.png:10
+arrojar_piedra_11,742,189,180,148,90.0,74.0,right,c3d0e5afb61cea6b5e7c74635bcd5f1a24730c51233c393e7402ea059315f113,assets/enemies/nino_marino/nino_marino_atlas_rgba.png:11
+arrojar_piedra_14,197,10,143,159,71.5,79.5,right,f6dbc31e2ecf9bf89028aba6737cd16efd0acf86f64838a7358e06bfa9515be8,assets/enemies/nino_marino/nino_marino_atlas_rgba.png:14
+recibir_dano_16,10,189,170,154,85.0,77.0,right,91e8083b528b103a6dacfa7fdb925ced1cc0687a068c852fc549866730863981,assets/enemies/nino_marino/nino_marino_atlas_rgba.png:16
+recibir_dano_17,200,189,151,154,75.5,77.0,right,40cb685f967067600e0f564bfe82871d0091f574fa583adb134a298f82bb2a7c,assets/enemies/nino_marino/nino_marino_atlas_rgba.png:17
+recibir_dano_18,566,189,156,151,78.0,75.5,right,8c4e7c59299e716c261432b9c344897272425674b6447e7dba1294fb96e83963,assets/enemies/nino_marino/nino_marino_atlas_rgba.png:18
+recibir_dano_19,371,189,175,151,87.5,75.5,right,54806b264161511282d6322e847f0163a811c85828c76bb9338f9afd3a503981,assets/enemies/nino_marino/nino_marino_atlas_rgba.png:19
+morir_20,806,363,191,138,95.5,69.0,right,2f40f009a2c2aeb5a4e6e93d1813da625bbf5af99a55a67373a0640991de1f04,assets/enemies/nino_marino/nino_marino_atlas_rgba.png:20
