@@ -626,3 +626,22 @@ Las tres hojas sueltas que mandaste con el paquete son las referencias con las q
   cada estado del juego y las duraciones.
 - **Chromium:** en Parafalls la vi parada, corriendo, saltando, cayendo, pateando, con dash y celebrando. Los 23 tramos
   sin errores ni archivos faltantes.
+
+# V58.8.34 · La transformación a Roblox con tu exportación nueva
+
+En la 58.8.33 traté como solo referencia la hoja de la transformación que mandaste con el atlas, y mantuve los
+cuadros anteriores. La revisé a fondo y ahora la uso.
+- **Mismo dibujo, más nítido.** Son los mismos 12 dibujos y la misma secuencia (camina, mira el portal, toca la luz y
+  se vuelve cúbica): los colores difieren apenas 5–7 de 255 en los píxeles comunes. Esta exportación es un 16 % más
+  grande: cada figura mide unos 343 px de alto, contra 296 en la anterior.
+- **Recorte.** La hoja es una cuadrícula exacta de 4 × 3 celdas de 362 px. Corté cada cuadro con su celda y luego todos
+  con el mismo recuadro (lienzo común de 284 × 355). Así se conserva la posición que les diste y la animación no salta;
+  los pies caen en la misma línea.
+- **Limpieza.** Quité el halo tenue (alfa menor a 90) y las motas sueltas, y dejé las chispas de la transformación.
+- **Mismos archivos.** Reemplacé los archivos en las mismas rutas. Subí la versión de la caché del service worker para
+  que el navegador descargue los nuevos.
+
+**QA**
+- **Node:** 157/157.
+- **Chromium:** revisé la cinemática del portal (caminando, mirando el portal y transformándose) y las dos escenas
+  siguientes; sin errores ni archivos faltantes.

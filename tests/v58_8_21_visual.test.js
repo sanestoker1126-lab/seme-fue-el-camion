@@ -14,7 +14,7 @@ test('V58.8.21: 22 imágenes originales retocadas, dimensiones declaradas y hash
 });
 test('V58.8.21: recursos de presentación y estilos versionados están en precache',()=>{
  const sw=read('sw.js').toString(),html=read('Se_Me_Fue_El_Camion.html').toString();
- assert.ok(sw.includes("'58.8.33'"));
+ assert.ok(sw.includes("'58.8.34'"));
  for(const [p,v] of [['css/release_visual.css','58.8.30'],['js/app/render.js','58.8.30'],['js/app/ui.js','58.8.31']]){assert.ok(sw.includes(p+'?v='+v));assert.ok(html.includes(p+'?v='+v));}
  for(const id of ['escuela','guadalajara','submarino','espacial','parafalls','sofia','luna','morita']){const f=`assets/ui/worlds_v21/${id}.webp`;assert.ok(sw.includes(f));assert.ok(read(f).length>1000);}
  for(const id of ['worldKicker','worldTitle','worldDesc','hudWorld','routeFill'])assert.ok(html.includes('id="'+id+'"'));
