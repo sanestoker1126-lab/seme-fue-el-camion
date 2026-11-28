@@ -25,7 +25,8 @@
     const CINEMATIC = [
       { tag: 'CAPÍTULO 01 · DESPUÉS DE LA POSADA', title: 'EL ÚLTIMO CAMIÓN SE FUE', text: 'Terminó tarde la posada de la escuela. Sofía llegó a la azotea justo para ver cómo la ruta 6 partía sin ella.', bg: 'assets/scenes/school_miguel_hidalgo/01_aulas_superiores.webp' },
       { tag: 'CAPÍTULO 02 · LUNA Y MORITA', title: 'HAY QUE BAJAR', text: 'Sus gatitas la acompañan por techos, patios y túneles. En el camino, seis cosas de su mochila quedaron atrás.', bg: 'assets/scenes/guadalajara_pro_v2/bg_centro_historico_pro_v2.webp' },
-      { tag: 'CAPÍTULO 03 · TU MISIÓN', title: 'ALCANZA LA TERMINAL', text: 'La historia principal recorre la escuela, Guadalajara, la persecución por la Calzada, el fondo del mar y el espacio. Cada tramo es una misión con su propio objetivo: cúmplela para seguir bajando. Los seis objetos son opcionales y mejoran el final. Parafalls, una misión adicional, y todos los demás tramos están disponibles desde el menú. ¡Empieza a bajar!', bg: 'assets/scenes/generated/terminal_guadalajara_amanecer.png' }
+      // V58.8.30: Parafalls ya es parte de la historia (va después de la Luna y lleva al epílogo de Puente Grande).
+      { tag: 'CAPÍTULO 03 · TU MISIÓN', title: 'LLEGA ANTES DE LA MEDIANOCHE', text: 'La historia recorre la escuela, Guadalajara, la persecución por la Calzada, el fondo del mar, la Luna y las cascadas de Parafalls, hasta Puente Grande. Cada tramo es una misión con su propio objetivo: cúmplela para seguir bajando. Los seis objetos esconden las llaves USB: son opcionales, pero con las seis se abre la escena final. Los tramos ya superados se pueden repetir desde el menú. ¡Empieza a bajar!', bg: 'assets/scenes/generated/terminal_guadalajara_amanecer.png' }
     ];
     const CINEMATIC_SECONDS = 6;
     const BOSS_CINEMATIC_SECONDS = 3.6;

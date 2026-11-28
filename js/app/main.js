@@ -177,6 +177,7 @@
   }
   function exitChase() {
     if (!chase) return;
+    if (audio.engine) audio.engine(false);
     chase = null; relabelControls(false);
   }
   function retryChase() { if (!chase) return; chase.retry(); ui.show(null); if (opt.music) audio.start(); audio.sfx('motor'); handleChaseEvents(chase.drainEvents()); }
@@ -543,6 +544,7 @@
     try {
       if (NS.ToxiPlayer && NS.ToxiPlayer.active) {
         acc = 0; qAcc = 0; qN = 0;
+        if (audio.engine) audio.engine(false);
         if (landing) paintLanding(real);
         root.requestAnimationFrame(frame);
         return;
@@ -557,9 +559,17 @@
         }
         animT += real;
         handleChaseEvents(chase.drainEvents());
+        // V58.8.30: motor de la moto, con el tono de la velocidad (en el salto final suena hasta el chapuzón).
+        if (chase && audio.engine) {
+          const P = chase.P, live = chase.state === 'playing' || (chase.state === 'finale' && !(chase.finale && chase.finale.splash));
+          audio.engine(live, P ? P.v / NS.Chase.TUNE.vMax : 0, !!(P && P.boostT > 0));
+        }
         ui.tick(real);
         tickFps(real);
         CR.draw(chase, animT);
+        // V58.8.30: la Calzada también adapta la resolución y recorta sus efectos en equipos lentos (antes salía antes
+        // de llegar al ajuste de abajo y nunca se adaptaba).
+        if (!MANUAL && chase.state === 'playing') adaptQuality(frameElapsed, now);
         root.requestAnimationFrame(frame);
         return;
       }
@@ -583,17 +593,26 @@
       console.error(err);
       if (errors < 4) ui.toast('Error del juego: ' + (err && err.message ? err.message : err), 9, 5);
     }
-    // Resolución adaptativa: si el promedio de fotograma pasa de ~21 ms (menos de ~47 fps) baja la calidad; si va sobrado, la sube.
-    if (!MANUAL && G.state === 'playing') {
-      qAcc += Math.min(.25, frameElapsed); qN++;
-      if (qN >= 36) {
-        const avg = qAcc / qN;
-        if (avg > 0.021 && quality > 0.55) { quality = Math.max(0.55, quality - 0.10); R.setQuality(quality); } // V51: piso 50 % (antes 60 %)
-        else if (avg < 0.0145 && quality < 1) { quality = Math.min(1, quality + 0.04); R.setQuality(quality); }
-        qAcc = 0; qN = 0;
-      }
-    }
+    if (!MANUAL && G.state === 'playing') adaptQuality(frameElapsed, now);
     root.requestAnimationFrame(frame);
+  }
+  /* Resolución adaptativa: si el promedio de fotograma pasa de ~21 ms (menos de ~47 fps) baja la calidad.
+     V58.8.30: antes solo subía con cuadros de menos de 14,5 ms, imposible en una pantalla de 60 Hz (el navegador entrega
+     un cuadro cada 16,7 ms): tras cualquier tirón pasajero el juego se quedaba con menos resolución toda la sesión. Ahora
+     sube un 5 % tras tres tramos seguidos a 60 fps (< 17,5 ms) y espera 8 s después de cada bajada (sin oscilar). */
+  let qGood = 0, qHoldUntil = 0;
+  function adaptQuality(frameElapsed, now) {
+    qAcc += Math.min(.25, frameElapsed); qN++;
+    if (qN < 36) return;
+    const avg = qAcc / qN;
+    qAcc = 0; qN = 0;
+    if (avg > 0.021) {
+      qGood = 0; qHoldUntil = now + 8000;
+      if (quality > 0.55) { quality = Math.max(0.55, quality - 0.10); R.setQuality(quality); }   // V51: piso 55 %
+    } else if (avg < 0.0175) {
+      if (++qGood >= 3 && quality < 1 && now >= qHoldUntil) { quality = Math.min(1, quality + 0.05); R.setQuality(quality); qGood = 0; }
+    } else qGood = 0;
+    if (CR.setOptions) CR.setOptions({ fx: quality });
   }
 
   function resize() { R.resize(); G.setView(root.innerWidth, root.innerHeight); if (landing) landing.shot.setView(root.innerWidth, root.innerHeight); }
@@ -645,7 +664,7 @@
 
   if (QA) {
     root.CAMION_QA = {
-      G, input, R, ui, opt,
+      G, input, R, ui, opt, audio,
       step(n, inp) { for (let i = 0; i < n; i++) G.step(DT, Object.assign({ left: false, right: false, jumpPressed: false, jumpHeld: false, dashPressed: false, downPressed: false, upHeld: false, downHeld: false }, typeof inp === 'function' ? inp(i) : inp || {})); handleEvents(G.drainEvents()); ui.hud(G); },
       draw() { R.draw(G, G.world ? G.world.t : 0); },
       start: startRun, menu: toMenu, togglePause,

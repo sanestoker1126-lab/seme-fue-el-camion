@@ -256,9 +256,45 @@
       if (musicEl && !fades.size) musicEl.volume = MUSIC_VOL * musicK;
       if (ambienceEl && !fades.size) ambienceEl.volume = AMB_VOL * musicK;
     }
-    function suspend() { pause(); try { if (AC && AC.state === 'running') AC.suspend(); } catch (_) {} }
+    function suspend() { pause(); engine(false); try { if (AC && AC.state === 'running') AC.suspend(); } catch (_) {} }
 
-    return { ensure, sfx, bossCue, start, stop, pause, resume, setTramo, setVolumes, vibrate, suspend, get context() { return AC; }, assets: AUDIO };
+    /* V58.8.30 · Motor de la moto (La Calzada): sonido continuo sintetizado cuyo tono sigue la velocidad. Diente de sierra
+       y cuadrada (a una quinta) por un pasabajos, con un pulso de cilindros; con nitro sube el tono y se abre el filtro.
+       Respeta EFECTOS y su volumen; main.js lo apaga al pausar, perder, ganar, salir o al entrar una cinemática. */
+    let eng = null;
+    function engine(on, speed = 0, boost = false) {
+      if (!on || !opt.sfx) { engineOff(); return; }
+      if (!AC) ensure();
+      if (!AC) return;
+      try {
+        if (!eng) {
+          const g = AC.createGain(), lp = AC.createBiquadFilter(), trem = AC.createGain(), lfoG = AC.createGain();
+          const o1 = AC.createOscillator(), o2 = AC.createOscillator(), lfo = AC.createOscillator();
+          g.gain.value = 0.0001; lp.type = 'lowpass'; lp.Q.value = 2.2; trem.gain.value = 0.72; lfoG.gain.value = 0.28;
+          o1.type = 'sawtooth'; o2.type = 'square'; lfo.type = 'sine';
+          lfo.connect(lfoG); lfoG.connect(trem.gain);
+          o1.connect(lp); o2.connect(lp); lp.connect(trem); trem.connect(g); g.connect(AC.destination);
+          o1.start(); o2.start(); lfo.start();
+          eng = { g, lp, o1, o2, lfo };
+        }
+        const t = AC.currentTime, s = Math.max(0, Math.min(1.3, speed)), f = 40 + s * 72 + (boost ? 24 : 0);
+        eng.o1.frequency.setTargetAtTime(f, t, 0.09);
+        eng.o2.frequency.setTargetAtTime(f * 1.5, t, 0.09);
+        eng.lfo.frequency.setTargetAtTime(f / 4, t, 0.09);
+        eng.lp.frequency.setTargetAtTime(360 + s * 950 + (boost ? 800 : 0), t, 0.1);
+        eng.g.gain.setTargetAtTime(Math.max(0.0001, (0.02 + s * 0.022 + (boost ? 0.012 : 0)) * sfxK), t, 0.12);
+      } catch (_) { eng = null; }
+    }
+    function engineOff() {
+      if (!eng) return;
+      const e = eng; eng = null;
+      try {
+        e.g.gain.setTargetAtTime(0.0001, AC.currentTime, 0.07);
+        setTimeout(() => { try { e.o1.stop(); e.o2.stop(); e.lfo.stop(); e.g.disconnect(); } catch (_) {} }, 450);
+      } catch (_) { /* audio no disponible */ }
+    }
+
+    return { ensure, sfx, bossCue, start, stop, pause, resume, setTramo, setVolumes, vibrate, suspend, engine, get context() { return AC; }, assets: AUDIO };
   }
 
   NS.Audio = { createAudio };

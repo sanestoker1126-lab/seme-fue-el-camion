@@ -43,11 +43,18 @@ test('Parafalls V2: tres escenas y seis capas RGBA existen y las páginas conser
   }
 });
 
-test('Parafalls: el prólogo distingue la campaña principal de la misión adicional', () => {
+// V58.8.30: Parafalls es el último capítulo de la historia (va después de la Luna, con escena puente, y su final lleva
+// al epílogo de Puente Grande), así que la guía ya no la presenta como misión adicional.
+test('Parafalls: la guía la presenta como parte de la historia, después de la Luna y hasta Puente Grande', () => {
   const ui = fs.readFileSync(path.join(ROOT, 'js/app/ui.js'), 'utf8');
-  assert.match(ui, /Parafalls, una misión adicional/);
-  assert.match(ui, /todos los demás tramos están disponibles desde el menú/);
+  assert.match(ui, /la Luna y las cascadas de Parafalls, hasta Puente Grande/);
+  assert.doesNotMatch(ui, /Parafalls, una misión adicional/);
+  assert.match(ui, /Los tramos ya superados se pueden repetir desde el menú/);
   assert.doesNotMatch(ui, /Cruza cuatro misiones/);
+  // Y así funciona el juego: ganar la Luna abre Parafalls y la escena final se gana al terminarla.
+  const M = NS.LEVELS.MISSIONS;
+  assert.equal(M[M.length - 1].id, 'parafalls');
+  assert.equal(M[M.findIndex((m) => m.id === 'espacial') + 1].id, 'parafalls');
 });
 
 test('Parafalls V2: trazado y puntos de control están en el arte y con hitboxes no dibujadas', () => {

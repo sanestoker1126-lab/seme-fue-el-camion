@@ -496,3 +496,66 @@ faltantes.
   Guadalajara de rosa y la Calzada sale con la original.
 - **Arte pendiente:** Doña Tóxica sigue en silueta en el epílogo, y falta la imagen del tráiler blindado.
 - **Rendimiento de los efectos:** no lo medí en un teléfono real; en Chromium de escritorio no hubo problemas.
+
+# V58.8.31 · Rendimiento, motor de la moto y presentación de jefes
+
+## Rendimiento (medido en Chromium)
+
+**Coste de los efectos de V58.8.30.** Medí el tiempo real entre cuadros, con un cuadro por `requestAnimationFrame` y
+el rasterizado incluido. El navegador de pruebas no tiene GPU.
+- **Sin limitar el procesador:** las dos versiones van a 60 fps (16,8–17,2 ms de media). En teléfono, el percentil 95
+  sube de 17 a 21 ms.
+- **Con el procesador 4 veces más lento:** el dibujo en JavaScript sigue siendo barato (1,2 → 1,7 ms de media). Lo que
+  pesa es el rasterizado (61–68 ms por cuadro sin GPU), y los efectos suman alrededor de un 12 %.
+- Una primera medición mostraba cuadros de 2 a 5 s, pero era un artefacto de medir sin devolverle el control al
+  navegador. Lo comprobé repitiendo la medición cuadro por cuadro.
+
+**Dos errores que encontré**
+- **La Calzada nunca adaptaba la resolución.** El ciclo salía antes del ajuste de calidad. Ahora la baja con equipos
+  lentos: en la prueba, el lienzo bajó de 680 a 374 px de ancho.
+- **En todo el juego, la calidad nunca volvía a subir en pantallas de 60 Hz.** Solo subía con cuadros de menos de
+  14,5 ms, y a 60 Hz el navegador entrega uno cada 16,7 ms. Tras cualquier tirón pasajero, el juego quedaba con menos
+  resolución toda la sesión.
+  - Ahora sube un 5 % tras tres tramos seguidos a 60 fps.
+  - Espera 8 s después de cada bajada, para no oscilar.
+  - En la prueba volvió de 374 a 680 px.
+
+**Efectos según la calidad.** Por debajo del 80 % de calidad se recortan los efectos de la Calzada: la mitad del
+polvo, una sola estela fantasma y sin estela de giro en las llantas.
+
+## Motor de la moto
+
+Sonido continuo sintetizado:
+- diente de sierra y cuadrada por un filtro, con pulso de cilindros;
+- el tono y el filtro siguen la velocidad, y con nitro suben;
+- respeta la opción EFECTOS y su volumen;
+- se apaga al pausar, perder, ganar, salir o cuando entra una cinemática;
+- en el salto final suena hasta el chapuzón.
+
+En el navegador: con el audio activo, el tono sube de 0,57 a 1,0 al acelerar, se apaga en la pausa y vuelve al
+reanudar.
+
+## Presentación de los jefes de la Calzada
+
+Cuando aparecen el Maestro en su moto roja o el tráiler, entra una franja inclinada con su nombre («DUELO EN LA
+CALZADA · EL MAESTRO ENOJÓN · MOTO ROJA») y se desvanece en 2 s de tiempo real. Revisada en escritorio y en teléfono.
+
+## Guía
+
+La guía presentaba Parafalls como «una misión adicional», pero en el juego es la continuación directa de la Luna: al
+ganarla aparece «CONTINUAR · PARAFALLS», y la escena final exige terminarla. Ahora la guía cuenta la historia completa
+hasta Puente Grande, y su título es «LLEGA ANTES DE LA MEDIANOCHE». Actualicé la prueba que fijaba el texto anterior.
+
+## Pulido revisado
+
+Capturé la zona del jefe o la salida de los 23 tramos. No encontré defectos nuevos.
+
+## QA
+
+- Node: 157/157.
+- Chromium: 23 tramos y la Calzada sin errores ni archivos faltantes.
+
+## Pendiente
+
+Sigue lo mismo de V58.8.30: la Sofía Roblox oficial de Parafalls, la Calzada con la ropa rosa, el arte de Doña Tóxica y
+la imagen del tráiler. Tampoco medí en un teléfono real.

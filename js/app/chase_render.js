@@ -89,7 +89,7 @@
     const base = ctx.globalAlpha;
     ctx.save();
     ctx.beginPath(); ctx.moveTo(X, Y); ctx.arc(X, Y, tex.r * s * 0.985, tex.a1, tex.a2); ctx.closePath(); ctx.clip();
-    const copies = blur > 0.05 ? 3 : 1;
+    const copies = blur > 0.05 && fxQ >= 0.8 ? 3 : 1;
     for (let j = 0; j < copies; j++) {
       ctx.save();
       ctx.globalAlpha = base * (j === 0 ? 1 : (j === 1 ? 0.42 : 0.22) * blur);
@@ -119,7 +119,7 @@
     if (dt > 0) {
       // Polvo continuo de la llanta trasera según la velocidad (más con nitro).
       if (!P.air && S.state === 'playing') {
-        VFX.acc += dt * (Math.max(0, (P.v - 330) / 560) * 15 + (P.boostT > 0 ? 26 : 0));
+        VFX.acc += dt * (Math.max(0, (P.v - 330) / 560) * 15 + (P.boostT > 0 ? 26 : 0)) * (fxQ < 0.8 ? 0.5 : 1);
         while (VFX.acc >= 1) { VFX.acc -= 1; puff(rear - vrand() * 20, P.ly + (vrand() - 0.5) * 0.12, P.boostT > 0); }
       }
       // Los perseguidores en moto también levantan polvo.
@@ -177,9 +177,35 @@
       // Nube achatada (más ancha que alta) con un núcleo claro: se lee como polvo, no como burbuja.
       ctx.fillStyle = d.boost ? 'rgba(175,225,255,' + a + ')' : 'rgba(205,193,172,' + a + ')';
       ctx.beginPath(); ctx.ellipse(x, y, rad * 1.25, rad * d.sq * 0.75, 0, 0, 7); ctx.fill();
-      ctx.fillStyle = 'rgba(255,255,255,' + a * 0.3 + ')';
-      ctx.beginPath(); ctx.ellipse(x - rad * 0.3, y - rad * 0.15, rad * 0.6, rad * 0.4, 0, 0, 7); ctx.fill();
+      if (fxQ >= 0.8) { ctx.fillStyle = 'rgba(255,255,255,' + a * 0.3 + ')'; ctx.beginPath(); ctx.ellipse(x - rad * 0.3, y - rad * 0.15, rad * 0.6, rad * 0.4, 0, 0, 7); ctx.fill(); }
     }
+  }
+  /* V58.8.30 · Cortinilla de jefe: cuando aparece el Maestro en su moto roja o el tráiler, una franja inclinada entra
+     deslizándose con su nombre y se desvanece (2 s de reloj real, aunque haya cámara lenta). */
+  const CARD = { ref: null, t: 9 };
+  function bossCard(S, L, dtReal) {
+    const b = S.mb && !S.mb.dead ? S.mb : S.boss && !S.boss.dead ? S.boss : null;
+    if (b && b !== CARD.ref) { CARD.ref = b; CARD.t = 0; CARD.name = b.name; CARD.sub = b.miniboss ? 'DUELO EN LA CALZADA' : 'JEFE FINAL DE LA CALZADA'; }
+    if (CARD.t > 2.2) return;
+    CARD.t += dtReal;
+    const t = CARD.t, a = t < 0.22 ? t / 0.22 : t > 1.75 ? Math.max(0, 1 - (t - 1.75) / 0.45) : 1;
+    if (a <= 0) return;
+    const ease = 1 - Math.pow(1 - Math.min(1, t / 0.35), 3), slide = (1 - ease) * L.W * 0.35;
+    const y = L.H * 0.4, h = Math.min(110, L.H * 0.15), sk = 16, W = L.W;
+    ctx.save(); ctx.globalAlpha = a;
+    ctx.fillStyle = 'rgba(12,6,22,0.82)';
+    ctx.beginPath(); ctx.moveTo(-20, y - h / 2 + sk); ctx.lineTo(W + 20, y - h / 2 - sk); ctx.lineTo(W + 20, y + h / 2 - sk); ctx.lineTo(-20, y + h / 2 + sk); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#ff3b4b'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(-20, y - h / 2 + sk); ctx.lineTo(W + 20, y - h / 2 - sk); ctx.moveTo(-20, y + h / 2 + sk); ctx.lineTo(W + 20, y + h / 2 - sk); ctx.stroke();
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const big = Math.round(Math.min(46, W / (CARD.name.length * 0.62 + 2))), small = Math.round(Math.max(10, big * 0.36));
+    ctx.font = '900 ' + small + 'px system-ui,sans-serif'; ctx.fillStyle = '#ffd36a';
+    ctx.fillText(CARD.sub.split('').join(' '), W / 2 + slide * 0.6, y - big * 0.62);
+    ctx.font = '900 ' + big + 'px system-ui,sans-serif'; ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#8a0f1c'; ctx.lineWidth = Math.max(4, big * 0.16); ctx.strokeText(CARD.name, W / 2 + slide, y + small * 0.5);
+    ctx.fillStyle = '#ffffff'; ctx.fillText(CARD.name, W / 2 + slide, y + small * 0.5);
+    ctx.restore();
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
   }
   /** Estallido de nitro: rayos que salen de la moto. */
   function vfxBurst(S, L) {
@@ -210,7 +236,9 @@
   }
 
 
-  let canvas = null, ctx = null, shakeMul = 1, camY = 0, lastT = 0;
+  // V58.8.30: `fxQ` = calidad de efectos (la misma escala 0,55–1 de la resolución adaptativa): por debajo de 0,8 se
+  // recortan el polvo, la estela fantasma y la estela de giro de las llantas.
+  let canvas = null, ctx = null, shakeMul = 1, camY = 0, lastT = 0, fxQ = 1;
   const R = () => NS.Render;
   const img = (src) => R().image(src);
   const ok = (im) => R().ready(im);
@@ -218,7 +246,7 @@
   const CIVIL_COLORS = ['#c23b3b', '#3a6fc4', '#e4e4e4', '#7b4fb3', '#2f8f6a', '#d98a2b', '#6b6f78'];
 
   function init(el) { canvas = el; ctx = canvas.getContext('2d'); }
-  function setOptions(o) { if (o && o.shake != null) shakeMul = o.shake; }
+  function setOptions(o) { if (o && o.shake != null) shakeMul = o.shake; if (o && Number.isFinite(o.fx)) fxQ = Math.max(0.5, Math.min(1, o.fx)); }
 
   /* ---------- Geometría de pantalla ---------- */
   function layout(S) {
@@ -637,7 +665,7 @@
     // V58.8.30: con nitro, estela fantasma de la moto (tres copias que se desvanecen hacia atrás).
     if (ok(im) && P.boostT > 0) {
       ctx.save(); ctx.globalCompositeOperation = 'lighter';
-      for (let i = 3; i >= 1; i--) { ctx.globalAlpha = (blink ? 0.45 : 1) * [0, 0.2, 0.12, 0.06][i]; ctx.drawImage(im, MOTO_BOX.x, MOTO_BOX.y, MOTO_BOX.w, MOTO_BOX.h, -len / 2 - i * 16 * k * Math.min(1.4, P.v / 900), -h + bob, len, h); }
+      for (let i = fxQ >= 0.8 ? 3 : 1; i >= 1; i--) { ctx.globalAlpha = (blink ? 0.45 : 1) * [0, 0.2, 0.12, 0.06][i]; ctx.drawImage(im, MOTO_BOX.x, MOTO_BOX.y, MOTO_BOX.w, MOTO_BOX.h, -len / 2 - i * 16 * k * Math.min(1.4, P.v / 900), -h + bob, len, h); }
       ctx.restore();
     }
     // Viento: líneas que salen de la espalda de Sofía a alta velocidad.
@@ -911,6 +939,7 @@
       g.addColorStop(0.85, 'rgba(0,0,0,0)'); g.addColorStop(1, on ? 'rgba(40,90,255,0.22)' : 'rgba(255,40,60,0.22)');
       ctx.fillStyle = g; ctx.fillRect(0, 0, L.W, L.H);
     }
+    if (S.state === 'playing') bossCard(S, L, dtR);
     if (S.state !== 'finale' || (S.finale && S.finale.t < 1)) hud(S, L, T);
     // Final: la imagen se funde a blanco mientras el camión cae hacia la presa.
     if (S.state === 'finale' || S.state === 'won') {

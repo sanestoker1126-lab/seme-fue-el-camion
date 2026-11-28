@@ -49,7 +49,7 @@ test('Parafalls: primer inicio y replay usan progreso persistente y assets cache
     assert.ok(sw.includes(asset), `Service Worker sin ${asset}`);
   }
   const html = read('Se_Me_Fue_El_Camion.html');
-  for (const route of ['js/core/toxifamilia.js?v=58.8.30', 'js/app/main.js?v=58.8.30', 'js/app/toxifamilia_cinematic.js?v=58.8.30', 'css/toxifamilia.css?v=58.8.25']) {
+  for (const route of ['js/core/toxifamilia.js?v=58.8.30', 'js/app/main.js?v=58.8.31', 'js/app/toxifamilia_cinematic.js?v=58.8.30', 'css/toxifamilia.css?v=58.8.25']) {
     assert.ok(html.includes(route), `HTML no versiona ${route}`);
   }
 });
