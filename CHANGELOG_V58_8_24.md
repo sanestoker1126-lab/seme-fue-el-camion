@@ -591,3 +591,38 @@ llamada por radio, entrecortada: «¿Sofía…? ¡Sofíaaa…!».
 
 **QA.** Node 157/157. En Chromium: las escenas de Parafalls después de transformarse y los 23 tramos, sin errores ni
 archivos faltantes.
+
+# V58.8.33 · La Sofía cúbica oficial ya se juega en Parafalls
+
+Integré el paquete **SOFIA_CUBICA_ATLAS_MAESTRO**: 30 poses del diseño oficial (el de tu hoja de transformación), en un
+atlas de 2048 × 1024 con celdas de 256 px, Sofía mirando a la derecha y el ancla fija en los pies (128, 240).
+
+- **Limpieza.** El propio paquete avisaba de bordes de color por el recorte. Quité 24 514 píxeles de halo tenue (alfa
+  menor a 90); no había motas sueltas. Las celdas y el ancla quedaron sin cambios.
+- **Animaciones por estado del juego:**
+  - reposo (4 cuadros);
+  - correr (ciclo completo de 6; caminar usa el mismo ciclo, más lento);
+  - salto, caída y aterrizaje;
+  - trepar;
+  - planear, que sirve para el dash, la tirolesa y el columpio;
+  - patada (3);
+  - derrota (cae y se queda tendida);
+  - celebrar.
+
+  El puñetazo del paquete queda disponible, aunque el juego todavía no lo usa.
+- **Sin pose de daño.** El paquete entendió «golpe» como dar un puñetazo, no como recibirlo. Para el daño uso el
+  agachado del aterrizaje; el juego además hace parpadear a Sofía al recibir daño.
+- **Duraciones por cuadro.** El adaptador ahora respeta la duración propia de cada cuadro (por ejemplo, la derrota: 180
+  ms y luego 450 ms). Si una animación no las trae, usa su velocidad fija, como antes.
+- **Mismos archivos.** El atlas reemplaza al anterior en las mismas rutas. El anterior queda en el historial de git.
+
+Las tres hojas sueltas que mandaste con el paquete son las referencias con las que se generó:
+- la del niño y la del Maestro en moto son idénticas, byte por byte, a las ya integradas;
+- la de la transformación es el mismo diseño que ya usa la cinemática, pero con un halo de colores más marcado, así que
+  dejé la versión limpia que ya estaba.
+
+**QA**
+- **Node:** 157/157. La prueba del atlas ahora exige el diseño oficial, el ciclo de correr completo, una animación para
+  cada estado del juego y las duraciones.
+- **Chromium:** en Parafalls la vi parada, corriendo, saltando, cayendo, pateando, con dash y celebrando. Los 23 tramos
+  sin errores ni archivos faltantes.

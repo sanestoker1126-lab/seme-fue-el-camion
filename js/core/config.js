@@ -6,8 +6,8 @@
   const NS = root.CAMION = root.CAMION || {};
 
   NS.CONFIG = {
-    version: '58.8.32',
-    build: 'v58-8-32-sofia-roblox-oficial',
+    version: '58.8.33',
+    build: 'v58-8-33-sofia-cubica',
 
     sim: {
       fixedDt: 1 / 60,      // paso fijo de simulación (60 Hz), independiente de la tasa de refresco

@@ -1,4 +1,5 @@
 /* Sofía Roblox 30-authored-frame atlas renderer — HTML5 Canvas 2D.
+ * V58.8.33: atlas de la Sofía cúbica oficial (durationsMs por cuadro; si no hay, fps por animación).
  * Does not mutate game physics, attack boxes, camera, or the world map.
  * Root x,feetY stay in world coordinates. Metadata includes alpha contour trimming.
  */
@@ -14,7 +15,14 @@
     const anim=atlas.animations[state]||atlas.animations.idle;
     const frames=anim.frames;
     const t=Math.max(0,Number(seconds)||0);
-    const idx=anim.loop ? Math.floor(t*anim.fps)%frames.length : Math.min(frames.length-1,Math.floor(t*anim.fps));
+    let idx;
+    const durs=anim.durationsMs;
+    if (Array.isArray(durs) && durs.length===frames.length) {
+      // V58.8.33: duración propia de cada cuadro (atlas de la Sofía cúbica); sin bucle se queda en el último.
+      const total=durs.reduce((s,d)=>s+d,0);
+      let ms=anim.loop ? (t*1000)%total : Math.min(t*1000,total-1);
+      idx=0; while (idx<frames.length-1 && ms>=durs[idx]) { ms-=durs[idx]; idx++; }
+    } else idx=anim.loop ? Math.floor(t*anim.fps)%frames.length : Math.min(frames.length-1,Math.floor(t*anim.fps));
     const f=atlas.frames[frames[idx]];
     if (!f)return false;
     const src=f.frame,off=f.spriteSourceSize;

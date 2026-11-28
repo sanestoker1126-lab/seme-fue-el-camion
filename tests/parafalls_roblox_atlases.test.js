@@ -21,8 +21,21 @@ test('Parafalls Roblox: atlas fuente completos, referencias dentro de hoja y met
     assert.ok(r.x >= 0 && r.y >= 0 && r.w > 0 && r.h > 0, `rectángulo Sofía ${name}`);
     assert.ok(r.x + r.w <= sofia.meta.size.w && r.y + r.h <= sofia.meta.size.h, `Sofía ${name} dentro del atlas`);
   }
-  assert.equal(sofia.animations.run.completeness, 'partial_cycle');
-  assert.equal(sofia.animations.walk.completeness, 'partial_cycle');
+  // V58.8.33: atlas de la Sofía cúbica oficial (diseño de la hoja de transformación): ciclos completos, ancla en los pies.
+  assert.equal(sofia.schema, 'seme-fue-el-camion/sofia-roblox-parafalls-atlas/v2');
+  assert.equal(sofia.animations.run.completeness, 'full_cycle');
+  assert.equal(sofia.animations.run.frames.length, 6);
+  assert.equal(sofia.animations.walk.completeness, 'full_cycle');
+  assert.deepEqual(sofia.meta.pivotPixels, { x: 128, y: 240 });
+  // Cada estado que pide el juego (render.js: PARAFALLS_ROBLOX_PLAYER_STATE) tiene su animación y cuadros existentes.
+  for (const st of ['idle', 'run', 'jump', 'fall', 'land', 'climb', 'glide', 'attack', 'hurt', 'knockdown', 'victory']) {
+    const an = sofia.animations[st];
+    assert.ok(an && an.frames.length && an.frames.every((f) => sofia.frames[f]), 'animación ' + st);
+    assert.equal(an.durationsMs.length, an.frames.length, 'duraciones de ' + st);
+  }
+  const data = read('assets/player/sofia_roblox/sofia_atlas_data.js');
+  assert.ok(data.startsWith('window.SOFIA_ROBLOX_ATLAS={"schema":"seme-fue-el-camion/sofia-roblox-parafalls-atlas/v2"'), 'datos del juego = JSON del atlas');
+  assert.match(read('assets/player/sofia_roblox/sofia_parafalls_adapter.js'), /durationsMs/);
 
   for (const id of ['luna', 'morita']) {
     const dir = `assets/companions/roblox_parafalls/${id}`;
