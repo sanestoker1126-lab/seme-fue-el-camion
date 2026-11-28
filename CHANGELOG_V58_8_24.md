@@ -645,3 +645,36 @@ cuadros anteriores. La revisé a fondo y ahora la uso.
 - **Node:** 157/157.
 - **Chromium:** revisé la cinemática del portal (caminando, mirando el portal y transformándose) y las dos escenas
   siguientes; sin errores ni archivos faltantes.
+
+# V58.8.35 · Cascadas más fluidas, combo de Sofía y avisos sin taparse
+
+- **Rendimiento real, medido en el bucle del juego.** En las cascadas, las dos capas de ambiente (atmósfera y
+  vegetación frontal) se amplían de 3 a 6 veces desde lienzos a media resolución. Se dibujaban con suavizado bicúbico,
+  y en un dispositivo sin aceleración eso costaba unos 15 ms por cuadro. Ahora esas capas difusas, igual que el
+  plancton y las burbujas del canal, usan suavizado bilineal. Los fondos de Guadalajara que se dibujan casi a 1:1 o
+  ampliados también lo usan, así el navegador ya no recalcula sus reducciones en cada cuadro. Las capas nítidas
+  (estrellas de la Luna, láminas pintadas y personajes) conservan el suavizado alto. Cuadros por segundo con la
+  resolución fija, antes → ahora:
+  - Cascadas medias: 39–42 → 56–57 (con CPU ×4: 6–7 → 12–13).
+  - Plataforma final: 31–43 → 59 (con CPU ×4: 8,5–10,5 → 13–14,5).
+  - Descenso inicial: 44–49 → 51–57; isla del canal con CPU ×4: 10–11 → 13–14,5.
+  - Metro de Guadalajara: casi igual (su costo es la linterna de la noche).
+  Comparé capturas antes y después a densidad de teléfono: la diferencia p99 es de 2 a 3 niveles de 255, y las únicas
+  manchas son las partículas aleatorias.
+- **Una medición que descarté.** Probé también reducir por niveles los atlas grandes de las gatitas Roblox. El tiempo
+  de JavaScript bajaba de 21 a 0,3 ms, pero solo porque Chrome deja el pintado para el final del cuadro. En el bucle
+  real los cuadros por segundo no cambiaban (43–44 en ambos casos), así que no lo incluí.
+- **Combo de la Sofía cúbica.** Si encadenas un segundo golpe en menos de 0,8 s después de la patada, sale un puñetazo
+  (el atlas ya lo traía). Después de una pausa vuelve la patada. La primera patada de cada nivel siempre es patada,
+  aunque el reloj del mundo se reinicie.
+- **Daño visible en Parafalls.** Al recibir un golpe, la Sofía cúbica destella en rojo durante la primera parte del
+  aturdimiento, como en los demás mundos.
+- **Avisos sin taparse.** Con la tarjeta del capítulo a la vista, el aviso se coloca justo debajo de su borde real.
+  Antes bajaba a una altura fija, y con títulos de dos líneas (p. ej. «CASCADAS DEL CIELO · TRAMO MEDIO») la tarjeta lo
+  tapaba.
+
+**QA**
+- **Node:** 159/159. La prueba nueva `rendimiento_capas` fija qué capas son suaves y que el suavizado se restaure;
+  comprobé que falla si se quita la marca o la condición.
+- **Chromium:** recorrí los 23 tramos sin errores ni archivos faltantes. Verifiqué el combo (patada, puñetazo
+  encadenado, patada tras una pausa) y el destello de daño en capturas.

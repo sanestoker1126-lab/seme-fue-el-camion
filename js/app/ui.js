@@ -98,7 +98,18 @@
       $('bannerLine').textContent = ch.line;
       $('bannerDriver').textContent = ch.driver;
       const el = $('banner'); el.hidden = false; el.classList.remove('out'); bannerT = 3.6; document.body.classList.add('bannerOn');
+      placeToast();
     }
+    /* V58.8.35: con la tarjeta del capítulo a la vista, el aviso va justo debajo de su borde real. Antes bajaba a una
+       altura fija y, si el título ocupaba dos líneas (p. ej. «CASCADAS DEL CIELO · TRAMO MEDIO»), la tarjeta lo tapaba. */
+    function placeToast() {
+      const b = $('banner'), t = $('toast');
+      if (!b || !t) return;
+      if (b.hidden) { t.style.removeProperty('top'); return; }
+      const r = b.getBoundingClientRect();
+      if (r.height > 0) t.style.top = Math.round(r.bottom + 8) + 'px';
+    }
+    if (typeof window !== 'undefined' && window.addEventListener) window.addEventListener('resize', placeToast);
     function sign(text) { const el = $('bubble'); $('bubbleText').textContent = text; el.hidden = false; el.classList.remove('out'); bubbleT = 4.2; }
     function itemCard(item, first, count, total) { enqueue(() => itemCardNow(item, first, count, total)); }
     function itemCardNow(item, first, count, total) {
@@ -123,7 +134,7 @@
         if (bossCineT <= 0) bossCinematicNext();
       }
       if (toastT > 0) { toastT -= dt; if (toastT <= 0) { $('toast').style.opacity = '0'; toastPri = -1; } }
-      if (bannerT > 0) { bannerT -= dt; if (bannerT <= 0.35) $('banner').classList.add('out'); if (bannerT <= 0) { $('banner').hidden = true; document.body.classList.remove('bannerOn'); } }
+      if (bannerT > 0) { bannerT -= dt; if (bannerT <= 0.35) $('banner').classList.add('out'); if (bannerT <= 0) { $('banner').hidden = true; document.body.classList.remove('bannerOn'); placeToast(); } }
       if (bubbleT > 0) { bubbleT -= dt; if (bubbleT <= 0.3) $('bubble').classList.add('out'); if (bubbleT <= 0) $('bubble').hidden = true; }
       if (cardT > 0) { cardT -= dt; if (cardT <= 0.3) $('card').classList.add('out'); if (cardT <= 0) $('card').hidden = true; }
       if (queue.length && !busy()) queue.shift()();
@@ -131,6 +142,7 @@
     function clearOverlays() {
       toastT = 0; bannerT = 0; bubbleT = 0; cardT = 0; toastPri = -1; queue.length = 0;
       $('toast').style.opacity = '0'; $('banner').hidden = true; document.body.classList.remove('bannerOn'); $('bubble').hidden = true; $('card').hidden = true;
+      placeToast();
     }
 
     /* ---------- HUD ---------- */

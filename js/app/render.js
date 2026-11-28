@@ -150,6 +150,7 @@
   /* Silueta de color de un sprite (cacheada): destellos de golpe y tintes sin depender de ctx.filter,
      que Safari no soporta. */
   const sils = new Map();
+  const robloxCombo = { start: -99, punch: false };   // V58.8.35: combo patada → puñetazo (Parafalls)
   function silhouette(im, color) {
     if (!ready(im)) return null;
     const key = im.src + '|' + color;
@@ -319,13 +320,17 @@
     anden_tren_ligero: { bottom: GDL('barrios_inferiores') },
     plaza_jacarandas: { bottom: GDL('azoteas') }
   };
+  /* SOFT_FX (V58.8.35): las capas de ambiente difusas (atmósfera y vegetación de las cascadas, plancton y burbujas
+     del canal) se amplían ×3–6 desde lienzos a media resolución. Con suavizado bilineal cuestan la mitad que con el
+     bicúbico y no se distinguen en pantalla (diferencia p99 = 2/255): cascadas medias 42–50 → 59 cuadros/s y el doble
+     con CPU lenta. Las capas nítidas (estrellas, láminas pintadas, personajes) conservan el suavizado alto. */
   const WATERFALL_DIR = 'assets/scenes/waterfalls/parafalls_v2/';
   const waterfallDepth = (page) => ({
     dir: WATERFALL_DIR,
     // Cada página conserva sus dos planos RGBA originales: atmósfera lenta y vegetación frontal ligeramente cercana.
     fx: [
-      { f: 0.18, zone: [0, 1], layers: [[`depth/atmosphere_0${page}.webp`, 0.65]] },
-      { f: 1.08, near: true, zone: [0, 1], layers: [[`depth/foreground_0${page}.webp`, 0.82]] }
+      { f: 0.18, zone: [0, 1], soft: true, layers: [[`depth/atmosphere_0${page}.webp`, 0.65]] },
+      { f: 1.08, near: true, zone: [0, 1], soft: true, layers: [[`depth/foreground_0${page}.webp`, 0.82]] }
     ],
     above: '#2684d3', below: '#10384b'
   });
@@ -338,8 +343,8 @@
       // Solo ambiente transparente (sin duplicar ruinas/corales ya pintados en V59); ambos efectos se limitan al canal.
       dir: PXD + 'marino/depth_v4/',
       fx: [
-        { f: 0.24, zone: [0, 1 / 3], tile: 520, layers: [['layers/05_plancton_flotante.png', 0.5]] },
-        { f: 0.76, zone: [0, 1 / 3], tile: 680, layers: [['layers/06_burbujas_ligeras.png', 0.42]] }
+        { f: 0.24, zone: [0, 1 / 3], tile: 520, soft: true, layers: [['layers/05_plancton_flotante.png', 0.5]] },
+        { f: 0.76, zone: [0, 1 / 3], tile: 680, soft: true, layers: [['layers/06_burbujas_ligeras.png', 0.42]] }
       ],
       above: '#438efa', below: '#093d7c'
     },
@@ -391,7 +396,7 @@
         c.width = Math.max(1, Math.round(first.naturalWidth / 2)); c.height = Math.max(1, Math.round(first.naturalHeight / 2));
         const x = c.getContext('2d');
         ims.forEach((im, i) => { if (im) { x.globalAlpha = g.layers[i][1]; x.drawImage(im, 0, 0, c.width, c.height); } });
-        return { canvas: c, f: g.f, near: !!g.near, zone: g.zone || null, tile: g.tile || 0 };
+        return { canvas: c, f: g.f, near: !!g.near, zone: g.zone || null, tile: g.tile || 0, soft: !!g.soft };
       }).filter(Boolean);
     });
     return null;
@@ -405,6 +410,7 @@
     const ox = B.x1 + (G.cam.x - B.x1) * (1 - g.f), oy = zy1 + (G.cam.y - zy1) * (1 - g.f);
     const sx = xx1 - ((((xx1 - ox) % tw) + tw) % tw), sy = y1 - ((((y1 - oy) % th) + th) % th);
     ctx.save(); ctx.beginPath(); ctx.rect(xx1, y1, xx2 - xx1, y2 - y1); ctx.clip();
+    if (g.soft) ctx.imageSmoothingQuality = 'low';   // V58.8.35: plancton/burbujas ampliados ×4 (ver SOFT_FX)
     for (let y = sy; y < y2; y += th) for (let x = sx; x < xx2; x += tw) ctx.drawImage(g.canvas, x, y, tw + 0.5, th + 0.5);
     ctx.restore();
   }
@@ -491,8 +497,10 @@
           const dx = B.x1 + xP * (1 - g.f) - 110, dy = sc.startY + yP * (1 - g.f) - 90;
           const x1 = Math.max(xx1, dx), y1 = Math.max(yy1, dy), x2 = Math.min(xx2, dx + dw), y2 = Math.min(yy2, dy + dh);
           if (x2 <= x1 || y2 <= y1) continue;
-          const iw = g.canvas.width, ih = g.canvas.height;
+          const iw = g.canvas.width, ih = g.canvas.height, q0 = ctx.imageSmoothingQuality;
+          if (g.soft) ctx.imageSmoothingQuality = 'low';   // V58.8.35: ver SOFT_FX
           ctx.drawImage(g.canvas, (x1 - dx) * iw / dw, (y1 - dy) * ih / dh, (x2 - x1) * iw / dw, (y2 - y1) * ih / dh, x1, y1, x2 - x1, y2 - y1);
+          ctx.imageSmoothingQuality = q0;
         }
       }
     }
@@ -547,9 +555,16 @@
 
   /** Capa escalada a la altura de la franja (+8 % de margen) con paralaje; mosaico espejo si no cubre el ancho. */
   function drawBandLayer(im, band, speed, camCx, camCy, clip) {
-    const bw = band.x2 - band.x1, bh = band.y2 - band.y1;
     const iw = im.naturalWidth || im.width, ih = im.naturalHeight || im.height;
     if (!iw || !ih) return;
+    // V58.8.35 (ver SOFT_FX): a escala ≥ 0,8 el bilineal se ve igual y no recalcula reducciones de la capa en cada cuadro.
+    const m = ctx.getTransform(), q0 = ctx.imageSmoothingQuality;
+    if (Math.hypot(m.a, m.b) * (band.y2 - band.y1) / ih * 1.08 >= 0.8) ctx.imageSmoothingQuality = 'low';
+    drawBandTiles(im, iw, ih, band, speed, camCx, camCy, clip);
+    ctx.imageSmoothingQuality = q0;
+  }
+  function drawBandTiles(im, iw, ih, band, speed, camCx, camCy, clip) {
+    const bw = band.x2 - band.x1, bh = band.y2 - band.y1;
     const s = (bh / ih) * 1.08, tw = iw * s, th = ih * s, k = 1 - speed;
     const oy = Math.max(-0.035 * th, Math.min(0.035 * th, -(camCy - (band.y1 + band.y2) / 2) * k * 0.08));
     const top = band.y1 + (bh - th) / 2 + oy;
@@ -3468,9 +3483,26 @@
     const meta = astro ? ASTRO_META : (NS.ART && NS.ART.SOFIA[name]) || [1, 96, 218];
     const useRobloxSofia = G.missionId === 'parafalls' && !astro && root.SOFIA_ROBLOX_ATLAS && root.SofiaRobloxAtlas;
     const robloxImg = useRobloxSofia ? image(PARAFALLS_ROBLOX_SOFIA) : null;
-    const robloxState = PARAFALLS_ROBLOX_PLAYER_STATE[state] || state;
+    // V58.8.35: combo con la Sofía cúbica: un segundo ataque seguido (< 0,8 s tras el anterior) sale como puñetazo
+    // (cuadros del paquete). Cada ataque se reconoce por su inicio en el reloj del juego (T − tiempo en el estado), así
+    // no depende de dibujar todos los cuadros.
+    if (useRobloxSofia && state === 'kick') {
+      const start = T - P.stateT;
+      if (Math.abs(start - robloxCombo.start) > 0.05) {
+        // Solo encadena si esta patada empezó después de la anterior (el reloj del mundo vuelve a 0 al cambiar de nivel).
+        robloxCombo.punch = start > robloxCombo.start && start - (robloxCombo.start + 0.22) < 0.8 && !robloxCombo.punch;
+        robloxCombo.start = start;
+      }
+    }
+    const robloxState = state === 'kick' && robloxCombo.punch && root.SOFIA_ROBLOX_ATLAS && root.SOFIA_ROBLOX_ATLAS.animations.punch ? 'punch' : PARAFALLS_ROBLOX_PLAYER_STATE[state] || state;
     const robloxTime = ['idle','run','fastRun','climb','zip','swing'].includes(state) ? P.animT : (P.dead ? G.timers.dying : P.stateT);
-    const robloxDrawn = !!(ready(robloxImg) && root.SofiaRobloxAtlas && root.SofiaRobloxAtlas.draw(ctx, robloxImg, root.SOFIA_ROBLOX_ATLAS, robloxState, robloxTime, P.x, foot + yOff, { scale: 0.29, facing: P.face || 1, opacity: alpha }));
+    const robloxOpts = { scale: 0.29, facing: P.face || 1, opacity: alpha };
+    const robloxDrawn = !!(ready(robloxImg) && root.SofiaRobloxAtlas && root.SofiaRobloxAtlas.draw(ctx, robloxImg, root.SOFIA_ROBLOX_ATLAS, robloxState, robloxTime, P.x, foot + yOff, robloxOpts));
+    // Destello rojo al recibir daño, como la Sofía normal: la misma pose dibujada con su silueta en rojo.
+    if (robloxDrawn && state === 'hurt' && P.hurtT > 0.25) {
+      const sil = silhouette(robloxImg, '#ff4040');
+      if (sil) root.SofiaRobloxAtlas.draw(ctx, sil, root.SOFIA_ROBLOX_ATLAS, robloxState, robloxTime, P.x, foot + yOff, Object.assign({}, robloxOpts, { opacity: alpha * 0.5 }));
+    }
     if (!robloxDrawn) {
       ctx.save();
       ctx.globalAlpha = alpha;

@@ -10,7 +10,9 @@
                attacking:'attack',interacting:'interact',crouching:'crouch'};
   function draw(ctx, img, atlas, state, seconds, centerX, feetY, options) {
     options=options||{};
-    if (!img || !img.complete || !img.naturalWidth || !atlas || !atlas.animations)return false;
+    // V58.8.35: acepta también un lienzo (silueta roja del destello de daño), que no tiene complete/naturalWidth.
+    const isCanvas=!!img && !('complete' in img) && img.width>0;
+    if (!img || (!isCanvas && (!img.complete || !img.naturalWidth)) || !atlas || !atlas.animations)return false;
     state=map[state]||state;
     const anim=atlas.animations[state]||atlas.animations.idle;
     const frames=anim.frames;
